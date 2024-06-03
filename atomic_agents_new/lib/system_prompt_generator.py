@@ -1,8 +1,10 @@
+# system_prompt_generator.py
+
 from typing import List
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
 
-class SystemPrompt(BaseModel):
+class SystemPromptInfo(BaseModel):
     background: List[str]
     steps: List[str]
     output_instructions: List[str]
@@ -16,24 +18,28 @@ class DynamicInfoProviderBase(ABC):
         pass
 
 class SystemPromptGenerator:
-    def __init__(self, system_prompt: SystemPrompt, dynamic_info_providers: dict[str, DynamicInfoProviderBase] = None):
-        self.system_prompt = system_prompt
+    def __init__(self, system_prompt_info: SystemPromptInfo = None, dynamic_info_providers: dict[str, DynamicInfoProviderBase] = None):
+        self.system_prompt_info = system_prompt_info or SystemPromptInfo(
+            background=['This is a conversation with a helpful and friendly AI assistant.'],
+            steps=[],
+            output_instructions=[]
+        )
         self.dynamic_info_providers = dynamic_info_providers or {}
 
     def generate_prompt(self) -> str:
         system_prompt = ''
 
-        if self.system_prompt.background:
+        if self.system_prompt_info.background:
             system_prompt += '# IDENTITY and PURPOSE\n'
-            system_prompt += f'-{'\n-'.join(self.system_prompt.background)}\n\n'
+            system_prompt += f'- {'\n-'.join(self.system_prompt_info.background)}\n\n'
 
-        if self.system_prompt.steps:
+        if self.system_prompt_info.steps:
             system_prompt += '# INTERNAL ASSISTANT STEPS\n'
-            system_prompt += f'-{'\n-'.join(self.system_prompt.steps)}\n\n'
+            system_prompt += f'- {'\n-'.join(self.system_prompt_info.steps)}\n\n'
 
-        if self.system_prompt.output_instructions:
+        if self.system_prompt_info.output_instructions:
             system_prompt += '# OUTPUT INSTRUCTIONS\n'
-            system_prompt += f'-{'\n-'.join(self.system_prompt.output_instructions)}\n\n'
+            system_prompt += f'- {'\n-'.join(self.system_prompt_info.output_instructions)}\n\n'
 
         if self.dynamic_info_providers:
             system_prompt += '# EXTRA INFORMATION AND CONTEXT\n'

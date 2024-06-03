@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from atomic_agents.lib.chat_memory import ChatMemory
 from atomic_agents.lib.utils.logger import logger
 from atomic_agents.tools.searx import SearxNGSearchTool
-from atomic_agents_new.lib.system_prompt_generator import SystemPrompt, SystemPromptGenerator
+from atomic_agents_new.lib.system_prompt_generator import DynamicInfoProviderBase, SystemPromptInfo, SystemPromptGenerator
 
 class BasicChatAgentInputSchema(BaseModel):
     chat_input: str = Field(..., description='The input text for the chat agent.')
@@ -40,18 +40,13 @@ class GeneralPlanResponse(BaseModel):
         }
 
 class BasicChatAgent:
-    def __init__(self, client, model: str = 'gpt-3.5-turbo', system_prompt: SystemPrompt = None, memory: ChatMemory = None, include_planning_step = False, input_schema = BasicChatAgentInputSchema, output_schema = BasicChatAgentResponse, dynamic_info_providers: dict[str, DynamicInfoProviderBase] = None):
+    def __init__(self, client, system_prompt_generator: SystemPromptGenerator = None, model: str = 'gpt-3.5-turbo',  memory: ChatMemory = None, include_planning_step = False, input_schema = BasicChatAgentInputSchema, output_schema = BasicChatAgentResponse):
         self.input_schema = input_schema
         self.output_schema = output_schema
         self.client = client
         self.model = model
         self.memory = memory or ChatMemory()
-        self.system_prompt = system_prompt or SystemPrompt(
-            background=['You are a helpful AI assistant.'],
-            steps=[],
-            output_instructions=[]
-        )
-        self.system_prompt_generator = SystemPromptGenerator(self.system_prompt, dynamic_info_providers)
+        self.system_prompt_generator = system_prompt_generator or SystemPromptGenerator()
         self.include_planning_step = include_planning_step
 
     def get_system_prompt(self) -> str:

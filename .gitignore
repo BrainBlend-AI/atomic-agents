@@ -137,3 +137,5 @@ chroma_data/
 chromadb_tmp/
 
 .vscode/
+
+personal_experiments/

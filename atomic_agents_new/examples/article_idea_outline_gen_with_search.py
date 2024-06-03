@@ -2,11 +2,13 @@ from datetime import datetime
 from rich.console import Console
 from atomic_agents.lib.chat_memory import ChatMemory
 from atomic_agents_new.agents.basic_chat_agent import BasicChatAgent
-from atomic_agents_new.lib.system_prompt_generator import DynamicInfoProviderBase, SystemPrompt
+from atomic_agents_new.lib.system_prompt_generator import DynamicInfoProviderBase, SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
-from atomic_agents.tools.searx import SearxNGSearchTool
+from atomic_agents_new.lib.tools.searx import SearxNGSearchTool
 from atomic_agents.lib.utils.logger import logger
+
+console = Console()
 
 class MyChatAgent(BasicChatAgent):
     def __init__(self, *args, **kwargs):
@@ -53,9 +55,8 @@ dynamic_info_providers = {
     'search': SearchResultsProvider('Search results')
 }
 
-console = Console()   
 
-system_prompt = SystemPrompt(
+system_prompt = SystemPromptInfo(
     background=[
         'This assistant is an expert in brainstorming ideas and creating article outlines.',
         'This assistant\'s goal is to generate engaging and creative ideas and structured outlines for articles based on the given topic.'
@@ -71,6 +72,8 @@ system_prompt = SystemPrompt(
         'Do not reply to the user\'s input with anything except the list of ideas and the article outline.'
     ]
 )
+system_prompt_generator = SystemPromptGenerator(system_prompt, dynamic_info_providers)
+
 
 memory = ChatMemory()
 initial_memory = [
@@ -80,10 +83,9 @@ memory.load_from_dict_list(initial_memory)
 
 agent = MyChatAgent(
     client=instructor.from_openai(openai.OpenAI()), 
+    # system_prompt_generator=system_prompt_generator,
     model='gpt-3.5-turbo',
-    system_prompt=system_prompt,
     memory=memory,
-    dynamic_info_providers=dynamic_info_providers
 )
 console.print(f'Agent: {initial_memory[0]["content"]}')
 
