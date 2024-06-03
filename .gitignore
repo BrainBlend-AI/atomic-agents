@@ -135,3 +135,5 @@ cython_debug/
 chromadb_persist/
 chroma_data/
 chromadb_tmp/
+
+.vscode/
