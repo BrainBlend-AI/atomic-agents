@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from abc import ABC, abstractmethod
 from atomic_agents.lib.chat_memory import ChatMemory
+from atomic_agents.lib.utils.logger import logger
 
 class BasicChatAgentInputSchema(BaseModel):
     chat_input: str = Field(..., description='The input text for the chat agent.')
@@ -30,11 +31,11 @@ class DynamicInfoProviderBase(ABC):
     @abstractmethod
     def get_info(self) -> str:
         pass
-
+    
 class SystemPromptGenerator:
-    def __init__(self, system_prompt: SystemPrompt, dynamic_info_providers: List[DynamicInfoProviderBase] = None):
+    def __init__(self, system_prompt: SystemPrompt, dynamic_info_providers: dict[str, DynamicInfoProviderBase] = None):
         self.system_prompt = system_prompt
-        self.dynamic_info_providers = dynamic_info_providers or []
+        self.dynamic_info_providers = dynamic_info_providers or {}
 
     def generate_prompt(self) -> str:
         system_prompt = ''
@@ -53,14 +54,34 @@ class SystemPromptGenerator:
 
         if self.dynamic_info_providers:
             system_prompt += '# EXTRA INFORMATION AND CONTEXT\n'
-            for provider in self.dynamic_info_providers:
-                system_prompt += f'## {provider.title}\n'
-                system_prompt += f'{provider.get_info()}\n\n'
+            for provider in self.dynamic_info_providers.values():
+                info = provider.get_info()
+                if info:
+                    system_prompt += f'## {provider.title}\n'
+                    system_prompt += f'{info}\n\n'
 
         return system_prompt
 
+class GeneralPlanStep(BaseModel):
+    step: str
+    description: str
+    substeps: List[str] = []
+
+class GeneralPlanResponse(BaseModel):
+    observations: List[str] = Field(..., description='Key points or observations about the input.')
+    thoughts: List[str] = Field(..., description='Thought process or considerations involved in preparing the response.')
+    response_plan: List[GeneralPlanStep] = Field(..., description='Steps involved in generating the response.')
+
+    class Config:
+        title = 'GeneralPlanResponse'
+        description = 'General response plan from the chat agent.'
+        json_schema_extra = {
+            'title': title,
+            'description': description
+        }
+
 class BasicChatAgent:
-    def __init__(self, client, model: str = 'gpt-3.5-turbo', system_prompt: SystemPrompt = None, memory: ChatMemory = None, vector_db = None, input_schema = BasicChatAgentInputSchema, output_schema = BasicChatAgentResponse, dynamic_info_providers: List[DynamicInfoProviderBase] = None):
+    def __init__(self, client, model: str = 'gpt-3.5-turbo', system_prompt: SystemPrompt = None, memory: ChatMemory = None, include_planning_step = False, input_schema = BasicChatAgentInputSchema, output_schema = BasicChatAgentResponse, dynamic_info_providers: dict[str, DynamicInfoProviderBase] = None):
         self.input_schema = input_schema
         self.output_schema = output_schema
         self.client = client
@@ -71,10 +92,11 @@ class BasicChatAgent:
             steps=[],
             output_instructions=[]
         )
-        self.prompt_generator = SystemPromptGenerator(self.system_prompt, dynamic_info_providers)
+        self.system_prompt_generator = SystemPromptGenerator(self.system_prompt, dynamic_info_providers)
+        self.include_planning_step = include_planning_step
 
     def get_system_prompt(self) -> str:
-        return self.prompt_generator.generate_prompt()
+        return self.system_prompt_generator.generate_prompt()
 
     def get_response(self, response_model=None) -> BaseModel:
         if response_model is None:
@@ -90,16 +112,27 @@ class BasicChatAgent:
 
     def run(self, user_input: str) -> str:
         self.memory.add_message('user', user_input)
+        self._pre_run()
+        if self.include_planning_step:
+            self.memory.add_message('assistant', 'I will now note the observations about the input and context and the thought process involved in preparing the response.')
+            plan = self.get_response(response_model=GeneralPlanResponse)
+            self.memory.add_message('assistant', plan.model_dump_json())
         response = self.get_response(response_model=self.output_schema)
         self.memory.add_message('assistant', response.model_dump_json())
+        self._post_run()
         return response
 
+    def _pre_run(self):
+        pass
+    
+    def _post_run(self):
+        pass
+
 if __name__ == '__main__':
-    import os
     import instructor
     import openai
-    from groq import Groq
     from rich.console import Console
+    from atomic_agents.tools.searx import SearxNGSearchTool
 
     class CurrentDateProvider(DynamicInfoProviderBase):
         def __init__(self, title: str, format: str = '%Y-%m-%d %H:%M:%S'):
@@ -109,72 +142,31 @@ if __name__ == '__main__':
         def get_info(self) -> str:
             return f'The current date, in the format "{self.format}", is {datetime.now().strftime(self.format)}'
 
-    class LiveSearchResultsProvider(DynamicInfoProviderBase):
-        def __init__(self, title: str, search_query: str):
-            super().__init__(title)
-            self.search_query = search_query
+    class SearchResultsProvider(DynamicInfoProviderBase):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.search_results: SearxNGSearchTool.output_schema = None
 
         def get_info(self) -> str:
-            # Placeholder for live search results fetching logic
-            # In a real implementation, this would fetch live data from a search API
-            return f'Live search results for "{self.search_query}"'
+            response = ''
+            if not self.search_results:
+                return response
+            
+            for result in self.search_results.results:
+                response += f'--- {result.title} ---\n'
+                response += f'{result.content}\n'
+                response += f'[Read more]({result.url})\n'
+                response += '--------------------------------\n\n'
+                
+            return response
     
-    console = Console()
-    
-    # Configuration dictionary
-    config = {
-        'openai': {
-            'client': instructor.from_openai(openai.OpenAI()),
-            'model': 'gpt-3.5-turbo'
-        },
-        'groq': {
-            'client': instructor.from_groq(Groq(api_key=os.getenv('GROQ_API_KEY'))),
-            'model': os.getenv('GROQ_CHAT_MODEL')
-        }
+    # Define dynamic info providers
+    dynamic_info_providers = {
+        'date': CurrentDateProvider('Current date', format='%Y-%m-%d %H:%M:%S'),
+        'search': SearchResultsProvider('Search results')
     }
     
-    # Choose the configuration
-    use_groq = False  # Set this to True to use Groq, False to use OpenAI
-    chosen_config = config['groq'] if use_groq else config['openai']
-    
-    class PlanStep(BaseModel):
-        step: str
-        description: str
-        substeps: List[str] = []
-    
-    class ArticleBuddyPlanResponse(BaseModel):
-        observations: List[str] = Field(..., description='What is the conversation about? What are the key points?')
-        thoughts: List[str] = Field(..., description='What is the thought process involved in preparing the ideas and outline?')
-        response_plan: List[PlanStep] = Field(..., description='What are the steps involved in generating the ideas and outline?')
-        
-        class Config:
-            title = 'ArticleBuddyPlanResponse'
-            description = 'Response plan from the Article Buddy chat agent.'
-            json_schema_extra = {
-                'title': title,
-                'description': description
-            }
-
-    class ArticleBuddyResponse(BaseModel):
-        response: str = Field(..., description='The markdown-enabled response from the chat agent.')
-        
-        class Config:
-            title = 'ArticleBuddyResponse'
-            description = 'Response from the Article Buddy chat agent.'
-            json_schema_extra = {
-                'title': title,
-                'description': description
-            }
-
-    class MyChatAgent(BasicChatAgent):
-        def run(self, user_input: str) -> ArticleBuddyResponse:
-            self.memory.add_message('user', user_input)
-            self.memory.add_message('assistant', 'First, let me note the observations about the input and thought process involved in preparing the ideas and outline.')
-            plan = self.get_response(response_model=ArticleBuddyPlanResponse)
-            self.memory.add_message('assistant', plan.model_dump_json())
-            response = self.get_response(response_model=ArticleBuddyResponse)
-            self.memory.add_message('assistant', response.model_dump_json())
-            return response
+    console = Console()   
 
     system_prompt = SystemPrompt(
         background=[
@@ -199,18 +191,26 @@ if __name__ == '__main__':
     ]
     memory.load_from_dict_list(initial_memory)
 
-    # Define dynamic info providers
-    dynamic_info_providers = [
-        CurrentDateProvider('Current date', format='%Y-%m-%d %H:%M:%S'),
-    ]
+    class MyChatAgent(BasicChatAgent):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.search_tool = SearxNGSearchTool(max_results=15)
+        
+        def _pre_run(self):
+            self.memory.add_message('assistant', 'First, I will perform a search with 3 different search queries to gather relevant information on the topic.')
+            search_input = self.get_response(response_model=SearxNGSearchTool.input_schema)
+            logger.verbose(f'Search input: {search_input}')
+            search_results = self.search_tool.run(search_input)
+            self.system_prompt_generator.dynamic_info_providers['search'].search_results = search_results
+            self.memory.add_message('assistant', 'I have gathered the search results and they have been added to the context.')
+            
 
     agent = MyChatAgent(
-        client=chosen_config['client'], 
-        model=chosen_config['model'],
+        client=instructor.from_openai(openai.OpenAI()), 
+        model='gpt-3.5-turbo',
         system_prompt=system_prompt,
         memory=memory,
-        dynamic_info_providers=dynamic_info_providers,
-        output_schema=ArticleBuddyResponse
+        dynamic_info_providers=dynamic_info_providers
     )
     console.print(f'Agent: {initial_memory[0]["content"]}')
 
