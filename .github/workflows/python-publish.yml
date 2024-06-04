@@ -39,7 +39,8 @@ jobs:
         git commit -m "Bump version to $VERSION"
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v5
+      id: cpr
+      uses: peter-evans/create-pull-request@v6
       with:
         commit-message: "Bump version to $VERSION"
         branch: version-bump
@@ -47,11 +48,14 @@ jobs:
         body: "This PR bumps the version to $VERSION."
         labels: version-bump
 
+    - name: Install GitHub CLI
+      run: sudo apt-get install gh
+
     - name: Merge Pull Request
-      uses: peter-evans/merge-pull-request@v2
-      with:
-        pull-request: ${{ steps.create-pull-request.outputs.pull-request-number }}
-        merge-method: squash
+      run: |
+        gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin --delete-branch
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build package
       run: python -m build
