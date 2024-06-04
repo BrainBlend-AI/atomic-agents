@@ -24,12 +24,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install build
 
-    - name: Bump version in pyproject.toml
-      run: |
-        VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
-        sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-      shell: bash
-
     - name: Build package
       run: python -m build
 
