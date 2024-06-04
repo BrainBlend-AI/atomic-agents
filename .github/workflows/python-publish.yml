@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   deploy:
@@ -30,18 +31,39 @@ jobs:
         sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
       shell: bash
 
-    - name: Commit and push changes
+    - name: Commit changes
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git checkout -b bump-version-$VERSION
         git add pyproject.toml
         git commit -m "Bump version to $VERSION"
-        git push origin HEAD:main
+        git push origin bump-version-$VERSION
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "Bump version to $VERSION"
+        branch: bump-version-$VERSION
+        title: "Bump version to $VERSION"
+        body: "This PR bumps the version to $VERSION."
+        labels: automerge
+
+    - name: Enable Auto-Merge
+      uses: pascalgn/automerge-action@v0.16.3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        merge-method: squash
+        required-labels: automerge
+        delete-branch: true
 
     - name: Build package
+      if: github.event.pull_request.merged == true
       run: python -m build
 
     - name: Publish package
+      if: github.event.pull_request.merged == true
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
         user: __token__
