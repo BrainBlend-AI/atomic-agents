@@ -5,8 +5,7 @@ on:
     types: [published]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   deploy:
@@ -26,36 +25,15 @@ jobs:
         pip install build
 
     - name: Bump version in pyproject.toml
-      id: bump_version
       run: |
         VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
-        BRANCH_NAME="bump-version-$VERSION"
-        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-        git checkout -b $BRANCH_NAME
         sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add pyproject.toml
-        git commit -m "Bump version to $VERSION"
-        git push origin $BRANCH_NAME
       shell: bash
 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ env.BRANCH_NAME }}
-        title: "Bump version to ${{ env.VERSION }}"
-        body: "This PR bumps the version to ${{ env.VERSION }}."
-        base: main
-
     - name: Build package
-      if: github.event_name == 'release'
       run: python -m build
 
     - name: Publish package
-      if: github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
         user: __token__
