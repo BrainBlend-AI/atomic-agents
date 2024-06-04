@@ -30,6 +30,8 @@ jobs:
       run: |
         VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
         BRANCH_NAME="bump-version-$VERSION"
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
         git checkout -b $BRANCH_NAME
         sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
         git config --global user.name "github-actions[bot]"
@@ -43,9 +45,9 @@ jobs:
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ steps.bump_version.outputs.BRANCH_NAME }}
-        title: "Bump version to ${{ steps.bump_version.outputs.VERSION }}"
-        body: "This PR bumps the version to ${{ steps.bump_version.outputs.VERSION }}."
+        branch: ${{ env.BRANCH_NAME }}
+        title: "Bump version to ${{ env.VERSION }}"
+        body: "This PR bumps the version to ${{ env.VERSION }}."
         base: main
 
     - name: Build package
