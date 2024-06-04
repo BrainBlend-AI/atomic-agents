@@ -48,6 +48,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         commit-message: "Bump version to $VERSION"
         branch: bump-version-${{ env.VERSION }}
+        base: main
         title: "Bump version to $VERSION"
         body: "This PR bumps the version to $VERSION."
         labels: automerge
