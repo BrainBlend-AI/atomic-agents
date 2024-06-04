@@ -61,7 +61,10 @@ jobs:
       run: sudo apt-get install gh
 
     - name: Enable Auto-Merge
-      run: gh pr merge ${{ steps.create_pull_request.outputs.pull-request-number }} --auto --squash
+      run: |
+        for i in {1..5}; do
+          gh pr merge ${{ steps.create_pull_request.outputs.pull-request-number }} --auto --squash && break || sleep 10
+        done
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         VERSION: ${{ env.VERSION }}
