@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atomic_agents"
+version = "0.1.4"
+description = "A versatile framework designed to facilitate the creation and management of intelligent agents."
+authors = [
+    { name = "Kenny Vaneetvelde", email = "kenny.vaneetvelde@gmail.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+dependencies = [
+    "aiohttp",
+    "beautifulsoup4",
+    "huggingface-hub",
+    "openai",
+    "scikit-learn",
+    "sympy",
+    "instructor"
+]
+
+[project.urls]
+homepage = "https://github.com/KennyVaneetvelde/atomic_agents"
+repository = "https://github.com/KennyVaneetvelde/atomic_agents"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["atomic_agents"]
