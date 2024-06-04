@@ -4,7 +4,7 @@ import requests
 from markdownify import MarkdownConverter
 from pydantic import BaseModel, Field
 
-from atomic_agents.lib.models.web_document import Document, WebDocumentMetadata
+from atomic_agents.lib.models.web_document import WebDocument, WebDocumentMetadata
 
 
 class UrlToMarkdownConverter:
@@ -61,7 +61,7 @@ class UrlToMarkdownConverter:
         metadata = UrlToMarkdownConverter._extract_metadata(soup, url)
         markdown_content = UrlToMarkdownConverter._convert_to_markdown(soup)
 
-        return Document(content=markdown_content, metadata=metadata)
+        return WebDocument(content=markdown_content, metadata=metadata)
 
 if __name__ == '__main__':
     url = "https://brainblendai.com"

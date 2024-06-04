@@ -5,7 +5,7 @@ from rich.console import Console
 import openai
 import instructor
 
-from atomic_agents.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool
 
 ################
 # INPUT SCHEMA #

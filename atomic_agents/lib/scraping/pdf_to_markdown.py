@@ -5,7 +5,7 @@ from PyPDF2 import PdfReader
 from io import BytesIO, StringIO
 import markdownify
 
-from atomic_agents.lib.models.web_document import Document, WebDocumentMetadata
+from atomic_agents.lib.models.web_document import WebDocument, WebDocumentMetadata
 
 class PdfToMarkdownConverter:
     @staticmethod
@@ -41,14 +41,14 @@ class PdfToMarkdownConverter:
         markdown_content = PdfToMarkdownConverter._convert_to_markdown(text_content)
         metadata = WebDocumentMetadata(url=url or file_path, title="", description="", keywords="", author="")
 
-        return Document(content=markdown_content, metadata=metadata)
+        return WebDocument(content=markdown_content, metadata=metadata)
 
 if __name__ == '__main__':
     from rich.console import Console
     from rich.markdown import Markdown
     console = Console()
     
-    url = "https://web.pdx.edu/~arhodes/ai5.pdf"
+    url = "https://pdfobject.com/pdf/sample.pdf"
     document = PdfToMarkdownConverter.convert(url=url)
     
     console.print(Markdown(document.content))

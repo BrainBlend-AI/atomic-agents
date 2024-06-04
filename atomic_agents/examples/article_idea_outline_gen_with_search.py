@@ -1,16 +1,16 @@
 from datetime import datetime
 from rich.console import Console
-from atomic_agents.lib.chat_memory import ChatMemory
-from atomic_agents_new.agents.basic_chat_agent import BasicChatAgent
-from atomic_agents_new.lib.system_prompt_generator import DynamicInfoProviderBase, SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.agents.base_chat_agent import BaseChatAgent
+from atomic_agents.lib.components.system_prompt_generator import DynamicInfoProviderBase, SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
-from atomic_agents_new.lib.tools.searx import SearxNGSearchTool
+from atomic_agents.lib.tools.searx import SearxNGSearchTool
 from atomic_agents.lib.utils.logger import logger
 
 console = Console()
 
-class MyChatAgent(BasicChatAgent):
+class MyChatAgent(BaseChatAgent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.search_tool = SearxNGSearchTool(max_results=25)

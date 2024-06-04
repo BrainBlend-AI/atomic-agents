@@ -1,21 +1,19 @@
-from typing import Callable, List
+from typing import List
 from pydantic import BaseModel, Field
-from datetime import datetime
-from abc import ABC, abstractmethod
-from atomic_agents.lib.chat_memory import ChatMemory
+from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.utils.logger import logger
-from atomic_agents.tools.searx import SearxNGSearchTool
-from atomic_agents_new.lib.system_prompt_generator import DynamicInfoProviderBase, SystemPromptInfo, SystemPromptGenerator
+from atomic_agents.lib.tools.searx import SearxNGSearchTool
+from atomic_agents.lib.components.system_prompt_generator import DynamicInfoProviderBase, SystemPromptInfo, SystemPromptGenerator
 
-class BasicChatAgentInputSchema(BaseModel):
+class BaseChatAgentInputSchema(BaseModel):
     chat_input: str = Field(..., description='The input text for the chat agent.')
 
-class BasicChatAgentResponse(BaseModel):    
+class BaseChatAgentResponse(BaseModel):    
     response: str = Field(..., description='The markdown-enabled response from the chat agent.')
     
     class Config:
-        title = 'BasicChatAgentResponse'
-        description = 'Response from the basic chat agent. The response can be in markdown format.'
+        title = 'BaseChatAgentResponse'
+        description = 'Response from the base chat agent. The response can be in markdown format.'
         json_schema_extra = {
             'title': title,
             'description': description
@@ -39,8 +37,8 @@ class GeneralPlanResponse(BaseModel):
             'description': description
         }
 
-class BasicChatAgent:
-    def __init__(self, client, system_prompt_generator: SystemPromptGenerator = None, model: str = 'gpt-3.5-turbo',  memory: ChatMemory = None, include_planning_step = False, input_schema = BasicChatAgentInputSchema, output_schema = BasicChatAgentResponse):
+class BaseChatAgent:
+    def __init__(self, client, system_prompt_generator: SystemPromptGenerator = None, model: str = 'gpt-3.5-turbo',  memory: ChatMemory = None, include_planning_step = False, input_schema = BaseChatAgentInputSchema, output_schema = BaseChatAgentResponse):
         self.input_schema = input_schema
         self.output_schema = output_schema
         self.client = client

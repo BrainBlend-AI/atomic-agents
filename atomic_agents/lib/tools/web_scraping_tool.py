@@ -6,10 +6,10 @@ import openai
 import instructor
 import requests
 
-from atomic_agents.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.scraping.url_to_markdown import UrlToMarkdownConverter
 from atomic_agents.lib.scraping.pdf_to_markdown import PdfToMarkdownConverter
-from atomic_agents.lib.models.web_document import Document
+from atomic_agents.lib.models.web_document import WebDocument
 
 ################
 # INPUT SCHEMA #

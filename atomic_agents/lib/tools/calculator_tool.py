@@ -6,7 +6,7 @@ from sympy import sympify
 import instructor
 from openai import OpenAI
 
-from atomic_agents.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool
 
 ################
 # INPUT SCHEMA #

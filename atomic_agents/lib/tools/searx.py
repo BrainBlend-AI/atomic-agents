@@ -6,7 +6,7 @@ from rich.console import Console
 import openai
 import instructor
 
-from atomic_agents.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool
 
 ################
 # INPUT SCHEMA #
@@ -119,10 +119,12 @@ if __name__ == "__main__":
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=SearxNGSearchTool.input_schema,
-        messages=[{"role": "user", "content": "Search for the latest PC gaming news of May 2024"}],
+        messages=[{"role": "user", "content": "Search for the latest PC gaming news of May 2024 using 3 different queries."}],
     )
     
+    rich_console.print(f"Search queries: {result.queries}")
+    
     # Print the result
-    output = SearxNGSearchTool(tool_description_override="derp", max_results=15).run(result)
+    output = SearxNGSearchTool(max_results=15).run(result)
     for i, result in enumerate(output.results):
         rich_console.print(f"{i}. Title: {result.title}, URL: {result.url}")
