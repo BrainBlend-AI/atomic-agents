@@ -53,11 +53,9 @@ jobs:
         labels: automerge
 
     - name: Enable Auto-Merge
-      uses: peter-evans/enable-pull-request-automerge@v2
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        pull-request-number: ${{ steps.create_pull_request.outputs.pull-request-number }}
-        merge-method: squash
+      run: gh pr merge ${{ steps.create_pull_request.outputs.pull-request-number }} --auto --squash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build package
       if: github.event.pull_request.merged == true
