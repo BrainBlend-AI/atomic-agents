@@ -44,6 +44,7 @@ jobs:
       with:
         commit-message: "Bump version to $VERSION"
         branch: version-bump
+        base: main
         title: "Bump version to $VERSION"
         body: "This PR bumps the version to $VERSION."
         labels: version-bump
