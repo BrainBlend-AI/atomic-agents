@@ -57,7 +57,12 @@ jobs:
 
     - name: Merge Pull Request
       run: |
-        gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin --delete-branch
+        if [ -n "${{ steps.cpr.outputs.pull-request-number }}" ]; then
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin --delete-branch
+        else
+          echo "No pull request found to merge."
+          exit 1
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
