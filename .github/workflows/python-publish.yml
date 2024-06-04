@@ -31,6 +31,7 @@ jobs:
         VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
         echo "VERSION=$VERSION" >> $GITHUB_ENV
         sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+        cat pyproject.toml  # Debug: Check the content of pyproject.toml
       shell: bash
 
     - name: Commit changes
@@ -39,6 +40,7 @@ jobs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git checkout -b bump-version-${{ env.VERSION }}
         git add pyproject.toml
+        git status  # Debug: Check the status of the git repository
         git commit -m "Bump version to ${{ env.VERSION }}"
         git push origin bump-version-${{ env.VERSION }}
       env:
