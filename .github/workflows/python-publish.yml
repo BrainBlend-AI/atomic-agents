@@ -40,6 +40,8 @@ jobs:
         git add pyproject.toml
         git commit -m "Bump version to $VERSION"
         git push origin bump-version-$VERSION
+      env:
+        VERSION: ${{ env.VERSION }}
 
     - name: Create Pull Request
       id: create_pull_request
@@ -52,6 +54,8 @@ jobs:
         title: "Bump version to $VERSION"
         body: "This PR bumps the version to $VERSION."
         labels: automerge
+      env:
+        VERSION: ${{ env.VERSION }}
 
     - name: Install GitHub CLI
       run: sudo apt-get install gh
@@ -60,6 +64,7 @@ jobs:
       run: gh pr merge ${{ steps.create_pull_request.outputs.pull-request-number }} --auto --squash
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION: ${{ env.VERSION }}
 
     - name: Build package
       if: github.event.pull_request.merged == true
