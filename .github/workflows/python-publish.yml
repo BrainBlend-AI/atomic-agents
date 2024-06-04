@@ -42,6 +42,7 @@ jobs:
         git push origin bump-version-$VERSION
 
     - name: Create Pull Request
+      id: create_pull_request
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -55,7 +56,7 @@ jobs:
       uses: peter-evans/enable-pull-request-automerge@v2
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        pull-request-number: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        pull-request-number: ${{ steps.create_pull_request.outputs.pull-request-number }}
         merge-method: squash
 
     - name: Build package
