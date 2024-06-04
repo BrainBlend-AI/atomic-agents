@@ -55,10 +55,9 @@ jobs:
       uses: pascalgn/automerge-action@v0.16.3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        merge-method: squash
-        required-labels: automerge
-        delete-branch: true
+        MERGE_METHOD: squash
+        MERGE_LABELS: automerge
+        MERGE_DELETE_BRANCH: true
 
     - name: Build package
       if: github.event.pull_request.merged == true
