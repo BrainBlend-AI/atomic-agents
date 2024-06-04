@@ -29,55 +29,31 @@ jobs:
       id: bump_version
       run: |
         VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        BRANCH_NAME="bump-version-$VERSION"
+        git checkout -b $BRANCH_NAME
         sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-        cat pyproject.toml  # Debug: Check the content of pyproject.toml
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add pyproject.toml
+        git commit -m "Bump version to $VERSION"
+        git push origin $BRANCH_NAME
       shell: bash
 
-    - name: Commit changes
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git checkout -b bump-version-${{ env.VERSION }}
-        git add pyproject.toml
-        git status  # Debug: Check the status of the git repository
-        git commit -m "Bump version to ${{ env.VERSION }}"
-        git push origin bump-version-${{ env.VERSION }}
-      env:
-        VERSION: ${{ env.VERSION }}
-
     - name: Create Pull Request
-      id: create_pull_request
       uses: peter-evans/create-pull-request@v5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        commit-message: "Bump version to ${{ env.VERSION }}"
-        branch: bump-version-${{ env.VERSION }}
+        branch: ${{ steps.bump_version.outputs.BRANCH_NAME }}
+        title: "Bump version to ${{ steps.bump_version.outputs.VERSION }}"
+        body: "This PR bumps the version to ${{ steps.bump_version.outputs.VERSION }}."
         base: main
-        title: "Bump version to ${{ env.VERSION }}"
-        body: "This PR bumps the version to ${{ env.VERSION }}."
-        labels: automerge
-      env:
-        VERSION: ${{ env.VERSION }}
-
-    - name: Install GitHub CLI
-      run: sudo apt-get install gh
-
-    - name: Enable Auto-Merge
-      run: |
-        for i in {1..5}; do
-          gh pr merge ${{ steps.create_pull_request.outputs.pull-request-number }} --auto --squash && break || sleep 10
-        done
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VERSION: ${{ env.VERSION }}
 
     - name: Build package
-      if: github.event.pull_request.merged == true
+      if: github.event_name == 'release'
       run: python -m build
 
     - name: Publish package
-      if: github.event.pull_request.merged == true
+      if: github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
         user: __token__
