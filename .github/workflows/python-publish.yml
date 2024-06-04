@@ -52,12 +52,12 @@ jobs:
         labels: automerge
 
     - name: Enable Auto-Merge
-      uses: pascalgn/automerge-action@v0.16.3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        MERGE_METHOD: squash
-        MERGE_LABELS: automerge
-        MERGE_DELETE_BRANCH: true
+      uses: actions-ecosystem/action-merge-pull-requests@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        merge-method: squash
+        merge-labels: automerge
+        delete-branch: true
 
     - name: Build package
       if: github.event.pull_request.merged == true
