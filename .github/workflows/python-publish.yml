@@ -52,6 +52,9 @@ jobs:
     - name: Install GitHub CLI
       run: sudo apt-get install gh
 
+    - name: Checkout base branch
+      run: git checkout main
+
     - name: Merge Pull Request
       run: |
         gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin --delete-branch
