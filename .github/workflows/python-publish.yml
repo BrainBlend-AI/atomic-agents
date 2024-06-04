@@ -28,6 +28,7 @@ jobs:
     - name: Bump version in pyproject.toml
       run: |
         VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
         sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
       shell: bash
 
@@ -52,8 +53,9 @@ jobs:
 
     - name: Enable Auto-Merge
       uses: pascalgn/automerge-action@v0.16.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
         merge-method: squash
         required-labels: automerge
         delete-branch: true
