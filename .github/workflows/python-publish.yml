@@ -5,7 +5,7 @@ on:
     types: [published]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   deploy:
@@ -29,6 +29,12 @@ jobs:
         VERSION=$(echo $GITHUB_REF | sed 's/refs\/tags\/v//')
         sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
       shell: bash
+
+    - name: Commit and push changes
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Bump version to $VERSION"
+        file_pattern: pyproject.toml
 
     - name: Build package
       run: python -m build
