@@ -39,13 +39,36 @@ class WebScrapingToolOutputSchema(BaseModel):
 # TOOL LOGIC #
 ##############
 class WebScrapingTool(BaseTool):
+    """
+    Tool for scraping web pages and converting content to markdown.
+
+    Attributes:
+        input_schema (WebScrapingToolSchema): The schema for the input data.
+        output_schema (WebScrapingToolOutputSchema): The schema for the output data.
+    """
     input_schema = WebScrapingToolSchema
     output_schema = WebScrapingToolOutputSchema
-    
-    def __init__(self, tool_description_override: Optional[str] = None):
-        super().__init__(tool_description_override)
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes the WebScrapingTool.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
+        super().__init__(*args, **kwargs)
 
     def run(self, params: WebScrapingToolSchema) -> WebScrapingToolOutputSchema:
+        """
+        Runs the WebScrapingTool with the given parameters.
+
+        Args:
+            params (WebScrapingToolSchema): The input parameters for the tool, adhering to the input schema.
+
+        Returns:
+            WebScrapingToolOutputSchema: The output of the tool, adhering to the output schema.
+        """
         url = params.url
         response = requests.head(url)
         content_type = response.headers.get('Content-Type', '')

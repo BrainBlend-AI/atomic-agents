@@ -1,10 +1,8 @@
 import os
-from typing import Optional
 import openai
 from pydantic import BaseModel, Field
 from sympy import sympify
 import instructor
-from openai import OpenAI
 
 from atomic_agents.lib.tools.base import BaseTool
 
@@ -32,13 +30,39 @@ class CalculatorToolOutputSchema(BaseModel):
 # TOOL LOGIC   #
 ################
 class CalculatorTool(BaseTool):
+    """
+    Tool for performing calculations based on the provided mathematical expression.
+
+    Attributes:
+        input_schema (CalculatorToolSchema): The schema for the input data.
+        output_schema (CalculatorToolOutputSchema): The schema for the output data.
+    """
     input_schema = CalculatorToolSchema
     output_schema = CalculatorToolOutputSchema
     
-    def __init__(self, tool_description_override: Optional[str] = None):
-        super().__init__(tool_description_override)
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes the CalculatorTool.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
+        super().__init__(*args, **kwargs)
 
     def run(self, params: CalculatorToolSchema) -> CalculatorToolOutputSchema:
+        """
+        Runs the CalculatorTool with the given parameters.
+
+        Args:
+            params (CalculatorToolSchema): The input parameters for the tool, adhering to the input schema.
+
+        Returns:
+            CalculatorToolOutputSchema: The output of the tool, adhering to the output schema.
+
+        Raises:
+            ValueError: If there is an error evaluating the expression.
+        """
         try:
             # Explicitly convert the string form of the expression
             parsed_expr = sympify(str(params.expression))
@@ -47,6 +71,7 @@ class CalculatorTool(BaseTool):
             return CalculatorToolOutputSchema(result=str(result))
         except Exception as e:
             raise ValueError(f"Error evaluating expression: {e}")
+            
             
 #################
 # EXAMPLE USAGE #
@@ -69,4 +94,4 @@ if __name__ == "__main__":
     )
 
     # Print the result
-    print(CalculatorTool().run(result))
+    print(CalculatorTool(tool_description_override="derp").run(result))

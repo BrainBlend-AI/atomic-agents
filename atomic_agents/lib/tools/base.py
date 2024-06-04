@@ -2,12 +2,40 @@ from typing import Type, Optional
 from pydantic import BaseModel
 
 class BaseTool:
+    """
+    Base class for all tools in the Atomic Agents framework.
+
+    Attributes:
+        input_schema (Type[BaseModel]): The schema for the input data.
+        output_schema (Type[BaseModel]): The schema for the output data.
+        tool_name (str): The name of the tool, derived from the input schema's title.
+        tool_description (str): The description of the tool, derived from the input schema's description or overridden by the user.
+    """
+
     input_schema: Type[BaseModel]
     output_schema: Type[BaseModel]
 
     def __init__(self, tool_description_override: Optional[str] = None):
+        """
+        Initializes the BaseTool with an optional description override.
+
+        Args:
+            tool_description_override (Optional[str]): An optional description to override the default description from the input schema.
+        """
         self.tool_name = self.input_schema.Config.title
         self.tool_description = tool_description_override or self.input_schema.Config.description
 
     def run(self, params: BaseModel) -> BaseModel:
+        """
+        Runs the tool with the given parameters. This method should be implemented by subclasses.
+
+        Args:
+            params (BaseModel): The input parameters for the tool, adhering to the input schema.
+
+        Returns:
+            BaseModel: The output of the tool, adhering to the output schema.
+
+        Raises:
+            NotImplementedError: If the method is not implemented by a subclass.
+        """
         raise NotImplementedError("Subclasses should implement this method")

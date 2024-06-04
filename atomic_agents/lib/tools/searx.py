@@ -39,14 +39,44 @@ class SearxNGSearchToolOutputSchema(BaseModel):
 # TOOL LOGIC #
 ##############
 class SearxNGSearchTool(BaseTool):
+    """
+    Tool for performing searches on SearxNG based on the provided queries and category.
+
+    Attributes:
+        input_schema (SearxNGSearchToolSchema): The schema for the input data.
+        output_schema (SearxNGSearchToolOutputSchema): The schema for the output data.
+        max_results (int): The maximum number of search results to return.
+    """
     input_schema = SearxNGSearchToolSchema
     output_schema = SearxNGSearchToolOutputSchema
-    
-    def __init__(self, tool_description_override: Optional[str] = None, max_results: int = 10):
-        super().__init__(tool_description_override)
+
+    def __init__(self, max_results: int = 10, *args, **kwargs):
+        """
+        Initializes the SearxNGSearchTool.
+
+        Args:
+            max_results (int): The maximum number of search results to return.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
+        super().__init__(*args, **kwargs)
         self.max_results = max_results
 
     def run(self, params: SearxNGSearchToolSchema, max_results: Optional[int] = None) -> SearxNGSearchToolOutputSchema:
+        """
+        Runs the SearxNGSearchTool with the given parameters.
+
+        Args:
+            params (SearxNGSearchToolSchema): The input parameters for the tool, adhering to the input schema.
+            max_results (Optional[int]): The maximum number of search results to return.
+
+        Returns:
+            SearxNGSearchToolOutputSchema: The output of the tool, adhering to the output schema.
+
+        Raises:
+            ValueError: If the SEARXNG_BASE_URL environment variable is not set.
+            Exception: If the request to SearxNG fails.
+        """
         SEARXNG_BASE_URL = os.getenv('SEARXNG_BASE_URL')
         if not SEARXNG_BASE_URL:
             raise ValueError("SEARXNG_BASE_URL environment variable not set")
@@ -62,7 +92,7 @@ class SearxNGSearchTool(BaseTool):
                 'language': 'en',
                 'engines': 'bing,duckduckgo,google,startpage,yandex',
             }
-            
+
             # Add category to query parameters if it is set
             if params.category:
                 query_params['categories'] = params.category
@@ -89,7 +119,7 @@ class SearxNGSearchTool(BaseTool):
             if result['url'] not in seen_urls:
                 unique_results.append(result)
                 seen_urls.add(result['url'])
-        
+
         # Filter results to include only those with the correct category if it is set
         if params.category:
             filtered_results = [result for result in unique_results if result.get('category') == params.category]
@@ -99,14 +129,14 @@ class SearxNGSearchTool(BaseTool):
         filtered_results = filtered_results[:max_results or self.max_results]
 
         return SearxNGSearchToolOutputSchema(results=filtered_results)
-    
-    
+
+
 #################
 # EXAMPLE USAGE #
 #################
 if __name__ == "__main__":
     rich_console = Console()
-    
+
     # Initialize the client outside
     client = instructor.from_openai(
         openai.OpenAI(
@@ -114,16 +144,16 @@ if __name__ == "__main__":
             base_url=os.getenv("OPENAI_BASE_URL")
         )
     )
-    
+
     # Extract structured data from natural language
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=SearxNGSearchTool.input_schema,
         messages=[{"role": "user", "content": "Search for the latest PC gaming news of May 2024 using 3 different queries."}],
     )
-    
+
     rich_console.print(f"Search queries: {result.queries}")
-    
+
     # Print the result
     output = SearxNGSearchTool(max_results=15).run(result)
     for i, result in enumerate(output.results):
