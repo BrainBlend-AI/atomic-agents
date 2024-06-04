@@ -1,124 +1,154 @@
-# Creating New Tools
+# Creating a New Tool
 
-This guide will help you create new tools based on the structure and patterns observed in `calculator_tool.py` and `searx.py`.
+This guide will walk you through the steps to create a new tool in the `atomic_agents` framework. We will cover the necessary components and provide an example to illustrate the process.
+
+## Components of a Tool
+
+A tool in the `atomic_agents` framework consists of the following components:
+
+1. **Input Schema**: Defines the input parameters for the tool.
+2. **Output Schema**: Defines the output structure of the tool.
+3. **Tool Logic**: Implements the core functionality of the tool.
+4. **Example Usage**: Demonstrates how to use the tool.
 
 ## Step-by-Step Guide
 
-### 1. Import Necessary Modules
+### 1. Define the Input Schema
 
-Start by importing the necessary modules. Typically, you will need `os`, `pydantic`, and any other modules specific to your tool's functionality.
+The input schema is a Pydantic `BaseModel` that specifies the input parameters for the tool. It can include simple fields, complex nested data structures, and even child schemas.
+An input schema should include a `Config` class with `title`, `description`, and `json_schema_extra` attributes. This is not just informational or aesthetic; it also helps generate the OpenAPI documentation for the tool, which is consumed by the LLM in order to generate the output.
+Here is an example:
 
 ```python
-import os
 from pydantic import BaseModel, Field
-# Add other necessary imports here
-```
 
-### 2. Define Input Schema
+class ChildSchema(BaseModel):
+    child_param: int = Field(..., description="A parameter in the child schema.")
 
-Create a class for the input schema using `pydantic.BaseModel`. Define the fields and their descriptions. Also, include a nested `Config` class with `title`, `description`, and `json_schema_extra`.
-
-```python
-class YourToolInputSchema(BaseModel):
-    # Define your input fields here
-    example_field: str = Field(..., description="Description of the example field.")
+class MyToolInputSchema(BaseModel):
+    parameter: str = Field(..., description="Description of the parameter.")
+    nested: ChildSchema = Field(..., description="A nested schema example.")
+    list_param: list[str] = Field(..., description="A list of strings.")
 
     class Config:
-        title = "YourTool"
-        description = "Tool for performing specific tasks."
+        title = "MyTool"
+        description = "Description of what MyTool does."
         json_schema_extra = {
             "title": title,
             "description": description
         }
 ```
 
-### 3. Define Output Schema
+### 2. Define the Output Schema
 
-Create a class for the output schema using `pydantic.BaseModel`. Define the fields and their descriptions.
-
-```python
-class YourToolOutputSchema(BaseModel):
-    # Define your output fields here
-    result: str = Field(..., description="Result of the operation.")
-```
-
-### 4. Implement the Tool Logic
-
-Create a class for your tool. Define `input_schema` and `output_schema` attributes. Implement the `run` method to process the input and produce the output.
+The output schema is a Pydantic `BaseModel` that specifies the structure of the tool's output. It can also include complex nested data structures and multiple properties just like the input schema. Here is an example:
 
 ```python
-class YourTool:
-    input_schema = YourToolInputSchema
-    output_schema = YourToolOutputSchema
-
-    def run(self, params: YourToolInputSchema) -> YourToolOutputSchema:
-        try:
-            # Implement your tool logic here
-            result = "Your result here"
-            return YourToolOutputSchema(result=result)
-        except Exception as e:
-            raise ValueError(f"Error processing input: {e}")
+class MyToolOutputSchema(BaseModel):
+    result: str = Field(..., description="Result of the tool's operation.")
+    details: dict = Field(..., description="Additional details about the result.")
 ```
 
-### 5. Example Usage
+### 3. Implement the Tool Logic
 
-Include an example usage section to demonstrate how to initialize and use your tool.
+Create a class that inherits from `BaseTool` and implements the core functionality of the tool. This class should define the `input_schema` and `output_schema` attributes and implement the `run` method.
+
+```python
+from typing import Optional
+from atomic_agents.lib.tools.base import BaseTool
+
+class MyTool(BaseTool):
+    input_schema = MyToolInputSchema
+    output_schema = MyToolOutputSchema
+    
+    def __init__(self, tool_description_override: Optional[str] = None):
+        super().__init__(tool_description_override)
+    
+    def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
+        # Implement the core logic here
+        result = f"Processed {params.parameter} with child param {params.nested.child_param}"
+        details = {"list_param_length": len(params.list_param)}
+        return MyToolOutputSchema(result=result, details=details)
+```
+
+### 4. Example Usage
+
+Provide an example of how to use the tool. This typically involves initializing the tool and running it with sample input. If you don't plan to merge this tool into the atomic_agents repository, you can exclude this part if you wish.
 
 ```python
 if __name__ == "__main__":
-    # Initialize your tool
-    your_tool = YourTool()
-
-    # Create input parameters
-    input_params = YourToolInputSchema(
-        example_field="Example input"
+    # Example usage of MyTool
+    input_data = MyToolInputSchema(
+        parameter="example input",
+        nested=ChildSchema(child_param=42),
+        list_param=["item1", "item2"]
     )
-
-    # Run the tool and get the output
-    output = your_tool.run(input_params)
-
-    # Print the result
+    tool = MyTool()
+    output = tool.run(input_data)
     print(output)
 ```
 
-## Example
+## Full Example
 
-Here is a complete example of a simple tool that echoes the input string.
+Here is a complete example of a new tool called `MyTool`:
 
 ```python
-import os
-from pydantic import BaseModel, Field
+# my_tool.py
 
-class EchoToolInputSchema(BaseModel):
-    message: str = Field(..., description="Message to echo.")
+from pydantic import BaseModel, Field
+from typing import Optional
+from atomic_agents.lib.tools.base import BaseTool
+
+# Child Schema
+class ChildSchema(BaseModel):
+    child_param: int = Field(..., description="A parameter in the child schema.")
+
+# Input Schema
+class MyToolInputSchema(BaseModel):
+    parameter: str = Field(..., description="Description of the parameter.")
+    nested: ChildSchema = Field(..., description="A nested schema example.")
+    list_param: list[str] = Field(..., description="A list of strings.")
 
     class Config:
-        title = "EchoTool"
-        description = "Tool for echoing messages."
+        title = "MyTool"
+        description = "Description of what MyTool does."
         json_schema_extra = {
             "title": title,
             "description": description
         }
 
-class EchoToolOutputSchema(BaseModel):
-    echoed_message: str = Field(..., description="Echoed message.")
+# Output Schema
+class MyToolOutputSchema(BaseModel):
+    result: str = Field(..., description="Result of the tool's operation.")
+    details: dict = Field(..., description="Additional details about the result.")
 
-class EchoTool:
-    input_schema = EchoToolInputSchema
-    output_schema = EchoToolOutputSchema
+# Tool Logic
+class MyTool(BaseTool):
+    input_schema = MyToolInputSchema
+    output_schema = MyToolOutputSchema
+    
+    def __init__(self, tool_description_override: Optional[str] = None):
+        super().__init__(tool_description_override)
+    
+    def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
+        # Implement the core logic here
+        result = f"Processed {params.parameter} with child param {params.nested.child_param}"
+        details = {"list_param_length": len(params.list_param)}
+        return MyToolOutputSchema(result=result, details=details)
 
-    def run(self, params: EchoToolInputSchema) -> EchoToolOutputSchema:
-        try:
-            echoed_message = params.message
-            return EchoToolOutputSchema(echoed_message=echoed_message)
-        except Exception as e:
-            raise ValueError(f"Error echoing message: {e}")
-
+# Example Usage
 if __name__ == "__main__":
-    echo_tool = EchoTool()
-    input_params = EchoToolInputSchema(message="Hello, World!")
-    output = echo_tool.run(input_params)
+    # Example usage of MyTool
+    input_data = MyToolInputSchema(
+        parameter="example input",
+        nested=ChildSchema(child_param=42),
+        list_param=["item1", "item2"]
+    )
+    tool = MyTool()
+    output = tool.run(input_data)
     print(output)
 ```
 
-By following this guide, you can create new tools with a consistent structure and easily integrate them into your projects.
+## Conclusion
+
+By following these steps, you can create a new tool in the `atomic_agents` framework. Define the input and output schemas, implement the tool logic, and provide an example usage to demonstrate how the tool works. Remember that the input and output schemas can be as simple or as complex as needed, including nested data structures and multiple properties.
