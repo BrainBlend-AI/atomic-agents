@@ -2,7 +2,7 @@
 
 ## Description
 
-Atomic Agents is a versatile framework designed to facilitate the creation and management of intelligent agents. These agents can perform a variety of tasks, including web scraping, calculations, and generating article ideas with integrated search capabilities. The project leverages powerful models like GPT-3.5-turbo to provide intelligent responses and perform complex operations.
+Atomic Agents is a versatile framework designed to facilitate the creation and management of intelligent agents. These agents can perform a variety of tasks, including web scraping, calculations, and generating article ideas with integrated search capabilities. The project leverages powerful models like GPT-4o to provide intelligent responses and perform complex operations.
 
 ## Philosophy
 
