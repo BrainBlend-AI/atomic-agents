@@ -47,10 +47,13 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         commit-message: "Bump version to $VERSION"
-        branch: bump-version-$VERSION
+        branch: bump-version-${{ env.VERSION }}
         title: "Bump version to $VERSION"
         body: "This PR bumps the version to $VERSION."
         labels: automerge
+
+    - name: Install GitHub CLI
+      run: sudo apt-get install gh
 
     - name: Enable Auto-Merge
       run: gh pr merge ${{ steps.create_pull_request.outputs.pull-request-number }} --auto --squash
