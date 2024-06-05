@@ -1,5 +1,5 @@
 # Atomic Agents
-![logo](./.assets/logo.png)
+![logo](./.assets/logo.png){width=250px}
 
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
