@@ -150,6 +150,9 @@ if __name__ == "__main__":
     print(output)
 ```
 
+### More examples
+If you want more examples, have a look at any of the tools in the `atomic_agents.lib.tools` package. For example, the (CalculatorTool)[../atomic_agents/lib/tools/calculator_tool.md#calculatortool] tool or the (Web Scraping Tool)[../atomic_agents/lib/tools/web_scraping_tool.md#web-scraping-tool] tool.
+
 ### Conclusion
 
 By following these steps, you can create a new tool in the `atomic_agents` framework. Define the input and output schemas, implement the tool logic, and provide an example usage to demonstrate how the tool works. Remember that the input and output schemas can be as simple or as complex as needed, including nested data structures and multiple properties.
