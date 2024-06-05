@@ -1,6 +1,6 @@
 # SystemPromptGenerator
 
-[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Components](./index.md#components) / SystemPromptGenerator
+[Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Components](./index.md#components) / SystemPromptGenerator
 
 > Auto-generated documentation for [atomic_agents.lib.components.system_prompt_generator](../../../../atomic_agents/lib/components/system_prompt_generator.py) module.
 

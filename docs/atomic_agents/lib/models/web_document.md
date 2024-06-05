@@ -1,6 +1,6 @@
 # WebDocument
 
-[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Models](./index.md#models) / WebDocument
+[Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Models](./index.md#models) / WebDocument
 
 > Auto-generated documentation for [atomic_agents.lib.models.web_document](../../../../atomic_agents/lib/models/web_document.py) module.
 

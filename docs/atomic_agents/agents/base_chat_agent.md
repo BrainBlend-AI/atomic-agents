@@ -1,6 +1,6 @@
 # BaseChatAgent
 
-[Atomic_agents_redux Index](../../README.md#atomic_agents_redux-index) / [Atomic Agents](../index.md#atomic-agents) / [Agents](./index.md#agents) / BaseChatAgent
+[Atomic_agents Index](../../README.md#atomic_agents-index) / [Atomic Agents](../index.md#atomic-agents) / [Agents](./index.md#agents) / BaseChatAgent
 
 > Auto-generated documentation for [atomic_agents.agents.base_chat_agent](../../../atomic_agents/agents/base_chat_agent.py) module.
 

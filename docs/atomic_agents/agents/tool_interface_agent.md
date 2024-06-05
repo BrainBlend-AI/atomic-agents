@@ -1,6 +1,6 @@
 # ToolInterfaceAgent
 
-[Atomic_agents_redux Index](../../README.md#atomic_agents_redux-index) / [Atomic Agents](../index.md#atomic-agents) / [Agents](./index.md#agents) / ToolInterfaceAgent
+[Atomic_agents Index](../../README.md#atomic_agents-index) / [Atomic Agents](../index.md#atomic-agents) / [Agents](./index.md#agents) / ToolInterfaceAgent
 
 > Auto-generated documentation for [atomic_agents.agents.tool_interface_agent](../../../atomic_agents/agents/tool_interface_agent.py) module.
 

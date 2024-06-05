@@ -1,6 +1,6 @@
 # Searx
 
-[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Searx
+[Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Searx
 
 > Auto-generated documentation for [atomic_agents.lib.tools.searx](../../../../atomic_agents/lib/tools/searx.py) module.
 

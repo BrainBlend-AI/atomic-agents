@@ -1,8 +1,8 @@
-# Atomic_agents_redux Index
+# Atomic_agents Index
 
 > Auto-generated documentation index.
 
-A full list of `Atomic_agents_redux` project modules.
+A full list of `Atomic_agents` project modules.
 
 - [Atomic Agents](atomic_agents/index.md#atomic-agents)
     - [Agents](atomic_agents/agents/index.md#agents)

@@ -1,6 +1,6 @@
 # Logger
 
-[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Utils](./index.md#utils) / Logger
+[Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Utils](./index.md#utils) / Logger
 
 > Auto-generated documentation for [atomic_agents.lib.utils.logger](../../../../atomic_agents/lib/utils/logger.py) module.
 
