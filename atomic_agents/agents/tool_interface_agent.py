@@ -2,13 +2,29 @@ from pydantic import Field, create_model
 from atomic_agents.agents.base_chat_agent import BaseChatAgent
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
-from atomic_agents.lib.tools.searx import SearxNGSearchTool
-from rich.console import Console
-import instructor
-import openai
 
 class ToolInterfaceAgent(BaseChatAgent):
+    """
+    A specialized chat agent designed to interact with a specific tool.
+
+    This agent extends the BaseChatAgent to include functionality for interacting with a tool instance.
+    It generates system prompts, handles tool input and output, and can optionally return raw tool output.
+
+    Attributes:
+        tool_instance: The instance of the tool this agent will interact with.
+        return_raw_output (bool): Whether to return the raw output from the tool.
+    """
+
     def __init__(self, tool_instance, return_raw_output=False, *args, **kwargs):
+        """
+        Initializes the ToolInterfaceAgent.
+
+        Args:
+            tool_instance: The instance of the tool this agent will interact with.
+            return_raw_output (bool, optional): Whether to return the raw output from the tool. Defaults to False.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+        """
         super().__init__(*args, **kwargs)
         
         self.tool_instance = tool_instance
@@ -50,6 +66,16 @@ class ToolInterfaceAgent(BaseChatAgent):
         )
         
     def _get_and_handle_response(self):
+        """
+        Handles obtaining and processing the response from the tool.
+
+        This method gets the response from the tool, formats the tool input, adds it to memory,
+        runs the tool, and processes the tool output. If `return_raw_output` is True, it returns
+        the raw tool output; otherwise, it processes the output and returns the response.
+        
+        Returns:
+            BaseModel: The processed response or raw tool output.
+        """
         tool_input = self.get_response(response_model=self.tool_instance.input_schema)
         formatted_tool_input = format_tool_message(tool_input)
         self.memory.add_message('assistant', '', tool_message=formatted_tool_input, tool_id=formatted_tool_input['id'])
