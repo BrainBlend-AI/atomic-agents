@@ -139,3 +139,5 @@ chromadb_tmp/
 .vscode/
 
 personal_experiments/
+
+*.psd
