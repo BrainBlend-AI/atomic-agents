@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 
 ## Usage examples & Docs
-![open source docs bad](./.assets/docs.png)
+<img src="./.assets/docs.png" alt="open source docs bad" width="350"/>
 
 While we do our best to provide excellent documentation, we are aware that it is not perfect. If you see anything missing or anything that could be improved, please don't hesitate to open an issue or a pull request.
 
