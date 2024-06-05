@@ -1,10 +1,10 @@
-# Creating a New Tool
+# Tools
 
-[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / Creating a New Tool
+[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / Tools
 
 > Auto-generated documentation for [atomic_agents.lib.tools](../../../../atomic_agents/lib/tools/__init__.py) module.
 
-- [Creating a New Tool](#creating-a-new-tool)
+- [Tools](#tools)
   - [Modules](#modules)
 
 ## Modules

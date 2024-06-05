@@ -1,6 +1,6 @@
 # Web Scraping Tool
 
-[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Creating a New Tool](./index.md#creating-a-new-tool) / Web Scraping Tool
+[Atomic_agents_redux Index](../../../README.md#atomic_agents_redux-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Web Scraping Tool
 
 > Auto-generated documentation for [atomic_agents.lib.tools.web_scraping_tool](../../../../atomic_agents/lib/tools/web_scraping_tool.py) module.
 

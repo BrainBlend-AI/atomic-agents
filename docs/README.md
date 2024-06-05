@@ -14,7 +14,7 @@ A full list of `Atomic_agents_redux` project modules.
             - [SystemPromptGenerator](atomic_agents/lib/components/system_prompt_generator.md#systempromptgenerator)
         - [Models](atomic_agents/lib/models/index.md#models)
             - [WebDocument](atomic_agents/lib/models/web_document.md#webdocument)
-        - [Creating a New Tool](atomic_agents/lib/tools/index.md#creating-a-new-tool)
+        - [Tools](atomic_agents/lib/tools/index.md#tools)
             - [Base](atomic_agents/lib/tools/base.md#base)
             - [CalculatorTool](atomic_agents/lib/tools/calculator_tool.md#calculatortool)
             - [Searx](atomic_agents/lib/tools/searx.md#searx)

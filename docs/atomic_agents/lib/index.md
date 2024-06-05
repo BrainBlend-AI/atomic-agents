@@ -11,5 +11,5 @@
 
 - [Components](components/index.md)
 - [Models](models/index.md)
-- [Creating a New Tool](tools/index.md)
+- [Tools](tools/index.md)
 - [Utils](utils/index.md)
