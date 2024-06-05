@@ -30,6 +30,25 @@ Further examples can be found in the [examples](./examples/) directory.
 ### Docs
 The documentation can be found in the [docs](./docs/) directory. Here you will find both API documentation and guides.
 
+## Instructor & Model Compatibility
+Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) package. This means that in all examples where OpenAI is used, any other API supported by Instructor can be used, such as Cohere, Anthropic, Gemini, and more. For a complete list please refer to the instructor documentation on its [GitHub page](https://github.com/jxnl/instructor).
+
+Additionally, Atomic Agents should work with Ollama or LMStudio. If the default settings do not work due to your local server not supporting tool-calling, you can set the `mode` to JSON. For example:
+
+```python
+from instructor import BaseChatAgent, Mode
+
+agent = BaseChatAgent(
+    client=instructor.from_openai(
+      openai.OpenAI(
+        base_url='http://localhost:1234/v1', api_key='local'
+      ), 
+      mode=Mode.JSON
+    ),
+    model='localmodel',
+)
+```
+
 ## Contributing
 We welcome contributions! Please follow these steps to contribute:
 

@@ -1,3 +1,4 @@
+import json
 from pydantic import Field, create_model
 from atomic_agents.agents.base_chat_agent import BaseChatAgent
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
@@ -78,12 +79,14 @@ class ToolInterfaceAgent(BaseChatAgent):
         """
         tool_input = self.get_response(response_model=self.tool_instance.input_schema)
         formatted_tool_input = format_tool_message(tool_input)
-        self.memory.add_message('assistant', '', tool_message=formatted_tool_input, tool_id=formatted_tool_input['id'])
+        
+        self.memory.add_message('assistant', 'TOOL CALL: ' + json.dumps(formatted_tool_input))
         tool_output = self.tool_instance.run(tool_input)
-        self.memory.add_message('tool', tool_output.model_dump_json(), tool_id=formatted_tool_input['id'])
+        self.memory.add_message('assistant', 'TOOL RESPONSE: ' + tool_output.model_dump_json())
         
         if self.return_raw_output:
             return tool_output
         
+        self.memory.add_message('assistant', 'I will now formulate a response for the user based on the tool output.')
         response = self.get_response(response_model=self.output_schema)        
         return response
