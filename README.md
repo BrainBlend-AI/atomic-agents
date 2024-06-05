@@ -20,15 +20,15 @@ pip install -r requirements.txt
 ```
 
 ## Usage examples & Docs
-While I did my best to provide good documentation, I am aware that it is not perfect. If you feel any parts can be improved feel free to open an issue or a pull request.
+![open source docs bad](./.assets/docs.png)
+
+While we do our best to provide excellent documentation, we are aware that it is not perfect. If you see anything missing or anything that could be improved, please don't hesitate to open an issue or a pull request.
 
 ### Examples
 Further examples can be found in the [examples](./examples/) directory.
 
 ### Docs
 The documentation can be found in the [docs](./docs/) directory. Here you will find both API documentation and guides.
-
-![open source docs bad](./.assets/docs.png)
 
 ## Contributing
 We welcome contributions! Please follow these steps to contribute:
