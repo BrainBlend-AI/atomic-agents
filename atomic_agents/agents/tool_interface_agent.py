@@ -15,7 +15,7 @@ class ToolInterfaceAgent(BaseChatAgent):
         return_raw_output (bool): Whether to return the raw output from the tool.
     """
 
-    def __init__(self, tool_instance, return_raw_output=False, *args, **kwargs):
+    def __init__(self, tool_instance, return_raw_output=False, **kwargs):
         """
         Initializes the ToolInterfaceAgent.
 
@@ -25,7 +25,7 @@ class ToolInterfaceAgent(BaseChatAgent):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         
         self.tool_instance = tool_instance
         

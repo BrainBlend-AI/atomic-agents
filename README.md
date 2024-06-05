@@ -1,15 +1,12 @@
 # Atomic Agents
+![logo](./.assets/logo.png)
 
-## Description
-
-Atomic Agents is a versatile framework designed to facilitate the creation and management of intelligent agents. These agents can perform a variety of tasks, including web scraping, calculations, and generating article ideas with integrated search capabilities. The project leverages powerful models like GPT-4o to provide intelligent responses and perform complex operations.
+[![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
 ## Philosophy
-
-TODO
+The Atomic Agents framework is designed to be modular, extensible, and easy to use. It provides a set of tools and agents that can be combined to create powerful applications. The framework is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data validation and serialization.
 
 ## Installation
-
 To install Atomic Agents, you can use pip:
 
 ```bash
@@ -22,12 +19,18 @@ Alternatively, to install the necessary dependencies from the repository, run th
 pip install -r requirements.txt
 ```
 
-## Usage
+## Usage examples & Docs
+While I did my best to provide good documentation, I am aware that it is not perfect. If you feel any parts can be improved feel free to open an issue or a pull request.
 
-TODO
+### Examples
+Further examples can be found in the [examples](./examples/) directory.
+
+### Docs
+The documentation can be found in the [docs](./docs/) directory. Here you will find both API documentation and guides.
+
+![open source docs bad](./.assets/docs.png)
 
 ## Contributing
-
 We welcome contributions! Please follow these steps to contribute:
 
 1. Fork the repository
@@ -38,5 +41,4 @@ We welcome contributions! Please follow these steps to contribute:
 6. Open a pull request
 
 ## License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

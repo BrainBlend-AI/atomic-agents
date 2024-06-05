@@ -48,7 +48,7 @@ Tool for performing searches on SearxNG based on the provided queries and catego
 
 ```python
 class SearxNGSearchTool(BaseTool):
-    def __init__(self, max_results: int = 10, *args, **kwargs): ...
+    def __init__(self, max_results: int = 10, **kwargs): ...
 ```
 
 #### See also

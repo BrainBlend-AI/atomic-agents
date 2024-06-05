@@ -11,8 +11,8 @@ from atomic_agents.lib.utils.logger import logger
 console = Console()
 
 class MyChatAgent(BaseChatAgent):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.search_tool = SearxNGSearchTool(max_results=25)
     
     def _pre_run(self):

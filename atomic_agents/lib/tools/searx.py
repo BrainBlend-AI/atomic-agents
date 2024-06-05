@@ -50,7 +50,7 @@ class SearxNGSearchTool(BaseTool):
     input_schema = SearxNGSearchToolSchema
     output_schema = SearxNGSearchToolOutputSchema
 
-    def __init__(self, max_results: int = 10, *args, **kwargs):
+    def __init__(self, max_results: int = 10, **kwargs):
         """
         Initializes the SearxNGSearchTool.
 
@@ -59,7 +59,7 @@ class SearxNGSearchTool(BaseTool):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.max_results = max_results
 
     def run(self, params: SearxNGSearchToolSchema, max_results: Optional[int] = None) -> SearxNGSearchToolOutputSchema:

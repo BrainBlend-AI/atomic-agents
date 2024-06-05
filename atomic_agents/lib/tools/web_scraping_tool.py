@@ -48,7 +48,7 @@ class ContentScrapingTool(BaseTool):
     input_schema = ContentScrapingToolSchema
     output_schema = ContentScrapingToolOutputSchema
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         """
         Initializes the ContentScrapingTool.
 
@@ -56,7 +56,7 @@ class ContentScrapingTool(BaseTool):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSchema:
         """

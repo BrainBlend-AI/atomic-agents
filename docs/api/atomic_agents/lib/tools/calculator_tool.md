@@ -32,7 +32,7 @@ Tool for performing calculations based on the provided mathematical expression.
 
 ```python
 class CalculatorTool(BaseTool):
-    def __init__(self, *args, **kwargs): ...
+    def __init__(self, **kwargs): ...
 ```
 
 #### See also

@@ -19,5 +19,5 @@
 #### Signature
 
 ```python
-def verbose(self, message, *args, **kwargs): ...
+def verbose(self, message, **kwargs): ...
 ```

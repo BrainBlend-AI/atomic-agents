@@ -26,7 +26,7 @@ It generates system prompts, handles tool input and output, and can optionally r
 
 ```python
 class ToolInterfaceAgent(BaseChatAgent):
-    def __init__(self, tool_instance, return_raw_output=False, *args, **kwargs): ...
+    def __init__(self, tool_instance, return_raw_output=False, **kwargs): ...
 ```
 
 #### See also

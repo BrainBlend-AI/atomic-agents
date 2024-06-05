@@ -51,7 +51,7 @@ Tool for scraping web pages or PDFs and converting content to markdown.
 
 ```python
 class ContentScrapingTool(BaseTool):
-    def __init__(self, *args, **kwargs): ...
+    def __init__(self, **kwargs): ...
 ```
 
 #### See also

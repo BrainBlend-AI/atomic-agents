@@ -40,7 +40,7 @@ class CalculatorTool(BaseTool):
     input_schema = CalculatorToolSchema
     output_schema = CalculatorToolOutputSchema
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         """
         Initializes the CalculatorTool.
 
@@ -48,7 +48,7 @@ class CalculatorTool(BaseTool):
             *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def run(self, params: CalculatorToolSchema) -> CalculatorToolOutputSchema:
         """
