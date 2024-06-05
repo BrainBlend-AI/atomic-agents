@@ -37,9 +37,37 @@ class GeneralPlanResponse(BaseModel):
             'description': description
         }
 
-# Base Chat Agent Class
 class BaseChatAgent:
-    def __init__(self, client, system_prompt_generator: SystemPromptGenerator = None, model: str = 'gpt-3.5-turbo',  memory: ChatMemory = None, include_planning_step = False, input_schema = BaseChatAgentInputSchema, output_schema = BaseChatAgentResponse):
+    """
+    Base class for chat agents.
+
+    This class provides the core functionality for handling chat interactions, including managing memory,
+    generating system prompts, and obtaining responses from a language model.
+
+    Attributes:
+        input_schema (BaseModel): Schema for the input data.
+        output_schema (BaseModel): Schema for the output data.
+        client: Client for interacting with the language model.
+        model (str): The model to use for generating responses.
+        memory (ChatMemory): Memory component for storing chat history.
+        system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
+        include_planning_step (bool): Whether to include a planning step in the response generation.
+        initial_memory (ChatMemory): Initial state of the memory.
+    """
+
+    def __init__(self, client, system_prompt_generator: SystemPromptGenerator = None, model: str = 'gpt-3.5-turbo', memory: ChatMemory = None, include_planning_step=False, input_schema=BaseChatAgentInputSchema, output_schema=BaseChatAgentResponse):
+        """
+        Initializes the BaseChatAgent.
+
+        Args:
+            client: Client for interacting with the language model.
+            system_prompt_generator (SystemPromptGenerator, optional): Component for generating system prompts. Defaults to None.
+            model (str, optional): The model to use for generating responses. Defaults to 'gpt-3.5-turbo'.
+            memory (ChatMemory, optional): Memory component for storing chat history. Defaults to None.
+            include_planning_step (bool, optional): Whether to include a planning step in the response generation. Defaults to False.
+            input_schema (BaseModel, optional): Schema for the input data. Defaults to BaseChatAgentInputSchema.
+            output_schema (BaseModel, optional): Schema for the output data. Defaults to BaseChatAgentResponse.
+        """
         self.input_schema = input_schema
         self.output_schema = output_schema
         self.client = client
@@ -48,17 +76,35 @@ class BaseChatAgent:
         self.system_prompt_generator = system_prompt_generator or SystemPromptGenerator()
         self.include_planning_step = include_planning_step
         self.initial_memory = self.memory.copy()
-        
+
     def reset_memory(self):
+        """
+        Resets the memory to its initial state.
+        """
         self.memory = self.initial_memory.copy()
-        
+
     def get_system_prompt(self) -> str:
+        """
+        Generates the system prompt.
+
+        Returns:
+            str: The generated system prompt.
+        """
         return self.system_prompt_generator.generate_prompt()
 
     def get_response(self, response_model=None) -> BaseModel:
+        """
+        Obtains a response from the language model.
+
+        Args:
+            response_model (Type[BaseModel], optional): The schema for the response data. If not set, self.output_schema is used.
+
+        Returns:
+            BaseModel: The response from the language model.
+        """
         if response_model is None:
             response_model = self.output_schema
-        
+
         messages = [{'role': 'system', 'content': self.get_system_prompt()}] + self.memory.get_history()
         response = self.client.chat.completions.create(
             model=self.model,
@@ -68,6 +114,15 @@ class BaseChatAgent:
         return response
 
     def run(self, user_input: str) -> str:
+        """
+        Runs the chat agent with the given user input.
+
+        Args:
+            user_input (str): The input text from the user.
+
+        Returns:
+            str: The response from the chat agent.
+        """
         self._init_run(user_input)
         self._pre_run()
         if self.include_planning_step:
@@ -75,20 +130,44 @@ class BaseChatAgent:
         response = self._get_and_handle_response()
         self._post_run(response)
         return response
-    
+
     def _get_and_handle_response(self):
+        """
+        Handles obtaining and processing the response.
+
+        Returns:
+            BaseModel: The processed response.
+        """
         return self.get_response(response_model=self.output_schema)
 
     def _plan_run(self):
+        """
+        Executes the planning step, if included.
+        """
         self.memory.add_message('assistant', 'I will now note any observations about the relevant input, context and thought process involved in preparing the response.')
         plan = self.get_response(response_model=GeneralPlanResponse)
         self.memory.add_message('assistant', plan.model_dump_json())
 
     def _init_run(self, user_input):
+        """
+        Initializes the run with the given user input.
+
+        Args:
+            user_input (str): The input text from the user.
+        """
         self.memory.add_message('user', user_input)
 
     def _pre_run(self):
+        """
+        Prepares for the run. This method can be overridden by subclasses to add custom pre-run logic.
+        """
         pass
-    
+
     def _post_run(self, response):
+        """
+        Finalizes the run with the given response.
+
+        Args:
+            response (Type[BaseModel]): The response from the chat agent.
+        """
         self.memory.add_message('assistant', response.model_dump_json())

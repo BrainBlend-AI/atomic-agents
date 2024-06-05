@@ -2,8 +2,6 @@ import os
 from bs4 import BeautifulSoup
 import requests
 from markdownify import MarkdownConverter
-from pydantic import BaseModel, Field
-
 from atomic_agents.lib.models.web_document import WebDocument, WebDocumentMetadata
 
 

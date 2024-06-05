@@ -1,8 +1,6 @@
-import os
 import requests
-from pydantic import BaseModel
 from PyPDF2 import PdfReader
-from io import BytesIO, StringIO
+from io import BytesIO
 import markdownify
 
 from atomic_agents.lib.models.web_document import WebDocument, WebDocumentMetadata
