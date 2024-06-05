@@ -5,3 +5,6 @@
 
 ## Guides
 [Guides](./guides/)
+
+##
+[Examples](../examples/)
