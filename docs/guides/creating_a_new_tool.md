@@ -151,7 +151,7 @@ if __name__ == "__main__":
 ```
 
 ### More examples
-If you want more examples, have a look at any of the tools in the `atomic_agents.lib.tools` package. For example, the [CalculatorTool](../atomic_agents/lib/tools/calculator_tool.md#calculatortool) or the [Web Scraping Tool](../atomic_agents/lib/tools/web_scraping_tool.md#web-scraping-tool) are good examples of how to structure a tool and implement the core logic.
+If you want more examples, have a look at any of the tools in the `atomic_agents.lib.tools` package. For example, the [CalculatorTool](../../atomic_agents/lib/tools/calculator_tool.py) or the [Web Scraping Tool](../../atomic_agents/lib/tools/web_scraping_tool.py).
 
 ### Conclusion
 
