@@ -5,8 +5,6 @@ from atomic_agents.agents.base_chat_agent import BaseChatAgent
 from atomic_agents.lib.components.system_prompt_generator import DynamicInfoProviderBase, SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
-from atomic_agents.lib.tools.searx import SearxNGSearchTool
-from atomic_agents.lib.utils.logger import logger
 
 console = Console()
 
@@ -18,9 +16,8 @@ class CurrentDateProvider(DynamicInfoProviderBase):
     def get_info(self) -> str:
         return f'The current date, in the format "{self.format}", is {datetime.now().strftime(self.format)}'
 
-# Define dynamic info providers
 dynamic_info_providers = {
-    'date': CurrentDateProvider('Current date', format='%Y-%m-%d %H:%M:%S'),
+    'date': CurrentDateProvider('Current date', format='%Y-%m-%d'),
 }
 
 system_prompt = SystemPromptInfo(

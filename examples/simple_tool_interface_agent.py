@@ -11,7 +11,7 @@ console = Console()
 client = instructor.from_openai(openai.OpenAI())
 
 # Initialize the SearxNGSearchTool
-searx_tool = SearxNGSearchTool(max_results=5)
+searx_tool = SearxNGSearchTool(max_results=10)
 
 # Initialize the ToolInterfaceAgent with the SearxNGSearchTool
 agent = ToolInterfaceAgent(
