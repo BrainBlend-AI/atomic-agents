@@ -1,3 +1,10 @@
+"""
+This example demonstrates how to create a chat agent that generates article ideas and outlines based on a given topic.
+The agent uses a search tool to gather relevant information and provides a structured outline for an article based on the search results.
+This script also demonstrates the usage of dynamic info providers to include additional dynamic information at runtime in the system prompt context.
+This can be useful if you only want to include the latest search results to save tokens (and thus, money) and avoid unnecessary repetition.
+"""
+
 from datetime import datetime
 from rich.console import Console
 from atomic_agents.lib.components.chat_memory import ChatMemory
@@ -8,8 +15,8 @@ import openai
 from atomic_agents.lib.tools.searx import SearxNGSearchTool
 from atomic_agents.lib.utils.logger import logger
 
-console = Console()
 
+# For this example, we extend the BaseChatAgent to create a custom chat agent that interacts with a search tool.
 class MyChatAgent(BaseChatAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -22,18 +29,21 @@ class MyChatAgent(BaseChatAgent):
         search_results = self.search_tool.run(search_input)
         self.system_prompt_generator.dynamic_info_providers['search'].search_results = search_results
         self.memory.add_message('assistant', 'I have gathered the search results and they have been added to the context.')
-        
+
+# We can define dynamic info providers to provide additional information in the system prompt context.
+# Each provider must have a title and a `get_info` method that returns a string. 
+# Each run, get_info will be called in order to provide the information at runtime.
 class CurrentDateProvider(DynamicInfoProviderBase):
-    def __init__(self, title: str, format: str = '%Y-%m-%d %H:%M:%S'):
-        super().__init__(title)
+    def __init__(self, format: str = '%Y-%m-%d %H:%M:%S', **kwargs):
+        super().__init__(**kwargs)
         self.format = format
 
     def get_info(self) -> str:
         return f'The current date, in the format "{self.format}", is {datetime.now().strftime(self.format)}'
 
 class SearchResultsProvider(DynamicInfoProviderBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.search_results: SearxNGSearchTool.output_schema = None
 
     def get_info(self) -> str:
@@ -49,13 +59,13 @@ class SearchResultsProvider(DynamicInfoProviderBase):
             
         return response
 
-# Define dynamic info providers
+# Define dynamic info providers.
 dynamic_info_providers = {
-    'date': CurrentDateProvider('Current date', format='%Y-%m-%d %H:%M:%S'),
-    'search': SearchResultsProvider('Search results')
+    'date': CurrentDateProvider(title='Current date', format='%Y-%m-%d %H:%M:%S'),
+    'search': SearchResultsProvider(title='Search results')
 }
 
-
+# Define the system prompt information including background, steps, and output instructions.
 system_prompt = SystemPromptInfo(
     background=[
         'This assistant is an expert in brainstorming ideas and creating article outlines.',
@@ -75,18 +85,24 @@ system_prompt = SystemPromptInfo(
 )
 system_prompt_generator = SystemPromptGenerator(system_prompt, dynamic_info_providers)
 
+# Optionally define the memory with an initial message from the assistant.
 memory = ChatMemory()
 initial_memory = [
     {'role': 'assistant', 'content': 'Hello! I\'m an AI assistant that can help you brainstorm ideas and generate article outlines. Please provide me with a topic to get started.'}
 ]
 memory.load(initial_memory)        
 
+# Create a chat agent with the specified model, system prompt generator, and memory.
+# For all supported clients such as Anthropic & Gemini, have a look at the `instructor` library documentation.
 agent = MyChatAgent(
     client=instructor.from_openai(openai.OpenAI()), 
     system_prompt_generator=system_prompt_generator,
     model='gpt-3.5-turbo',
     memory=memory,
 )
+
+console = Console()
+
 console.print(f'Agent: {initial_memory[0]["content"]}')
 
 while True:

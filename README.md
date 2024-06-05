@@ -25,10 +25,10 @@ pip install -r requirements.txt
 While we do our best to provide excellent documentation, we are aware that it is not perfect. If you see anything missing or anything that could be improved, please don't hesitate to open an issue or a pull request.
 
 ### Examples
-Further examples can be found in the [examples](./examples/) directory.
+All examples can be found in the [examples](./examples/) directory. We do our best to thoroughly document each example, but if something is unclear, please don't hesitate to open an issue or a pull request in order to improve the documentation.
 
 ### Docs
-The documentation can be found in the [docs](./docs/) directory. Here you will find both API documentation and guides.
+The documentation can be found in the [docs](./docs/) directory. Here you will find both API documentation and some general guides such as [How to create a new tool](./docs/guides/creating_a_new_tool.md).
 
 ## Instructor & Model Compatibility
 Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) package. This means that in all examples where OpenAI is used, any other API supported by Instructor can be used, such as Cohere, Anthropic, Gemini, and more. For a complete list please refer to the instructor documentation on its [GitHub page](https://github.com/jxnl/instructor).

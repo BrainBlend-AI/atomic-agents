@@ -8,6 +8,7 @@ from atomic_agents.lib.tools.searx import SearxNGSearchTool
 console = Console()
 
 # Initialize the client
+# For all supported clients such as Anthropic & Gemini, have a look at the `instructor` library documentation.
 client = instructor.from_openai(openai.OpenAI())
 
 # Initialize the SearxNGSearchTool
