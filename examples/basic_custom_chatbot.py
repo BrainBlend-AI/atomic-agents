@@ -44,7 +44,7 @@ initial_memory = [
     {'role': 'assistant', 'content': 'How do you do? What can I do for you? Tell me, pray, what is your need today?'}
 ]
 
-memory.load_from_dict_list(initial_memory)        
+memory.load(initial_memory)        
 
 agent = BaseChatAgent(
     client=instructor.from_openai(openai.OpenAI()), 

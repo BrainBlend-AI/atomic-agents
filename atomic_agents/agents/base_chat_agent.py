@@ -2,9 +2,9 @@ from typing import List
 from pydantic import BaseModel, Field
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.utils.logger import logger
-from atomic_agents.lib.tools.searx import SearxNGSearchTool
-from atomic_agents.lib.components.system_prompt_generator import DynamicInfoProviderBase, SystemPromptInfo, SystemPromptGenerator
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
+# Input and Response Schemas
 class BaseChatAgentInputSchema(BaseModel):
     chat_input: str = Field(..., description='The input text for the chat agent.')
 
@@ -13,7 +13,7 @@ class BaseChatAgentResponse(BaseModel):
     
     class Config:
         title = 'BaseChatAgentResponse'
-        description = 'Response from the base chat agent. The response can be in markdown format.'
+        description = 'Response from the base chat agent. The response can be in markdown format. This response is the only thing the user will see in the chat interface.'
         json_schema_extra = {
             'title': title,
             'description': description
@@ -37,6 +37,7 @@ class GeneralPlanResponse(BaseModel):
             'description': description
         }
 
+# Base Chat Agent Class
 class BaseChatAgent:
     def __init__(self, client, system_prompt_generator: SystemPromptGenerator = None, model: str = 'gpt-3.5-turbo',  memory: ChatMemory = None, include_planning_step = False, input_schema = BaseChatAgentInputSchema, output_schema = BaseChatAgentResponse):
         self.input_schema = input_schema
@@ -46,7 +47,11 @@ class BaseChatAgent:
         self.memory = memory or ChatMemory()
         self.system_prompt_generator = system_prompt_generator or SystemPromptGenerator()
         self.include_planning_step = include_planning_step
-
+        self.initial_memory = self.memory.copy()
+        
+    def reset_memory(self):
+        self.memory = self.initial_memory.copy()
+        
     def get_system_prompt(self) -> str:
         return self.system_prompt_generator.generate_prompt()
 
@@ -63,19 +68,27 @@ class BaseChatAgent:
         return response
 
     def run(self, user_input: str) -> str:
-        self.memory.add_message('user', user_input)
+        self._init_run(user_input)
         self._pre_run()
         if self.include_planning_step:
-            self.memory.add_message('assistant', 'I will now note the observations about the input and context and the thought process involved in preparing the response.')
-            plan = self.get_response(response_model=GeneralPlanResponse)
-            self.memory.add_message('assistant', plan.model_dump_json())
-        response = self.get_response(response_model=self.output_schema)
-        self.memory.add_message('assistant', response.model_dump_json())
-        self._post_run()
+            self._plan_run()
+        response = self._get_and_handle_response()
+        self._post_run(response)
         return response
+    
+    def _get_and_handle_response(self):
+        return self.get_response(response_model=self.output_schema)
+
+    def _plan_run(self):
+        self.memory.add_message('assistant', 'I will now note any observations about the relevant input, context and thought process involved in preparing the response.')
+        plan = self.get_response(response_model=GeneralPlanResponse)
+        self.memory.add_message('assistant', plan.model_dump_json())
+
+    def _init_run(self, user_input):
+        self.memory.add_message('user', user_input)
 
     def _pre_run(self):
         pass
     
-    def _post_run(self):
-        pass
+    def _post_run(self, response):
+        self.memory.add_message('assistant', response.model_dump_json())

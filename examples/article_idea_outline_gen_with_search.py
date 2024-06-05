@@ -79,7 +79,7 @@ memory = ChatMemory()
 initial_memory = [
     {'role': 'assistant', 'content': 'Hello! I\'m an AI assistant that can help you brainstorm ideas and generate article outlines. Please provide me with a topic to get started.'}
 ]
-memory.load_from_dict_list(initial_memory)        
+memory.load(initial_memory)        
 
 agent = MyChatAgent(
     client=instructor.from_openai(openai.OpenAI()), 

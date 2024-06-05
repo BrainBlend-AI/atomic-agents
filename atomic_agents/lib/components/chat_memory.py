@@ -61,7 +61,7 @@ class ChatMemory:
         """
         return self.history
 
-    def to_dict_list(self) -> List[Dict]:
+    def dump(self) -> List[Dict]:
         """
         Converts the chat history to a list of dictionaries.
 
@@ -70,7 +70,7 @@ class ChatMemory:
         """
         return [message.model_dump() for message in self.history]
 
-    def load_from_dict_list(self, dict_list: List[Dict]) -> None:
+    def load(self, dict_list: List[Dict]) -> None:
         """
         Loads the chat history from a list of dictionaries.
 
@@ -78,3 +78,13 @@ class ChatMemory:
             dict_list (List[Dict]): The list of messages as dictionaries.
         """
         self.history = [Message(**message_dict) for message_dict in dict_list]
+        
+    def copy(self) -> 'ChatMemory':
+        """
+        Creates a copy of the chat memory.
+
+        Returns:
+            ChatMemory: A copy of the chat memory.
+        """
+        new_memory = ChatMemory()
+        new_memory.load(self.dump())
