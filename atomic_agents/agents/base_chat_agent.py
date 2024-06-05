@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 from pydantic import BaseModel, Field
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.utils.logger import logger
@@ -45,8 +45,8 @@ class BaseChatAgent:
     generating system prompts, and obtaining responses from a language model.
 
     Attributes:
-        input_schema (BaseModel): Schema for the input data.
-        output_schema (BaseModel): Schema for the output data.
+        input_schema (Type[BaseModel]): Schema for the input data.
+        output_schema (Type[BaseModel]): Schema for the output data.
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
         memory (ChatMemory): Memory component for storing chat history.
@@ -65,8 +65,8 @@ class BaseChatAgent:
             model (str, optional): The model to use for generating responses. Defaults to 'gpt-3.5-turbo'.
             memory (ChatMemory, optional): Memory component for storing chat history. Defaults to None.
             include_planning_step (bool, optional): Whether to include a planning step in the response generation. Defaults to False.
-            input_schema (BaseModel, optional): Schema for the input data. Defaults to BaseChatAgentInputSchema.
-            output_schema (BaseModel, optional): Schema for the output data. Defaults to BaseChatAgentResponse.
+            input_schema (Type[BaseModel], optional): Schema for the input data. Defaults to BaseChatAgentInputSchema.
+            output_schema (Type[BaseModel], optional): Schema for the output data. Defaults to BaseChatAgentResponse.
         """
         self.input_schema = input_schema
         self.output_schema = output_schema
@@ -92,7 +92,7 @@ class BaseChatAgent:
         """
         return self.system_prompt_generator.generate_prompt()
 
-    def get_response(self, response_model=None) -> BaseModel:
+    def get_response(self, response_model=None) -> Type[BaseModel]:
         """
         Obtains a response from the language model.
 
@@ -100,7 +100,7 @@ class BaseChatAgent:
             response_model (Type[BaseModel], optional): The schema for the response data. If not set, self.output_schema is used.
 
         Returns:
-            BaseModel: The response from the language model.
+            Type[BaseModel]: The response from the language model.
         """
         if response_model is None:
             response_model = self.output_schema
@@ -136,7 +136,7 @@ class BaseChatAgent:
         Handles obtaining and processing the response.
 
         Returns:
-            BaseModel: The processed response.
+            Type[BaseModel]: The processed response.
         """
         return self.get_response(response_model=self.output_schema)
 

@@ -1,5 +1,3 @@
-# system_prompt_generator.py
-
 from typing import List
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
