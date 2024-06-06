@@ -46,20 +46,22 @@ class SearxNGSearchTool(BaseTool):
         input_schema (SearxNGSearchToolSchema): The schema for the input data.
         output_schema (SearxNGSearchToolOutputSchema): The schema for the output data.
         max_results (int): The maximum number of search results to return.
+        base_url (str): The base URL for the SearxNG instance to use.
     """
     input_schema = SearxNGSearchToolSchema
     output_schema = SearxNGSearchToolOutputSchema
 
-    def __init__(self, max_results: int = 10, **kwargs):
+    def __init__(self, base_url: str, max_results: int = 10, **kwargs):
         """
         Initializes the SearxNGSearchTool.
 
         Args:
+            base_url (str): The base URL for the SearxNG instance to use.
             max_results (int): The maximum number of search results to return.
-            *args: Variable length argument list.
             **kwargs: Arbitrary keyword arguments.
         """
         super().__init__(**kwargs)
+        self.base_url = base_url
         self.max_results = max_results
 
     def run(self, params: SearxNGSearchToolSchema, max_results: Optional[int] = None) -> SearxNGSearchToolOutputSchema:
@@ -74,13 +76,9 @@ class SearxNGSearchTool(BaseTool):
             SearxNGSearchToolOutputSchema: The output of the tool, adhering to the output schema.
 
         Raises:
-            ValueError: If the SEARXNG_BASE_URL environment variable is not set.
+            ValueError: If the base URL is not provided.
             Exception: If the request to SearxNG fails.
         """
-        SEARXNG_BASE_URL = os.getenv('SEARXNG_BASE_URL')
-        if not SEARXNG_BASE_URL:
-            raise ValueError("SEARXNG_BASE_URL environment variable not set")
-
         all_results = []
 
         for query in params.queries:
@@ -98,10 +96,10 @@ class SearxNGSearchTool(BaseTool):
                 query_params['categories'] = params.category
 
             # Make the GET request
-            response = requests.get(f"{SEARXNG_BASE_URL}/search", params=query_params)
+            response = requests.get(f"{self.base_url}/search", params=query_params)
 
             # Check if the request was successful
-            if response.status_code != 200:
+            if response.status_code!= 200:
                 raise Exception(f"Failed to fetch search results for query '{query}': {response.status_code} {response.reason}")
 
             results = response.json().get('results', [])
@@ -155,6 +153,6 @@ if __name__ == "__main__":
     rich_console.print(f"Search queries: {result.queries}")
 
     # Print the result
-    output = SearxNGSearchTool(max_results=15).run(result)
+    output = SearxNGSearchTool(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=15).run(result)
     for i, result in enumerate(output.results):
         rich_console.print(f"{i}. Title: {result.title}, URL: {result.url}")
