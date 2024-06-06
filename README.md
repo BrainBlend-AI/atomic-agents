@@ -1,11 +1,13 @@
 # Atomic Agents
-<img src="./.assets//logo.png" alt="Atomic Agents" width="350"/>
+<img src="./.assets/logo.png" alt="Atomic Agents" width="350"/>
 
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
 ## Philosophy
 The Atomic Agents framework is designed to be modular, extensible, and easy to use. Components in the Atomic Agents Framework should always be as small and single-purpose as possible, similar to design system components in [Atomic Design](https://bradfrost.com/blog/post/atomic-web-design/). Even though Atomic Design cannot be directly applied to AI agent architecture, a lot of ideas were taken from it. The resulting framework provides a set of tools and agents that can be combined to create powerful applications. The framework is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data validation and serialization.
 
+<!-- ![alt text](./.assets/architecture_highlevel_overview.png) -->
+<img src="./.assets/architecture_highlevel_overview.png" alt="Atomic Agents Architecture" width="600"/>
 ## Installation
 To install Atomic Agents, you can use pip:
 
