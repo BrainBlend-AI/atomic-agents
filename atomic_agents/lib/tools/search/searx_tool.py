@@ -116,6 +116,10 @@ class SearxNGSearchTool(BaseTool):
                 continue
             if result['url'] not in seen_urls:
                 unique_results.append(result)
+                if 'metadata' in result:
+                    result['title'] = result['metadata'] + ' - ' + result['title']
+                if 'publishedDate' in result and result['publishedDate']:
+                    result['title'] = 'Date: ' + result['publishedDate'] + ' - ' + result['title']
                 seen_urls.add(result['url'])
 
         # Filter results to include only those with the correct category if it is set
@@ -147,7 +151,7 @@ if __name__ == "__main__":
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=SearxNGSearchTool.input_schema,
-        messages=[{"role": "user", "content": "Search for the latest PC gaming news of May 2024 using 3 different queries."}],
+        messages=[{"role": "user", "content": "Search for the latest AI news."}],
     )
 
     rich_console.print(f"Search queries: {result.queries}")
