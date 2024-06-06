@@ -13,7 +13,7 @@ from atomic_agents.agents.base_chat_agent import BaseChatAgent
 from atomic_agents.lib.components.system_prompt_generator import DynamicInfoProviderBase, SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
-from atomic_agents.lib.tools.searx import SearxNGSearchTool
+from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
 from atomic_agents.lib.utils.logger import logger
 
 

@@ -4,7 +4,7 @@ import openai
 from  rich.console import Console
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent
-from atomic_agents.lib.tools.searx import SearxNGSearchTool
+from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
 
 console = Console()
 
