@@ -1,3 +1,4 @@
+import os
 import instructor
 import openai
 from  rich.console import Console
@@ -12,7 +13,7 @@ console = Console()
 client = instructor.from_openai(openai.OpenAI())
 
 # Initialize the SearxNGSearchTool
-searx_tool = SearxNGSearchTool(max_results=10)
+searx_tool = SearxNGSearchTool(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10)
 
 # Initialize the ToolInterfaceAgent with the SearxNGSearchTool
 agent = ToolInterfaceAgent(

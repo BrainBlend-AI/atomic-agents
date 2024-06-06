@@ -6,6 +6,7 @@ This can be useful if you only want to include the latest search results to save
 """
 
 from datetime import datetime
+import os
 from rich.console import Console
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.agents.base_chat_agent import BaseChatAgent
@@ -20,7 +21,7 @@ from atomic_agents.lib.utils.logger import logger
 class MyChatAgent(BaseChatAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.search_tool = SearxNGSearchTool(max_results=25)
+        self.search_tool = SearxNGSearchTool(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=25)
     
     def _pre_run(self):
         self.memory.add_message('assistant', 'First, I will perform a search with 3 different search queries to gather relevant information on the topic.')
