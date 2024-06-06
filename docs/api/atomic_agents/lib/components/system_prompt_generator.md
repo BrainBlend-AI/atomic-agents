@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Components](./index.md#components) / SystemPromptGenerator
 
-> Auto-generated documentation for [atomic_agents.lib.components.system_prompt_generator](../../../../atomic_agents/lib/components/system_prompt_generator.py) module.
+> Auto-generated documentation for [atomic_agents.lib.components.system_prompt_generator](../../../../../atomic_agents/lib/components/system_prompt_generator.py) module.
 
 - [SystemPromptGenerator](#systempromptgenerator)
   - [DynamicInfoProviderBase](#dynamicinfoproviderbase)
@@ -13,7 +13,7 @@
 
 ## DynamicInfoProviderBase
 
-[Show source in system_prompt_generator.py:10](../../../../atomic_agents/lib/components/system_prompt_generator.py#L10)
+[Show source in system_prompt_generator.py:10](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L10)
 
 #### Signature
 
@@ -24,7 +24,7 @@ class DynamicInfoProviderBase(ABC):
 
 ### DynamicInfoProviderBase().get_info
 
-[Show source in system_prompt_generator.py:14](../../../../atomic_agents/lib/components/system_prompt_generator.py#L14)
+[Show source in system_prompt_generator.py:14](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L14)
 
 #### Signature
 
@@ -37,7 +37,7 @@ def get_info(self) -> str: ...
 
 ## SystemPromptGenerator
 
-[Show source in system_prompt_generator.py:18](../../../../atomic_agents/lib/components/system_prompt_generator.py#L18)
+[Show source in system_prompt_generator.py:18](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L18)
 
 #### Signature
 
@@ -57,7 +57,7 @@ class SystemPromptGenerator:
 
 ### SystemPromptGenerator().generate_prompt
 
-[Show source in system_prompt_generator.py:27](../../../../atomic_agents/lib/components/system_prompt_generator.py#L27)
+[Show source in system_prompt_generator.py:27](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L27)
 
 #### Signature
 
@@ -69,7 +69,7 @@ def generate_prompt(self) -> str: ...
 
 ## SystemPromptInfo
 
-[Show source in system_prompt_generator.py:5](../../../../atomic_agents/lib/components/system_prompt_generator.py#L5)
+[Show source in system_prompt_generator.py:5](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L5)
 
 #### Signature
 

@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Utils](./index.md#utils) / Logger
 
-> Auto-generated documentation for [atomic_agents.lib.utils.logger](../../../../atomic_agents/lib/utils/logger.py) module.
+> Auto-generated documentation for [atomic_agents.lib.utils.logger](../../../../../atomic_agents/lib/utils/logger.py) module.
 
 #### Attributes
 
@@ -14,10 +14,10 @@
 
 ## verbose
 
-[Show source in logger.py:9](../../../../atomic_agents/lib/utils/logger.py#L9)
+[Show source in logger.py:9](../../../../../atomic_agents/lib/utils/logger.py#L9)
 
 #### Signature
 
 ```python
-def verbose(self, message, **kwargs): ...
+def verbose(self, message, *args, **kwargs): ...
 ```

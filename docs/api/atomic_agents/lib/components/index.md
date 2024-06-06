@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / Components
 
-> Auto-generated documentation for [atomic_agents.lib.components](../../../../atomic_agents/lib/components/__init__.py) module.
+> Auto-generated documentation for [atomic_agents.lib.components](../../../../../atomic_agents/lib/components/__init__.py) module.
 
 - [Components](#components)
   - [Modules](#modules)

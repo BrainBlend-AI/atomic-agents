@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../README.md#atomic_agents-index) / [Atomic Agents](../index.md#atomic-agents) / [Agents](./index.md#agents) / ToolInterfaceAgent
 
-> Auto-generated documentation for [atomic_agents.agents.tool_interface_agent](../../../atomic_agents/agents/tool_interface_agent.py) module.
+> Auto-generated documentation for [atomic_agents.agents.tool_interface_agent](../../../../atomic_agents/agents/tool_interface_agent.py) module.
 
 - [ToolInterfaceAgent](#toolinterfaceagent)
   - [ToolInterfaceAgent](#toolinterfaceagent-1)
@@ -10,7 +10,7 @@
 
 ## ToolInterfaceAgent
 
-[Show source in tool_interface_agent.py:6](../../../atomic_agents/agents/tool_interface_agent.py#L6)
+[Show source in tool_interface_agent.py:7](../../../../atomic_agents/agents/tool_interface_agent.py#L7)
 
 A specialized chat agent designed to interact with a specific tool.
 
@@ -35,7 +35,7 @@ class ToolInterfaceAgent(BaseChatAgent):
 
 ### ToolInterfaceAgent()._get_and_handle_response
 
-[Show source in tool_interface_agent.py:68](../../../atomic_agents/agents/tool_interface_agent.py#L68)
+[Show source in tool_interface_agent.py:69](../../../../atomic_agents/agents/tool_interface_agent.py#L69)
 
 Handles obtaining and processing the response from the tool.
 

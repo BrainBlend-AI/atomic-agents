@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / CalculatorTool
 
-> Auto-generated documentation for [atomic_agents.lib.tools.calculator_tool](../../../../atomic_agents/lib/tools/calculator_tool.py) module.
+> Auto-generated documentation for [atomic_agents.lib.tools.calculator_tool](../../../../../atomic_agents/lib/tools/calculator_tool.py) module.
 
 #### Attributes
 
@@ -19,7 +19,7 @@
 
 ## CalculatorTool
 
-[Show source in calculator_tool.py:32](../../../../atomic_agents/lib/tools/calculator_tool.py#L32)
+[Show source in calculator_tool.py:32](../../../../../atomic_agents/lib/tools/calculator_tool.py#L32)
 
 Tool for performing calculations based on the provided mathematical expression.
 
@@ -41,7 +41,7 @@ class CalculatorTool(BaseTool):
 
 ### CalculatorTool().run
 
-[Show source in calculator_tool.py:53](../../../../atomic_agents/lib/tools/calculator_tool.py#L53)
+[Show source in calculator_tool.py:53](../../../../../atomic_agents/lib/tools/calculator_tool.py#L53)
 
 Runs the CalculatorTool with the given parameters.
 
@@ -72,7 +72,7 @@ def run(self, params: CalculatorToolSchema) -> CalculatorToolOutputSchema: ...
 
 ## CalculatorToolOutputSchema
 
-[Show source in calculator_tool.py:26](../../../../atomic_agents/lib/tools/calculator_tool.py#L26)
+[Show source in calculator_tool.py:26](../../../../../atomic_agents/lib/tools/calculator_tool.py#L26)
 
 #### Signature
 
@@ -84,7 +84,7 @@ class CalculatorToolOutputSchema(BaseModel): ...
 
 ## CalculatorToolSchema
 
-[Show source in calculator_tool.py:12](../../../../atomic_agents/lib/tools/calculator_tool.py#L12)
+[Show source in calculator_tool.py:12](../../../../../atomic_agents/lib/tools/calculator_tool.py#L12)
 
 #### Signature
 

@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../README.md#atomic_agents-index) / [Atomic Agents](../index.md#atomic-agents) / [Agents](./index.md#agents) / BaseChatAgent
 
-> Auto-generated documentation for [atomic_agents.agents.base_chat_agent](../../../atomic_agents/agents/base_chat_agent.py) module.
+> Auto-generated documentation for [atomic_agents.agents.base_chat_agent](../../../../atomic_agents/agents/base_chat_agent.py) module.
 
 - [BaseChatAgent](#basechatagent)
   - [BaseChatAgent](#basechatagent-1)
@@ -22,7 +22,7 @@
 
 ## BaseChatAgent
 
-[Show source in base_chat_agent.py:40](../../../atomic_agents/agents/base_chat_agent.py#L40)
+[Show source in base_chat_agent.py:40](../../../../atomic_agents/agents/base_chat_agent.py#L40)
 
 Base class for chat agents.
 
@@ -65,7 +65,7 @@ class BaseChatAgent:
 
 ### BaseChatAgent()._get_and_handle_response
 
-[Show source in base_chat_agent.py:134](../../../atomic_agents/agents/base_chat_agent.py#L134)
+[Show source in base_chat_agent.py:134](../../../../atomic_agents/agents/base_chat_agent.py#L134)
 
 Handles obtaining and processing the response.
 
@@ -81,7 +81,7 @@ def _get_and_handle_response(self): ...
 
 ### BaseChatAgent()._init_run
 
-[Show source in base_chat_agent.py:151](../../../atomic_agents/agents/base_chat_agent.py#L151)
+[Show source in base_chat_agent.py:151](../../../../atomic_agents/agents/base_chat_agent.py#L151)
 
 Initializes the run with the given user input.
 
@@ -97,7 +97,7 @@ def _init_run(self, user_input): ...
 
 ### BaseChatAgent()._plan_run
 
-[Show source in base_chat_agent.py:143](../../../atomic_agents/agents/base_chat_agent.py#L143)
+[Show source in base_chat_agent.py:143](../../../../atomic_agents/agents/base_chat_agent.py#L143)
 
 Executes the planning step, if included.
 
@@ -109,7 +109,7 @@ def _plan_run(self): ...
 
 ### BaseChatAgent()._post_run
 
-[Show source in base_chat_agent.py:166](../../../atomic_agents/agents/base_chat_agent.py#L166)
+[Show source in base_chat_agent.py:166](../../../../atomic_agents/agents/base_chat_agent.py#L166)
 
 Finalizes the run with the given response.
 
@@ -125,7 +125,7 @@ def _post_run(self, response): ...
 
 ### BaseChatAgent()._pre_run
 
-[Show source in base_chat_agent.py:160](../../../atomic_agents/agents/base_chat_agent.py#L160)
+[Show source in base_chat_agent.py:160](../../../../atomic_agents/agents/base_chat_agent.py#L160)
 
 Prepares for the run. This method can be overridden by subclasses to add custom pre-run logic.
 
@@ -137,7 +137,7 @@ def _pre_run(self): ...
 
 ### BaseChatAgent().get_response
 
-[Show source in base_chat_agent.py:95](../../../atomic_agents/agents/base_chat_agent.py#L95)
+[Show source in base_chat_agent.py:95](../../../../atomic_agents/agents/base_chat_agent.py#L95)
 
 Obtains a response from the language model.
 
@@ -157,7 +157,7 @@ def get_response(self, response_model=None) -> Type[BaseModel]: ...
 
 ### BaseChatAgent().get_system_prompt
 
-[Show source in base_chat_agent.py:86](../../../atomic_agents/agents/base_chat_agent.py#L86)
+[Show source in base_chat_agent.py:86](../../../../atomic_agents/agents/base_chat_agent.py#L86)
 
 Generates the system prompt.
 
@@ -173,7 +173,7 @@ def get_system_prompt(self) -> str: ...
 
 ### BaseChatAgent().reset_memory
 
-[Show source in base_chat_agent.py:80](../../../atomic_agents/agents/base_chat_agent.py#L80)
+[Show source in base_chat_agent.py:80](../../../../atomic_agents/agents/base_chat_agent.py#L80)
 
 Resets the memory to its initial state.
 
@@ -185,7 +185,7 @@ def reset_memory(self): ...
 
 ### BaseChatAgent().run
 
-[Show source in base_chat_agent.py:116](../../../atomic_agents/agents/base_chat_agent.py#L116)
+[Show source in base_chat_agent.py:116](../../../../atomic_agents/agents/base_chat_agent.py#L116)
 
 Runs the chat agent with the given user input.
 
@@ -207,7 +207,7 @@ def run(self, user_input: str) -> str: ...
 
 ## BaseChatAgentInputSchema
 
-[Show source in base_chat_agent.py:8](../../../atomic_agents/agents/base_chat_agent.py#L8)
+[Show source in base_chat_agent.py:8](../../../../atomic_agents/agents/base_chat_agent.py#L8)
 
 #### Signature
 
@@ -219,7 +219,7 @@ class BaseChatAgentInputSchema(BaseModel): ...
 
 ## BaseChatAgentResponse
 
-[Show source in base_chat_agent.py:11](../../../atomic_agents/agents/base_chat_agent.py#L11)
+[Show source in base_chat_agent.py:11](../../../../atomic_agents/agents/base_chat_agent.py#L11)
 
 #### Signature
 
@@ -231,7 +231,7 @@ class BaseChatAgentResponse(BaseModel): ...
 
 ## GeneralPlanResponse
 
-[Show source in base_chat_agent.py:27](../../../atomic_agents/agents/base_chat_agent.py#L27)
+[Show source in base_chat_agent.py:27](../../../../atomic_agents/agents/base_chat_agent.py#L27)
 
 #### Signature
 
@@ -243,7 +243,7 @@ class GeneralPlanResponse(BaseModel): ...
 
 ## GeneralPlanStep
 
-[Show source in base_chat_agent.py:22](../../../atomic_agents/agents/base_chat_agent.py#L22)
+[Show source in base_chat_agent.py:22](../../../../atomic_agents/agents/base_chat_agent.py#L22)
 
 #### Signature
 

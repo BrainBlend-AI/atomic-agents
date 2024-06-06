@@ -2,14 +2,14 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Utils](./index.md#utils) / Format Tool Message
 
-> Auto-generated documentation for [atomic_agents.lib.utils.format_tool_message](../../../../atomic_agents/lib/utils/format_tool_message.py) module.
+> Auto-generated documentation for [atomic_agents.lib.utils.format_tool_message](../../../../../atomic_agents/lib/utils/format_tool_message.py) module.
 
 - [Format Tool Message](#format-tool-message)
   - [format_tool_message](#format_tool_message)
 
 ## format_tool_message
 
-[Show source in format_tool_message.py:8](../../../../atomic_agents/lib/utils/format_tool_message.py#L8)
+[Show source in format_tool_message.py:8](../../../../../atomic_agents/lib/utils/format_tool_message.py#L8)
 
 Formats a message for a tool call.
 

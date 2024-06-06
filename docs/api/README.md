@@ -17,7 +17,6 @@ A full list of `Atomic_agents` project modules.
         - [Tools](atomic_agents/lib/tools/index.md#tools)
             - [Base](atomic_agents/lib/tools/base.md#base)
             - [CalculatorTool](atomic_agents/lib/tools/calculator_tool.md#calculatortool)
-            - [Searx](atomic_agents/lib/tools/searx.md#searx)
             - [Web Scraping Tool](atomic_agents/lib/tools/web_scraping_tool.md#web-scraping-tool)
         - [Utils](atomic_agents/lib/utils/index.md#utils)
             - [Format Tool Message](atomic_agents/lib/utils/format_tool_message.md#format-tool-message)

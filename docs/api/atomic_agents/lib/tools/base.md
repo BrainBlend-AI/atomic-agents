@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Base
 
-> Auto-generated documentation for [atomic_agents.lib.tools.base](../../../../atomic_agents/lib/tools/base.py) module.
+> Auto-generated documentation for [atomic_agents.lib.tools.base](../../../../../atomic_agents/lib/tools/base.py) module.
 
 - [Base](#base)
   - [BaseTool](#basetool)
@@ -10,7 +10,7 @@
 
 ## BaseTool
 
-[Show source in base.py:4](../../../../atomic_agents/lib/tools/base.py#L4)
+[Show source in base.py:4](../../../../../atomic_agents/lib/tools/base.py#L4)
 
 Base class for all tools in the Atomic Agents framework.
 
@@ -30,7 +30,7 @@ class BaseTool:
 
 ### BaseTool().run
 
-[Show source in base.py:28](../../../../atomic_agents/lib/tools/base.py#L28)
+[Show source in base.py:28](../../../../../atomic_agents/lib/tools/base.py#L28)
 
 Runs the tool with the given parameters. This method should be implemented by subclasses.
 

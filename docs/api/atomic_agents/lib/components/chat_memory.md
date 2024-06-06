@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Components](./index.md#components) / ChatMemory
 
-> Auto-generated documentation for [atomic_agents.lib.components.chat_memory](../../../../atomic_agents/lib/components/chat_memory.py) module.
+> Auto-generated documentation for [atomic_agents.lib.components.chat_memory](../../../../../atomic_agents/lib/components/chat_memory.py) module.
 
 - [ChatMemory](#chatmemory)
   - [ChatMemory](#chatmemory-1)
@@ -15,7 +15,7 @@
 
 ## ChatMemory
 
-[Show source in chat_memory.py:20](../../../../atomic_agents/lib/components/chat_memory.py#L20)
+[Show source in chat_memory.py:20](../../../../../atomic_agents/lib/components/chat_memory.py#L20)
 
 Manages the chat history for an AI agent.
 
@@ -32,7 +32,7 @@ class ChatMemory:
 
 ### ChatMemory().add_message
 
-[Show source in chat_memory.py:34](../../../../atomic_agents/lib/components/chat_memory.py#L34)
+[Show source in chat_memory.py:34](../../../../../atomic_agents/lib/components/chat_memory.py#L34)
 
 Adds a message to the chat history.
 
@@ -57,7 +57,7 @@ def add_message(
 
 ### ChatMemory().copy
 
-[Show source in chat_memory.py:82](../../../../atomic_agents/lib/components/chat_memory.py#L82)
+[Show source in chat_memory.py:82](../../../../../atomic_agents/lib/components/chat_memory.py#L82)
 
 Creates a copy of the chat memory.
 
@@ -73,7 +73,7 @@ def copy(self) -> "ChatMemory": ...
 
 ### ChatMemory().dump
 
-[Show source in chat_memory.py:64](../../../../atomic_agents/lib/components/chat_memory.py#L64)
+[Show source in chat_memory.py:64](../../../../../atomic_agents/lib/components/chat_memory.py#L64)
 
 Converts the chat history to a list of dictionaries.
 
@@ -89,7 +89,7 @@ def dump(self) -> List[Dict]: ...
 
 ### ChatMemory().get_history
 
-[Show source in chat_memory.py:55](../../../../atomic_agents/lib/components/chat_memory.py#L55)
+[Show source in chat_memory.py:55](../../../../../atomic_agents/lib/components/chat_memory.py#L55)
 
 Retrieves the chat history.
 
@@ -109,7 +109,7 @@ def get_history(self) -> List[Message]: ...
 
 ### ChatMemory().load
 
-[Show source in chat_memory.py:73](../../../../atomic_agents/lib/components/chat_memory.py#L73)
+[Show source in chat_memory.py:73](../../../../../atomic_agents/lib/components/chat_memory.py#L73)
 
 Loads the chat history from a list of dictionaries.
 
@@ -127,7 +127,7 @@ def load(self, dict_list: List[Dict]) -> None: ...
 
 ## Message
 
-[Show source in chat_memory.py:5](../../../../atomic_agents/lib/components/chat_memory.py#L5)
+[Show source in chat_memory.py:5](../../../../../atomic_agents/lib/components/chat_memory.py#L5)
 
 Represents a message in the chat history.
 

@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Web Scraping Tool
 
-> Auto-generated documentation for [atomic_agents.lib.tools.web_scraping_tool](../../../../atomic_agents/lib/tools/web_scraping_tool.py) module.
+> Auto-generated documentation for [atomic_agents.lib.tools.web_scraping_tool](../../../../../atomic_agents/lib/tools/web_scraping_tool.py) module.
 
 #### Attributes
 
@@ -26,7 +26,7 @@
 
 ## ContentScrapingResultSchema
 
-[Show source in web_scraping_tool.py:30](../../../../atomic_agents/lib/tools/web_scraping_tool.py#L30)
+[Show source in web_scraping_tool.py:30](../../../../../atomic_agents/lib/tools/web_scraping_tool.py#L30)
 
 #### Signature
 
@@ -38,7 +38,7 @@ class ContentScrapingResultSchema(BaseModel): ...
 
 ## ContentScrapingTool
 
-[Show source in web_scraping_tool.py:40](../../../../atomic_agents/lib/tools/web_scraping_tool.py#L40)
+[Show source in web_scraping_tool.py:40](../../../../../atomic_agents/lib/tools/web_scraping_tool.py#L40)
 
 Tool for scraping web pages or PDFs and converting content to markdown.
 
@@ -60,7 +60,7 @@ class ContentScrapingTool(BaseTool):
 
 ### ContentScrapingTool().run
 
-[Show source in web_scraping_tool.py:61](../../../../atomic_agents/lib/tools/web_scraping_tool.py#L61)
+[Show source in web_scraping_tool.py:61](../../../../../atomic_agents/lib/tools/web_scraping_tool.py#L61)
 
 Runs the ContentScrapingTool with the given parameters.
 
@@ -87,7 +87,7 @@ def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSch
 
 ## ContentScrapingToolOutputSchema
 
-[Show source in web_scraping_tool.py:34](../../../../atomic_agents/lib/tools/web_scraping_tool.py#L34)
+[Show source in web_scraping_tool.py:34](../../../../../atomic_agents/lib/tools/web_scraping_tool.py#L34)
 
 #### Signature
 
@@ -99,7 +99,7 @@ class ContentScrapingToolOutputSchema(BaseModel): ...
 
 ## ContentScrapingToolSchema
 
-[Show source in web_scraping_tool.py:16](../../../../atomic_agents/lib/tools/web_scraping_tool.py#L16)
+[Show source in web_scraping_tool.py:16](../../../../../atomic_agents/lib/tools/web_scraping_tool.py#L16)
 
 #### Signature
 
