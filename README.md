@@ -19,6 +19,7 @@ Alternatively, to install the necessary dependencies from the repository, run th
 
 ```bash
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ## Usage examples & Docs
