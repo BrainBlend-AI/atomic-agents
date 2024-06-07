@@ -86,7 +86,6 @@ class ContentScrapingTool(BaseTool):
 if __name__ == "__main__":
     rich_console = Console()
 
-    # Initialize the client outside
     client = instructor.from_openai(
         openai.OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
@@ -94,25 +93,26 @@ if __name__ == "__main__":
         )
     )
 
-    # Extract from webpage
+    #################
+    # TEST WEB PAGE #
+    #################
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=ContentScrapingTool.input_schema,
         messages=[{"role": "user", "content": "Scrape the content of https://example.com"}],
     )
 
-    # Print the result
     output = ContentScrapingTool().run(result)
     rich_console.print(f"Content: {output.result.content}, Metadata: {output.result.metadata}")
     
-    
-    # Extract from PDF
+    ################
+    # TEST PDF URL #
+    ################
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=ContentScrapingTool.input_schema,
         messages=[{"role": "user", "content": "Scrape the content of https://pdfobject.com/pdf/sample.pdf"}],
     )
     
-    # Print the result
     output = ContentScrapingTool().run(result)
     rich_console.print(f"Content: {output.result.content}, Metadata: {output.result.metadata}")

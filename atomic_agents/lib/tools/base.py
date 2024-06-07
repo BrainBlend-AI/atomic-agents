@@ -25,7 +25,7 @@ class BaseTool:
         self.tool_name = self.input_schema.Config.title
         self.tool_description = tool_description_override or self.input_schema.Config.description
 
-    def run(self, params: BaseModel) -> BaseModel:
+    def run(self, params: Type[BaseModel]) -> BaseModel:
         """
         Runs the tool with the given parameters. This method should be implemented by subclasses.
 
