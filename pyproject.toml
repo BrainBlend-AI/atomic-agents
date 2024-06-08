@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "atomic_agents"
-version = "0.1.40"
+version = "0.1.41"
 description = "A versatile framework designed to facilitate the creation and management of intelligent agents."
 authors = [
     { name = "Kenny Vaneetvelde", email = "kenny.vaneetvelde@gmail.com" }
