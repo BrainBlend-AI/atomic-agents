@@ -6,7 +6,7 @@ import openai
 import instructor
 import requests
 
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 from atomic_agents.lib.utils.scraping.url_to_markdown import UrlToMarkdownConverter
 from atomic_agents.lib.utils.scraping.pdf_to_markdown import PdfToMarkdownConverter
 
@@ -37,6 +37,9 @@ class ContentScrapingToolOutputSchema(BaseModel):
 ##############
 # TOOL LOGIC #
 ##############
+class ContentScrapingToolConfig(BaseToolConfig):
+    pass
+
 class ContentScrapingTool(BaseTool):
     """
     Tool for scraping web pages or PDFs and converting content to markdown.
@@ -48,15 +51,14 @@ class ContentScrapingTool(BaseTool):
     input_schema = ContentScrapingToolSchema
     output_schema = ContentScrapingToolOutputSchema
 
-    def __init__(self, **kwargs):
+    def __init__(self, config: ContentScrapingToolConfig = ContentScrapingToolConfig()):
         """
         Initializes the ContentScrapingTool.
 
         Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
+            config (ContentScrapingToolConfig): Configuration for the tool.
         """
-        super().__init__(**kwargs)
+        super().__init__(config)
 
     def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSchema:
         """

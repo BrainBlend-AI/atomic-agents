@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from sympy import sympify
 import instructor
 
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
 # INPUT SCHEMA #
@@ -26,9 +26,12 @@ class CalculatorToolSchema(BaseModel):
 class CalculatorToolOutputSchema(BaseModel):
     result: str = Field(..., description="Result of the calculation.")
 
-################
-# TOOL LOGIC   #
-################
+##############
+# TOOL LOGIC #
+##############
+class CalculatorToolConfig(BaseToolConfig):
+    pass
+
 class CalculatorTool(BaseTool):
     """
     Tool for performing calculations based on the provided mathematical expression.
@@ -40,15 +43,14 @@ class CalculatorTool(BaseTool):
     input_schema = CalculatorToolSchema
     output_schema = CalculatorToolOutputSchema
     
-    def __init__(self, **kwargs):
+    def __init__(self, config: CalculatorToolConfig = CalculatorToolConfig()):
         """
         Initializes the CalculatorTool.
-
+        
         Args:
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
+            config (CalculatorToolConfig): Configuration for the tool.
         """
-        super().__init__(**kwargs)
+        super().__init__(config)
 
     def run(self, params: CalculatorToolSchema) -> CalculatorToolOutputSchema:
         """
@@ -77,21 +79,4 @@ class CalculatorTool(BaseTool):
 # EXAMPLE USAGE #
 #################
 if __name__ == "__main__":
-    
-    # Initialize the client outside
-    client = instructor.from_openai(
-        openai.OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL")
-        )
-    )
-    
-    # Extract structured data from natural language
-    result = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        response_model=CalculatorTool.input_schema,
-        messages=[{"role": "user", "content": "Calculate 2 + 2"}],
-    )
-
-    # Print the result
-    print(CalculatorTool(tool_description_override="derp").run(result))
+    print(CalculatorTool().run(CalculatorToolSchema(expression="2 + 2")))
