@@ -6,9 +6,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from atomic_agents.agents.base_chat_agent import BaseChatAgent
-from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
 from atomic_agents.lib.tools.yt_transcript_scraper import YouTubeTranscriptTool, YouTubeTranscriptToolConfig, YouTubeTranscriptToolSchema
 
 console = Console()
@@ -86,7 +84,6 @@ transcript_provider.transcript = scraped_transcript.transcript
 transcript_provider.duration = scraped_transcript.duration
 transcript_provider.metadata = scraped_transcript.metadata
 
-# agent.memory.add_message('assistant', 'I have successfully extracted the transcript and put it in the context of the system prompt. I will now use it to generate a detailed response following the rules and steps provided in the system prompt. Here is the output:')
 response = agent.run('Perform your assignment on the YouTube video transcript present in your context. Do not reply with anything other than the output of the assignment.')
 
 # Convert the ResponseModel to a dictionary and then to a Markdown string

@@ -80,7 +80,7 @@ if __name__ == "__main__":
         output_instructions=[
             'Provide helpful and relevant information to assist the user.',
             'Be friendly and respectful in all interactions.',
-            'Always answer in rhyming verse. Preferably in alexandrine verse.'
+            'Always answer in rhyming verse.'
         ],
         context_providers={
             'date': CurrentDateProvider(title='Current date', format='%Y-%m-%d %H:%M:%S'),

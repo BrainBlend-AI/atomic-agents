@@ -21,7 +21,7 @@ system_prompt = SystemPromptInfo(
     output_instructions=[
         'Provide helpful and relevant information to assist the user.',
         'Be friendly and respectful in all interactions.',
-        'Always answer in rhyming verse. Preferably in alexandrine verse.'
+        'Always answer in rhyming verse.'
     ]
 )
 # Initialize the system prompt generator with the defined system prompt and dynamic info providers
