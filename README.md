@@ -27,6 +27,7 @@ pip install -e .
 
 ## Quickstart
 A quickstart guide is available in the [quickstart notebook](./examples/notebooks/quickstart.ipynb). More guides and tutorials will be added soon!
+In the meanwhile, have a look at the other examples in the [examples](./examples/) directory.
 
 ## Usage examples & Docs
 <img src="./.assets/docs.png" alt="open source docs bad" width="350"/>
