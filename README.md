@@ -25,6 +25,9 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+## Quickstart
+A quickstart guide is available in the [quickstart notebook](./examples/notebooks/quickstart.ipynb). More guides and tutorials will be added soon!
+
 ## Usage examples & Docs
 <img src="./.assets/docs.png" alt="open source docs bad" width="350"/>
 
