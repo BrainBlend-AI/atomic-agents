@@ -10,10 +10,10 @@ import os
 from rich.console import Console
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.agents.base_chat_agent import BaseChatAgent
-from atomic_agents.lib.components.system_prompt_generator import DynamicInfoProviderBase, SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
+from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
 from atomic_agents.lib.utils.logger import logger
 
 
@@ -21,20 +21,20 @@ from atomic_agents.lib.utils.logger import logger
 class MyChatAgent(BaseChatAgent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.search_tool = SearxNGSearchTool(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=25)
+        self.search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=25))
     
     def _pre_run(self):
         self.memory.add_message('assistant', 'First, I will perform a search with 3 different search queries to gather relevant information on the topic.')
         search_input = self.get_response(response_model=SearxNGSearchTool.input_schema)
         logger.verbose(f'Search input: {search_input}')
         search_results = self.search_tool.run(search_input)
-        self.system_prompt_generator.dynamic_info_providers['search'].search_results = search_results
+        self.system_prompt_generator.system_prompt_info.context_providers['search'].search_results = search_results
         self.memory.add_message('assistant', 'I have gathered the search results and they have been added to the context.')
 
 # We can define dynamic info providers to provide additional information in the system prompt context.
 # Each provider must have a title and a `get_info` method that returns a string. 
 # Each run, get_info will be called in order to provide the information at runtime.
-class CurrentDateProvider(DynamicInfoProviderBase):
+class CurrentDateProvider(SystemPromptContextProviderBase):
     def __init__(self, format: str = '%Y-%m-%d %H:%M:%S', **kwargs):
         super().__init__(**kwargs)
         self.format = format
@@ -42,7 +42,7 @@ class CurrentDateProvider(DynamicInfoProviderBase):
     def get_info(self) -> str:
         return f'The current date, in the format "{self.format}", is {datetime.now().strftime(self.format)}'
 
-class SearchResultsProvider(DynamicInfoProviderBase):
+class SearchResultsProvider(SystemPromptContextProviderBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.search_results: SearxNGSearchTool.output_schema = None
@@ -61,7 +61,7 @@ class SearchResultsProvider(DynamicInfoProviderBase):
         return response
 
 # Define dynamic info providers.
-dynamic_info_providers = {
+system_prompt_context_providers = {
     'date': CurrentDateProvider(title='Current date', format='%Y-%m-%d %H:%M:%S'),
     'search': SearchResultsProvider(title='Search results')
 }
@@ -82,9 +82,10 @@ system_prompt = SystemPromptInfo(
         'Include a list of the most promising-looking URLs for further research at the end of the response as a markdown list.',
         'Do not include any additional text or confirmation messages; only provide the list of ideas, the article outline, and the URLs.',
         'Do not reply to the user\'s input with anything except the list of ideas, the article outline, and the URLs.'
-    ]
+    ],
+    context_providers=system_prompt_context_providers
 )
-system_prompt_generator = SystemPromptGenerator(system_prompt, dynamic_info_providers)
+system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Optionally define the memory with an initial message from the assistant.
 memory = ChatMemory()

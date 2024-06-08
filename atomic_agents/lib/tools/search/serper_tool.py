@@ -7,7 +7,7 @@ from rich.console import Console
 import openai
 import instructor
 
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
 # INPUT SCHEMA #
@@ -38,6 +38,10 @@ class SerperSearchToolOutputSchema(BaseModel):
 ##############
 # TOOL LOGIC #
 ##############
+class SerperSearchToolConfig(BaseToolConfig):
+    api_key: str = ""
+    max_results: int = 10
+
 class SerperSearchTool(BaseTool):
     """
     Tool for performing searches using the Serper API based on the provided queries.
@@ -51,18 +55,16 @@ class SerperSearchTool(BaseTool):
     input_schema = SerperSearchToolSchema
     output_schema = SerperSearchToolOutputSchema
 
-    def __init__(self, api_key: str, max_results: int = 10, **kwargs):
+    def __init__(self, config: SerperSearchToolConfig = SerperSearchToolConfig()):
         """
         Initializes the SerperSearchTool.
 
         Args:
-            api_key (str): The API key for the Serper API.
-            max_results (int): The maximum number of search results to return.
-            **kwargs: Arbitrary keyword arguments.
+            config (SerperSearchToolConfig): Configuration for the tool, including API key, max results, and optional title and description overrides.
         """
-        super().__init__(**kwargs)
-        self.api_key = api_key
-        self.max_results = max_results
+        super().__init__(config)
+        self.api_key = config.api_key
+        self.max_results = config.max_results
 
     def run(self, params: SerperSearchToolSchema, max_results: Optional[int] = None) -> SerperSearchToolOutputSchema:
         """
@@ -127,31 +129,15 @@ class SerperSearchTool(BaseTool):
 
         return SerperSearchToolOutputSchema(results=output_results)
 
-
 #################
 # EXAMPLE USAGE #
 #################
 if __name__ == "__main__":
     rich_console = Console()
+    search_tool_instance = SerperSearchTool(config=SerperSearchToolConfig(api_key=os.getenv("SERPER_API_KEY"), max_results=5))
+    
+    search_input = SerperSearchTool.input_schema(queries=["Python programming", "Machine learning", "Quantum computing"])
 
-    # Initialize the client outside
-    client = instructor.from_openai(
-        openai.OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL")
-        )
-    )
-
-    # Extract structured data from natural language
-    result = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        response_model=SerperSearchTool.input_schema,
-        messages=[{"role": "user", "content": "I want to compare transformers architecture with mamba."}],
-    )
-
-    rich_console.print(f"Search queries: {result.queries}")
-
-    # Print the result
-    output = SerperSearchTool(api_key=os.getenv('SERPER_API_KEY'), max_results=15).run(result)
+    output = search_tool_instance.run(search_input)
     for i, result in enumerate(output.results):
         rich_console.print(f"{i}. Title: {result.title}, URL: {result.url}")

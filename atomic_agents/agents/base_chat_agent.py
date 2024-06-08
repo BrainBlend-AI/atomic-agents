@@ -1,4 +1,4 @@
-from typing import List, Type
+from typing import List, Optional, Type
 from pydantic import BaseModel, Field
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.utils.logger import logger
@@ -113,17 +113,18 @@ class BaseChatAgent:
         )
         return response
 
-    def run(self, user_input: str) -> str:
+    def run(self, user_input: Optional[str] = None) -> str:
         """
         Runs the chat agent with the given user input.
 
         Args:
-            user_input (str): The input text from the user.
+            user_input (Optional[str]): The input text from the user. If not provided, skips the initialization step.
 
         Returns:
             str: The response from the chat agent.
         """
-        self._init_run(user_input)
+        if user_input:
+            self._init_run(user_input)
         self._pre_run()
         if self.include_planning_step:
             self._plan_run()

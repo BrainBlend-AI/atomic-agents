@@ -1,5 +1,10 @@
 from typing import Type, Optional
 from pydantic import BaseModel
+from dataclasses import dataclass
+
+class BaseToolConfig(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
 
 class BaseTool:
     """
@@ -15,15 +20,15 @@ class BaseTool:
     input_schema: Type[BaseModel]
     output_schema: Type[BaseModel]
 
-    def __init__(self, tool_description_override: Optional[str] = None):
+    def __init__(self, config: BaseToolConfig = BaseToolConfig()):
         """
         Initializes the BaseTool with an optional description override.
 
         Args:
-            tool_description_override (Optional[str]): An optional description to override the default description from the input schema.
+            config (BaseToolConfig): Configuration for the tool, including optional title and description overrides.
         """
-        self.tool_name = self.input_schema.Config.title
-        self.tool_description = tool_description_override or self.input_schema.Config.description
+        self.tool_name = config.title or self.input_schema.Config.title
+        self.tool_description = config.description or self.input_schema.Config.description
 
     def run(self, params: Type[BaseModel]) -> BaseModel:
         """

@@ -3,10 +3,8 @@ import requests
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from rich.console import Console
-import openai
-import instructor
 
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
 # INPUT SCHEMA #
@@ -38,6 +36,10 @@ class SearxNGSearchToolOutputSchema(BaseModel):
 ##############
 # TOOL LOGIC #
 ##############
+class SearxNGSearchToolConfig(BaseToolConfig):
+    base_url: str = ""
+    max_results: int = 10
+
 class SearxNGSearchTool(BaseTool):
     """
     Tool for performing searches on SearxNG based on the provided queries and category.
@@ -51,18 +53,16 @@ class SearxNGSearchTool(BaseTool):
     input_schema = SearxNGSearchToolSchema
     output_schema = SearxNGSearchToolOutputSchema
 
-    def __init__(self, base_url: str, max_results: int = 10, **kwargs):
+    def __init__(self, config: SearxNGSearchToolConfig = SearxNGSearchToolConfig()):
         """
         Initializes the SearxNGSearchTool.
 
         Args:
-            base_url (str): The base URL for the SearxNG instance to use.
-            max_results (int): The maximum number of search results to return.
-            **kwargs: Arbitrary keyword arguments.
+            config (SearxNGSearchToolConfig): Configuration for the tool, including base URL, max results, and optional title and description overrides.
         """
-        super().__init__(**kwargs)
-        self.base_url = base_url
-        self.max_results = max_results
+        super().__init__(config)
+        self.base_url = config.base_url
+        self.max_results = config.max_results
 
     def run(self, params: SearxNGSearchToolSchema, max_results: Optional[int] = None) -> SearxNGSearchToolOutputSchema:
         """
@@ -99,7 +99,7 @@ class SearxNGSearchTool(BaseTool):
             response = requests.get(f"{self.base_url}/search", params=query_params)
 
             # Check if the request was successful
-            if response.status_code!= 200:
+            if response.status_code != 200:
                 raise Exception(f"Failed to fetch search results for query '{query}': {response.status_code} {response.reason}")
 
             results = response.json().get('results', [])
@@ -117,9 +117,9 @@ class SearxNGSearchTool(BaseTool):
             if result['url'] not in seen_urls:
                 unique_results.append(result)
                 if 'metadata' in result:
-                    result['title'] = result['metadata'] + ' - ' + result['title']
+                    result['title'] = result['title'] + ' - (Published ' + result['metadata'] + ')'
                 if 'publishedDate' in result and result['publishedDate']:
-                    result['title'] = 'Date: ' + result['publishedDate'] + ' - ' + result['title']
+                    result['title'] = result['title'] + ' - (Published ' + result['publishedDate'] + ')'
                 seen_urls.add(result['url'])
 
         # Filter results to include only those with the correct category if it is set
@@ -138,25 +138,10 @@ class SearxNGSearchTool(BaseTool):
 #################
 if __name__ == "__main__":
     rich_console = Console()
+    search_tool_instance = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=5))
+    
+    search_input = SearxNGSearchTool.input_schema(queries=["Python programming", "Machine learning", "Artificial intelligence"], category="news")
 
-    # Initialize the client outside
-    client = instructor.from_openai(
-        openai.OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL")
-        )
-    )
-
-    # Extract structured data from natural language
-    result = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        response_model=SearxNGSearchTool.input_schema,
-        messages=[{"role": "user", "content": "Search for the latest AI news."}],
-    )
-
-    rich_console.print(f"Search queries: {result.queries}")
-
-    # Print the result
-    output = SearxNGSearchTool(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=15).run(result)
+    output = search_tool_instance.run(search_input)
     for i, result in enumerate(output.results):
         rich_console.print(f"{i}. Title: {result.title}, URL: {result.url}")

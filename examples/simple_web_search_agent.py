@@ -4,7 +4,7 @@ import openai
 from  rich.console import Console
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
+from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
 
 console = Console()
 
@@ -13,7 +13,7 @@ console = Console()
 client = instructor.from_openai(openai.OpenAI())
 
 # Initialize the SearxNGSearchTool
-searx_tool = SearxNGSearchTool(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10)
+searx_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10))
 
 # Initialize the ToolInterfaceAgent with the SearxNGSearchTool
 agent = ToolInterfaceAgent(

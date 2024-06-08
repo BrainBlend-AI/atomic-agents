@@ -18,6 +18,8 @@ pip install atomic-agents
 Alternatively, to install the necessary dependencies from the repository, run the following command:
 
 ```bash
+python -m venv venv
+source venv/bin/activate # On Windows, use `venv\Scripts\activate.bat`
 pip install -r requirements.txt
 pip install -e .
 ```

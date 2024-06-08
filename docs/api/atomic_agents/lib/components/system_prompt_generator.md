@@ -5,24 +5,24 @@
 > Auto-generated documentation for [atomic_agents.lib.components.system_prompt_generator](../../../../../atomic_agents/lib/components/system_prompt_generator.py) module.
 
 - [SystemPromptGenerator](#systempromptgenerator)
-  - [DynamicInfoProviderBase](#dynamicinfoproviderbase)
-    - [DynamicInfoProviderBase().get_info](#dynamicinfoproviderbase()get_info)
+  - [SystemPromptContextProviderBase](#SystemPromptContextproviderbase)
+    - [SystemPromptContextProviderBase().get_info](#SystemPromptContextproviderbase()get_info)
   - [SystemPromptGenerator](#systempromptgenerator-1)
     - [SystemPromptGenerator().generate_prompt](#systempromptgenerator()generate_prompt)
   - [SystemPromptInfo](#systempromptinfo)
 
-## DynamicInfoProviderBase
+## SystemPromptContextProviderBase
 
 [Show source in system_prompt_generator.py:10](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L10)
 
 #### Signature
 
 ```python
-class DynamicInfoProviderBase(ABC):
+class SystemPromptContextProviderBase(ABC):
     def __init__(self, title: str): ...
 ```
 
-### DynamicInfoProviderBase().get_info
+### SystemPromptContextProviderBase().get_info
 
 [Show source in system_prompt_generator.py:14](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L14)
 
@@ -46,13 +46,13 @@ class SystemPromptGenerator:
     def __init__(
         self,
         system_prompt_info: SystemPromptInfo = None,
-        dynamic_info_providers: dict[str, DynamicInfoProviderBase] = None,
+        system_prompt_context_providers: dict[str, SystemPromptContextProviderBase] = None,
     ): ...
 ```
 
 #### See also
 
-- [DynamicInfoProviderBase](#dynamicinfoproviderbase)
+- [SystemPromptContextProviderBase](#SystemPromptContextproviderbase)
 - [SystemPromptInfo](#systempromptinfo)
 
 ### SystemPromptGenerator().generate_prompt
