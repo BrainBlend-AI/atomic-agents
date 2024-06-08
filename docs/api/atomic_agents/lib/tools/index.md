@@ -11,4 +11,5 @@
 
 - [Base](./base.md)
 - [CalculatorTool](./calculator_tool.md)
-- [Web Scraping Tool](./web_scraping_tool.md)
+- [ContentScrapingTool](./content_scraping_tool.md)
+- [Yt Transcript Scraper](./yt_transcript_scraper.md)

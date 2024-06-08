@@ -65,7 +65,7 @@ class BaseChatAgent:
 
 ### BaseChatAgent()._get_and_handle_response
 
-[Show source in base_chat_agent.py:134](../../../../atomic_agents/agents/base_chat_agent.py#L134)
+[Show source in base_chat_agent.py:135](../../../../atomic_agents/agents/base_chat_agent.py#L135)
 
 Handles obtaining and processing the response.
 
@@ -81,7 +81,7 @@ def _get_and_handle_response(self): ...
 
 ### BaseChatAgent()._init_run
 
-[Show source in base_chat_agent.py:151](../../../../atomic_agents/agents/base_chat_agent.py#L151)
+[Show source in base_chat_agent.py:152](../../../../atomic_agents/agents/base_chat_agent.py#L152)
 
 Initializes the run with the given user input.
 
@@ -97,7 +97,7 @@ def _init_run(self, user_input): ...
 
 ### BaseChatAgent()._plan_run
 
-[Show source in base_chat_agent.py:143](../../../../atomic_agents/agents/base_chat_agent.py#L143)
+[Show source in base_chat_agent.py:144](../../../../atomic_agents/agents/base_chat_agent.py#L144)
 
 Executes the planning step, if included.
 
@@ -109,7 +109,7 @@ def _plan_run(self): ...
 
 ### BaseChatAgent()._post_run
 
-[Show source in base_chat_agent.py:166](../../../../atomic_agents/agents/base_chat_agent.py#L166)
+[Show source in base_chat_agent.py:167](../../../../atomic_agents/agents/base_chat_agent.py#L167)
 
 Finalizes the run with the given response.
 
@@ -125,7 +125,7 @@ def _post_run(self, response): ...
 
 ### BaseChatAgent()._pre_run
 
-[Show source in base_chat_agent.py:160](../../../../atomic_agents/agents/base_chat_agent.py#L160)
+[Show source in base_chat_agent.py:161](../../../../atomic_agents/agents/base_chat_agent.py#L161)
 
 Prepares for the run. This method can be overridden by subclasses to add custom pre-run logic.
 
@@ -191,7 +191,7 @@ Runs the chat agent with the given user input.
 
 #### Arguments
 
-- `user_input` *str* - The input text from the user.
+- `user_input` *Optional[str]* - The input text from the user. If not provided, skips the initialization step.
 
 #### Returns
 
@@ -200,7 +200,7 @@ Runs the chat agent with the given user input.
 #### Signature
 
 ```python
-def run(self, user_input: str) -> str: ...
+def run(self, user_input: Optional[str] = None) -> str: ...
 ```
 
 

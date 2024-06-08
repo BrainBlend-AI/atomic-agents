@@ -7,10 +7,11 @@
 - [Base](#base)
   - [BaseTool](#basetool)
     - [BaseTool().run](#basetool()run)
+  - [BaseToolConfig](#basetoolconfig)
 
 ## BaseTool
 
-[Show source in base.py:4](../../../../../atomic_agents/lib/tools/base.py#L4)
+[Show source in base.py:9](../../../../../atomic_agents/lib/tools/base.py#L9)
 
 Base class for all tools in the Atomic Agents framework.
 
@@ -25,12 +26,16 @@ Base class for all tools in the Atomic Agents framework.
 
 ```python
 class BaseTool:
-    def __init__(self, tool_description_override: Optional[str] = None): ...
+    def __init__(self, config: BaseToolConfig = BaseToolConfig()): ...
 ```
+
+#### See also
+
+- [BaseToolConfig](#basetoolconfig)
 
 ### BaseTool().run
 
-[Show source in base.py:28](../../../../../atomic_agents/lib/tools/base.py#L28)
+[Show source in base.py:33](../../../../../atomic_agents/lib/tools/base.py#L33)
 
 Runs the tool with the given parameters. This method should be implemented by subclasses.
 
@@ -49,5 +54,17 @@ Runs the tool with the given parameters. This method should be implemented by su
 #### Signature
 
 ```python
-def run(self, params: BaseModel) -> BaseModel: ...
+def run(self, params: Type[BaseModel]) -> BaseModel: ...
+```
+
+
+
+## BaseToolConfig
+
+[Show source in base.py:5](../../../../../atomic_agents/lib/tools/base.py#L5)
+
+#### Signature
+
+```python
+class BaseToolConfig(BaseModel): ...
 ```
