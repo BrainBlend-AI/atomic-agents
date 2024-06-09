@@ -19,24 +19,6 @@ class BaseChatAgentResponse(BaseModel):
             'description': description
         }
 
-class GeneralPlanStep(BaseModel):
-    step: str
-    description: str
-    substeps: List[str] = []
-
-class GeneralPlanResponse(BaseModel):
-    observations: List[str] = Field(..., description='Key points or observations about the input.')
-    thoughts: List[str] = Field(..., description='Thought process or considerations involved in preparing the response.')
-    response_plan: List[GeneralPlanStep] = Field(..., description='Steps involved in generating the response.')
-
-    class Config:
-        title = 'GeneralPlanResponse'
-        description = 'General response plan from the chat agent.'
-        json_schema_extra = {
-            'title': title,
-            'description': description
-        }
-
 class BaseChatAgent:
     """
     Base class for chat agents.
@@ -51,7 +33,6 @@ class BaseChatAgent:
         model (str): The model to use for generating responses.
         memory (ChatMemory): Memory component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
-        include_planning_step (bool): Whether to include a planning step in the response generation.
         initial_memory (ChatMemory): Initial state of the memory.
     """
 
@@ -64,7 +45,6 @@ class BaseChatAgent:
             system_prompt_generator (SystemPromptGenerator, optional): Component for generating system prompts. Defaults to None.
             model (str, optional): The model to use for generating responses. Defaults to 'gpt-3.5-turbo'.
             memory (ChatMemory, optional): Memory component for storing chat history. Defaults to None.
-            include_planning_step (bool, optional): Whether to include a planning step in the response generation. Defaults to False.
             input_schema (Type[BaseModel], optional): Schema for the input data. Defaults to BaseChatAgentInputSchema.
             output_schema (Type[BaseModel], optional): Schema for the output data. Defaults to BaseChatAgentResponse.
         """
@@ -74,7 +54,6 @@ class BaseChatAgent:
         self.model = model
         self.memory = memory or ChatMemory()
         self.system_prompt_generator = system_prompt_generator or SystemPromptGenerator()
-        self.include_planning_step = include_planning_step
         self.initial_memory = self.memory.copy()
 
     def reset_memory(self):
@@ -126,8 +105,6 @@ class BaseChatAgent:
         if user_input:
             self._init_run(user_input)
         self._pre_run()
-        if self.include_planning_step:
-            self._plan_run()
         response = self._get_and_handle_response()
         self._post_run(response)
         return response
@@ -141,13 +118,6 @@ class BaseChatAgent:
         """
         return self.get_response(response_model=self.output_schema)
 
-    def _plan_run(self):
-        """
-        Executes the planning step, if included.
-        """
-        self.memory.add_message('assistant', 'I will now note any observations about the relevant input, context and thought process involved in preparing the response.')
-        plan = self.get_response(response_model=GeneralPlanResponse)
-        self.memory.add_message('assistant', plan.model_dump_json())
 
     def _init_run(self, user_input):
         """
