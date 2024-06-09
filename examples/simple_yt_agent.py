@@ -1,9 +1,10 @@
 import os
 import instructor
 import openai
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from rich.console import Console
 from rich.markdown import Markdown
+from typing import List, Optional
 
 from atomic_agents.agents.base_chat_agent import BaseChatAgent
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
@@ -29,44 +30,33 @@ class YtTranscriptProvider(SystemPromptContextProviderBase):
         
 transcript_provider = YtTranscriptProvider(title='YouTube Transcript')
 
+# Define the system prompt information
 system_prompt_info = SystemPromptInfo(
     background=[
-        'Extract surprising, insightful, and interesting information from text content. Focus on insights related to the purpose and meaning of life, human flourishing, the role of technology in the future of humanity, artificial intelligence and its effect on humans, memes, learning, reading, books, continuous improvement, and similar topics.'
+        'This Assistant is an expert at extracting knowledge and other insightful and interesting information from YouTube transcripts.'
     ],
     steps=[
-        'SUMMARY: Extract a 25-word summary of the content, including who is presenting and the content being discussed.',
-        'IDEAS: Extract 20 to 50 of the most surprising, insightful, and/or interesting ideas from the input.',
-        'INSIGHTS: Extract 10 to 20 of the best insights from the input and the IDEAS section.',
-        'QUOTES: Extract 15 to 30 of the most surprising, insightful, and/or interesting quotes from the input.',
-        'HABITS: Extract 15 to 30 of the most practical and useful personal habits mentioned by the speakers.',
-        'FACTS: Extract 15 to 30 of the most surprising, insightful, and/or interesting valid facts about the greater world mentioned in the content.',
-        'REFERENCES: Extract all mentions of writing, art, tools, projects, and other sources of inspiration mentioned by the speakers.',
-        'ONE-SENTENCE TAKEAWAY: Extract the most potent takeaway and recommendation into a 15-word sentence.',
-        'RECOMMENDATIONS: Extract 15 to 30 of the most surprising, insightful, and/or interesting recommendations from the content.'
+        'Analyse the YouTube transcript thoroughly to extract the most valuable insights, facts, and recommendations.',
+        'Adhere strictly to the provided schema when extracting information from the input content.',
+        'Ensure that the output matches the field descriptions, types and constraints exactly.',
     ],
     output_instructions=[
-        'Only output Markdown.',
-        'Write IDEAS, RECOMMENDATIONS, HABITS, FACTS, and INSIGHTS bullets as exactly 15 words.',
-        'Extract at least 25 IDEAS, 10 INSIGHTS, and 20 items for other sections.',
-        'Do not give warnings or notes; only output the requested sections.',
-        'Use bulleted lists for output, not numbered lists.',
-        'Do not repeat ideas, quotes, facts, or resources.',
-        'Do not start items with the same opening words.',
-        'Ensure you follow ALL these instructions when creating your output.',
-        'Do not reply to the user\'s input with anything except the final output of the assignment.'
+        'Only output Markdown-compatible strings.',
+        'Ensure you follow ALL these instructions when creating your output.'
     ],
     context_providers={'yt_transcript': transcript_provider}
 )
 
+# Define the response model with detailed descriptions, constraints, and field types
 class ResponseModel(BaseModel):
-    summary: str
-    ideas: list[str]
-    insights: list[str]
-    quotes: list[str]
-    habits: list[str]
-    facts: list[str]
-    references: list[str]
-    one_sentence_takeaway: str
+    summary: str = Field(..., description="A short summary of the content, including who is presenting and the content being discussed.")
+    insights: List[str] = Field(..., min_items=5, max_items=5, description="exactly 5 of the best insights and ideas from the input.")
+    quotes: List[str] = Field(None, min_items=5, max_items=5, description="exactly 5 of the most surprising, insightful, and/or interesting quotes from the input.")
+    habits: Optional[List[str]] = Field(None, min_items=5, max_items=5, description="exactly 5 of the most practical and useful personal habits mentioned by the speakers.")
+    facts: List[str] = Field(..., min_items=5, max_items=5, description="exactly 5 of the most surprising, insightful, and/or interesting valid facts about the greater world mentioned in the content.")
+    recommendations: List[str] = Field(..., min_items=5, max_items=5, description="exactly 5 of the most surprising, insightful, and/or interesting recommendations from the content.")    
+    references: List[str] = Field(..., description="All mentions of writing, art, tools, projects, and other sources of inspiration mentioned by the speakers.")
+    one_sentence_takeaway: str = Field(..., description="The most potent takeaways and recommendations condensed into a single 20-word sentence.")
 
 # Initialize the ToolInterfaceAgent with the SearxNGSearchTool
 agent = BaseChatAgent(
