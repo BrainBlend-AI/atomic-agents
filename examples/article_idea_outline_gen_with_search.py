@@ -14,7 +14,6 @@ from atomic_agents.lib.components.system_prompt_generator import SystemPromptCon
 import instructor
 import openai
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
-from atomic_agents.lib.utils.logger import logger
 
 
 # For this example, we extend the BaseChatAgent to create a custom chat agent that interacts with a search tool.
@@ -26,7 +25,6 @@ class MyChatAgent(BaseChatAgent):
     def _pre_run(self):
         self.memory.add_message('assistant', 'First, I will perform a search with 3 different search queries to gather relevant information on the topic.')
         search_input = self.get_response(response_model=SearxNGSearchTool.input_schema)
-        logger.verbose(f'Search input: {search_input}')
         search_results = self.search_tool.run(search_input)
         self.system_prompt_generator.system_prompt_info.context_providers['search'].search_results = search_results
         self.memory.add_message('assistant', 'I have gathered the search results and they have been added to the context.')

@@ -1,7 +1,6 @@
 from typing import List, Optional, Type
 from pydantic import BaseModel, Field
 from atomic_agents.lib.components.chat_memory import ChatMemory
-from atomic_agents.lib.utils.logger import logger
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # Input and Response Schemas

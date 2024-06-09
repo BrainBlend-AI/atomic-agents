@@ -21,7 +21,6 @@ A full list of `Atomic_agents` project modules.
             - [Yt Transcript Scraper](atomic_agents/lib/tools/yt_transcript_scraper.md#yt-transcript-scraper)
         - [Utils](atomic_agents/lib/utils/index.md#utils)
             - [Format Tool Message](atomic_agents/lib/utils/format_tool_message.md#format-tool-message)
-            - [Logger](atomic_agents/lib/utils/logger.md#logger)
             - [Scraping](atomic_agents/lib/utils/scraping/index.md#scraping)
                 - [Pdf To Markdown](atomic_agents/lib/utils/scraping/pdf_to_markdown.md#pdf-to-markdown)
                 - [Url To Markdown](atomic_agents/lib/utils/scraping/url_to_markdown.md#url-to-markdown)

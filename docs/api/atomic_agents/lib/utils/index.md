@@ -10,5 +10,4 @@
 ## Modules
 
 - [Format Tool Message](./format_tool_message.md)
-- [Logger](./logger.md)
 - [Scraping](scraping/index.md)
