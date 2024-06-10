@@ -9,6 +9,7 @@ The Atomic Agents framework is designed to be modular, extensible, and easy to u
 <!-- ![alt text](./.assets/architecture_highlevel_overview.png) -->
 <img src="./.assets/architecture_highlevel_overview.png" alt="Atomic Agents Architecture" width="600"/>
 <img src="./.assets/what_is_sent_in_prompt.png" alt="What is sent to the LLM in the prompt?" width="600"/>
+
 ## Installation
 To install Atomic Agents, you can use pip:
 
