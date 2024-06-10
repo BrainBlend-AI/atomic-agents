@@ -10,15 +10,14 @@ A tool in the `atomic_agents` framework consists of the following components:
 1. **Input Schema**: Defines the input parameters for the tool.
 2. **Output Schema**: Defines the output structure of the tool.
 3. **Tool Logic**: Implements the core functionality of the tool.
-4. **Example Usage**: Demonstrates how to use the tool.
+4. **Configuration**: Defines the configuration parameters for the tool.
+5. **Example Usage**: Demonstrates how to use the tool.
 
 ### Step-by-Step Guide
 
 #### 1. Define the Input Schema
 
-The input schema is a Pydantic `BaseModel` that specifies the input parameters for the tool. It can include simple fields, complex nested data structures, and even child schemas.
-An input schema should include a `Config` class with `title`, `description`, and `json_schema_extra` attributes. This is not just informational or aesthetic; it also helps generate the OpenAPI documentation for the tool, which is consumed by the LLM in order to generate the output.
-Here is an example:
+The input schema is a Pydantic `BaseModel` that specifies the input parameters for the tool. It can include simple fields, complex nested data structures, and even child schemas. An input schema should include a `Config` class with `title`, `description`, and `json_schema_extra` attributes. This is not just informational or aesthetic; it also helps generate the OpenAPI documentation for the tool, which is consumed by the LLM in order to generate the output. Here is an example:
 
 ```python
 from pydantic import BaseModel, Field
@@ -50,21 +49,35 @@ class MyToolOutputSchema(BaseModel):
     details: dict = Field(..., description="Additional details about the result.")
 ```
 
-#### 3. Implement the Tool Logic
+#### 3. Define the Configuration
 
-Create a class that inherits from `BaseTool` and implements the core functionality of the tool. This class should define the `input_schema` and `output_schema` attributes and implement the `run` method.
+The configuration is a Pydantic `BaseModel` that specifies the configuration parameters for the tool. It should extend from `BaseToolConfig`, which includes `title` and `description` attributes. This allows for optional overrides of the tool's title and description. Here is an example:
+
+```python
+from pydantic import BaseModel, Field
+from atomic_agents.lib.tools.base import BaseToolConfig
+
+class MyToolConfig(BaseToolConfig):
+    api_key: str = Field(..., description="API key for accessing external services.")
+```
+
+#### 4. Implement the Tool Logic
+
+Create a class that inherits from `BaseTool` and implements the core functionality of the tool. This class should define the `input_schema`, `output_schema`, and `config` attributes and implement the `run` method.
 
 ```python
 from typing import Optional
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 class MyTool(BaseTool):
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema
-    
-    def __init__(self, tool_description_override: Optional[str] = None):
-        super().__init__(tool_description_override)
-    
+    config = MyToolConfig
+
+    def __init__(self, config: MyToolConfig):
+        super().__init__(config)
+        self.api_key = config.api_key
+
     def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
         # Implement the core logic here
         result = f"Processed {params.parameter} with child param {params.nested.child_param}"
@@ -72,7 +85,7 @@ class MyTool(BaseTool):
         return MyToolOutputSchema(result=result, details=details)
 ```
 
-#### 4. Example Usage
+#### 5. Example Usage
 
 Provide an example of how to use the tool. This typically involves initializing the tool and running it with sample input. If you don't plan to merge this tool into the atomic_agents repository, you can exclude this part if you wish.
 
@@ -84,7 +97,8 @@ if __name__ == "__main__":
         nested=ChildSchema(child_param=42),
         list_param=["item1", "item2"]
     )
-    tool = MyTool()
+    config = MyToolConfig(api_key="your_api_key_here")
+    tool = MyTool(config=config)
     output = tool.run(input_data)
     print(output)
 ```
@@ -98,7 +112,7 @@ Here is a complete example of a new tool called `MyTool`:
 
 from pydantic import BaseModel, Field
 from typing import Optional
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 # Child Schema
 class ChildSchema(BaseModel):
@@ -123,14 +137,20 @@ class MyToolOutputSchema(BaseModel):
     result: str = Field(..., description="Result of the tool's operation.")
     details: dict = Field(..., description="Additional details about the result.")
 
+# Configuration
+class MyToolConfig(BaseToolConfig):
+    api_key: str = Field(..., description="API key for accessing external services.")
+
 # Tool Logic
 class MyTool(BaseTool):
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema
-    
-    def __init__(self, tool_description_override: Optional[str] = None):
-        super().__init__(tool_description_override)
-    
+    config = MyToolConfig
+
+    def __init__(self, config: MyToolConfig):
+        super().__init__(config)
+        self.api_key = config.api_key
+
     def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
         # Implement the core logic here
         result = f"Processed {params.parameter} with child param {params.nested.child_param}"
@@ -145,7 +165,8 @@ if __name__ == "__main__":
         nested=ChildSchema(child_param=42),
         list_param=["item1", "item2"]
     )
-    tool = MyTool()
+    config = MyToolConfig(api_key="your_api_key_here")
+    tool = MyTool(config=config)
     output = tool.run(input_data)
     print(output)
 ```
