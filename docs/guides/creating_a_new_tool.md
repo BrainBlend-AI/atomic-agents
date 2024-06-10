@@ -172,7 +172,7 @@ if __name__ == "__main__":
 ```
 
 ### More examples
-If you want more examples, have a look at any of the tools in the `atomic_agents.lib.tools` package. For example, the [CalculatorTool](../../atomic_agents/lib/tools/calculator_tool.py) or the [Web Scraping Tool](../../atomic_agents/lib/tools/web_scraping_tool.py).
+If you want more examples, have a look at any of the tools in the `atomic_agents.lib.tools` package. For example, the [CalculatorTool](../../atomic_agents/lib/tools/calculator_tool.py) or the [Content Scraping Tool](../../atomic_agents/lib/tools/content_scraping_tool.py).
 
 ### Conclusion
 
