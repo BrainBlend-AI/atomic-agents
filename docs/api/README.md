@@ -18,6 +18,7 @@ A full list of `Atomic_agents` project modules.
             - [Base](atomic_agents/lib/tools/base.md#base)
             - [CalculatorTool](atomic_agents/lib/tools/calculator_tool.md#calculatortool)
             - [ContentScrapingTool](atomic_agents/lib/tools/content_scraping_tool.md#contentscrapingtool)
+            - [Yelp Restaurant Finder Tool](atomic_agents/lib/tools/yelp_restaurant_finder_tool.md#yelp-restaurant-finder-tool)
             - [Yt Transcript Scraper](atomic_agents/lib/tools/yt_transcript_scraper.md#yt-transcript-scraper)
         - [Utils](atomic_agents/lib/utils/index.md#utils)
             - [Format Tool Message](atomic_agents/lib/utils/format_tool_message.md#format-tool-message)

@@ -12,4 +12,5 @@
 - [Base](./base.md)
 - [CalculatorTool](./calculator_tool.md)
 - [ContentScrapingTool](./content_scraping_tool.md)
+- [Yelp Restaurant Finder Tool](./yelp_restaurant_finder_tool.md)
 - [Yt Transcript Scraper](./yt_transcript_scraper.md)

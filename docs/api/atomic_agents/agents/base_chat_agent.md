@@ -14,12 +14,13 @@
     - [BaseChatAgent().get_system_prompt](#basechatagent()get_system_prompt)
     - [BaseChatAgent().reset_memory](#basechatagent()reset_memory)
     - [BaseChatAgent().run](#basechatagent()run)
+  - [BaseChatAgentConfig](#basechatagentconfig)
   - [BaseChatAgentInputSchema](#basechatagentinputschema)
   - [BaseChatAgentResponse](#basechatagentresponse)
 
 ## BaseChatAgent
 
-[Show source in base_chat_agent.py:21](../../../../atomic_agents/agents/base_chat_agent.py#L21)
+[Show source in base_chat_agent.py:34](../../../../atomic_agents/agents/base_chat_agent.py#L34)
 
 Base class for chat agents.
 
@@ -42,26 +43,19 @@ generating system prompts, and obtaining responses from a language model.
 class BaseChatAgent:
     def __init__(
         self,
-        client,
-        system_prompt_generator: SystemPromptGenerator = None,
-        model: str = "gpt-3.5-turbo",
-        memory: ChatMemory = None,
-        include_planning_step=False,
-        input_schema=BaseChatAgentInputSchema,
-        output_schema=BaseChatAgentResponse,
+        config: BaseChatAgentConfig = BaseChatAgentConfig(
+            client=instructor.from_openai(openai.OpenAI())
+        ),
     ): ...
 ```
 
 #### See also
 
-- [BaseChatAgentInputSchema](#basechatagentinputschema)
-- [BaseChatAgentResponse](#basechatagentresponse)
-- [ChatMemory](../lib/components/chat_memory.md#chatmemory)
-- [SystemPromptGenerator](../lib/components/system_prompt_generator.md#systempromptgenerator)
+- [BaseChatAgentConfig](#basechatagentconfig)
 
 ### BaseChatAgent()._get_and_handle_response
 
-[Show source in base_chat_agent.py:111](../../../../atomic_agents/agents/base_chat_agent.py#L111)
+[Show source in base_chat_agent.py:119](../../../../atomic_agents/agents/base_chat_agent.py#L119)
 
 Handles obtaining and processing the response.
 
@@ -77,7 +71,7 @@ def _get_and_handle_response(self): ...
 
 ### BaseChatAgent()._init_run
 
-[Show source in base_chat_agent.py:121](../../../../atomic_agents/agents/base_chat_agent.py#L121)
+[Show source in base_chat_agent.py:129](../../../../atomic_agents/agents/base_chat_agent.py#L129)
 
 Initializes the run with the given user input.
 
@@ -93,7 +87,7 @@ def _init_run(self, user_input): ...
 
 ### BaseChatAgent()._post_run
 
-[Show source in base_chat_agent.py:136](../../../../atomic_agents/agents/base_chat_agent.py#L136)
+[Show source in base_chat_agent.py:144](../../../../atomic_agents/agents/base_chat_agent.py#L144)
 
 Finalizes the run with the given response.
 
@@ -109,7 +103,7 @@ def _post_run(self, response): ...
 
 ### BaseChatAgent()._pre_run
 
-[Show source in base_chat_agent.py:130](../../../../atomic_agents/agents/base_chat_agent.py#L130)
+[Show source in base_chat_agent.py:138](../../../../atomic_agents/agents/base_chat_agent.py#L138)
 
 Prepares for the run. This method can be overridden by subclasses to add custom pre-run logic.
 
@@ -121,7 +115,7 @@ def _pre_run(self): ...
 
 ### BaseChatAgent().get_response
 
-[Show source in base_chat_agent.py:73](../../../../atomic_agents/agents/base_chat_agent.py#L73)
+[Show source in base_chat_agent.py:81](../../../../atomic_agents/agents/base_chat_agent.py#L81)
 
 Obtains a response from the language model.
 
@@ -141,7 +135,7 @@ def get_response(self, response_model=None) -> Type[BaseModel]: ...
 
 ### BaseChatAgent().get_system_prompt
 
-[Show source in base_chat_agent.py:64](../../../../atomic_agents/agents/base_chat_agent.py#L64)
+[Show source in base_chat_agent.py:72](../../../../atomic_agents/agents/base_chat_agent.py#L72)
 
 Generates the system prompt.
 
@@ -157,7 +151,7 @@ def get_system_prompt(self) -> str: ...
 
 ### BaseChatAgent().reset_memory
 
-[Show source in base_chat_agent.py:58](../../../../atomic_agents/agents/base_chat_agent.py#L58)
+[Show source in base_chat_agent.py:66](../../../../atomic_agents/agents/base_chat_agent.py#L66)
 
 Resets the memory to its initial state.
 
@@ -169,7 +163,7 @@ def reset_memory(self): ...
 
 ### BaseChatAgent().run
 
-[Show source in base_chat_agent.py:94](../../../../atomic_agents/agents/base_chat_agent.py#L94)
+[Show source in base_chat_agent.py:102](../../../../atomic_agents/agents/base_chat_agent.py#L102)
 
 Runs the chat agent with the given user input.
 
@@ -189,9 +183,21 @@ def run(self, user_input: Optional[str] = None) -> str: ...
 
 
 
+## BaseChatAgentConfig
+
+[Show source in base_chat_agent.py:23](../../../../atomic_agents/agents/base_chat_agent.py#L23)
+
+#### Signature
+
+```python
+class BaseChatAgentConfig(BaseModel): ...
+```
+
+
+
 ## BaseChatAgentInputSchema
 
-[Show source in base_chat_agent.py:7](../../../../atomic_agents/agents/base_chat_agent.py#L7)
+[Show source in base_chat_agent.py:9](../../../../atomic_agents/agents/base_chat_agent.py#L9)
 
 #### Signature
 
@@ -203,7 +209,7 @@ class BaseChatAgentInputSchema(BaseModel): ...
 
 ## BaseChatAgentResponse
 
-[Show source in base_chat_agent.py:10](../../../../atomic_agents/agents/base_chat_agent.py#L10)
+[Show source in base_chat_agent.py:12](../../../../atomic_agents/agents/base_chat_agent.py#L12)
 
 #### Signature
 

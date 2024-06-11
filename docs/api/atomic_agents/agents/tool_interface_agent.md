@@ -7,10 +7,11 @@
 - [ToolInterfaceAgent](#toolinterfaceagent)
   - [ToolInterfaceAgent](#toolinterfaceagent-1)
     - [ToolInterfaceAgent()._get_and_handle_response](#toolinterfaceagent()_get_and_handle_response)
+  - [ToolInterfaceAgentConfig](#toolinterfaceagentconfig)
 
 ## ToolInterfaceAgent
 
-[Show source in tool_interface_agent.py:7](../../../../atomic_agents/agents/tool_interface_agent.py#L7)
+[Show source in tool_interface_agent.py:14](../../../../atomic_agents/agents/tool_interface_agent.py#L14)
 
 A specialized chat agent designed to interact with a specific tool.
 
@@ -26,16 +27,17 @@ It generates system prompts, handles tool input and output, and can optionally r
 
 ```python
 class ToolInterfaceAgent(BaseChatAgent):
-    def __init__(self, tool_instance, return_raw_output=False, **kwargs): ...
+    def __init__(self, config: ToolInterfaceAgentConfig): ...
 ```
 
 #### See also
 
 - [BaseChatAgent](./base_chat_agent.md#basechatagent)
+- [ToolInterfaceAgentConfig](#toolinterfaceagentconfig)
 
 ### ToolInterfaceAgent()._get_and_handle_response
 
-[Show source in tool_interface_agent.py:69](../../../../atomic_agents/agents/tool_interface_agent.py#L69)
+[Show source in tool_interface_agent.py:73](../../../../atomic_agents/agents/tool_interface_agent.py#L73)
 
 Handles obtaining and processing the response from the tool.
 
@@ -52,3 +54,19 @@ the raw tool output; otherwise, it processes the output and returns the response
 ```python
 def _get_and_handle_response(self): ...
 ```
+
+
+
+## ToolInterfaceAgentConfig
+
+[Show source in tool_interface_agent.py:9](../../../../atomic_agents/agents/tool_interface_agent.py#L9)
+
+#### Signature
+
+```python
+class ToolInterfaceAgentConfig(BaseChatAgentConfig): ...
+```
+
+#### See also
+
+- [BaseChatAgentConfig](./base_chat_agent.md#basechatagentconfig)
