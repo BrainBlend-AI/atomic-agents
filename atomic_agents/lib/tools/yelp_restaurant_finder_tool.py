@@ -42,7 +42,7 @@ class YelpSearchToolSchema(BaseModel):
     location: str = Field(..., description="Location to search for food.")
     term: Optional[str] = Field(None, description="Search term (e.g., 'pizza', 'sushi').")
     categories: Optional[List[YelpCategory]] = Field(None, description="Categories to filter by (e.g., 'italian, mexican').")
-    price: Optional[List[PriceRange]] = Field(None, description="Price range to filter by (e.g., '1', '2', '3', '4').")
+    price: Optional[List[PriceRange]] = Field(None, description="Price range to filter by (e.g., '1', '2', '3', '4'). Can be multiple. 1 is cheap. 2 and 3 are mid-range. 4 is the most high-end.")
     open_now: Optional[bool] = Field(False, description="Filter for businesses that are open now.")
     sort_by: Optional[str] = Field("best_match", description="Sort by criteria (e.g., 'best_match', 'rating', 'review_count', 'distance').")
     limit: Optional[int] = Field(10, description="Number of results to return.")
@@ -126,7 +126,8 @@ class YelpSearchTool(BaseTool):
             "categories": ",".join([category.value for category in params.categories]) if params.categories else None,
             "price": ",".join([price.value for price in params.price]) if params.price else None,
             "sort_by": params.sort_by,
-            "limit": self.max_results
+            "limit": self.max_results,
+            "open_now": params.open_now
         }
 
         # Make the GET request

@@ -1,4 +1,6 @@
 from typing import List, Optional, Type
+import instructor
+import openai
 from pydantic import BaseModel, Field
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
@@ -18,6 +20,17 @@ class BaseChatAgentResponse(BaseModel):
             'description': description
         }
 
+class BaseChatAgentConfig(BaseModel):
+    client: instructor.client.Instructor = Field(..., description='Client for interacting with the language model.')
+    model: str = Field("gpt-3.5-turbo", description='The model to use for generating responses.')
+    memory: Optional[ChatMemory] = Field(None, description='Memory component for storing chat history.')
+    system_prompt_generator: Optional[SystemPromptGenerator] = Field(None, description='Component for generating system prompts.')
+    input_schema: Type[BaseModel] = Field(BaseChatAgentInputSchema, description='Schema for the input data.')
+    output_schema: Type[BaseModel] = Field(BaseChatAgentResponse, description='Schema for the output data.')
+    
+    class Config:
+        arbitrary_types_allowed = True
+
 class BaseChatAgent:
     """
     Base class for chat agents.
@@ -35,24 +48,19 @@ class BaseChatAgent:
         initial_memory (ChatMemory): Initial state of the memory.
     """
 
-    def __init__(self, client, system_prompt_generator: SystemPromptGenerator = None, model: str = 'gpt-3.5-turbo', memory: ChatMemory = None, include_planning_step=False, input_schema=BaseChatAgentInputSchema, output_schema=BaseChatAgentResponse):
+    def __init__(self, config: BaseChatAgentConfig = BaseChatAgentConfig(client=instructor.from_openai(openai.OpenAI()))):
         """
         Initializes the BaseChatAgent.
 
         Args:
-            client: Client for interacting with the language model.
-            system_prompt_generator (SystemPromptGenerator, optional): Component for generating system prompts. Defaults to None.
-            model (str, optional): The model to use for generating responses. Defaults to 'gpt-3.5-turbo'.
-            memory (ChatMemory, optional): Memory component for storing chat history. Defaults to None.
-            input_schema (Type[BaseModel], optional): Schema for the input data. Defaults to BaseChatAgentInputSchema.
-            output_schema (Type[BaseModel], optional): Schema for the output data. Defaults to BaseChatAgentResponse.
+            config (BaseChatAgentConfig): Configuration for the chat agent.
         """
-        self.input_schema = input_schema
-        self.output_schema = output_schema
-        self.client = client
-        self.model = model
-        self.memory = memory or ChatMemory()
-        self.system_prompt_generator = system_prompt_generator or SystemPromptGenerator()
+        self.input_schema = config.input_schema
+        self.output_schema = config.output_schema
+        self.client = config.client
+        self.model = config.model
+        self.memory = config.memory or ChatMemory()
+        self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.initial_memory = self.memory.copy()
 
     def reset_memory(self):

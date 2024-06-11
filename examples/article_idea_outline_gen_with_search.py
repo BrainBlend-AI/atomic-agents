@@ -9,7 +9,7 @@ from datetime import datetime
 import os
 from rich.console import Console
 from atomic_agents.lib.components.chat_memory import ChatMemory
-from atomic_agents.agents.base_chat_agent import BaseChatAgent
+from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
@@ -92,14 +92,21 @@ initial_memory = [
 ]
 memory.load(initial_memory)        
 
-# Create a chat agent with the specified model, system prompt generator, and memory.
-# For all supported clients such as Anthropic & Gemini, have a look at the `instructor` library documentation.
-agent = MyChatAgent(
-    client=instructor.from_openai(openai.OpenAI()), 
-    system_prompt_generator=system_prompt_generator,
+# Define ArticleIdeaOutlineGenConfig class - this is optional if you don't have any customization, 
+# but I like to do this for consistnecy and in order to not have to do it later if I need to add something.
+class ArticleIdeaOutlineGenConfig(BaseChatAgentConfig):
+    pass
+
+# Update the configuration to use ArticleIdeaOutlineGenConfig
+config = ArticleIdeaOutlineGenConfig(
+    client=instructor.from_openai(openai.OpenAI()),
     model='gpt-3.5-turbo',
+    system_prompt_generator=system_prompt_generator,
     memory=memory,
 )
+
+# Create an instance of MyChatAgent with the specified configuration
+agent = MyChatAgent(config=config)
 
 console = Console()
 

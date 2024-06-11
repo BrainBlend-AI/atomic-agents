@@ -1,8 +1,15 @@
 import json
 from pydantic import Field, create_model
-from atomic_agents.agents.base_chat_agent import BaseChatAgent
+from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
+
+
+class ToolInterfaceAgentConfig(BaseChatAgentConfig):
+    tool_instance: BaseTool
+    return_raw_output: bool = False
+
 
 class ToolInterfaceAgent(BaseChatAgent):
     """
@@ -16,19 +23,17 @@ class ToolInterfaceAgent(BaseChatAgent):
         return_raw_output (bool): Whether to return the raw output from the tool.
     """
 
-    def __init__(self, tool_instance, return_raw_output=False, **kwargs):
+    def __init__(self, config: ToolInterfaceAgentConfig):
         """
         Initializes the ToolInterfaceAgent.
 
         Args:
-            tool_instance: The instance of the tool this agent will interact with.
-            return_raw_output (bool, optional): Whether to return the raw output from the tool. Defaults to False.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
+            config (ToolInterfaceAgentConfig): Configuration for the tool interface agent.
         """
-        super().__init__(**kwargs)
+        super().__init__(config=config)
         
-        self.tool_instance = tool_instance
+        self.tool_instance = config.tool_instance
+        self.return_raw_output = config.return_raw_output
         
         self.input_schema = create_model(
             self.tool_instance.tool_name,
@@ -43,7 +48,6 @@ class ToolInterfaceAgent(BaseChatAgent):
             })
         )
         
-        self.return_raw_output = return_raw_output
         if self.return_raw_output:
             self.output_schema = self.tool_instance.output_schema
             
@@ -61,7 +65,7 @@ class ToolInterfaceAgent(BaseChatAgent):
                 ],
                 output_instructions=[
                     "Make sure the tool call will maximize the utility of the tool in the context of the user input.",
-                    "Process the output of the tool into a human readable format and/or use it to respond to the user input." if return_raw_output else "Return the raw output of the tool."
+                    "Process the output of the tool into a human readable format and/or use it to respond to the user input." if self.return_raw_output else "Return the raw output of the tool."
                 ]
             )
         )

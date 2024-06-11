@@ -1,20 +1,25 @@
 import os
-from typing import List, Type, Union
+from typing import List, Union
+
 from pydantic import BaseModel, Field
 from rich.console import Console
-from atomic_agents.lib.components.chat_memory import ChatMemory
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentResponse
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
+from rich.markdown import Markdown
+
 import instructor
 import openai
 
+from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentResponse, BaseChatAgentConfig
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.tools.calculator_tool import CalculatorTool, CalculatorToolSchema
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolSchema
 
+# Initialize tools
 search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10))
 calculator_tool = CalculatorTool()
 
+# Define ToolInfoProvider class
 class ToolInfoProvider(SystemPromptContextProviderBase):        
     def get_info(self) -> str:
         response = 'The available tools are:\n'
@@ -29,7 +34,11 @@ system_prompt = SystemPromptInfo(
     ],
     steps=[
         'Understand the user\'s input and the current context.',
-        'Look at the tools available and determine which to use next based on the current context, user input, and history.',
+        'Take a step back and think methodically and step-by-step about how to proceed by using internal reasoning.',
+        'Evaluate the available tools and decide whether to use a tool based on the current context, user input, and history.',
+        'If a tool can be used, decide which tool to use and how to use it.',
+        'If a tool can be used it must always be explicitly mentioned in the internal reasoning response.',
+        'If a tool can be used, return nothing but the tool response to the user. If no tool is needed or if the tool has finished, return a chat response.',
         'Execute the chosen tool and provide a relevant response to the user.'
     ],
     output_instructions=[
@@ -42,12 +51,26 @@ system_prompt = SystemPromptInfo(
     }
 )
 
+# Define InternalReasoningResponse class
+class InternalReasoningResponse(BaseModel):
+    observation: str = Field(..., description='What is the current state of the conversation and context? What is the user saying or asking?')
+    action_plan: List[str] = Field(..., min_length=1, description='What steps could be taken to address the current observation? Is there a tool that could be used?')
+
+    class Config:
+        title = 'InternalReasoningResponse'
+        description = 'The internal reasoning response schema for the chat agent, following the ReACT pattern.'
+        json_schema_extra = {
+            'title': title,
+            'description': description,
+        }
+
+# Define ResponseSchema class
 class ResponseSchema(BaseModel):
-    chosen_schema: Union[BaseChatAgentResponse, SearxNGSearchToolSchema, CalculatorToolSchema] = Field(..., description='The response from the chat agent.')
+    chosen_schema: Union[BaseChatAgentResponse, SearxNGSearchToolSchema, CalculatorToolSchema] = Field(..., description='The response from the chat agent, which may include the result of using a tool if one was deemed necessary.')
     
     class Config:
         title = 'ResponseSchema'
-        description = 'The response schema for the chat agent.'
+        description = 'The response schema for the chat agent, including potential tool usage results.'
         json_schema_extra = {
             'title': title,
             'description': description,
@@ -57,15 +80,14 @@ class ResponseSchema(BaseModel):
 system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Test out the system prompt generator
-from rich.markdown import Markdown
-from rich.console import Console
-Console().print('='*50)
-Console().print(Markdown(system_prompt_generator.generate_prompt()))
-Console().print('='*50)
+console = Console()
+console.print('='*50)
+console.print(Markdown(system_prompt_generator.generate_prompt()))
+console.print('='*50)
 
 # Print the response schema
-Console().print(ResponseSchema.model_json_schema())
-Console().print('='*50)
+console.print(ResponseSchema.model_json_schema())
+console.print('='*50)
 
 # Initialize chat memory to store conversation history
 memory = ChatMemory()
@@ -76,18 +98,31 @@ initial_memory = [
 # Load the initial memory into the chat memory
 memory.load(initial_memory)
 
-# Create a chat agent with the specified model, system prompt generator, and memory
-# For all supported clients such as Anthropic & Gemini, have a look at the `instructor` library documentation.
-agent = BaseChatAgent(
-    client=instructor.from_openai(openai.OpenAI()), 
-    system_prompt_generator=system_prompt_generator,
+# Define OrchestratorAgentConfig class
+class OrchestratorAgentConfig(BaseChatAgentConfig):
+    pass
+
+# Define OrchestratorAgent class
+class OrchestratorAgent(BaseChatAgent):
+    def _pre_run(self):
+        self.memory.add_message('assistant', 'First, I will plan my steps and think about the tools at my disposal.')
+        response = self.get_response(response_model=InternalReasoningResponse)
+        self.memory.add_message('assistant', f'INTERNAL THOUGHT: I have observed "{response.observation}" and will take the following steps: {", ".join(response.action_plan)}')
+        return
+
+# Update the configuration to use OrchestratorAgentConfig
+config = OrchestratorAgentConfig(
+    client=instructor.from_openai(openai.OpenAI()),
     model='gpt-3.5-turbo',
+    system_prompt_generator=system_prompt_generator,
     memory=memory,
     output_schema=ResponseSchema
 )
 
+# Create an instance of OrchestratorAgent with the specified configuration
+agent = OrchestratorAgent(config=config)
+
 # Main chat loop for testing the chat agent
-console = Console()
 console.print(f'Agent: {initial_memory[0]["content"]}')
 
 while True:

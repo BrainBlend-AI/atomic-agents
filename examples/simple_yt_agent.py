@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from typing import List, Optional
 
-from atomic_agents.agents.base_chat_agent import BaseChatAgent
+from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.tools.yt_transcript_scraper import YouTubeTranscriptTool, YouTubeTranscriptToolConfig, YouTubeTranscriptToolSchema
 
@@ -58,15 +58,14 @@ class ResponseModel(BaseModel):
     references: List[str] = Field(..., description="All mentions of writing, art, tools, projects, and other sources of inspiration mentioned by the speakers.")
     one_sentence_takeaway: str = Field(..., description="The most potent takeaways and recommendations condensed into a single 20-word sentence.")
 
-# Initialize the ToolInterfaceAgent with the SearxNGSearchTool
 agent = BaseChatAgent(
-    client=client,
-    model='gpt-3.5-turbo',
-    system_prompt_generator=SystemPromptGenerator(system_prompt_info),
-    output_schema=ResponseModel
+    config = BaseChatAgentConfig(
+        client=client,
+        model='gpt-3.5-turbo',
+        system_prompt_generator=SystemPromptGenerator(system_prompt_info),
+        output_schema=ResponseModel
+    )
 )
-
-console.print("ToolInterfaceAgent with SearxNGSearchTool is ready.")
 
 video_url = input('Enter the YouTube video URL: ')
 scraped_transcript = yt_scraper_tool.run(YouTubeTranscriptToolSchema(video_url=video_url))
