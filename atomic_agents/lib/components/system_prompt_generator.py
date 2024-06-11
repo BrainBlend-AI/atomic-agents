@@ -14,8 +14,8 @@ class SystemPromptContextProviderBase(ABC):
 @dataclass
 class SystemPromptInfo:
     background: List[str]
-    steps: List[str]
-    output_instructions: List[str]
+    steps: Optional[List[str]] = field(default_factory=list)
+    output_instructions: Optional[List[str]] = field(default_factory=list)
     context_providers: Optional[Dict[str, SystemPromptContextProviderBase]] = field(default_factory=dict)
 
 class SystemPromptGenerator:
