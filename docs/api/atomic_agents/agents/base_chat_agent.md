@@ -5,6 +5,8 @@
 > Auto-generated documentation for [atomic_agents.agents.base_chat_agent](../../../../atomic_agents/agents/base_chat_agent.py) module.
 
 - [BaseChatAgent](#basechatagent)
+  - [BaseAgentIO](#baseagentio)
+    - [BaseAgentIO().stringify](#baseagentio()stringify)
   - [BaseChatAgent](#basechatagent-1)
     - [BaseChatAgent()._get_and_handle_response](#basechatagent()_get_and_handle_response)
     - [BaseChatAgent()._init_run](#basechatagent()_init_run)
@@ -16,11 +18,37 @@
     - [BaseChatAgent().run](#basechatagent()run)
   - [BaseChatAgentConfig](#basechatagentconfig)
   - [BaseChatAgentInputSchema](#basechatagentinputschema)
+    - [BaseChatAgentInputSchema().stringify](#basechatagentinputschema()stringify)
   - [BaseChatAgentResponse](#basechatagentresponse)
+    - [BaseChatAgentResponse().stringify](#basechatagentresponse()stringify)
+
+## BaseAgentIO
+
+[Show source in base_chat_agent.py:8](../../../../atomic_agents/agents/base_chat_agent.py#L8)
+
+Base class for input and output schemas for chat agents.
+
+#### Signature
+
+```python
+class BaseAgentIO(BaseModel): ...
+```
+
+### BaseAgentIO().stringify
+
+[Show source in base_chat_agent.py:12](../../../../atomic_agents/agents/base_chat_agent.py#L12)
+
+#### Signature
+
+```python
+def stringify(self): ...
+```
+
+
 
 ## BaseChatAgent
 
-[Show source in base_chat_agent.py:34](../../../../atomic_agents/agents/base_chat_agent.py#L34)
+[Show source in base_chat_agent.py:46](../../../../atomic_agents/agents/base_chat_agent.py#L46)
 
 Base class for chat agents.
 
@@ -29,8 +57,8 @@ generating system prompts, and obtaining responses from a language model.
 
 #### Attributes
 
-- `input_schema` *Type[BaseModel]* - Schema for the input data.
-- `output_schema` *Type[BaseModel]* - Schema for the output data.
+- `input_schema` *Type[BaseAgentIO]* - Schema for the input data.
+- `output_schema` *Type[BaseAgentIO]* - Schema for the output data.
 - `client` - Client for interacting with the language model.
 - `model` *str* - The model to use for generating responses.
 - `memory` *ChatMemory* - Memory component for storing chat history.
@@ -55,7 +83,7 @@ class BaseChatAgent:
 
 ### BaseChatAgent()._get_and_handle_response
 
-[Show source in base_chat_agent.py:119](../../../../atomic_agents/agents/base_chat_agent.py#L119)
+[Show source in base_chat_agent.py:131](../../../../atomic_agents/agents/base_chat_agent.py#L131)
 
 Handles obtaining and processing the response.
 
@@ -71,7 +99,7 @@ def _get_and_handle_response(self): ...
 
 ### BaseChatAgent()._init_run
 
-[Show source in base_chat_agent.py:129](../../../../atomic_agents/agents/base_chat_agent.py#L129)
+[Show source in base_chat_agent.py:141](../../../../atomic_agents/agents/base_chat_agent.py#L141)
 
 Initializes the run with the given user input.
 
@@ -82,12 +110,16 @@ Initializes the run with the given user input.
 #### Signature
 
 ```python
-def _init_run(self, user_input): ...
+def _init_run(self, user_input: Type[BaseAgentIO]): ...
 ```
+
+#### See also
+
+- [BaseAgentIO](#baseagentio)
 
 ### BaseChatAgent()._post_run
 
-[Show source in base_chat_agent.py:144](../../../../atomic_agents/agents/base_chat_agent.py#L144)
+[Show source in base_chat_agent.py:156](../../../../atomic_agents/agents/base_chat_agent.py#L156)
 
 Finalizes the run with the given response.
 
@@ -103,7 +135,7 @@ def _post_run(self, response): ...
 
 ### BaseChatAgent()._pre_run
 
-[Show source in base_chat_agent.py:138](../../../../atomic_agents/agents/base_chat_agent.py#L138)
+[Show source in base_chat_agent.py:150](../../../../atomic_agents/agents/base_chat_agent.py#L150)
 
 Prepares for the run. This method can be overridden by subclasses to add custom pre-run logic.
 
@@ -115,7 +147,7 @@ def _pre_run(self): ...
 
 ### BaseChatAgent().get_response
 
-[Show source in base_chat_agent.py:81](../../../../atomic_agents/agents/base_chat_agent.py#L81)
+[Show source in base_chat_agent.py:93](../../../../atomic_agents/agents/base_chat_agent.py#L93)
 
 Obtains a response from the language model.
 
@@ -135,7 +167,7 @@ def get_response(self, response_model=None) -> Type[BaseModel]: ...
 
 ### BaseChatAgent().get_system_prompt
 
-[Show source in base_chat_agent.py:72](../../../../atomic_agents/agents/base_chat_agent.py#L72)
+[Show source in base_chat_agent.py:84](../../../../atomic_agents/agents/base_chat_agent.py#L84)
 
 Generates the system prompt.
 
@@ -151,7 +183,7 @@ def get_system_prompt(self) -> str: ...
 
 ### BaseChatAgent().reset_memory
 
-[Show source in base_chat_agent.py:66](../../../../atomic_agents/agents/base_chat_agent.py#L66)
+[Show source in base_chat_agent.py:78](../../../../atomic_agents/agents/base_chat_agent.py#L78)
 
 Resets the memory to its initial state.
 
@@ -163,7 +195,7 @@ def reset_memory(self): ...
 
 ### BaseChatAgent().run
 
-[Show source in base_chat_agent.py:102](../../../../atomic_agents/agents/base_chat_agent.py#L102)
+[Show source in base_chat_agent.py:114](../../../../atomic_agents/agents/base_chat_agent.py#L114)
 
 Runs the chat agent with the given user input.
 
@@ -178,14 +210,18 @@ Runs the chat agent with the given user input.
 #### Signature
 
 ```python
-def run(self, user_input: Optional[str] = None) -> str: ...
+def run(self, user_input: Optional[Type[BaseAgentIO]] = None) -> str: ...
 ```
+
+#### See also
+
+- [BaseAgentIO](#baseagentio)
 
 
 
 ## BaseChatAgentConfig
 
-[Show source in base_chat_agent.py:23](../../../../atomic_agents/agents/base_chat_agent.py#L23)
+[Show source in base_chat_agent.py:36](../../../../atomic_agents/agents/base_chat_agent.py#L36)
 
 #### Signature
 
@@ -197,22 +233,50 @@ class BaseChatAgentConfig(BaseModel): ...
 
 ## BaseChatAgentInputSchema
 
-[Show source in base_chat_agent.py:9](../../../../atomic_agents/agents/base_chat_agent.py#L9)
+[Show source in base_chat_agent.py:16](../../../../atomic_agents/agents/base_chat_agent.py#L16)
 
 #### Signature
 
 ```python
-class BaseChatAgentInputSchema(BaseModel): ...
+class BaseChatAgentInputSchema(BaseAgentIO): ...
+```
+
+#### See also
+
+- [BaseAgentIO](#baseagentio)
+
+### BaseChatAgentInputSchema().stringify
+
+[Show source in base_chat_agent.py:19](../../../../atomic_agents/agents/base_chat_agent.py#L19)
+
+#### Signature
+
+```python
+def stringify(self): ...
 ```
 
 
 
 ## BaseChatAgentResponse
 
-[Show source in base_chat_agent.py:12](../../../../atomic_agents/agents/base_chat_agent.py#L12)
+[Show source in base_chat_agent.py:22](../../../../atomic_agents/agents/base_chat_agent.py#L22)
 
 #### Signature
 
 ```python
-class BaseChatAgentResponse(BaseModel): ...
+class BaseChatAgentResponse(BaseAgentIO): ...
+```
+
+#### See also
+
+- [BaseAgentIO](#baseagentio)
+
+### BaseChatAgentResponse().stringify
+
+[Show source in base_chat_agent.py:33](../../../../atomic_agents/agents/base_chat_agent.py#L33)
+
+#### Signature
+
+```python
+def stringify(self): ...
 ```
