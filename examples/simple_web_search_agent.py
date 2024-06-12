@@ -29,7 +29,11 @@ def initialize_agent(client, searx_tool):
 
 def main():
     console = Console()
-    client = instructor.from_openai(openai.OpenAI())
+    client = instructor.from_openai(
+    openai.OpenAI(
+        base_url='http://localhost:1234/v1'
+        )
+    )
     searx_tool = initialize_searx_tool()
     agent = initialize_agent(client, searx_tool)
 
@@ -40,8 +44,9 @@ def main():
         if user_input.lower() in ['exit', 'quit']:
             print('Exiting chat...')
             break
-
-        response = agent.run(user_input)
+        
+        # Fix this
+        response = agent.run(agent.input_schema(tool_input=user_input))
         console.print(f'Agent: {response.response}')
 
 if __name__ == "__main__":

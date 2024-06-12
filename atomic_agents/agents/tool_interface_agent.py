@@ -1,15 +1,27 @@
 import json
 from pydantic import Field, create_model
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
-
 
 class ToolInterfaceAgentConfig(BaseChatAgentConfig):
     tool_instance: BaseTool
     return_raw_output: bool = False
 
+class ToolInputModel(BaseAgentIO):
+    tool_input: str = Field(..., description="Tool input. Presented as a single question or instruction")
+
+    class Config:
+        title = "Default Tool"
+        description = "Default tool description"
+        json_schema_extra = {
+            "title": "Default Tool",
+            "description": "Default tool description"
+        }
+
+    def stringify(self):
+        return self.tool_input
 
 class ToolInterfaceAgent(BaseChatAgent):
     """
@@ -35,18 +47,22 @@ class ToolInterfaceAgent(BaseChatAgent):
         self.tool_instance = config.tool_instance
         self.return_raw_output = config.return_raw_output
         
+        # Create a new model with the updated schema
         self.input_schema = create_model(
             self.tool_instance.tool_name,
             tool_input=(str, Field(..., description=f"{self.tool_instance.tool_name} tool input. Presented as a single question or instruction", alias=f'tool_input_{self.tool_instance.tool_name}')),
-            __config__=type('Config', (), {
-                'title': self.tool_instance.tool_name,
-                'description': self.tool_instance.tool_description,
-                'json_schema_extra': {
-                    "title": self.tool_instance.tool_name,
-                    "description": self.tool_instance.tool_description
-                }
-            })
+            __base__=ToolInputModel
         )
+        
+        # Manually set the configuration attributes
+        self.input_schema.model_config['title'] = self.tool_instance.tool_name
+        self.input_schema.model_config['description'] = self.tool_instance.tool_description
+        self.input_schema.model_config['json_schema_extra'] = {
+            'title': self.tool_instance.tool_name,
+            'description': self.tool_instance.tool_description
+        }
+        
+        print(self.input_schema.schema_json(indent=2))
         
         if self.return_raw_output:
             self.output_schema = self.tool_instance.output_schema

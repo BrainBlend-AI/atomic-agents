@@ -5,11 +5,21 @@ from pydantic import BaseModel, Field
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
-# Input and Response Schemas
-class BaseChatAgentInputSchema(BaseModel):
-    chat_input: str = Field(..., description='The input text for the chat agent.')
+class BaseAgentIO(BaseModel):
+    """
+    Base class for input and output schemas for chat agents.
+    """
+    def stringify(self):
+        raise NotImplementedError
 
-class BaseChatAgentResponse(BaseModel):    
+# Input and Response Schemas
+class BaseChatAgentInputSchema(BaseAgentIO):
+    chat_input: str = Field(..., description='The input text for the chat agent.')
+    
+    def stringify(self):
+        return self.chat_input
+
+class BaseChatAgentResponse(BaseAgentIO):    
     response: str = Field(..., description='The markdown-enabled response from the chat agent.')
     
     class Config:
@@ -19,13 +29,15 @@ class BaseChatAgentResponse(BaseModel):
             'title': title,
             'description': description
         }
+        
+    def stringify(self):
+        return self.response
 
 class BaseChatAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description='Client for interacting with the language model.')
     model: str = Field("gpt-3.5-turbo", description='The model to use for generating responses.')
     memory: Optional[ChatMemory] = Field(None, description='Memory component for storing chat history.')
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(None, description='Component for generating system prompts.')
-    input_schema: Type[BaseModel] = Field(BaseChatAgentInputSchema, description='Schema for the input data.')
     output_schema: Type[BaseModel] = Field(BaseChatAgentResponse, description='Schema for the output data.')
     
     class Config:
@@ -39,14 +51,15 @@ class BaseChatAgent:
     generating system prompts, and obtaining responses from a language model.
 
     Attributes:
-        input_schema (Type[BaseModel]): Schema for the input data.
-        output_schema (Type[BaseModel]): Schema for the output data.
+        input_schema (Type[BaseAgentIO]): Schema for the input data.
+        output_schema (Type[BaseAgentIO]): Schema for the output data.
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
         memory (ChatMemory): Memory component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
         initial_memory (ChatMemory): Initial state of the memory.
     """
+    input_schema = BaseChatAgentInputSchema
 
     def __init__(self, config: BaseChatAgentConfig = BaseChatAgentConfig(client=instructor.from_openai(openai.OpenAI()))):
         """
@@ -55,7 +68,6 @@ class BaseChatAgent:
         Args:
             config (BaseChatAgentConfig): Configuration for the chat agent.
         """
-        self.input_schema = config.input_schema
         self.output_schema = config.output_schema
         self.client = config.client
         self.model = config.model
@@ -99,7 +111,7 @@ class BaseChatAgent:
         )
         return response
 
-    def run(self, user_input: Optional[str] = None) -> str:
+    def run(self, user_input: Optional[Type[BaseAgentIO]] = None) -> str:
         """
         Runs the chat agent with the given user input.
 
@@ -126,14 +138,14 @@ class BaseChatAgent:
         return self.get_response(response_model=self.output_schema)
 
 
-    def _init_run(self, user_input):
+    def _init_run(self, user_input: Type[BaseAgentIO]):
         """
         Initializes the run with the given user input.
 
         Args:
             user_input (str): The input text from the user.
         """
-        self.memory.add_message('user', user_input)
+        self.memory.add_message('user', user_input.stringify())
 
     def _pre_run(self):
         """

@@ -13,21 +13,9 @@ from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentCon
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
+from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
 
-
-# For this example, we extend the BaseChatAgent to create a custom chat agent that interacts with a search tool.
-class MyChatAgent(BaseChatAgent):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=25))
-    
-    def _pre_run(self):
-        self.memory.add_message('assistant', 'First, I will perform a search with 3 different search queries to gather relevant information on the topic.')
-        search_input = self.get_response(response_model=SearxNGSearchTool.input_schema)
-        search_results = self.search_tool.run(search_input)
-        self.system_prompt_generator.system_prompt_info.context_providers['search'].search_results = search_results
-        self.memory.add_message('assistant', 'I have gathered the search results and they have been added to the context.')
 
 # We can define dynamic info providers to provide additional information in the system prompt context.
 # Each provider must have a title and a `get_info` method that returns a string. 
@@ -95,7 +83,21 @@ memory.load(initial_memory)
 # Define ArticleIdeaOutlineGenConfig class - this is optional if you don't have any customization, 
 # but I like to do this for consistnecy and in order to not have to do it later if I need to add something.
 class ArticleIdeaOutlineGenConfig(BaseChatAgentConfig):
-    pass
+    search_tool: BaseTool
+
+# For this example, we extend the BaseChatAgent to create a custom chat agent that interacts with a search tool.
+class OutlineGenAgent(BaseChatAgent):
+    def __init__(self, config: ArticleIdeaOutlineGenConfig):
+        super().__init__(config)
+        self.search_tool = config.search_tool
+    
+    def _pre_run(self):
+        self.memory.add_message('assistant', 'First, I will perform a search with 3 different search queries to gather relevant information on the topic.')
+        search_input = self.get_response(response_model=SearxNGSearchTool.input_schema)
+        search_results = self.search_tool.run(search_input)
+        self.system_prompt_generator.system_prompt_info.context_providers['search'].search_results = search_results
+        self.memory.add_message('assistant', 'I have gathered the search results and they have been added to the context.')
+
 
 # Update the configuration to use ArticleIdeaOutlineGenConfig
 config = ArticleIdeaOutlineGenConfig(
@@ -103,10 +105,11 @@ config = ArticleIdeaOutlineGenConfig(
     model='gpt-3.5-turbo',
     system_prompt_generator=system_prompt_generator,
     memory=memory,
+    search_tool=SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=25))
 )
 
-# Create an instance of MyChatAgent with the specified configuration
-agent = MyChatAgent(config=config)
+# Create an instance of OutlineGenAgent with the specified configuration
+agent = OutlineGenAgent(config=config)
 
 console = Console()
 
@@ -118,5 +121,5 @@ while True:
         print('Exiting chat...')
         break
 
-    response = agent.run(user_input)
+    response = agent.run(OutlineGenAgent.input_schema(chat_input=user_input))
     console.print(f'Agent: {response.response}')

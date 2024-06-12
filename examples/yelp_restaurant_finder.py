@@ -88,7 +88,7 @@ while True:
         print('Exiting chat...')
         break
 
-    response = agent.run(user_input)
+    response = agent.run(agent.input_schema(chat_input=user_input))
     
     # Log the chosen schema
     logger.info(f'Chosen schema: {response.chosen_schema}')
@@ -97,7 +97,7 @@ while True:
     if isinstance(response.chosen_schema, YelpSearchToolSchema):
         output = yelp_tool.run(response.chosen_schema)
         
-        # In this example, we will add an "internal thought" to the chat memory followed by an empty agent.run() call. 
+        # In this example, we will add a simple "internal thought" to the chat memory followed by an empty agent.run() call. 
         # This will make the agent continue the conversation without user input.
         # In a more complex example, it might be preferable to extend the BaseChatAgent class and override the _get_and_handle_response method.
         agent.memory.add_message('assistant', f'INTERNAL THOUGHT: I have found the following information: {output.results}\n\n I will now summarize the results for the user.')
