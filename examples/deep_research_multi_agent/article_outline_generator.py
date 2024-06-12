@@ -112,7 +112,7 @@ while True:
         print('Exiting chat...')
         break
 
-    response = agent.run(user_input)
+    response = agent.run(agent.input_schema(chat_input=user_input))
     response_dict = response.dict()
 
     def format_markdown_section(title, items):

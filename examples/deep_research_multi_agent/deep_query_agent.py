@@ -101,6 +101,6 @@ deep_query_agent = DeepQueryAgent(
 if __name__ == "__main__":
     # We can test the agent by running a topic through it and observing the generated queries.
     console = Console()
-    output = deep_query_agent.run('What are the benefits of exercise?')
+    output = deep_query_agent.run(deep_query_agent.input_schema(chat_input='Apple intelligence'))
     console.print(output)
     
