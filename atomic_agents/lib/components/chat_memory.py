@@ -41,7 +41,7 @@ class ChatMemory:
             tool_message (Optional[Dict]): Optional tool message to be included.
             tool_id (Optional[str]): Optional unique identifier for the tool call.
         """
-        message = Message(role=role, content=json.dumps(content))
+        message = Message(role=role, content=content)
         if tool_message:
             if tool_id is None:
                 tool_id = tool_message["id"]
