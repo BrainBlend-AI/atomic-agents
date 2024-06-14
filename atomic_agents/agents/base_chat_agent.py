@@ -74,6 +74,7 @@ class BaseChatAgent:
         self.memory = config.memory or ChatMemory()
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.initial_memory = self.memory.copy()
+        self.current_user_input = None
 
     def reset_memory(self):
         """
@@ -111,7 +112,7 @@ class BaseChatAgent:
         )
         return response
 
-    def run(self, user_input: Optional[Type[BaseAgentIO]] = None) -> str:
+    def run(self, user_input: Optional[Type[BaseAgentIO]] = None) -> Type[BaseAgentIO]:
         """
         Runs the chat agent with the given user input.
 
@@ -145,6 +146,7 @@ class BaseChatAgent:
         Args:
             user_input (str): The input text from the user.
         """
+        self.current_user_input = user_input
         self.memory.add_message('user', user_input.stringify())
 
     def _pre_run(self):
