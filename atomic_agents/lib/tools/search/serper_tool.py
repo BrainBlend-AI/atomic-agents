@@ -8,11 +8,12 @@ import openai
 import instructor
 
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 
 ################
 # INPUT SCHEMA #
 ################
-class SerperSearchToolSchema(BaseModel):
+class SerperSearchToolSchema(BaseAgentIO):
     queries: List[str] = Field(..., description="List of search queries.")
 
     class Config:
@@ -26,13 +27,13 @@ class SerperSearchToolSchema(BaseModel):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class SerperSearchResultSchema(BaseModel):
+class SerperSearchResultSchema(BaseAgentIO):
     url: str
     title: str
     content: Optional[str] = None
     position: Optional[int] = None
 
-class SerperSearchToolOutputSchema(BaseModel):
+class SerperSearchToolOutputSchema(BaseAgentIO):
     results: List[SerperSearchResultSchema]
 
 ##############
@@ -139,5 +140,5 @@ if __name__ == "__main__":
     search_input = SerperSearchTool.input_schema(queries=["Python programming", "Machine learning", "Quantum computing"])
 
     output = search_tool_instance.run(search_input)
-    for i, result in enumerate(output.results):
-        rich_console.print(f"{i}. Title: {result.title}, URL: {result.url}")
+    
+    rich_console.print(output)

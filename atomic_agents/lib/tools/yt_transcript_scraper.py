@@ -3,13 +3,14 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from rich.console import Console
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 from googleapiclient.discovery import build
 
 ################
 # INPUT SCHEMA #
 ################
-class YouTubeTranscriptToolSchema(BaseModel):
+class YouTubeTranscriptToolSchema(BaseAgentIO):
     video_url: str = Field(..., description="URL of the YouTube video to fetch the transcript for.")
     language: Optional[str] = Field(None, description="Language code for the transcript (e.g., 'en' for English).")
 
@@ -24,16 +25,20 @@ class YouTubeTranscriptToolSchema(BaseModel):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class YouTubeTranscriptResultSchema(BaseModel):
-    text: str
-    start: float
-    duration: float
-
-class YouTubeTranscriptToolOutputSchema(BaseModel):
+class YouTubeTranscriptToolOutputSchema(BaseAgentIO):
     transcript: str
     duration: float
     comments: List[str]
     metadata: dict
+    
+    class Config:
+        title = "YouTubeTranscriptToolOutput"
+        description = "Output schema for the YouTubeTranscriptTool. Contains the transcript text, duration, comments, and metadata."
+        json_schema_extra = {
+            "title": title,
+            "description": description
+        }
+        
 
 ##############
 # TOOL LOGIC #
@@ -143,9 +148,7 @@ if __name__ == "__main__":
     api_key = os.getenv('YOUTUBE_API_KEY')
     search_tool_instance = YouTubeTranscriptTool(config=YouTubeTranscriptToolConfig(api_key=api_key))
     
-    search_input = YouTubeTranscriptTool.input_schema(video_url="https://www.youtube.com/watch?v=C2w45qRc3aU", language="en")
+    search_input = YouTubeTranscriptTool.input_schema(video_url="https://www.youtube.com/watch?v=t1e8gqXLbsU", language="en")
 
     output = search_tool_instance.run(search_input)
-    rich_console.print(f"Transcript: {output.transcript}")
-    rich_console.print(f"Duration: {output.duration}")
-    rich_console.print(f"Metadata: {output.metadata}")
+    rich_console.print(output)

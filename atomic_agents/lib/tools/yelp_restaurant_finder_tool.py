@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.table import Table
 from enum import Enum
 
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
@@ -38,7 +39,7 @@ class PriceRange(Enum):
     THREE = "3"
     FOUR = "4"
 
-class YelpSearchToolSchema(BaseModel):
+class YelpSearchToolSchema(BaseAgentIO):
     location: str = Field(..., description="Location to search for food.")
     term: Optional[str] = Field(None, description="Search term (e.g., 'pizza', 'sushi').")
     categories: Optional[List[YelpCategory]] = Field(None, description="Categories to filter by (e.g., 'italian, mexican').")
@@ -58,7 +59,7 @@ class YelpSearchToolSchema(BaseModel):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class YelpSearchResultSchema(BaseModel):
+class YelpSearchResultSchema(BaseAgentIO):
     name: str
     url: str
     rating: float
@@ -67,8 +68,16 @@ class YelpSearchResultSchema(BaseModel):
     phone: Optional[str] = None
     categories: List[str]
 
-class YelpSearchToolOutputSchema(BaseModel):
+class YelpSearchToolOutputSchema(BaseAgentIO):
     results: List[YelpSearchResultSchema]
+    
+    class Config:
+        title = "YelpSearchToolOutput"
+        description = "Output schema for the YelpSearchTool, containing a list of search results with details such as name, rating, and address."
+        json_schema_extra = {
+            "title": title,
+            "description": description
+        }
 
 ##############
 # TOOL LOGIC #
@@ -175,26 +184,4 @@ if __name__ == "__main__":
 
     output = search_tool_instance.run(search_input)
     
-    # Create a table to display the results
-    table = Table(title="Yelp Search Results")
-
-    table.add_column("Name", style="cyan", no_wrap=True)
-    table.add_column("Rating", style="magenta")
-    table.add_column("Review Count", style="magenta")
-    table.add_column("Address", style="green")
-    table.add_column("URL", style="blue")
-    table.add_column("Phone", style="yellow")
-    table.add_column("Categories", style="red")
-
-    for result in output.results:
-        table.add_row(
-            result.name,
-            str(result.rating),
-            str(result.review_count),
-            result.address,
-            result.url,
-            result.phone or "N/A",
-            ", ".join(result.categories)
-        )
-
-    rich_console.print(table)
+    rich_console.print(output)

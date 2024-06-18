@@ -31,13 +31,13 @@ class ChatMemory:
         """
         self.history: List[Message] = []
 
-    def add_message(self, role: str, content: Union[str, Dict], tool_message: Optional[Dict] = None, tool_id: Optional[str] = None) -> None:
+    def add_message(self, role: str, content: str, tool_message: Optional[Dict] = None, tool_id: Optional[str] = None) -> None:
         """
         Adds a message to the chat history.
 
         Args:
             role (str): The role of the message sender.
-            content (Union[str, Dict]): The content of the message.
+            content (str): The content of the message.
             tool_message (Optional[Dict]): Optional tool message to be included.
             tool_id (Optional[str]): Optional unique identifier for the tool call.
         """

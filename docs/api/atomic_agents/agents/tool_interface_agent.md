@@ -6,7 +6,6 @@
 
 - [ToolInterfaceAgent](#toolinterfaceagent)
   - [ToolInputModel](#toolinputmodel)
-    - [ToolInputModel().stringify](#toolinputmodel()stringify)
   - [ToolInterfaceAgent](#toolinterfaceagent-1)
     - [ToolInterfaceAgent()._get_and_handle_response](#toolinterfaceagent()_get_and_handle_response)
   - [ToolInterfaceAgentConfig](#toolinterfaceagentconfig)
@@ -25,21 +24,11 @@ class ToolInputModel(BaseAgentIO): ...
 
 - [BaseAgentIO](./base_chat_agent.md#baseagentio)
 
-### ToolInputModel().stringify
-
-[Show source in tool_interface_agent.py:23](../../../../atomic_agents/agents/tool_interface_agent.py#L23)
-
-#### Signature
-
-```python
-def stringify(self): ...
-```
-
 
 
 ## ToolInterfaceAgent
 
-[Show source in tool_interface_agent.py:26](../../../../atomic_agents/agents/tool_interface_agent.py#L26)
+[Show source in tool_interface_agent.py:23](../../../../atomic_agents/agents/tool_interface_agent.py#L23)
 
 A specialized chat agent designed to interact with a specific tool.
 
@@ -65,7 +54,7 @@ class ToolInterfaceAgent(BaseChatAgent):
 
 ### ToolInterfaceAgent()._get_and_handle_response
 
-[Show source in tool_interface_agent.py:89](../../../../atomic_agents/agents/tool_interface_agent.py#L89)
+[Show source in tool_interface_agent.py:86](../../../../atomic_agents/agents/tool_interface_agent.py#L86)
 
 Handles obtaining and processing the response from the tool.
 

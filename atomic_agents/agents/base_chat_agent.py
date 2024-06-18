@@ -2,43 +2,44 @@ from typing import List, Optional, Type
 import instructor
 import openai
 from pydantic import BaseModel, Field
+from rich.json import JSON
+
 from atomic_agents.lib.components.chat_memory import ChatMemory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
 
 class BaseAgentIO(BaseModel):
     """
     Base class for input and output schemas for chat agents.
     """
-    def stringify(self):
-        raise NotImplementedError
+    def __str__(self):
+        return self.model_dump_json()
+    
+    def __rich__(self):
+        json_str = self.model_dump_json()
+        return JSON(json_str)
 
 # Input and Response Schemas
 class BaseChatAgentInputSchema(BaseAgentIO):
     chat_input: str = Field(..., description='The input text for the chat agent.')
-    
-    def stringify(self):
-        return self.chat_input
 
-class BaseChatAgentResponse(BaseAgentIO):    
+class BaseChatAgentResponseSchema(BaseAgentIO):    
     response: str = Field(..., description='The markdown-enabled response from the chat agent.')
     
     class Config:
-        title = 'BaseChatAgentResponse'
+        title = 'BaseChatAgentResponseSchema'
         description = 'Response from the base chat agent. The response can be in markdown format. This response is the only thing the user will see in the chat interface.'
         json_schema_extra = {
             'title': title,
             'description': description
         }
-        
-    def stringify(self):
-        return self.response
 
 class BaseChatAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description='Client for interacting with the language model.')
     model: str = Field("gpt-3.5-turbo", description='The model to use for generating responses.')
     memory: Optional[ChatMemory] = Field(None, description='Memory component for storing chat history.')
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(None, description='Component for generating system prompts.')
-    output_schema: Type[BaseModel] = Field(BaseChatAgentResponse, description='Schema for the output data.')
+    input_schema: Optional[Type[BaseModel]] = Field(None, description='The schema for the input data.')
+    output_schema: Optional[Type[BaseModel]] = Field(None, description='The schema for the output data.')
     
     class Config:
         arbitrary_types_allowed = True
@@ -60,6 +61,7 @@ class BaseChatAgent:
         initial_memory (ChatMemory): Initial state of the memory.
     """
     input_schema = BaseChatAgentInputSchema
+    output_schema = BaseChatAgentResponseSchema
 
     def __init__(self, config: BaseChatAgentConfig = BaseChatAgentConfig(client=instructor.from_openai(openai.OpenAI()))):
         """
@@ -68,7 +70,8 @@ class BaseChatAgent:
         Args:
             config (BaseChatAgentConfig): Configuration for the chat agent.
         """
-        self.output_schema = config.output_schema
+        self.input_schema = config.input_schema or self.input_schema
+        self.output_schema = config.output_schema or self.output_schema
         self.client = config.client
         self.model = config.model
         self.memory = config.memory or ChatMemory()
@@ -147,7 +150,7 @@ class BaseChatAgent:
             user_input (str): The input text from the user.
         """
         self.current_user_input = user_input
-        self.memory.add_message('user', user_input.stringify())
+        self.memory.add_message('user', str(user_input))
 
     def _pre_run(self):
         """
@@ -162,4 +165,21 @@ class BaseChatAgent:
         Args:
             response (Type[BaseModel]): The response from the chat agent.
         """
-        self.memory.add_message('assistant', response.model_dump_json())
+        self.memory.add_message('assistant', str(response))
+        
+    def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
+        """
+        Retrieves a context provider by name.
+
+        Args:
+            provider_name (str): The name of the context provider.
+
+        Returns:
+            SystemPromptContextProviderBase: The context provider if found.
+
+        Raises:
+            KeyError: If the context provider is not found.
+        """
+        if provider_name not in self.system_prompt_generator.system_prompt_info.context_providers:
+            raise KeyError(f"Context provider '{provider_name}' not found.")
+        return self.system_prompt_generator.system_prompt_info.context_providers[provider_name]

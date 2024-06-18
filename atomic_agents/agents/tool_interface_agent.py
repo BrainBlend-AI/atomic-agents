@@ -20,9 +20,6 @@ class ToolInputModel(BaseAgentIO):
             "description": "Default tool description"
         }
 
-    def stringify(self):
-        return self.tool_input
-
 class ToolInterfaceAgent(BaseChatAgent):
     """
     A specialized chat agent designed to interact with a specific tool.

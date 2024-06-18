@@ -8,7 +8,7 @@ from rich.console import Console
 
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentResponse, BaseChatAgentConfig
+from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentResponseSchema, BaseChatAgentConfig
 from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolSchema
 
 # Configure logging
@@ -57,7 +57,7 @@ yelp_tool = YelpSearchTool(YelpSearchToolConfig(api_key=os.getenv('YELP_API_KEY'
 
 # Define a custom response schema that can handle both chat responses and Yelp search tool responses
 class ResponseSchema(BaseModel):
-    chosen_schema: Union[BaseChatAgentResponse, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
+    chosen_schema: Union[BaseChatAgentResponseSchema, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
 
     class Config:
         title = 'ResponseSchema'

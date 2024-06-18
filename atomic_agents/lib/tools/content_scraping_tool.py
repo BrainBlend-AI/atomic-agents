@@ -6,6 +6,7 @@ import openai
 import instructor
 import requests
 
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 from atomic_agents.lib.utils.scraping.url_to_markdown import UrlToMarkdownConverter
 from atomic_agents.lib.utils.scraping.pdf_to_markdown import PdfToMarkdownConverter
@@ -13,7 +14,7 @@ from atomic_agents.lib.utils.scraping.pdf_to_markdown import PdfToMarkdownConver
 ################
 # INPUT SCHEMA #
 ################
-class ContentScrapingToolSchema(BaseModel):
+class ContentScrapingToolSchema(BaseAgentIO):
     url: str = Field(..., description="URL of the web page or PDF to scrape.")
 
     class Config:
@@ -27,12 +28,10 @@ class ContentScrapingToolSchema(BaseModel):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class ContentScrapingResultSchema(BaseModel):
+class ContentScrapingToolOutputSchema(BaseAgentIO):
     content: str
     metadata: Optional[dict] = None
-
-class ContentScrapingToolOutputSchema(BaseModel):
-    result: ContentScrapingResultSchema
+    
 
 ##############
 # TOOL LOGIC #
@@ -79,8 +78,7 @@ class ContentScrapingTool(BaseTool):
         else:
             document = UrlToMarkdownConverter.convert(url=url)
 
-        result = ContentScrapingResultSchema(content=document.content, metadata=document.metadata.model_dump())
-        return ContentScrapingToolOutputSchema(result=result)
+        return ContentScrapingToolOutputSchema(content=document.content, metadata=document.metadata.model_dump())
 
 #################
 # EXAMPLE USAGE #
@@ -105,7 +103,7 @@ if __name__ == "__main__":
     )
 
     output = ContentScrapingTool().run(result)
-    rich_console.print(f"Content: {output.result.content}, Metadata: {output.result.metadata}")
+    rich_console.print(output)
     
     ################
     # TEST PDF URL #
@@ -117,4 +115,4 @@ if __name__ == "__main__":
     )
     
     output = ContentScrapingTool().run(result)
-    rich_console.print(f"Content: {output.result.content}, Metadata: {output.result.metadata}")
+    rich_console.print(output)

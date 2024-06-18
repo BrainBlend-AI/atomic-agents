@@ -1,3 +1,4 @@
+import re
 import requests
 from PyPDF2 import PdfReader
 from io import BytesIO
@@ -23,7 +24,10 @@ class PdfToMarkdownConverter:
 
     @staticmethod
     def _convert_to_markdown(text):
-        return markdownify.markdownify(text, heading_style="ATX")
+        markdown_text = markdownify.markdownify(text, heading_style="ATX")
+        # Replace more than two consecutive newlines with exactly two newlines
+        markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
+        return markdown_text
 
     @staticmethod
     def convert(url=None, file_path=None):

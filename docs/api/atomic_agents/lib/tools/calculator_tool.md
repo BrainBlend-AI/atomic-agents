@@ -83,22 +83,30 @@ class CalculatorToolConfig(BaseToolConfig): ...
 
 ## CalculatorToolOutputSchema
 
-[Show source in calculator_tool.py:26](../../../../../atomic_agents/lib/tools/calculator_tool.py#L26)
+[Show source in calculator_tool.py:25](../../../../../atomic_agents/lib/tools/calculator_tool.py#L25)
 
 #### Signature
 
 ```python
-class CalculatorToolOutputSchema(BaseModel): ...
+class CalculatorToolOutputSchema(BaseAgentIO): ...
 ```
+
+#### See also
+
+- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
 
 
 
 ## CalculatorToolSchema
 
-[Show source in calculator_tool.py:12](../../../../../atomic_agents/lib/tools/calculator_tool.py#L12)
+[Show source in calculator_tool.py:11](../../../../../atomic_agents/lib/tools/calculator_tool.py#L11)
 
 #### Signature
 
 ```python
-class CalculatorToolSchema(BaseModel): ...
+class CalculatorToolSchema(BaseAgentIO): ...
 ```
+
+#### See also
+
+- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)

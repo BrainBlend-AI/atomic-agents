@@ -1,4 +1,5 @@
 import os
+import re
 from bs4 import BeautifulSoup
 import requests
 from markdownify import MarkdownConverter
@@ -50,7 +51,10 @@ class UrlToMarkdownConverter:
             style.decompose()
 
         converter = CustomMarkdownConverter()
-        return converter.convert(str(html)).strip()
+        markdown_text = converter.convert(str(html))
+        # Replace more than two consecutive newlines with exactly two newlines
+        markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
+        return markdown_text
 
     @staticmethod
     def convert(url):

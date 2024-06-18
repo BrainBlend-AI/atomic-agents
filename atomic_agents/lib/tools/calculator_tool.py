@@ -1,15 +1,14 @@
-import os
-import openai
-from pydantic import BaseModel, Field
+from pydantic import Field
 from sympy import sympify
-import instructor
+from rich.console import Console
 
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
 # INPUT SCHEMA #
 ################
-class CalculatorToolSchema(BaseModel):
+class CalculatorToolSchema(BaseAgentIO):
     expression: str = Field(..., description="Mathematical expression to evaluate. For example, '2 + 2'.")
 
     class Config:
@@ -23,8 +22,9 @@ class CalculatorToolSchema(BaseModel):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class CalculatorToolOutputSchema(BaseModel):
+class CalculatorToolOutputSchema(BaseAgentIO):
     result: str = Field(..., description="Result of the calculation.")
+
 
 ##############
 # TOOL LOGIC #
@@ -79,4 +79,5 @@ class CalculatorTool(BaseTool):
 # EXAMPLE USAGE #
 #################
 if __name__ == "__main__":
-    print(CalculatorTool().run(CalculatorToolSchema(expression="2 + 2")))
+    rich_console = Console()
+    rich_console.print(CalculatorTool().run(CalculatorToolSchema(expression="2 + 2")))

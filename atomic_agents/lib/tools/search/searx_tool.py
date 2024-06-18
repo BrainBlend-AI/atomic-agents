@@ -4,12 +4,13 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from rich.console import Console
 
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
 # INPUT SCHEMA #
 ################
-class SearxNGSearchToolSchema(BaseModel):
+class SearxNGSearchToolSchema(BaseAgentIO):
     queries: List[str] = Field(..., description="List of search queries.")
     category: Optional[Literal["general", "news", "social_media"]] = Field(None, description="Category of the search queries.")
 
@@ -24,14 +25,15 @@ class SearxNGSearchToolSchema(BaseModel):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class SearxNGSearchResultSchema(BaseModel):
+class SearxNGSearchResultSchema(BaseAgentIO):
     url: str
     title: str
     content: Optional[str] = None
-    category: Optional[str] = None
+    
 
-class SearxNGSearchToolOutputSchema(BaseModel):
+class SearxNGSearchToolOutputSchema(BaseAgentIO):
     results: List[SearxNGSearchResultSchema]
+    category: Optional[str] = None
 
 ##############
 # TOOL LOGIC #
@@ -130,8 +132,7 @@ class SearxNGSearchTool(BaseTool):
 
         filtered_results = filtered_results[:max_results or self.max_results]
 
-        return SearxNGSearchToolOutputSchema(results=filtered_results)
-
+        return SearxNGSearchToolOutputSchema(results=filtered_results, category=params.category)
 
 #################
 # EXAMPLE USAGE #
@@ -143,5 +144,5 @@ if __name__ == "__main__":
     search_input = SearxNGSearchTool.input_schema(queries=["Python programming", "Machine learning", "Artificial intelligence"], category="news")
 
     output = search_tool_instance.run(search_input)
-    for i, result in enumerate(output.results):
-        rich_console.print(f"{i}. Title: {result.title}, URL: {result.url}")
+
+    rich_console.print(output)
