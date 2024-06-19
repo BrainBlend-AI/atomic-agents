@@ -21,6 +21,7 @@ google-auth==2.29.0
 googleapis-common-protos==1.63.0
 grpcio==1.64.1
 h11==0.14.0
+html2text==2024.2.26
 httpcore==1.0.5
 httpx==0.27.0
 huggingface-hub==0.23.1
