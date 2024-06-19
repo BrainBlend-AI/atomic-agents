@@ -26,6 +26,11 @@ class SystemPromptGenerator:
             output_instructions=[],
             context_providers={}
         )
+        
+        self.system_prompt_info.output_instructions.extend([
+            'Always respond using the proper JSON schema.',
+            'Always use the available additional information and context to enhance the response.'
+        ])
 
     def generate_prompt(self) -> str:
         system_prompt = ''
