@@ -88,3 +88,5 @@ class ChatMemory:
         """
         new_memory = ChatMemory()
         new_memory.load(self.dump())
+        
+        return new_memory
