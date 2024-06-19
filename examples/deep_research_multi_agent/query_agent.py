@@ -1,5 +1,3 @@
-import os
-import groq
 import instructor
 import openai
 from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
@@ -14,7 +12,7 @@ class QueryAgentInputSchema(BaseAgentIO):
 # Create the query agent
 query_agent = BaseChatAgent(
     BaseChatAgentConfig(
-        client=instructor.from_groq(groq.Groq(api_key=os.getenv('GROQ_API_KEY')))
+        client=instructor.from_openai(openai.OpenAI()), 
         model='gpt-3.5-turbo',
         system_prompt_generator=SystemPromptGenerator(
             SystemPromptInfo(
