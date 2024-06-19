@@ -141,7 +141,6 @@ class BaseChatAgent:
         """
         return self.get_response(response_model=self.output_schema)
 
-
     def _init_run(self, user_input: Type[BaseAgentIO]):
         """
         Initializes the run with the given user input.
@@ -166,7 +165,7 @@ class BaseChatAgent:
             response (Type[BaseModel]): The response from the chat agent.
         """
         self.memory.add_message('assistant', str(response))
-        
+
     def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
         """
         Retrieves a context provider by name.
@@ -183,3 +182,25 @@ class BaseChatAgent:
         if provider_name not in self.system_prompt_generator.system_prompt_info.context_providers:
             raise KeyError(f"Context provider '{provider_name}' not found.")
         return self.system_prompt_generator.system_prompt_info.context_providers[provider_name]
+
+    def register_context_provider(self, provider_name: str, provider: SystemPromptContextProviderBase):
+        """
+        Registers a new context provider.
+
+        Args:
+            provider_name (str): The name of the context provider.
+            provider (SystemPromptContextProviderBase): The context provider instance.
+        """
+        self.system_prompt_generator.system_prompt_info.context_providers[provider_name] = provider
+
+    def unregister_context_provider(self, provider_name: str):
+        """
+        Unregisters an existing context provider.
+
+        Args:
+            provider_name (str): The name of the context provider to remove.
+        """
+        if provider_name in self.system_prompt_generator.system_prompt_info.context_providers:
+            del self.system_prompt_generator.system_prompt_info.context_providers[provider_name]
+        else:
+            raise KeyError(f"Context provider '{provider_name}' not found.")
