@@ -12,7 +12,7 @@ from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 ################
 class SearxNGSearchToolSchema(BaseAgentIO):
     queries: List[str] = Field(..., description="List of search queries.")
-    category: Optional[Literal["general", "news", "social_media"]] = Field(None, description="Category of the search queries.")
+    category: Optional[Literal["general", "news", "social_media"]] = Field("general", description="Category of the search queries.")
 
     class Config:
         title = "SearxNGSearchTool"
