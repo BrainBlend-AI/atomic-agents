@@ -14,7 +14,7 @@ console = Console()
 search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=30))
 in_mem_faiss = InMemFaiss(openai_api_key=os.getenv('OPENAI_API_KEY'))
 
-user_input = "Create an in-depth table of upcoming PC games for july and august 2024"
+user_input = "Create an in-depth guide on beating rellana in the elden ring DLC"
 
 while True:
     if user_input.lower() == 'exit':
