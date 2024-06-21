@@ -2,6 +2,7 @@ import os
 from pydantic import BaseModel, Field
 from typing import Optional
 from rich.console import Console
+from rich.markdown import Markdown
 import openai
 import instructor
 import requests
@@ -31,13 +32,14 @@ class ContentScrapingToolSchema(BaseAgentIO):
 class ContentScrapingToolOutputSchema(BaseAgentIO):
     content: str
     metadata: Optional[dict] = None
-    
+
 
 ##############
 # TOOL LOGIC #
 ##############
 class ContentScrapingToolConfig(BaseToolConfig):
     pass
+
 
 class ContentScrapingTool(BaseTool):
     """
@@ -80,6 +82,7 @@ class ContentScrapingTool(BaseTool):
 
         return ContentScrapingToolOutputSchema(content=document.content, metadata=document.metadata.model_dump())
 
+
 #################
 # EXAMPLE USAGE #
 #################
@@ -99,12 +102,12 @@ if __name__ == "__main__":
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=ContentScrapingTool.input_schema,
-        messages=[{"role": "user", "content": "Scrape the content of https://example.com"}],
+        messages=[{"role": "user", "content": "Scrape the content of https://brainblendai.com"}],
     )
 
     output = ContentScrapingTool().run(result)
-    rich_console.print(output)
-    
+    rich_console.print(Markdown(output.content))
+
     ################
     # TEST PDF URL #
     ################
@@ -113,6 +116,6 @@ if __name__ == "__main__":
         response_model=ContentScrapingTool.input_schema,
         messages=[{"role": "user", "content": "Scrape the content of https://pdfobject.com/pdf/sample.pdf"}],
     )
-    
+
     output = ContentScrapingTool().run(result)
-    rich_console.print(output)
+    rich_console.print(Markdown(output.content))
