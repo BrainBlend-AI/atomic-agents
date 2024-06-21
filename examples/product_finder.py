@@ -93,4 +93,4 @@ while True:
     else:
         output = response.chosen_schema.chat_message
         
-    console.print(f'Agent: {output}')|
+    console.print(f'Agent: {output}')
