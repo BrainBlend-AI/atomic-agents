@@ -58,3 +58,5 @@ We welcome contributions! Please follow these steps to contribute:
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=KennyVaneetvelde/atomic_agents&type=Date)](https://star-history.com/#KennyVaneetvelde/atomic_agents&Date)
