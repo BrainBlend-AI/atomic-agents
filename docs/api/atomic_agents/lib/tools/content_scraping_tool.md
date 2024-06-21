@@ -8,7 +8,7 @@
 
 - `result` - ################
   TEST WEB PAGE #
-  ################: client.chat.completions.create(model='gpt-3.5-turbo', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://example.com'}])
+  ################: client.chat.completions.create(model='gpt-3.5-turbo', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://brainblendai.com'}])
 
 - `result` - ###############
   TEST PDF URL #
@@ -24,7 +24,7 @@
 
 ## ContentScrapingTool
 
-[Show source in content_scraping_tool.py:42](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L42)
+[Show source in content_scraping_tool.py:44](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L44)
 
 Tool for scraping web pages or PDFs and converting content to markdown.
 
@@ -49,7 +49,7 @@ class ContentScrapingTool(BaseTool):
 
 ### ContentScrapingTool().run
 
-[Show source in content_scraping_tool.py:62](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L62)
+[Show source in content_scraping_tool.py:64](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L64)
 
 Runs the ContentScrapingTool with the given parameters.
 
@@ -76,7 +76,7 @@ def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSch
 
 ## ContentScrapingToolConfig
 
-[Show source in content_scraping_tool.py:39](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L39)
+[Show source in content_scraping_tool.py:40](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L40)
 
 #### Signature
 
@@ -92,7 +92,7 @@ class ContentScrapingToolConfig(BaseToolConfig): ...
 
 ## ContentScrapingToolOutputSchema
 
-[Show source in content_scraping_tool.py:31](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L31)
+[Show source in content_scraping_tool.py:32](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L32)
 
 #### Signature
 
@@ -108,7 +108,7 @@ class ContentScrapingToolOutputSchema(BaseAgentIO): ...
 
 ## ContentScrapingToolSchema
 
-[Show source in content_scraping_tool.py:17](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L17)
+[Show source in content_scraping_tool.py:18](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L18)
 
 #### Signature
 

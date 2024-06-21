@@ -10,7 +10,7 @@
 
 ## UrlToMarkdownConverter
 
-[Show source in url_to_markdown.py:8](../../../../../../atomic_agents/lib/utils/scraping/url_to_markdown.py#L8)
+[Show source in url_to_markdown.py:9](../../../../../../atomic_agents/lib/utils/scraping/url_to_markdown.py#L9)
 
 #### Signature
 
@@ -20,7 +20,7 @@ class UrlToMarkdownConverter: ...
 
 ### UrlToMarkdownConverter.convert
 
-[Show source in url_to_markdown.py:55](../../../../../../atomic_agents/lib/utils/scraping/url_to_markdown.py#L55)
+[Show source in url_to_markdown.py:59](../../../../../../atomic_agents/lib/utils/scraping/url_to_markdown.py#L59)
 
 #### Signature
 

@@ -17,7 +17,7 @@
 
 ## CurrentDateProvider
 
-[Show source in system_prompt_generator.py:56](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L56)
+[Show source in system_prompt_generator.py:61](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L61)
 
 #### Signature
 
@@ -32,7 +32,7 @@ class CurrentDateProvider(SystemPromptContextProviderBase):
 
 ### CurrentDateProvider().get_info
 
-[Show source in system_prompt_generator.py:61](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L61)
+[Show source in system_prompt_generator.py:66](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L66)
 
 #### Signature
 
@@ -44,7 +44,7 @@ def get_info(self) -> str: ...
 
 ## LoremIpsumProvider
 
-[Show source in system_prompt_generator.py:64](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L64)
+[Show source in system_prompt_generator.py:69](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L69)
 
 #### Signature
 
@@ -58,7 +58,7 @@ class LoremIpsumProvider(SystemPromptContextProviderBase): ...
 
 ### LoremIpsumProvider().get_info
 
-[Show source in system_prompt_generator.py:65](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L65)
+[Show source in system_prompt_generator.py:70](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L70)
 
 #### Signature
 
@@ -109,7 +109,7 @@ class SystemPromptGenerator:
 
 ### SystemPromptGenerator().generate_prompt
 
-[Show source in system_prompt_generator.py:30](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L30)
+[Show source in system_prompt_generator.py:35](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L35)
 
 #### Signature
 

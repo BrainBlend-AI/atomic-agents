@@ -10,19 +10,23 @@
 
 ## WebDocument
 
-[Show source in web_document.py:10](../../../../../atomic_agents/lib/models/web_document.py#L10)
+[Show source in web_document.py:12](../../../../../atomic_agents/lib/models/web_document.py#L12)
 
 #### Signature
 
 ```python
-class WebDocument(BaseModel): ...
+class WebDocument(BaseAgentIO): ...
 ```
+
+#### See also
+
+- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
 
 
 
 ## WebDocumentMetadata
 
-[Show source in web_document.py:3](../../../../../atomic_agents/lib/models/web_document.py#L3)
+[Show source in web_document.py:5](../../../../../atomic_agents/lib/models/web_document.py#L5)
 
 #### Signature
 

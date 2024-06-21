@@ -10,7 +10,7 @@
 
 ## PdfToMarkdownConverter
 
-[Show source in pdf_to_markdown.py:8](../../../../../../atomic_agents/lib/utils/scraping/pdf_to_markdown.py#L8)
+[Show source in pdf_to_markdown.py:9](../../../../../../atomic_agents/lib/utils/scraping/pdf_to_markdown.py#L9)
 
 #### Signature
 
@@ -20,7 +20,7 @@ class PdfToMarkdownConverter: ...
 
 ### PdfToMarkdownConverter.convert
 
-[Show source in pdf_to_markdown.py:28](../../../../../../atomic_agents/lib/utils/scraping/pdf_to_markdown.py#L28)
+[Show source in pdf_to_markdown.py:32](../../../../../../atomic_agents/lib/utils/scraping/pdf_to_markdown.py#L32)
 
 #### Signature
 
