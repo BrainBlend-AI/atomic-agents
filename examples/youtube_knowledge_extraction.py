@@ -73,7 +73,7 @@ transcript_provider.transcript = scraped_transcript.transcript
 transcript_provider.duration = scraped_transcript.duration
 transcript_provider.metadata = scraped_transcript.metadata
 
-response = agent.run(agent.input_schema(chat_input='Perform your assignment on the YouTube video transcript present in your context. Do not reply with anything other than the output of the assignment.'))
+response = agent.run(agent.input_schema(chat_message='Perform your assignment on the YouTube video transcript present in your context. Do not reply with anything other than the output of the assignment.'))
 
 # Convert the ResponseModel to a dictionary and then to a Markdown string
 response_dict = response.dict()

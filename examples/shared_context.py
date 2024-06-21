@@ -46,11 +46,11 @@ def query_agents_with_random_number():
     print(f'Updated shared context with random number: {random_number}')
 
     # Get responses from both agents
-    response_one = agent_one.run(agent_one.input_schema(chat_input="What is the random number?"))
-    response_two = agent_two.run(agent_two.input_schema(chat_input="What is the random number?"))
+    response_one = agent_one.run(agent_one.input_schema(chat_message="What is the random number?"))
+    response_two = agent_two.run(agent_two.input_schema(chat_message="What is the random number?"))
 
-    print(f'Agent One: {response_one.response}')
-    print(f'Agent Two: {response_two.response}')
+    print(f'Agent One: {response_one.chat_message}')
+    print(f'Agent Two: {response_two.chat_message}')
 
 if __name__ == "__main__":
     query_agents_with_random_number()

@@ -24,5 +24,5 @@ while True:
         print('Exiting chat...')
         break
 
-    response = agent.run(agent.input_schema(chat_input=user_input))
-    console.print(f'Agent: {response.response}')
+    response = agent.run(agent.input_schema(chat_message=user_input))
+    console.print(f'Agent: {response.chat_message}')

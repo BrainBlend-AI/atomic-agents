@@ -28,14 +28,14 @@ while True:
         print('Exiting chat...')
         break
 
-    response = orchestration_agent.run(orchestration_agent.input_schema(chat_input=user_input))
-    console.print(f'Agent: {response.response}')
+    response = orchestration_agent.run(orchestration_agent.input_schema(chat_message=user_input))
+    console.print(f'Agent: {response.chat_message}')
 
-    if isinstance(response.response, searx_agent.input_schema):
+    if isinstance(response.chat_message, searx_agent.input_schema):
         console.print(f'Using searx agent')
-        response = searx_agent.run(response.response)
-    elif isinstance(response.response, calc_agent.input_schema):
+        response = searx_agent.run(response.chat_message)
+    elif isinstance(response.chat_message, calc_agent.input_schema):
         console.print(f'Using calc agent')
-        response = calc_agent.run(response.response)
+        response = calc_agent.run(response.chat_message)
 
-    console.print(f'Agent: {response.response}')
+    console.print(f'Agent: {response.chat_message}')

@@ -47,7 +47,7 @@ def main():
         
         # Fix this
         response = agent.run(agent.input_schema(tool_input=user_input))
-        console.print(f'Agent: {response.response}')
+        console.print(f'Agent: {response.chat_message}')
 
 if __name__ == "__main__":
     main()

@@ -88,7 +88,7 @@ while True:
         print('Exiting chat...')
         break
 
-    response = agent.run(agent.input_schema(chat_input=user_input))
+    response = agent.run(agent.input_schema(chat_message=user_input))
     
     # Log the chosen schema
     logger.info(f'Chosen schema: {response.chosen_schema}')
@@ -101,8 +101,8 @@ while True:
         # This will make the agent continue the conversation without user input.
         # In a more complex example, it might be preferable to extend the BaseChatAgent class and override the _get_and_handle_response method.
         agent.memory.add_message('assistant', f'INTERNAL THOUGHT: I have found the following information: {output.results}\n\n I will now summarize the results for the user.')
-        output = agent.run().chosen_schema.response
+        output = agent.run().chosen_schema.chat_message
     else:
-        output = response.chosen_schema.response
+        output = response.chosen_schema.chat_message
         
     console.print(f'Agent: {output}')
