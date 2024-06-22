@@ -162,10 +162,6 @@ if __name__ == "__main__":
     rich_console.print(output)
 ```
 
-### More examples
-
-For more examples, you can refer to the `CalculatorTool` and `ContentScrapingTool` provided in the `atomic_agents.lib.tools` package.
-
 ### Conclusion
 
 By following these steps, you can create a new tool in the `atomic_agents` framework. Define the input and output schemas, implement the tool logic, and provide an example usage to demonstrate how the tool works. Remember to inherit from the appropriate base classes (`BaseAgentIO`, `BaseToolConfig`, and `BaseTool`) and use the `rich` library for console output in your example usage.
