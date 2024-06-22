@@ -17,17 +17,14 @@ A tool in the `atomic_agents` framework consists of the following components:
 
 #### 1. Define the Input Schema
 
-The input schema is a Pydantic `BaseModel` that specifies the input parameters for the tool. It can include simple fields, complex nested data structures, and even child schemas. An input schema should include a `Config` class with `title`, `description`, and `json_schema_extra` attributes. This is not just informational or aesthetic; it also helps generate the OpenAPI documentation for the tool, which is consumed by the LLM in order to generate the output. Here is an example:
+The input schema is a Pydantic `BaseModel` that specifies the input parameters for the tool. It should inherit from `BaseAgentIO` and include a `Config` class with `title`, `description`, and `json_schema_extra` attributes. Here's an example:
 
 ```python
-from pydantic import BaseModel, Field
+from pydantic import Field
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 
-class ChildSchema(BaseModel):
-    child_param: int = Field(..., description="A parameter in the child schema.")
-
-class MyToolInputSchema(BaseModel):
+class MyToolInputSchema(BaseAgentIO):
     parameter: str = Field(..., description="Description of the parameter.")
-    nested: ChildSchema = Field(..., description="A nested schema example.")
     list_param: list[str] = Field(..., description="A list of strings.")
 
     class Config:
@@ -41,20 +38,19 @@ class MyToolInputSchema(BaseModel):
 
 #### 2. Define the Output Schema
 
-The output schema is a Pydantic `BaseModel` that specifies the structure of the tool's output. It can also include complex nested data structures and multiple properties just like the input schema. Here is an example:
+The output schema is also a Pydantic `BaseModel` that inherits from `BaseAgentIO`. It specifies the structure of the tool's output. Here's an example:
 
 ```python
-class MyToolOutputSchema(BaseModel):
+class MyToolOutputSchema(BaseAgentIO):
     result: str = Field(..., description="Result of the tool's operation.")
     details: dict = Field(..., description="Additional details about the result.")
 ```
 
 #### 3. Define the Configuration
 
-The configuration is a Pydantic `BaseModel` that specifies the configuration parameters for the tool. It should extend from `BaseToolConfig`, which includes `title` and `description` attributes. This allows for optional overrides of the tool's title and description. Here is an example:
+The configuration is a Pydantic `BaseModel` that specifies the configuration parameters for the tool. It should extend from `BaseToolConfig`. Here's an example:
 
 ```python
-from pydantic import BaseModel, Field
 from atomic_agents.lib.tools.base import BaseToolConfig
 
 class MyToolConfig(BaseToolConfig):
@@ -63,44 +59,44 @@ class MyToolConfig(BaseToolConfig):
 
 #### 4. Implement the Tool Logic
 
-Create a class that inherits from `BaseTool` and implements the core functionality of the tool. This class should define the `input_schema`, `output_schema`, and `config` attributes and implement the `run` method.
+Create a class that inherits from `BaseTool` and implements the core functionality of the tool. This class should define the `input_schema`, `output_schema`, and implement the `run` method.
 
 ```python
-from typing import Optional
-from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
+from atomic_agents.lib.tools.base import BaseTool
 
 class MyTool(BaseTool):
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema
-    config = MyToolConfig
-
-    def __init__(self, config: MyToolConfig):
+    
+    def __init__(self, config: MyToolConfig = MyToolConfig()):
         super().__init__(config)
         self.api_key = config.api_key
 
     def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
         # Implement the core logic here
-        result = f"Processed {params.parameter} with child param {params.nested.child_param}"
+        result = f"Processed {params.parameter}"
         details = {"list_param_length": len(params.list_param)}
         return MyToolOutputSchema(result=result, details=details)
 ```
 
 #### 5. Example Usage
 
-Provide an example of how to use the tool. This typically involves initializing the tool and running it with sample input. If you don't plan to merge this tool into the atomic_agents repository, you can exclude this part if you wish.
+Provide an example of how to use the tool. This typically involves initializing the tool and running it with sample input.
 
 ```python
 if __name__ == "__main__":
-    # Example usage of MyTool
+    from rich.console import Console
+
+    rich_console = Console()
+    
     input_data = MyToolInputSchema(
         parameter="example input",
-        nested=ChildSchema(child_param=42),
         list_param=["item1", "item2"]
     )
     config = MyToolConfig(api_key="your_api_key_here")
     tool = MyTool(config=config)
     output = tool.run(input_data)
-    print(output)
+    rich_console.print(output)
 ```
 
 ### Full Example
@@ -110,18 +106,14 @@ Here is a complete example of a new tool called `MyTool`:
 ```python
 # my_tool.py
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import Field
+from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
-
-# Child Schema
-class ChildSchema(BaseModel):
-    child_param: int = Field(..., description="A parameter in the child schema.")
+from rich.console import Console
 
 # Input Schema
-class MyToolInputSchema(BaseModel):
+class MyToolInputSchema(BaseAgentIO):
     parameter: str = Field(..., description="Description of the parameter.")
-    nested: ChildSchema = Field(..., description="A nested schema example.")
     list_param: list[str] = Field(..., description="A list of strings.")
 
     class Config:
@@ -133,7 +125,7 @@ class MyToolInputSchema(BaseModel):
         }
 
 # Output Schema
-class MyToolOutputSchema(BaseModel):
+class MyToolOutputSchema(BaseAgentIO):
     result: str = Field(..., description="Result of the tool's operation.")
     details: dict = Field(..., description="Additional details about the result.")
 
@@ -145,35 +137,35 @@ class MyToolConfig(BaseToolConfig):
 class MyTool(BaseTool):
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema
-    config = MyToolConfig
-
-    def __init__(self, config: MyToolConfig):
+    
+    def __init__(self, config: MyToolConfig = MyToolConfig()):
         super().__init__(config)
         self.api_key = config.api_key
 
     def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
         # Implement the core logic here
-        result = f"Processed {params.parameter} with child param {params.nested.child_param}"
+        result = f"Processed {params.parameter}"
         details = {"list_param_length": len(params.list_param)}
         return MyToolOutputSchema(result=result, details=details)
 
 # Example Usage
 if __name__ == "__main__":
-    # Example usage of MyTool
+    rich_console = Console()
+    
     input_data = MyToolInputSchema(
         parameter="example input",
-        nested=ChildSchema(child_param=42),
         list_param=["item1", "item2"]
     )
     config = MyToolConfig(api_key="your_api_key_here")
     tool = MyTool(config=config)
     output = tool.run(input_data)
-    print(output)
+    rich_console.print(output)
 ```
 
 ### More examples
-If you want more examples, have a look at any of the tools in the `atomic_agents.lib.tools` package. For example, the [CalculatorTool](../../atomic_agents/lib/tools/calculator_tool.py) or the [Content Scraping Tool](../../atomic_agents/lib/tools/content_scraping_tool.py).
+
+For more examples, you can refer to the `CalculatorTool` and `ContentScrapingTool` provided in the `atomic_agents.lib.tools` package.
 
 ### Conclusion
 
-By following these steps, you can create a new tool in the `atomic_agents` framework. Define the input and output schemas, implement the tool logic, and provide an example usage to demonstrate how the tool works. Remember that the input and output schemas can be as simple or as complex as needed, including nested data structures and multiple properties.
+By following these steps, you can create a new tool in the `atomic_agents` framework. Define the input and output schemas, implement the tool logic, and provide an example usage to demonstrate how the tool works. Remember to inherit from the appropriate base classes (`BaseAgentIO`, `BaseToolConfig`, and `BaseTool`) and use the `rich` library for console output in your example usage.
