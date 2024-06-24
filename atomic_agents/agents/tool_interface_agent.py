@@ -59,8 +59,6 @@ class ToolInterfaceAgent(BaseChatAgent):
             'description': self.tool_instance.tool_description
         }
         
-        print(self.input_schema.schema_json(indent=2))
-        
         if self.return_raw_output:
             self.output_schema = self.tool_instance.output_schema
             
