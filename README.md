@@ -6,6 +6,8 @@
 ## Philosophy
 The Atomic Agents framework is designed to be modular, extensible, and easy to use. Components in the Atomic Agents Framework should always be as small and single-purpose as possible, similar to design system components in [Atomic Design](https://bradfrost.com/blog/post/atomic-web-design/). Even though Atomic Design cannot be directly applied to AI agent architecture, a lot of ideas were taken from it. The resulting framework provides a set of tools and agents that can be combined to create powerful applications. The framework is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data validation and serialization.
 
+[A more detailed deep-dive article can be found on Medium](https://medium.com/generative-ai/an-in-depth-introduction-to-the-atomic-agents-multi-agent-ai-framework-b621f14df454)
+
 <!-- ![alt text](./.assets/architecture_highlevel_overview.png) -->
 <img src="./.assets/architecture_highlevel_overview.png" alt="Atomic Agents Architecture" width="600"/>
 <img src="./.assets/what_is_sent_in_prompt.png" alt="What is sent to the LLM in the prompt?" width="600"/>
