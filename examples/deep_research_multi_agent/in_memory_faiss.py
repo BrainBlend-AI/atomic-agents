@@ -1,10 +1,7 @@
-import os
 import openai
 import faiss
 import numpy as np
-import html2text
 import asyncio
-import aiohttp
 from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 import markdownify
@@ -52,8 +49,8 @@ class InMemFaiss:
     async def generate_embeddings(self, texts):
         embeddings = []
         for text in texts:
-            response = await openai.Embedding.create(input=text, model="text-embedding-3-small")
-            embeddings.append(response['data'][0]['embedding'])
+            response = await openai.embeddings.create(input=text, model="text-embedding-3-small")
+            embeddings.append(response.data[0].embedding)
         return np.array(embeddings).astype('float32')
 
     async def ingest_urls(self, urls):

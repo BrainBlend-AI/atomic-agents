@@ -4,8 +4,6 @@ import instructor
 import openai
 from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from examples.deep_research_multi_agent.providers import vector_db_chunks_provider
-from examples.deep_research_multi_agent.providers import current_date_provider
 
 class RefineAnswerInputSchema(BaseAgentIO):
     question: str = Field(..., description='The question that was asked.')
@@ -41,7 +39,3 @@ refine_answer_agent = BaseChatAgent(
         output_schema=RefineAnswerOutputSchema
     )
 )
-
-# Register the context providers
-refine_answer_agent.register_context_provider('date', current_date_provider)
-refine_answer_agent.register_context_provider('vector_db_chunks', vector_db_chunks_provider)

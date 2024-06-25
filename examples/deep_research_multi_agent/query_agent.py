@@ -3,7 +3,6 @@ import openai
 from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
-from examples.deep_research_multi_agent.providers import CurrentDateProvider
 
 class QueryAgentInputSchema(BaseAgentIO):
     instruction: str = 'A detailed instruction or request to generate deep research queries for.'
@@ -35,6 +34,3 @@ query_agent = BaseChatAgent(
         output_schema=SearxNGSearchTool.input_schema
     )
 )
-
-# Register the new context provider
-query_agent.register_context_provider('date', CurrentDateProvider(title='Current date'))

@@ -3,12 +3,11 @@ import openai
 from pydantic import BaseModel, Field
 from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from examples.deep_research_multi_agent.providers import current_date_provider
 
 class AnswerAgentInputSchema(BaseAgentIO):
     question: str = Field(..., description='A question that needs to be answered based on the provided context.')
 
-class AnswerAgentOutputSchema(BaseModel):
+class AnswerAgentOutputSchema(BaseAgentIO):
     markdown_output: str = Field(..., description='The answer to the question in markdown format.')
 
 # Create the answer agent
