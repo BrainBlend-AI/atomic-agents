@@ -2,6 +2,7 @@
 This example demonstrates how to create a custom chatbot with custom personality using the Atomic Agents library.
 """
 
+import os
 from rich.console import Console
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
@@ -38,9 +39,15 @@ memory.load(initial_memory)
 
 # Create a chat agent with the specified model, system prompt generator, and memory
 # For all supported clients such as Anthropic & Gemini, have a look at the `instructor` library documentation.
+
+base_url = None # Replace with your OpenAI API base URL
+api_key = None # Replace with your OpenAI API key
 agent = BaseChatAgent(
     config=BaseChatAgentConfig(
-        client=instructor.from_openai(openai.OpenAI()), 
+        client=instructor.from_openai(openai.OpenAI(
+            base_url=base_url or os.getenv('OPENAI_BASE_URL'),
+            api_key=api_key or os.getenv('OPENAI_API_KEY')
+        )), 
         system_prompt_generator=system_prompt_generator,
         model='gpt-3.5-turbo',
         memory=memory,
