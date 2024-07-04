@@ -22,18 +22,18 @@ class ChatMemory:
 
     Attributes:
         history (List[Message]): A list of messages representing the chat history.
-        max_turns (Optional[int]): Maximum number of turns to keep in history.
+        max_messages (Optional[int]): Maximum number of turns to keep in history.
     """
 
-    def __init__(self, max_turns: Optional[int] = None):
+    def __init__(self, max_messages: Optional[int] = None):
         """
         Initializes the ChatMemory with an empty history and optional constraints.
 
         Args:
-            max_turns (Optional[int]): Maximum number of turns to keep in history.
+            max_messages (Optional[int]): Maximum number of turns to keep in history.
         """
         self.history: List[Message] = []
-        self.max_turns = max_turns
+        self.max_messages = max_messages
 
     def add_message(self, role: str, content: Union[str, Dict], tool_message: Optional[Dict] = None, tool_id: Optional[str] = None) -> None:
         """
@@ -60,10 +60,10 @@ class ChatMemory:
 
     def _manage_overflow(self) -> None:
         """
-        Manages the chat history overflow based on max_turns constraint.
+        Manages the chat history overflow based on max_messages constraint.
         """
-        if self.max_turns is not None:
-            while len(self.history) > self.max_turns:
+        if self.max_messages is not None:
+            while len(self.history) > self.max_messages:
                 self.history.pop(0)
 
     def get_history(self) -> List[Message]:
@@ -113,7 +113,7 @@ class ChatMemory:
         Returns:
             ChatMemory: A copy of the chat memory.
         """
-        new_memory = ChatMemory(max_turns=self.max_turns)
+        new_memory = ChatMemory(max_messages=self.max_messages)
         new_memory.load(self.dump())
         
         return new_memory
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         console.print(Panel(content, title=title, expand=False, border_style="cyan"))
 
     # Create a ChatMemory with a maximum of 5 messages
-    memory = ChatMemory(max_turns=5)
+    memory = ChatMemory(max_messages=5)
 
     console.print("[bold magenta]ChatMemory Test Cases[/bold magenta]", justify="center")
     console.print()
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     content.append("Dumped data:\n")
     content.append(str(dumped_data), style="dim")
     content.append("\n\n")
-    new_memory = ChatMemory(max_turns=5)
+    new_memory = ChatMemory(max_messages=5)
     new_memory.load(dumped_data)
     content.append("Loaded memory:\n")
     for msg in new_memory.get_history():
@@ -220,17 +220,17 @@ if __name__ == "__main__":
     large_buffer = [
         {"role": "user", "content": f"Message {i}"} for i in range(10)
     ]
-    large_memory = ChatMemory(max_turns=5)
+    large_memory = ChatMemory(max_messages=5)
     large_memory.load(large_buffer)
     content.append(f"Total messages after loading large buffer: {large_memory.get_message_count()}\n\n")
     content.append("Current history (should only have 5 most recent messages):\n")
     for msg in large_memory.get_history():
         content.append(f"- {msg.role}: {msg.content}\n", style="green")
-    print_panel("7. Testing loading a larger buffer than max_turns", content)
+    print_panel("7. Testing loading a larger buffer than max_messages", content)
 
     # Test Case 8
     content = Text()
-    mixed_memory = ChatMemory(max_turns=10)
+    mixed_memory = ChatMemory(max_messages=10)
     mixed_memory.add_message("user", "Hello")
     mixed_memory.add_message("assistant", {"text": "Hi there!", "confidence": 0.95})
     mixed_memory.add_message("system", {"command": "reset_conversation"})
