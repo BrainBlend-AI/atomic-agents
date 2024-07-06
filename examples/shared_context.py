@@ -31,6 +31,8 @@ agent_two = BaseChatAgent(
         model='gpt-3.5-turbo',
     )
 )
+
+# Add an additional output instruction to agent two, to have some differences between the two agents
 agent_two.system_prompt_generator.system_prompt_info.output_instructions.append('Always respond in a beautiful poetic rhyming verse.')
 
 # Define a context provider that will be shared between the two agents

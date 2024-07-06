@@ -1,8 +1,8 @@
 import os
-from examples.deep_research_multi_agent.query_agent import query_agent
-from examples.deep_research_multi_agent.question_answering import answer_agent
-from examples.deep_research_multi_agent.top_urls_selector import top_urls_selector_agent
-from examples.deep_research_multi_agent.info_refiner import refine_answer_agent
+from examples.deep_research_multi_agent.agents.query_agent import query_agent
+from examples.deep_research_multi_agent.agents.question_answering_agent import answer_agent
+from examples.deep_research_multi_agent.agents.top_urls_selector_agent import top_urls_selector_agent
+from examples.deep_research_multi_agent.agents.info_refiner_agent import refine_answer_agent
 from examples.deep_research_multi_agent.providers import search_results_provider, vector_db_chunks_provider
 from examples.deep_research_multi_agent.in_memory_faiss import InMemFaiss
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig

@@ -25,6 +25,7 @@ refine_answer_agent = BaseChatAgent(
                 ],
                 steps=[
                     "You will receive a question or instruction, the initial answer, and additional context from vector DB chunks.",
+                    "Correct any inaccuracies and factual errors in the initial answer.",
                     "Expand and elaborate on the initial answer using the additional context to provide a more comprehensive and detailed response."
                 ],
                 output_instructions=[

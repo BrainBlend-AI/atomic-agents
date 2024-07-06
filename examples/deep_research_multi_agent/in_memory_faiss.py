@@ -49,8 +49,9 @@ class InMemFaiss:
     async def generate_embeddings(self, texts):
         embeddings = []
         for text in texts:
-            response = await openai.embeddings.create(input=text, model="text-embedding-3-small")
-            embeddings.append(response.data[0].embedding)
+            response = openai.embeddings.create(input=text, model="text-embedding-3-small")
+            embedding = response.data[0].embedding
+            embeddings.append(embedding)
         return np.array(embeddings).astype('float32')
 
     async def ingest_urls(self, urls):
