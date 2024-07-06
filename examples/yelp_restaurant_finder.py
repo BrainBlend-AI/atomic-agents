@@ -8,7 +8,7 @@ from rich.console import Console
 
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentResponseSchema, BaseChatAgentConfig
+from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentOutputSchema, BaseChatAgentConfig
 from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolSchema
 
 # Configure logging
@@ -56,11 +56,11 @@ client = instructor.from_openai(openai.OpenAI())
 yelp_tool = YelpSearchTool(YelpSearchToolConfig(api_key=os.getenv('YELP_API_KEY'), max_results=10))
 
 # Define a custom response schema that can handle both chat responses and Yelp search tool responses
-class ResponseSchema(BaseModel):
-    chosen_schema: Union[BaseChatAgentResponseSchema, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
+class OutputSchema(BaseModel):
+    chosen_schema: Union[BaseChatAgentOutputSchema, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
 
     class Config:
-        title = 'ResponseSchema'
+        title = 'OutputSchema'
         description = 'The response schema for the chat agent.'
         json_schema_extra = {
             'title': title,
@@ -73,7 +73,7 @@ agent_config = BaseChatAgentConfig(
     system_prompt_generator=system_prompt_generator,
     model='gpt-3.5-turbo',
     memory=memory,
-    output_schema=ResponseSchema
+    output_schema=OutputSchema
 )
 
 # Create a chat agent with the specified config
