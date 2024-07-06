@@ -20,7 +20,7 @@
     - [BaseChatAgent().unregister_context_provider](#basechatagent()unregister_context_provider)
   - [BaseChatAgentConfig](#basechatagentconfig)
   - [BaseChatAgentInputSchema](#basechatagentinputschema)
-  - [BaseChatAgentResponseSchema](#basechatagentresponseschema)
+  - [BaseChatAgentOutputSchema](#basechatagentoutputschema)
 
 ## BaseAgentIO
 
@@ -306,14 +306,14 @@ class BaseChatAgentInputSchema(BaseAgentIO): ...
 
 
 
-## BaseChatAgentResponseSchema
+## BaseChatAgentOutputSchema
 
 [Show source in base_chat_agent.py:36](../../../../atomic_agents/agents/base_chat_agent.py#L36)
 
 #### Signature
 
 ```python
-class BaseChatAgentResponseSchema(BaseAgentIO): ...
+class BaseChatAgentOutputSchema(BaseAgentIO): ...
 ```
 
 #### See also

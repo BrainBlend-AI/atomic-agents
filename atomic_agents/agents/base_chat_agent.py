@@ -33,7 +33,7 @@ class BaseChatAgentInputSchema(BaseAgentIO):
             "description": description,
         }
 
-class BaseChatAgentResponseSchema(BaseAgentIO):
+class BaseChatAgentOutputSchema(BaseAgentIO):
     chat_message: str = Field(
         ...,
         description='The chat message exchanged between the user and the chat agent. '
@@ -41,7 +41,7 @@ class BaseChatAgentResponseSchema(BaseAgentIO):
     )
 
     class Config:
-        title = 'BaseChatAgentResponseSchema'
+        title = 'BaseChatAgentOutputSchema'
         description = 'This schema represents the response message exchanged between the user and the chat agent.'
         json_schema_extra = {
             "title": title,
@@ -76,7 +76,7 @@ class BaseChatAgent:
         initial_memory (ChatMemory): Initial state of the memory.
     """
     input_schema = BaseChatAgentInputSchema
-    output_schema = BaseChatAgentResponseSchema
+    output_schema = BaseChatAgentOutputSchema
 
     def __init__(self, config: BaseChatAgentConfig = BaseChatAgentConfig(client=instructor.from_openai(openai.OpenAI()))):
         """

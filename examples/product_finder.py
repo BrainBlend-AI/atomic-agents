@@ -8,7 +8,7 @@ from rich.console import Console
 
 from atomic_agents.lib.components.chat_memory import ChatMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentResponseSchema, BaseChatAgentConfig
+from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentOutputSchema, BaseChatAgentConfig
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolSchema
 
 # Configure logging
@@ -53,11 +53,11 @@ client = instructor.from_openai(openai.OpenAI())
 searx_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=5))
 
 # Define a custom response schema
-class ResponseSchema(BaseModel):
-    chosen_schema: Union[BaseChatAgentResponseSchema, SearxNGSearchToolSchema] = Field(..., description='The response from the chat agent.')
+class OutputSchema(BaseModel):
+    chosen_schema: Union[BaseChatAgentOutputSchema, SearxNGSearchToolSchema] = Field(..., description='The response from the chat agent.')
 
     class Config:
-        title = 'ResponseSchema'
+        title = 'OutputSchema'
         description = 'The response schema for the chat agent.'
 
 # Create a config for the chat agent
@@ -66,7 +66,7 @@ agent_config = BaseChatAgentConfig(
     system_prompt_generator=system_prompt_generator,
     model='gpt-3.5-turbo',
     memory=memory,
-    output_schema=ResponseSchema
+    output_schema=OutputSchema
 )
 
 # Create a chat agent

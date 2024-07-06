@@ -5,7 +5,7 @@ import groq
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents.agents.base_chat_agent import BaseChatAgentConfig, BaseChatAgent, BaseChatAgentInputSchema, BaseChatAgentResponseSchema
+from atomic_agents.agents.base_chat_agent import BaseChatAgentConfig, BaseChatAgent, BaseChatAgentInputSchema, BaseChatAgentOutputSchema
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
 # Initialize the system prompts. For simplicity, we use the same system prompt for both agents.
