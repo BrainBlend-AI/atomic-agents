@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
     
 class SearchResultsProvider(SystemPromptContextProviderBase):
