@@ -10,6 +10,9 @@ class SystemPromptContextProviderBase(ABC):
     @abstractmethod
     def get_info(self) -> str:
         pass
+    
+    def __repr__(self) -> str:
+        return self.get_info()
 
 @dataclass
 class SystemPromptInfo:
@@ -59,8 +62,8 @@ class SystemPromptGenerator:
 
 if __name__ == "__main__":
     class CurrentDateProvider(SystemPromptContextProviderBase):
-        def __init__(self, format: str = '%Y-%m-%d %H:%M:%S', **kwargs):
-            super().__init__(**kwargs)
+        def __init__(self, title, format: str = '%Y-%m-%d %H:%M:%S'):
+            super().__init__(title)
             self.format = format
 
         def get_info(self) -> str:

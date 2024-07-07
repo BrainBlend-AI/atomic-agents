@@ -19,8 +19,8 @@ client = instructor.from_openai(openai.OpenAI())
 yt_scraper_tool = YouTubeTranscriptTool(config=YouTubeTranscriptToolConfig())
 
 class YtTranscriptProvider(SystemPromptContextProviderBase):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, title):
+        super().__init__(title)
         self.transcript = None
         self.duration = None
         self.metadata = None
