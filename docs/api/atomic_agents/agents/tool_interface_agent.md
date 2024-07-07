@@ -54,7 +54,7 @@ class ToolInterfaceAgent(BaseChatAgent):
 
 ### ToolInterfaceAgent()._get_and_handle_response
 
-[Show source in tool_interface_agent.py:86](../../../../atomic_agents/agents/tool_interface_agent.py#L86)
+[Show source in tool_interface_agent.py:84](../../../../atomic_agents/agents/tool_interface_agent.py#L84)
 
 Handles obtaining and processing the response from the tool.
 
