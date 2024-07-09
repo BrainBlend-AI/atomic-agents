@@ -100,15 +100,6 @@ class BaseChatAgent:
         """
         self.memory = self.initial_memory.copy()
 
-    def get_system_prompt(self) -> str:
-        """
-        Generates the system prompt.
-
-        Returns:
-            str: The generated system prompt.
-        """
-        return self.system_prompt_generator.generate_prompt()
-
     def get_response(self, response_model=None) -> Type[BaseModel]:
         """
         Obtains a response from the language model.
@@ -122,7 +113,7 @@ class BaseChatAgent:
         if response_model is None:
             response_model = self.output_schema
 
-        messages = [{'role': 'system', 'content': self.get_system_prompt()}] + self.memory.get_history()
+        messages = [{'role': 'system', 'content': self.system_prompt_generator.generate_prompt()}] + self.memory.get_history()
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
