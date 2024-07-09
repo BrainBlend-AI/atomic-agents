@@ -35,7 +35,7 @@ async def main():
 
         console.print("[bold green]Getting search results...[/bold green]")
         search_results_provider.search_results = search_tool.run(search_tool.input_schema(**queries.model_dump()))
-
+        
         # Select top URLs
         console.print("[bold green]Selecting top URLs...[/bold green]")
         top_urls = top_urls_selector_agent.run(top_urls_selector_agent.input_schema(
