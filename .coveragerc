@@ -1,0 +1,4 @@
+[report]
+exclude_lines =
+    @abstractmethod
+    @abc.abstractmethod
