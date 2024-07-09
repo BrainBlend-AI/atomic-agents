@@ -78,7 +78,7 @@ class BaseChatAgent:
     input_schema = BaseChatAgentInputSchema
     output_schema = BaseChatAgentOutputSchema
 
-    def __init__(self, config: BaseChatAgentConfig = BaseChatAgentConfig(client=instructor.from_openai(openai.OpenAI()))):
+    def __init__(self, config: BaseChatAgentConfig):
         """
         Initializes the BaseChatAgent.
 
