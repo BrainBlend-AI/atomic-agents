@@ -21,7 +21,7 @@ The input schema is a Pydantic `BaseModel` that specifies the input parameters f
 
 ```python
 from pydantic import Field
-from atomic_agents.agents.base_chat_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO
 
 class MyToolInputSchema(BaseAgentIO):
     parameter: str = Field(..., description="Description of the parameter.")
@@ -107,7 +107,7 @@ Here is a complete example of a new tool called `MyTool`:
 # my_tool.py
 
 from pydantic import Field
-from atomic_agents.agents.base_chat_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 from rich.console import Console
 

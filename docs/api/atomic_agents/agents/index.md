@@ -9,5 +9,5 @@
 
 ## Modules
 
-- [BaseChatAgent](./base_chat_agent.md)
+- [BaseAgent](./base_agent.md)
 - [ToolInterfaceAgent](./tool_interface_agent.md)

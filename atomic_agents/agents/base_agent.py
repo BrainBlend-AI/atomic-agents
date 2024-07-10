@@ -21,14 +21,14 @@ class BaseAgentIO(BaseModel):
         return JSON(json_str)
 
 
-class BaseChatAgentInputSchema(BaseAgentIO):
+class BaseAgentInputSchema(BaseAgentIO):
     chat_message: str = Field(
         ...,
         description="The chat message sent by the user to the assistant.",
     )
 
     class Config:
-        title = "BaseChatAgentInputSchema"
+        title = "BaseAgentInputSchema"
         description = "This schema represents the user input message exchanged between the user and the chat agent."
         json_schema_extra = {
             "title": title,
@@ -36,7 +36,7 @@ class BaseChatAgentInputSchema(BaseAgentIO):
         }
 
 
-class BaseChatAgentOutputSchema(BaseAgentIO):
+class BaseAgentOutputSchema(BaseAgentIO):
     chat_message: str = Field(
         ...,
         description=(
@@ -46,7 +46,7 @@ class BaseChatAgentOutputSchema(BaseAgentIO):
     )
 
     class Config:
-        title = "BaseChatAgentOutputSchema"
+        title = "BaseAgentOutputSchema"
         description = "This schema represents the response message exchanged between the user and the chat agent."
         json_schema_extra = {
             "title": title,
@@ -54,7 +54,7 @@ class BaseChatAgentOutputSchema(BaseAgentIO):
         }
 
 
-class BaseChatAgentConfig(BaseModel):
+class BaseAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field("gpt-3.5-turbo", description="The model to use for generating responses.")
     memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
@@ -68,7 +68,7 @@ class BaseChatAgentConfig(BaseModel):
         arbitrary_types_allowed = True
 
 
-class BaseChatAgent:
+class BaseAgent:
     """
     Base class for chat agents.
 
@@ -85,15 +85,15 @@ class BaseChatAgent:
         initial_memory (AgentMemory): Initial state of the memory.
     """
 
-    input_schema = BaseChatAgentInputSchema
-    output_schema = BaseChatAgentOutputSchema
+    input_schema = BaseAgentInputSchema
+    output_schema = BaseAgentOutputSchema
 
-    def __init__(self, config: BaseChatAgentConfig):
+    def __init__(self, config: BaseAgentConfig):
         """
-        Initializes the BaseChatAgent.
+        Initializes the BaseAgent.
 
         Args:
-            config (BaseChatAgentConfig): Configuration for the chat agent.
+            config (BaseAgentConfig): Configuration for the chat agent.
         """
         self.input_schema = config.input_schema or self.input_schema
         self.output_schema = config.output_schema or self.output_schema

@@ -8,7 +8,7 @@ from pydantic import Field
 from rich.console import Console
 from rich.markdown import Markdown
 
-from atomic_agents.agents.base_chat_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 from atomic_agents.lib.utils.scraping.pdf_to_markdown import PdfToMarkdownConverter
 from atomic_agents.lib.utils.scraping.url_to_markdown import UrlToMarkdownConverter

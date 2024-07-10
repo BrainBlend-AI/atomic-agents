@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, patch
 from pydantic import BaseModel, Field
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig, ToolInputModel
-from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgentConfig
 from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.components.agent_memory import AgentMemory

@@ -8,7 +8,7 @@ from rich.console import Console
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentOutputSchema, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolSchema
 
 # Configure logging
@@ -54,14 +54,14 @@ searx_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARX
 
 # Define a custom response schema
 class OutputSchema(BaseModel):
-    chosen_schema: Union[BaseChatAgentOutputSchema, SearxNGSearchToolSchema] = Field(..., description='The response from the chat agent.')
+    chosen_schema: Union[BaseAgentOutputSchema, SearxNGSearchToolSchema] = Field(..., description='The response from the chat agent.')
 
     class Config:
         title = 'OutputSchema'
         description = 'The response schema for the chat agent.'
 
 # Create a config for the chat agent
-agent_config = BaseChatAgentConfig(
+agent_config = BaseAgentConfig(
     client=client,
     system_prompt_generator=system_prompt_generator,
     model='gpt-3.5-turbo',
@@ -70,7 +70,7 @@ agent_config = BaseChatAgentConfig(
 )
 
 # Create a chat agent
-agent = BaseChatAgent(config=agent_config)
+agent = BaseAgent(config=agent_config)
 
 console.print("Product Finder Agent is ready.")
 console.print(f'Agent: {initial_memory[0]["content"]}')
