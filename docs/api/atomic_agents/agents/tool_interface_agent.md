@@ -22,7 +22,7 @@ class ToolInputModel(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](./base_chat_agent.md#baseagentio)
+- [BaseAgentIO](./base_agent.md#baseagentio)
 
 
 
@@ -32,7 +32,7 @@ class ToolInputModel(BaseAgentIO): ...
 
 A specialized chat agent designed to interact with a specific tool.
 
-This agent extends the BaseChatAgent to include functionality for interacting with a tool instance.
+This agent extends the BaseAgent to include functionality for interacting with a tool instance.
 It generates system prompts, handles tool input and output, and can optionally return raw tool output.
 
 #### Attributes
@@ -43,13 +43,13 @@ It generates system prompts, handles tool input and output, and can optionally r
 #### Signature
 
 ```python
-class ToolInterfaceAgent(BaseChatAgent):
+class ToolInterfaceAgent(BaseAgent):
     def __init__(self, config: ToolInterfaceAgentConfig): ...
 ```
 
 #### See also
 
-- [BaseChatAgent](./base_chat_agent.md#basechatagent)
+- [BaseAgent](./base_agent.md#baseAgent)
 - [ToolInterfaceAgentConfig](#toolinterfaceagentconfig)
 
 ### ToolInterfaceAgent()._get_and_handle_response
@@ -81,9 +81,9 @@ def _get_and_handle_response(self): ...
 #### Signature
 
 ```python
-class ToolInterfaceAgentConfig(BaseChatAgentConfig): ...
+class ToolInterfaceAgentConfig(BaseAgentConfig): ...
 ```
 
 #### See also
 
-- [BaseChatAgentConfig](./base_chat_agent.md#basechatagentconfig)
+- [BaseAgentConfig](./base_agent.md#baseAgentconfig)

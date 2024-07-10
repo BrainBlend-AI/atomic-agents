@@ -2,7 +2,7 @@ from typing import List
 import instructor
 import openai
 from pydantic import BaseModel, Field, HttpUrl
-from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
 class TopUrlsSelectorInputSchema(BaseAgentIO):
@@ -13,8 +13,8 @@ class TopUrlsSelectorOutputSchema(BaseAgentIO):
     top_urls: List[HttpUrl] = Field(..., description='The list of top URLs selected based on the user input.')
 
 # Create the top URLs selector agent
-top_urls_selector_agent = BaseChatAgent(
-    BaseChatAgentConfig(
+top_urls_selector_agent = BaseAgent(
+    BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()), 
         model='gpt-3.5-turbo',
         system_prompt_generator=SystemPromptGenerator(

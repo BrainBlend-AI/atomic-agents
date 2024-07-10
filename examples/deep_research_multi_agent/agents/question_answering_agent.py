@@ -1,7 +1,7 @@
 import instructor
 import openai
 from pydantic import BaseModel, Field
-from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
 class AnswerAgentInputSchema(BaseAgentIO):
@@ -11,8 +11,8 @@ class AnswerAgentOutputSchema(BaseAgentIO):
     markdown_output: str = Field(..., description='The answer to the question in markdown format.')
 
 # Create the answer agent
-answer_agent = BaseChatAgent(
-    BaseChatAgentConfig(
+answer_agent = BaseAgent(
+    BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()), 
         model='gpt-3.5-turbo',
         system_prompt_generator=SystemPromptGenerator(

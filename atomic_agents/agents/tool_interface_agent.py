@@ -2,13 +2,13 @@ import json
 
 from pydantic import Field, create_model
 
-from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
 
 
-class ToolInterfaceAgentConfig(BaseChatAgentConfig):
+class ToolInterfaceAgentConfig(BaseAgentConfig):
     tool_instance: BaseTool
     return_raw_output: bool = False
 
@@ -25,11 +25,11 @@ class ToolInputModel(BaseAgentIO):
         }
 
 
-class ToolInterfaceAgent(BaseChatAgent):
+class ToolInterfaceAgent(BaseAgent):
     """
     A specialized chat agent designed to interact with a specific tool.
 
-    This agent extends the BaseChatAgent to include functionality for interacting with a tool instance.
+    This agent extends the BaseAgent to include functionality for interacting with a tool instance.
     It generates system prompts, handles tool input and output, and can optionally return raw tool output.
 
     Attributes:

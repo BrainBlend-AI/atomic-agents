@@ -138,7 +138,7 @@ class YouTubeTranscriptToolOutputSchema(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
+- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -154,4 +154,4 @@ class YouTubeTranscriptToolSchema(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
+- [BaseAgentIO](../../agents/base_agent.md#baseagentio)

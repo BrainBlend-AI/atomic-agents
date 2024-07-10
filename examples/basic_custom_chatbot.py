@@ -5,7 +5,7 @@ This example demonstrates how to create a custom chatbot with custom personality
 import os
 from rich.console import Console
 from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 import instructor
 import openai
@@ -42,8 +42,8 @@ memory.load(initial_memory)
 
 base_url = None # Replace with your OpenAI API base URL
 api_key = None # Replace with your OpenAI API key
-agent = BaseChatAgent(
-    config=BaseChatAgentConfig(
+agent = BaseAgent(
+    config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(
             base_url=base_url or os.getenv('OPENAI_BASE_URL'),
             api_key=api_key or os.getenv('OPENAI_API_KEY')

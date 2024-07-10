@@ -3,7 +3,7 @@ import random
 import instructor
 import openai
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
-from atomic_agents.agents.base_chat_agent import BaseChatAgentConfig, BaseChatAgent
+from atomic_agents.agents.base_agent import BaseAgentConfig, BaseAgent
 
 class SharedContextProvider(SystemPromptContextProviderBase):
     def __init__(self, title):
@@ -18,15 +18,15 @@ class SharedContextProvider(SystemPromptContextProviderBase):
         self.shared_context[key] = value
 
 # Define two simple agents with shared context
-agent_one = BaseChatAgent(
-    config=BaseChatAgentConfig(
+agent_one = BaseAgent(
+    config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model='gpt-3.5-turbo',
     )
 )
 
-agent_two = BaseChatAgent(
-    config=BaseChatAgentConfig(
+agent_two = BaseAgent(
+    config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model='gpt-3.5-turbo',
     )

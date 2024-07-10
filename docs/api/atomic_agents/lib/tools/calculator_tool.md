@@ -93,7 +93,7 @@ class CalculatorToolOutputSchema(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
+- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -109,4 +109,4 @@ class CalculatorToolSchema(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
+- [BaseAgentIO](../../agents/base_agent.md#baseagentio)

@@ -8,7 +8,7 @@ from rich.console import Console
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentOutputSchema, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
 from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolSchema
 
 # Configure logging
@@ -57,7 +57,7 @@ yelp_tool = YelpSearchTool(YelpSearchToolConfig(api_key=os.getenv('YELP_API_KEY'
 
 # Define a custom response schema that can handle both chat responses and Yelp search tool responses
 class OutputSchema(BaseModel):
-    chosen_schema: Union[BaseChatAgentOutputSchema, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
+    chosen_schema: Union[BaseAgentOutputSchema, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
 
     class Config:
         title = 'OutputSchema'
@@ -68,7 +68,7 @@ class OutputSchema(BaseModel):
         }
 
 # Create a config for the chat agent
-agent_config = BaseChatAgentConfig(
+agent_config = BaseAgentConfig(
     client=client,
     system_prompt_generator=system_prompt_generator,
     model='gpt-3.5-turbo',
@@ -77,9 +77,9 @@ agent_config = BaseChatAgentConfig(
 )
 
 # Create a chat agent with the specified config
-agent = BaseChatAgent(config=agent_config)
+agent = BaseAgent(config=agent_config)
 
-console.print("BaseChatAgent with YelpSearchTool is ready.")
+console.print("BaseAgent with YelpSearchTool is ready.")
 console.print(f'Agent: {initial_memory[0]["content"]}')
 
 while True:
@@ -99,7 +99,7 @@ while True:
         
         # In this example, we will add a simple "internal thought" to the chat memory followed by an empty agent.run() call. 
         # This will make the agent continue the conversation without user input.
-        # In a more complex example, it might be preferable to extend the BaseChatAgent class and override the _get_and_handle_response method.
+        # In a more complex example, it might be preferable to extend the BaseAgent class and override the _get_and_handle_response method.
         agent.memory.add_message('assistant', f'INTERNAL THOUGHT: I have found the following information: {output.results}\n\n I will now summarize the results for the user.')
         output = agent.run().chosen_schema.chat_message
     else:

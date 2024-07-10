@@ -50,7 +50,7 @@ class YelpSearchResultSchema(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
+- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -140,7 +140,7 @@ class YelpSearchToolOutputSchema(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
+- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -156,4 +156,4 @@ class YelpSearchToolSchema(BaseAgentIO): ...
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_chat_agent.md#baseagentio)
+- [BaseAgentIO](../../agents/base_agent.md#baseagentio)

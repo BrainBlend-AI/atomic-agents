@@ -5,7 +5,7 @@ import requests
 from pydantic import Field
 from rich.console import Console
 
-from atomic_agents.agents.base_chat_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################

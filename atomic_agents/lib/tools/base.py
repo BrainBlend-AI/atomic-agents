@@ -2,7 +2,7 @@ from typing import Optional, Type
 
 from pydantic import BaseModel
 
-from atomic_agents.agents.base_chat_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO
 
 
 class BaseToolConfig(BaseModel):

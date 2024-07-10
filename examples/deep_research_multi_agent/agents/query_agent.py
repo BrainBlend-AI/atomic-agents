@@ -1,6 +1,6 @@
 import instructor
 import openai
-from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
 
@@ -9,8 +9,8 @@ class QueryAgentInputSchema(BaseAgentIO):
     num_queries: int = 'The number of queries to generate.'
 
 # Create the query agent
-query_agent = BaseChatAgent(
-    BaseChatAgentConfig(
+query_agent = BaseAgent(
+    BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()), 
         model='gpt-3.5-turbo',
         system_prompt_generator=SystemPromptGenerator(

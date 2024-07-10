@@ -6,7 +6,7 @@ A full list of `Atomic_agents` project modules.
 
 - [Atomic Agents](atomic_agents/index.md#atomic-agents)
     - [Agents](atomic_agents/agents/index.md#agents)
-        - [BaseChatAgent](atomic_agents/agents/base_chat_agent.md#basechatagent)
+        - [BaseAgent](atomic_agents/agents/base_agent.md#baseAgent)
         - [ToolInterfaceAgent](atomic_agents/agents/tool_interface_agent.md#toolinterfaceagent)
     - [Lib](atomic_agents/lib/index.md#lib)
         - [Components](atomic_agents/lib/components/index.md#components)

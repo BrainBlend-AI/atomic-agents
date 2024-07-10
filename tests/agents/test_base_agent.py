@@ -2,12 +2,12 @@ import pytest
 from unittest.mock import Mock, call
 from pydantic import BaseModel
 import instructor
-from atomic_agents.agents.base_chat_agent import (
+from atomic_agents.agents.base_agent import (
     BaseAgentIO,
-    BaseChatAgent,
-    BaseChatAgentConfig,
-    BaseChatAgentInputSchema,
-    BaseChatAgentOutputSchema,
+    BaseAgent,
+    BaseAgentConfig,
+    BaseAgentInputSchema,
+    BaseAgentOutputSchema,
     SystemPromptGenerator,
     AgentMemory,
     SystemPromptContextProviderBase
@@ -38,7 +38,7 @@ def mock_system_prompt_generator():
 
 @pytest.fixture
 def agent_config(mock_instructor, mock_memory, mock_system_prompt_generator):
-    return BaseChatAgentConfig(
+    return BaseAgentConfig(
         client=mock_instructor,
         model="gpt-3.5-turbo",
         memory=mock_memory,
@@ -47,15 +47,15 @@ def agent_config(mock_instructor, mock_memory, mock_system_prompt_generator):
 
 @pytest.fixture
 def agent(agent_config):
-    return BaseChatAgent(agent_config)
+    return BaseAgent(agent_config)
 
 def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_generator):
     assert agent.client == mock_instructor
     assert agent.model == "gpt-3.5-turbo"
     assert agent.memory == mock_memory
     assert agent.system_prompt_generator == mock_system_prompt_generator
-    assert agent.input_schema == BaseChatAgentInputSchema
-    assert agent.output_schema == BaseChatAgentOutputSchema
+    assert agent.input_schema == BaseAgentInputSchema
+    assert agent.output_schema == BaseAgentOutputSchema
 
 def test_reset_memory(agent, mock_memory):
     initial_memory = agent.initial_memory
@@ -67,7 +67,7 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
     mock_memory.get_history.return_value = [{'role': 'user', 'content': 'Hello'}]
     mock_system_prompt_generator.generate_prompt.return_value = "System prompt"
     
-    mock_response = Mock(spec=BaseChatAgentOutputSchema)
+    mock_response = Mock(spec=BaseAgentOutputSchema)
     mock_instructor.chat.completions.create.return_value = mock_response
     
     response = agent.get_response()
@@ -80,12 +80,12 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
             {'role': 'system', 'content': 'System prompt'},
             {'role': 'user', 'content': 'Hello'}
         ],
-        response_model=BaseChatAgentOutputSchema
+        response_model=BaseAgentOutputSchema
     )
 
 def test_run(agent):
-    mock_input = BaseChatAgentInputSchema(chat_message="Test input")
-    mock_output = BaseChatAgentOutputSchema(chat_message="Test output")
+    mock_input = BaseAgentInputSchema(chat_message="Test input")
+    mock_output = BaseAgentOutputSchema(chat_message="Test output")
     
     agent._init_run = Mock()
     agent._pre_run = Mock()
@@ -138,14 +138,14 @@ def test_custom_input_output_schemas(mock_instructor):
     class CustomOutputSchema(BaseModel):
         result: str
 
-    custom_config = BaseChatAgentConfig(
+    custom_config = BaseAgentConfig(
         client=mock_instructor,
         model="gpt-3.5-turbo",
         input_schema=CustomInputSchema,
         output_schema=CustomOutputSchema
     )
     
-    custom_agent = BaseChatAgent(custom_config)
+    custom_agent = BaseAgent(custom_config)
     
     assert custom_agent.input_schema == CustomInputSchema
     assert custom_agent.output_schema == CustomOutputSchema
@@ -159,15 +159,15 @@ def test_base_agent_io_str_and_rich():
     assert str(test_io) == '{"field":"test"}'
     assert test_io.__rich__() is not None  # Just check if it returns something, as we can't easily compare Rich objects
 
-def test_base_chat_agent_input_output_schema_config():
-    assert BaseChatAgentInputSchema.Config.title == "BaseChatAgentInputSchema"
-    assert "description" in BaseChatAgentInputSchema.Config.json_schema_extra
+def test_base_agent_input_output_schema_config():
+    assert BaseAgentInputSchema.Config.title == "BaseAgentInputSchema"
+    assert "description" in BaseAgentInputSchema.Config.json_schema_extra
     
-    assert BaseChatAgentOutputSchema.Config.title == "BaseChatAgentOutputSchema"
-    assert "description" in BaseChatAgentOutputSchema.Config.json_schema_extra
+    assert BaseAgentOutputSchema.Config.title == "BaseAgentOutputSchema"
+    assert "description" in BaseAgentOutputSchema.Config.json_schema_extra
 
 def test_init_run(agent, mock_memory):
-    input_schema = BaseChatAgentInputSchema(chat_message="Test message")
+    input_schema = BaseAgentInputSchema(chat_message="Test message")
     agent._init_run(input_schema)
     assert agent.current_user_input == input_schema
     mock_memory.add_message.assert_called_once_with("user", str(input_schema))
@@ -177,14 +177,14 @@ def test_pre_run(agent):
     agent._pre_run()
 
 def test_post_run(agent, mock_memory):
-    output_schema = BaseChatAgentOutputSchema(chat_message="Test response")
+    output_schema = BaseAgentOutputSchema(chat_message="Test response")
     agent._post_run(output_schema)
     mock_memory.add_message.assert_called_once_with("assistant", str(output_schema))
 
 # Update the existing test_run function to use the actual methods instead of mocks
 def test_run(agent, mock_memory):
-    mock_input = BaseChatAgentInputSchema(chat_message="Test input")
-    mock_output = BaseChatAgentOutputSchema(chat_message="Test output")
+    mock_input = BaseAgentInputSchema(chat_message="Test input")
+    mock_output = BaseAgentOutputSchema(chat_message="Test output")
     
     agent.get_response = Mock(return_value=mock_output)
     

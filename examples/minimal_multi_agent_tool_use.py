@@ -4,7 +4,7 @@ import instructor
 import openai
 from pydantic import create_model
 from rich.console import Console
-from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
 from atomic_agents.lib.tools.calculator_tool import CalculatorTool, CalculatorToolConfig
@@ -20,7 +20,7 @@ searx_agent, calc_agent = ToolInterfaceAgent(config=search_agent_config), ToolIn
 
 UnionResponse = create_model('UnionResponse', __base__=BaseAgentIO, response=(Union[searx_agent.input_schema, calc_agent.input_schema], ...))
 
-orchestration_agent = BaseChatAgent(config=BaseChatAgentConfig(client=client, model='gpt-3.5-turbo', output_schema=UnionResponse))
+orchestration_agent = BaseAgent(config=BaseAgentConfig(client=client, model='gpt-3.5-turbo', output_schema=UnionResponse))
 
 while True:
     user_input = input('You: ')

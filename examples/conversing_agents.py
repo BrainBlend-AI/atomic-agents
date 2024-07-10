@@ -5,7 +5,7 @@ import groq
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents.agents.base_chat_agent import BaseChatAgentConfig, BaseChatAgent, BaseChatAgentInputSchema, BaseChatAgentOutputSchema
+from atomic_agents.agents.base_agent import BaseAgentConfig, BaseAgent, BaseAgentInputSchema, BaseAgentOutputSchema
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
 # Initialize the system prompts. For simplicity, we use the same system prompt for both agents.
@@ -23,16 +23,16 @@ agent2_system_prompt_info = SystemPromptInfo(
 
 # Initialize the agents. For fun, we use two different clients for the agents. One uses Groq and the other uses OpenAI.
 # You can use the same client for both agents if you prefer. For a list of supported clients, refer to the `instructor` library documentation.
-agent1 = BaseChatAgent(
-    config=BaseChatAgentConfig(
+agent1 = BaseAgent(
+    config=BaseAgentConfig(
         client=instructor.from_groq(groq.Groq(api_key=os.getenv('GROQ_API_KEY'))),
         model=os.getenv('GROQ_CHAT_MODEL'),
         system_prompt_generator=SystemPromptGenerator(system_prompt_info=agent1_system_prompt_info)
     )
 )
 
-agent2 = BaseChatAgent(
-    config=BaseChatAgentConfig(
+agent2 = BaseAgent(
+    config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model='gpt-3.5-turbo',
         system_prompt_generator=SystemPromptGenerator(system_prompt_info=agent2_system_prompt_info)

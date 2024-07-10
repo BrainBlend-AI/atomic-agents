@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from atomic_agents.lib.models.web_document import WebDocumentMetadata, WebDocument
-from atomic_agents.agents.base_chat_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO
 
 def test_web_document_metadata_creation():
     metadata = WebDocumentMetadata(url="https://example.com")

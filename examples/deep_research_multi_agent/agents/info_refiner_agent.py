@@ -1,8 +1,8 @@
 from pydantic import BaseModel, Field
-from atomic_agents.agents.base_chat_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO
 import instructor
 import openai
-from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
 class RefineAnswerInputSchema(BaseAgentIO):
@@ -13,8 +13,8 @@ class RefineAnswerOutputSchema(BaseModel):
     refined_answer: str = Field(..., description='The refined answer to the question.')
 
 # Create the refine answer agent
-refine_answer_agent = BaseChatAgent(
-    BaseChatAgentConfig(
+refine_answer_agent = BaseAgent(
+    BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()), 
         model='gpt-3.5-turbo',
         system_prompt_generator=SystemPromptGenerator(
