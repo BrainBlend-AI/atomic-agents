@@ -1,6 +1,6 @@
 from pydantic import Field
 from rich.console import Console
-from sympy import SympifyError, sympify
+from sympy import sympify
 
 from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
