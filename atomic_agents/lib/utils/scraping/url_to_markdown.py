@@ -1,18 +1,19 @@
-import os
 import re
-from bs4 import BeautifulSoup
+
 import requests
+from bs4 import BeautifulSoup
 from markdownify import MarkdownConverter
+
 from atomic_agents.lib.models.web_document import WebDocument, WebDocumentMetadata
 
 
 class UrlToMarkdownConverter:
     METADATA_ATTRS = {
-        'url': '',
-        'title': ('title', None),
-        'description': ('meta', {'name': 'description'}),
-        'keywords': ('meta', {'name': 'keywords'}),
-        'author': ('meta', {'name': 'author'})
+        "url": "",
+        "title": ("title", None),
+        "description": ("meta", {"name": "description"}),
+        "keywords": ("meta", {"name": "keywords"}),
+        "author": ("meta", {"name": "author"}),
     }
 
     @staticmethod
@@ -23,7 +24,7 @@ class UrlToMarkdownConverter:
 
     @staticmethod
     def _parse_html(html):
-        return BeautifulSoup(html, 'html.parser')
+        return BeautifulSoup(html, "html.parser")
 
     @staticmethod
     def _extract_metadata(soup, url):
@@ -31,7 +32,7 @@ class UrlToMarkdownConverter:
         for attr, selector in UrlToMarkdownConverter.METADATA_ATTRS.items():
             if selector:
                 element = soup.find(*selector)
-                metadata_dict[attr] = element.get('content', '').strip() if element else ''
+                metadata_dict[attr] = element.get("content", "").strip() if element else ""
             else:
                 metadata_dict[attr] = url
         return WebDocumentMetadata(**metadata_dict)
@@ -40,20 +41,21 @@ class UrlToMarkdownConverter:
     def _convert_to_markdown(html):
         class CustomMarkdownConverter(MarkdownConverter):
             def convert_img(self, el, text, convert_as_inline):
-                return ''
-            def convert_p(self, el, text, convert_as_inline):
-                return text + '\n\n'
+                return ""
 
-        for script in html.find_all('script'):
+            def convert_p(self, el, text, convert_as_inline):
+                return text + "\n\n"
+
+        for script in html.find_all("script"):
             script.decompose()
-            
-        for style in html.find_all('style'):
+
+        for style in html.find_all("style"):
             style.decompose()
 
         converter = CustomMarkdownConverter()
         markdown_text = converter.convert(str(html))
         # Replace more than two consecutive newlines with exactly two newlines
-        markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
+        markdown_text = re.sub(r"\n{3,}", "\n\n", markdown_text)
         return markdown_text
 
     @staticmethod
@@ -65,7 +67,8 @@ class UrlToMarkdownConverter:
 
         return WebDocument(content=markdown_content, metadata=metadata)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     url = "https://brainblendai.com"
     document = UrlToMarkdownConverter.convert(url)
     print(document)

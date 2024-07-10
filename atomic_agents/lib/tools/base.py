@@ -1,12 +1,14 @@
-from typing import Type, Optional
+from typing import Optional, Type
+
 from pydantic import BaseModel
-from dataclasses import dataclass
 
 from atomic_agents.agents.base_chat_agent import BaseAgentIO
+
 
 class BaseToolConfig(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+
 
 class BaseTool:
     """
@@ -16,7 +18,8 @@ class BaseTool:
         input_schema (Type[BaseAgentIO]): The schema for the input data.
         output_schema (Type[BaseAgentIO]): The schema for the output data.
         tool_name (str): The name of the tool, derived from the input schema's title.
-        tool_description (str): The description of the tool, derived from the input schema's description or overridden by the user.
+        tool_description (str):
+            The description of the tool, derived from the input schema's description or overridden by the user.
     """
 
     input_schema: Type[BaseAgentIO]

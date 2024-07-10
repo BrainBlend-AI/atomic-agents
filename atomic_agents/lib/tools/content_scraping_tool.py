@@ -1,34 +1,40 @@
 import os
-from pydantic import BaseModel, Field
 from typing import Optional
+
+import instructor
+import openai
+import requests
+from pydantic import Field
 from rich.console import Console
 from rich.markdown import Markdown
-import openai
-import instructor
-import requests
 
 from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
-from atomic_agents.lib.utils.scraping.url_to_markdown import UrlToMarkdownConverter
 from atomic_agents.lib.utils.scraping.pdf_to_markdown import PdfToMarkdownConverter
+from atomic_agents.lib.utils.scraping.url_to_markdown import UrlToMarkdownConverter
 
 ################
 # INPUT SCHEMA #
 ################
+
+
 class ContentScrapingToolSchema(BaseAgentIO):
     url: str = Field(..., description="URL of the web page or PDF to scrape.")
 
     class Config:
         title = "ContentScrapingTool"
-        description = "Tool for scraping web pages or PDFs and converting content to markdown in order to extract information or summarize the content."
-        json_schema_extra = {
-            "title": title,
-            "description": description
-        }
+        description = (
+            "Tool for scraping web pages or PDFs and converting content to markdown "
+            "in order to extract information or summarize the content."
+        )
+        json_schema_extra = {"title": title, "description": description}
+
 
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
+
+
 class ContentScrapingToolOutputSchema(BaseAgentIO):
     content: str
     metadata: Optional[dict] = None
@@ -49,6 +55,7 @@ class ContentScrapingTool(BaseTool):
         input_schema (ContentScrapingToolSchema): The schema for the input data.
         output_schema (ContentScrapingToolOutputSchema): The schema for the output data.
     """
+
     input_schema = ContentScrapingToolSchema
     output_schema = ContentScrapingToolOutputSchema
 
@@ -73,9 +80,9 @@ class ContentScrapingTool(BaseTool):
         """
         url = params.url
         response = requests.head(url)
-        content_type = response.headers.get('Content-Type', '')
+        content_type = response.headers.get("Content-Type", "")
 
-        if 'application/pdf' in content_type:
+        if "application/pdf" in content_type:
             document = PdfToMarkdownConverter.convert(url=url)
         else:
             document = UrlToMarkdownConverter.convert(url=url)
@@ -89,12 +96,7 @@ class ContentScrapingTool(BaseTool):
 if __name__ == "__main__":
     rich_console = Console()
 
-    client = instructor.from_openai(
-        openai.OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_BASE_URL")
-        )
-    )
+    client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL")))
 
     #################
     # TEST WEB PAGE #
@@ -102,7 +104,12 @@ if __name__ == "__main__":
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=ContentScrapingTool.input_schema,
-        messages=[{"role": "user", "content": "Scrape the content of https://brainblendai.com"}],
+        messages=[
+            {
+                "role": "user",
+                "content": "Scrape the content of https://brainblendai.com",
+            }
+        ],
     )
 
     output = ContentScrapingTool().run(result)
@@ -114,7 +121,12 @@ if __name__ == "__main__":
     result = client.chat.completions.create(
         model="gpt-3.5-turbo",
         response_model=ContentScrapingTool.input_schema,
-        messages=[{"role": "user", "content": "Scrape the content of https://pdfobject.com/pdf/sample.pdf"}],
+        messages=[
+            {
+                "role": "user",
+                "content": "Scrape the content of https://pdfobject.com/pdf/sample.pdf",
+            }
+        ],
     )
 
     output = ContentScrapingTool().run(result)

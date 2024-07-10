@@ -1,11 +1,10 @@
-import json
-from typing import Dict, Type
 import uuid
+from typing import Dict, Optional, Type
 
 from pydantic import BaseModel
 
 
-def format_tool_message(tool_call: Type[BaseModel], tool_id: str = None) -> Dict:
+def format_tool_message(tool_call: Type[BaseModel], tool_id: Optional[str] = None) -> Dict:
     """
     Formats a message for a tool call.
 
@@ -19,13 +18,12 @@ def format_tool_message(tool_call: Type[BaseModel], tool_id: str = None) -> Dict
     """
     if tool_id is None:
         tool_id = str(uuid.uuid4())
-    
+
     return {
         "id": tool_id,
         "type": "function",
         "function": {
             "name": tool_call.model_config["title"],
-            "arguments": tool_call.model_dump_json()
-        }
+            "arguments": tool_call.model_dump_json(),
+        },
     }
-    

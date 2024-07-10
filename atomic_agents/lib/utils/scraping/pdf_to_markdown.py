@@ -1,10 +1,12 @@
 import re
+from io import BytesIO
+
+import markdownify
 import requests
 from PyPDF2 import PdfReader
-from io import BytesIO
-import markdownify
 
 from atomic_agents.lib.models.web_document import WebDocument, WebDocumentMetadata
+
 
 class PdfToMarkdownConverter:
     @staticmethod
@@ -26,7 +28,7 @@ class PdfToMarkdownConverter:
     def _convert_to_markdown(text):
         markdown_text = markdownify.markdownify(text, heading_style="ATX")
         # Replace more than two consecutive newlines with exactly two newlines
-        markdown_text = re.sub(r'\n{3,}', '\n\n', markdown_text)
+        markdown_text = re.sub(r"\n{3,}", "\n\n", markdown_text)
         return markdown_text
 
     @staticmethod
@@ -34,7 +36,7 @@ class PdfToMarkdownConverter:
         if url:
             pdf_content = PdfToMarkdownConverter._fetch_pdf_content(url)
         elif file_path:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 pdf_content = BytesIO(f.read())
         else:
             raise ValueError("Either url or file_path must be provided")
@@ -45,12 +47,14 @@ class PdfToMarkdownConverter:
 
         return WebDocument(content=markdown_content, metadata=metadata)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from rich.console import Console
     from rich.markdown import Markdown
+
     console = Console()
-    
+
     url = "https://pdfobject.com/pdf/sample.pdf"
     document = PdfToMarkdownConverter.convert(url=url)
-    
+
     console.print(Markdown(document.content))

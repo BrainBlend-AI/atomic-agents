@@ -28,3 +28,6 @@ repository = "https://github.com/KennyVaneetvelde/atomic_agents"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["atomic_agents"]
+
+[tool.black]
+line-length = 127

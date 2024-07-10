@@ -1,50 +1,60 @@
 import os
-from pydantic import BaseModel, Field
 from typing import List, Optional
+
+from googleapiclient.discovery import build
+from pydantic import Field
 from rich.console import Console
-from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
+from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled, YouTubeTranscriptApi
+
 from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
-from googleapiclient.discovery import build
 
 ################
 # INPUT SCHEMA #
 ################
+
+
 class YouTubeTranscriptToolSchema(BaseAgentIO):
     video_url: str = Field(..., description="URL of the YouTube video to fetch the transcript for.")
     language: Optional[str] = Field(None, description="Language code for the transcript (e.g., 'en' for English).")
 
     class Config:
         title = "YouTubeTranscriptTool"
-        description = "Tool for fetching the transcript of a YouTube video using the YouTube Transcript API. Returns the transcript with text, start time, and duration."
-        json_schema_extra = {
-            "title": title,
-            "description": description
-        }
+        description = (
+            "Tool for fetching the transcript of a YouTube video using the YouTube Transcript API. "
+            "Returns the transcript with text, start time, and duration."
+        )
+        json_schema_extra = {"title": title, "description": description}
+
 
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
+
+
 class YouTubeTranscriptToolOutputSchema(BaseAgentIO):
     transcript: str
     duration: float
     comments: List[str]
     metadata: dict
-    
+
     class Config:
         title = "YouTubeTranscriptToolOutput"
-        description = "Output schema for the YouTubeTranscriptTool. Contains the transcript text, duration, comments, and metadata."
-        json_schema_extra = {
-            "title": title,
-            "description": description
-        }
-        
+        description = (
+            "Output schema for the YouTubeTranscriptTool. " "Contains the transcript text, duration, comments, and metadata."
+        )
+        json_schema_extra = {"title": title, "description": description}
+
 
 ##############
 # TOOL LOGIC #
 ##############
 class YouTubeTranscriptToolConfig(BaseToolConfig):
-    api_key: str = Field(description="YouTube API key for fetching video metadata.", default=os.getenv('YOUTUBE_API_KEY'))
+    api_key: str = Field(
+        description="YouTube API key for fetching video metadata.",
+        default=os.getenv("YOUTUBE_API_KEY"),
+    )
+
 
 class YouTubeTranscriptTool(BaseTool):
     """
@@ -54,6 +64,7 @@ class YouTubeTranscriptTool(BaseTool):
         input_schema (YouTubeTranscriptToolSchema): The schema for the input data.
         output_schema (YouTubeTranscriptToolOutputSchema): The schema for the output data.
     """
+
     input_schema = YouTubeTranscriptToolSchema
     output_schema = YouTubeTranscriptToolOutputSchema
 
@@ -89,8 +100,8 @@ class YouTubeTranscriptTool(BaseTool):
         except (NoTranscriptFound, TranscriptsDisabled) as e:
             raise Exception(f"Failed to fetch transcript for video '{video_id}': {str(e)}")
 
-        transcript_text = " ".join([transcript['text'] for transcript in transcripts])
-        total_duration = sum([transcript['duration'] for transcript in transcripts])
+        transcript_text = " ".join([transcript["text"] for transcript in transcripts])
+        total_duration = sum([transcript["duration"] for transcript in transcripts])
 
         metadata = self.fetch_video_metadata(video_id)
 
@@ -98,7 +109,7 @@ class YouTubeTranscriptTool(BaseTool):
             transcript=transcript_text,
             duration=total_duration,
             comments=[],
-            metadata=metadata
+            metadata=metadata,
         )
 
     @staticmethod
@@ -112,7 +123,7 @@ class YouTubeTranscriptTool(BaseTool):
         Returns:
             str: The extracted video ID.
         """
-        return url.split('v=')[-1].split('&')[0]
+        return url.split("v=")[-1].split("&")[0]
 
     def fetch_video_metadata(self, video_id: str) -> dict:
         """
@@ -124,30 +135,31 @@ class YouTubeTranscriptTool(BaseTool):
         Returns:
             dict: The metadata of the video.
         """
-        youtube = build('youtube', 'v3', developerKey=self.api_key)
+        youtube = build("youtube", "v3", developerKey=self.api_key)
         request = youtube.videos().list(part="snippet", id=video_id)
         response = request.execute()
 
-        if not response['items']:
+        if not response["items"]:
             raise Exception(f"No metadata found for video '{video_id}'")
 
-        video_info = response['items'][0]['snippet']
+        video_info = response["items"][0]["snippet"]
         metadata = {
             "id": video_id,
-            "title": video_info['title'],
-            "channel": video_info['channelTitle'],
-            "published_at": video_info['publishedAt']
+            "title": video_info["title"],
+            "channel": video_info["channelTitle"],
+            "published_at": video_info["publishedAt"],
         }
         return metadata
+
 
 #################
 # EXAMPLE USAGE #
 #################
 if __name__ == "__main__":
     rich_console = Console()
-    api_key = os.getenv('YOUTUBE_API_KEY')
+    api_key = os.getenv("YOUTUBE_API_KEY")
     search_tool_instance = YouTubeTranscriptTool(config=YouTubeTranscriptToolConfig(api_key=api_key))
-    
+
     search_input = YouTubeTranscriptTool.input_schema(video_url="https://www.youtube.com/watch?v=t1e8gqXLbsU", language="en")
 
     output = search_tool_instance.run(search_input)

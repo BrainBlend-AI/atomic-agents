@@ -1,5 +1,7 @@
-from typing import List, Dict, Union, Optional
+from typing import Dict, List, Optional, Union
+
 from pydantic import BaseModel, ValidationError
+
 
 class Message(BaseModel):
     """
@@ -11,10 +13,12 @@ class Message(BaseModel):
         tool_calls (Optional[List[Dict]]): Optional list of tool call messages.
         tool_call_id (Optional[str]): Optional unique identifier for the tool call.
     """
+
     role: str
     content: Union[str, Dict]
     tool_calls: Optional[List[Dict]] = None
     tool_call_id: Optional[str] = None
+
 
 class ChatMemory:
     """
@@ -35,7 +39,13 @@ class ChatMemory:
         self.history: List[Message] = []
         self.max_messages = max_messages
 
-    def add_message(self, role: str, content: Union[str, Dict], tool_message: Optional[Dict] = None, tool_id: Optional[str] = None) -> None:
+    def add_message(
+        self,
+        role: str,
+        content: Union[str, Dict],
+        tool_message: Optional[Dict] = None,
+        tool_id: Optional[str] = None,
+    ) -> None:
         """
         Adds a message to the chat history and manages overflow.
 
@@ -49,12 +59,12 @@ class ChatMemory:
         if tool_message:
             if tool_id is None:
                 tool_id = tool_message["id"]
-            
+
             message.tool_calls = [tool_message]
             message.tool_call_id = tool_id
         elif role == "tool":
             message.tool_call_id = tool_id
-        
+
         self.history.append(message)
         self._manage_overflow()
 
@@ -105,8 +115,8 @@ class ChatMemory:
 
         # Optionally, manage overflow after loading all messages
         self._manage_overflow()
-        
-    def copy(self) -> 'ChatMemory':
+
+    def copy(self) -> "ChatMemory":
         """
         Creates a copy of the chat memory.
 
@@ -115,7 +125,7 @@ class ChatMemory:
         """
         new_memory = ChatMemory(max_messages=self.max_messages)
         new_memory.load(self.dump())
-        
+
         return new_memory
 
     def get_message_count(self) -> int:

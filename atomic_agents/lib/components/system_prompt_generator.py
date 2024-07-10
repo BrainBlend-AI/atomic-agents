@@ -1,6 +1,7 @@
-from typing import List, Dict, Optional
-from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
 
 class SystemPromptContextProviderBase(ABC):
     def __init__(self, title: str):
@@ -8,53 +9,55 @@ class SystemPromptContextProviderBase(ABC):
 
     @abstractmethod
     def get_info(self) -> str:
-        return
-    
+        pass
+
     def __repr__(self) -> str:
         return self.get_info()
+
 
 @dataclass
 class SystemPromptInfo:
     background: List[str]
-    steps: Optional[List[str]] = field(default_factory=list)
-    output_instructions: Optional[List[str]] = field(default_factory=list)
-    context_providers: Optional[Dict[str, SystemPromptContextProviderBase]] = field(default_factory=dict)
+    steps: List[str] = field(default_factory=list)
+    output_instructions: List[str] = field(default_factory=list)
+    context_providers: Dict[str, SystemPromptContextProviderBase] = field(default_factory=dict)
+
 
 class SystemPromptGenerator:
-    def __init__(self, system_prompt_info: SystemPromptInfo = None):
+    def __init__(self, system_prompt_info: Optional[SystemPromptInfo] = None):
         self.system_prompt_info = system_prompt_info or SystemPromptInfo(
-            background=['This is a conversation with a helpful and friendly AI assistant.'],
-            steps=[],
-            output_instructions=[],
-            context_providers={}
+            background=["This is a conversation with a helpful and friendly AI assistant."]
         )
-        
-        self.system_prompt_info.output_instructions.extend([
-            'Always respond using the proper JSON schema.',
-            'Always use the available additional information and context to enhance the response.'
-        ])
+
+        self.system_prompt_info.output_instructions.extend(
+            [
+                "Always respond using the proper JSON schema.",
+                "Always use the available additional information and context to enhance the response.",
+            ]
+        )
 
     def generate_prompt(self) -> str:
-        system_prompt = ''
+        sections = [
+            ("IDENTITY and PURPOSE", self.system_prompt_info.background),
+            ("INTERNAL ASSISTANT STEPS", self.system_prompt_info.steps),
+            ("OUTPUT INSTRUCTIONS", self.system_prompt_info.output_instructions),
+        ]
 
-        if self.system_prompt_info.background:
-            system_prompt += '# IDENTITY and PURPOSE\n'
-            system_prompt += '- ' + '\n- '.join(self.system_prompt_info.background) + '\n\n'
+        prompt_parts = []
 
-        if self.system_prompt_info.steps:
-            system_prompt += '# INTERNAL ASSISTANT STEPS\n'
-            system_prompt += '- ' + '\n- '.join(self.system_prompt_info.steps) + '\n\n'
-
-        if self.system_prompt_info.output_instructions:
-            system_prompt += '# OUTPUT INSTRUCTIONS\n'
-            system_prompt += '- ' + '\n- '.join(self.system_prompt_info.output_instructions) + '\n\n'
+        for title, content in sections:
+            if content:
+                prompt_parts.append(f"# {title}")
+                prompt_parts.extend(f"- {item}" for item in content)
+                prompt_parts.append("")
 
         if self.system_prompt_info.context_providers:
-            system_prompt += '# EXTRA INFORMATION AND CONTEXT\n'
+            prompt_parts.append("# EXTRA INFORMATION AND CONTEXT")
             for provider in self.system_prompt_info.context_providers.values():
                 info = provider.get_info()
                 if info:
-                    system_prompt += f'## {provider.title}\n'
-                    system_prompt += f'{info}\n\n'
+                    prompt_parts.append(f"## {provider.title}")
+                    prompt_parts.append(info)
+                    prompt_parts.append("")
 
-        return system_prompt
+        return "\n".join(prompt_parts).strip()

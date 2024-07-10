@@ -5,6 +5,7 @@ anyio==4.4.0
 asgiref==3.8.1
 attrs==23.2.0
 beautifulsoup4==4.12.3
+black==24.4.2
 cachetools==5.3.3
 certifi==2024.6.2
 charset-normalizer==3.3.2
