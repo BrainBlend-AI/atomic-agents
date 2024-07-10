@@ -6,7 +6,7 @@ import instructor
 import openai
 from rich.console import Console
 
-from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentOutputSchema, BaseChatAgentConfig
 from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolSchema
@@ -38,7 +38,7 @@ system_prompt = SystemPromptInfo(
 system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Initialize chat memory
-memory = ChatMemory()
+memory = AgentMemory()
 initial_memory = [
     {'role': 'assistant', 'content': 'Hello! I\'m your product finder assistant. What kind of product are you looking for today?'}
 ]

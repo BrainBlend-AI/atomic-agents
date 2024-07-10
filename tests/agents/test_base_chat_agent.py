@@ -9,7 +9,7 @@ from atomic_agents.agents.base_chat_agent import (
     BaseChatAgentInputSchema,
     BaseChatAgentOutputSchema,
     SystemPromptGenerator,
-    ChatMemory,
+    AgentMemory,
     SystemPromptContextProviderBase
 )
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptInfo
@@ -22,10 +22,10 @@ def mock_instructor():
 
 @pytest.fixture
 def mock_memory():
-    mock = Mock(spec=ChatMemory)
+    mock = Mock(spec=AgentMemory)
     mock.get_history.return_value = []
     mock.add_message = Mock()
-    mock.copy = Mock(return_value=Mock(spec=ChatMemory))
+    mock.copy = Mock(return_value=Mock(spec=AgentMemory))
     return mock
 
 @pytest.fixture

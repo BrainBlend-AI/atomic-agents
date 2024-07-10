@@ -10,7 +10,7 @@ A full list of `Atomic_agents` project modules.
         - [ToolInterfaceAgent](atomic_agents/agents/tool_interface_agent.md#toolinterfaceagent)
     - [Lib](atomic_agents/lib/index.md#lib)
         - [Components](atomic_agents/lib/components/index.md#components)
-            - [ChatMemory](atomic_agents/lib/components/chat_memory.md#chatmemory)
+            - [AgentMemory](atomic_agents/lib/components/agent_memory.md#AgentMemory)
             - [SystemPromptGenerator](atomic_agents/lib/components/system_prompt_generator.md#systempromptgenerator)
         - [Models](atomic_agents/lib/models/index.md#models)
             - [WebDocument](atomic_agents/lib/models/web_document.md#webdocument)

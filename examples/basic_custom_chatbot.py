@@ -4,7 +4,7 @@ This example demonstrates how to create a custom chatbot with custom personality
 
 import os
 from rich.console import Console
-from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 import instructor
@@ -29,7 +29,7 @@ system_prompt = SystemPromptInfo(
 system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Initialize chat memory to store conversation history
-memory = ChatMemory()
+memory = AgentMemory()
 # Define initial memory with a greeting message from the assistant
 initial_memory = [
     {'role': 'assistant', 'content': 'How do you do? What can I do for you? Tell me, pray, what is your need today?'}

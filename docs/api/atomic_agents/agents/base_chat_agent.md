@@ -51,9 +51,9 @@ generating system prompts, and obtaining responses from a language model.
 - `output_schema` *Type[BaseAgentIO]* - Schema for the output data.
 - `client` - Client for interacting with the language model.
 - `model` *str* - The model to use for generating responses.
-- `memory` *ChatMemory* - Memory component for storing chat history.
+- `memory` *AgentMemory* - Memory component for storing chat history.
 - `system_prompt_generator` *SystemPromptGenerator* - Component for generating system prompts.
-- `initial_memory` *ChatMemory* - Initial state of the memory.
+- `initial_memory` *AgentMemory* - Initial state of the memory.
 
 #### Signature
 

@@ -9,5 +9,5 @@
 
 ## Modules
 
-- [ChatMemory](./chat_memory.md)
+- [AgentMemory](./agent_memory.md)
 - [SystemPromptGenerator](./system_prompt_generator.md)
