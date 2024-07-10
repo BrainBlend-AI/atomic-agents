@@ -1,8 +1,9 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 from pydantic import BaseModel
 import instructor
 from atomic_agents.agents.base_chat_agent import (
+    BaseAgentIO,
     BaseChatAgent,
     BaseChatAgentConfig,
     BaseChatAgentInputSchema,
@@ -148,6 +149,53 @@ def test_custom_input_output_schemas(mock_instructor):
     
     assert custom_agent.input_schema == CustomInputSchema
     assert custom_agent.output_schema == CustomOutputSchema
+    
+
+def test_base_agent_io_str_and_rich():
+    class TestIO(BaseAgentIO):
+        field: str
+
+    test_io = TestIO(field="test")
+    assert str(test_io) == '{"field":"test"}'
+    assert test_io.__rich__() is not None  # Just check if it returns something, as we can't easily compare Rich objects
+
+def test_base_chat_agent_input_output_schema_config():
+    assert BaseChatAgentInputSchema.Config.title == "BaseChatAgentInputSchema"
+    assert "description" in BaseChatAgentInputSchema.Config.json_schema_extra
+    
+    assert BaseChatAgentOutputSchema.Config.title == "BaseChatAgentOutputSchema"
+    assert "description" in BaseChatAgentOutputSchema.Config.json_schema_extra
+
+def test_init_run(agent, mock_memory):
+    input_schema = BaseChatAgentInputSchema(chat_message="Test message")
+    agent._init_run(input_schema)
+    assert agent.current_user_input == input_schema
+    mock_memory.add_message.assert_called_once_with("user", str(input_schema))
+
+def test_pre_run(agent):
+    # This test just ensures that _pre_run can be called without errors
+    agent._pre_run()
+
+def test_post_run(agent, mock_memory):
+    output_schema = BaseChatAgentOutputSchema(chat_message="Test response")
+    agent._post_run(output_schema)
+    mock_memory.add_message.assert_called_once_with("assistant", str(output_schema))
+
+# Update the existing test_run function to use the actual methods instead of mocks
+def test_run(agent, mock_memory):
+    mock_input = BaseChatAgentInputSchema(chat_message="Test input")
+    mock_output = BaseChatAgentOutputSchema(chat_message="Test output")
+    
+    agent.get_response = Mock(return_value=mock_output)
+    
+    result = agent.run(mock_input)
+    
+    assert result == mock_output
+    assert agent.current_user_input == mock_input
+    mock_memory.add_message.assert_has_calls([
+        call("user", str(mock_input)),
+        call("assistant", str(mock_output))
+    ])
     
 if __name__ == '__main__':
     pytest.main()
