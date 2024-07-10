@@ -19,7 +19,7 @@ To install Atomic Agents, you can use pip:
 pip install atomic-agents
 ```
 
-Alternatively, to install the necessary dependencies from the repository, run the following command:
+Alternatively, for local development, to install the necessary dependencies from the repository, run the following command:
 
 ```bash
 python -m venv venv
