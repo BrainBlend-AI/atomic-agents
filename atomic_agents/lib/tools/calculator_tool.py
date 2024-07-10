@@ -1,6 +1,6 @@
 from pydantic import Field
 from rich.console import Console
-from sympy import sympify
+from sympy import SympifyError, sympify
 
 from atomic_agents.agents.base_chat_agent import BaseAgentIO
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
@@ -70,18 +70,12 @@ class CalculatorTool(BaseTool):
 
         Returns:
             CalculatorToolOutputSchema: The output of the tool, adhering to the output schema.
-
-        Raises:
-            ValueError: If there is an error evaluating the expression.
         """
-        try:
-            # Explicitly convert the string form of the expression
-            parsed_expr = sympify(str(params.expression))
-            # Evaluate the expression numerically
-            result = parsed_expr.evalf()
-            return CalculatorToolOutputSchema(result=str(result))
-        except Exception as e:
-            raise ValueError(f"Error evaluating expression: {e}")
+        # Explicitly convert the string form of the expression
+        parsed_expr = sympify(str(params.expression))
+        # Evaluate the expression numerically
+        result = parsed_expr.evalf()
+        return CalculatorToolOutputSchema(result=str(result))
 
 
 #################
