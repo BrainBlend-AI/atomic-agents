@@ -15,6 +15,7 @@ Deprecated==1.2.14
 distro==1.9.0
 docstring_parser==0.16
 filelock==3.14.0
+flake8==7.1.0
 frozenlist==1.4.1
 fsspec==2024.6.0
 google-auth==2.29.0
