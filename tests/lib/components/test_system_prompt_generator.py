@@ -119,7 +119,8 @@ class TestSystemPromptGeneratorBasic:
         empty_info = SystemPromptInfo(background=[])
         empty_generator = SystemPromptGenerator(empty_info)
         prompt = empty_generator.generate_prompt()
-        assert prompt == "# OUTPUT INSTRUCTIONS\n- Always respond using the proper JSON schema.\n- Always use the available additional information and context to enhance the response.\n\n"
+        expected_prompt = "# OUTPUT INSTRUCTIONS\n- Always respond using the proper JSON schema.\n- Always use the available additional information and context to enhance the response."
+        assert prompt == expected_prompt
 
     def test_partial_system_prompt_info(self):
         partial_info = SystemPromptInfo(
@@ -206,3 +207,6 @@ class TestSystemPromptGeneratorContextProviders:
         assert "Info 1" in prompt
         assert "## Provider 2" in prompt
         assert "Info 2" in prompt
+        
+if __name__ == '__main__':
+    pytest.main()
