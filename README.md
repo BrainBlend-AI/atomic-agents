@@ -48,8 +48,8 @@ Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) pa
 
 Additionally, Atomic Agents should work with Ollama or LMStudio. If the default settings do not work due to your local server not supporting tool-calling, you can set the `mode` to JSON.
 
-## Formatting
-To format the code before committing, you must run the following two commands:
+## Formatting and Linting
+To format & lint the code before committing, you must run the following two commands:
 
 `black atomic_agents`
 
