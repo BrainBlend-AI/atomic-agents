@@ -2,3 +2,6 @@
 exclude_lines =
     @abstractmethod
     @abc.abstractmethod
+
+[run]
+omit = */__init__.py
