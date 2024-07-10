@@ -1,3 +1,9 @@
+# development dependencies
+black
+flake8
+pytest
+
+# library dependencies
 beautifulsoup4==4.12.3
 faiss_cpu==1.8.0.post1
 google_api_python_client==2.114.0
