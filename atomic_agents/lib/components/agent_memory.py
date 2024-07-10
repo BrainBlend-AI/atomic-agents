@@ -20,7 +20,7 @@ class Message(BaseModel):
     tool_call_id: Optional[str] = None
 
 
-class ChatMemory:
+class AgentMemory:
     """
     Manages the chat history for an AI agent.
 
@@ -31,7 +31,7 @@ class ChatMemory:
 
     def __init__(self, max_messages: Optional[int] = None):
         """
-        Initializes the ChatMemory with an empty history and optional constraints.
+        Initializes the AgentMemory with an empty history and optional constraints.
 
         Args:
             max_messages (Optional[int]): Maximum number of turns to keep in history.
@@ -116,14 +116,14 @@ class ChatMemory:
         # Optionally, manage overflow after loading all messages
         self._manage_overflow()
 
-    def copy(self) -> "ChatMemory":
+    def copy(self) -> "AgentMemory":
         """
         Creates a copy of the chat memory.
 
         Returns:
-            ChatMemory: A copy of the chat memory.
+            AgentMemory: A copy of the chat memory.
         """
-        new_memory = ChatMemory(max_messages=self.max_messages)
+        new_memory = AgentMemory(max_messages=self.max_messages)
         new_memory.load(self.dump())
 
         return new_memory

@@ -5,7 +5,7 @@ from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolIn
 from atomic_agents.agents.base_chat_agent import BaseAgentIO, BaseChatAgentConfig
 from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.lib.components.agent_memory import AgentMemory
 import instructor
 
 class MockToolInputSchema(BaseAgentIO):
@@ -33,7 +33,7 @@ def mock_instructor():
 
 @pytest.fixture
 def mock_memory():
-    return Mock(spec=ChatMemory)
+    return Mock(spec=AgentMemory)
 
 @pytest.fixture
 def mock_tool():

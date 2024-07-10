@@ -3,17 +3,17 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
 
-from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.lib.components.agent_memory import AgentMemory
 
 console = Console()
 
 def print_panel(title, content):
     console.print(Panel(content, title=title, expand=False, border_style="cyan"))
 
-# Create a ChatMemory with a maximum of 5 messages
-memory = ChatMemory(max_messages=5)
+# Create a AgentMemory with a maximum of 5 messages
+memory = AgentMemory(max_messages=5)
 
-console.print("[bold magenta]ChatMemory Test Cases[/bold magenta]", justify="center")
+console.print("[bold magenta]AgentMemory Test Cases[/bold magenta]", justify="center")
 console.print()
 
 # Test Case 1
@@ -67,7 +67,7 @@ dumped_data = memory.dump()
 content.append("Dumped data:\n")
 content.append(str(dumped_data), style="dim")
 content.append("\n\n")
-new_memory = ChatMemory(max_messages=5)
+new_memory = AgentMemory(max_messages=5)
 new_memory.load(dumped_data)
 content.append("Loaded memory:\n")
 for msg in new_memory.get_history():
@@ -91,7 +91,7 @@ content = Text()
 large_buffer = [
     {"role": "user", "content": f"Message {i}"} for i in range(10)
 ]
-large_memory = ChatMemory(max_messages=5)
+large_memory = AgentMemory(max_messages=5)
 large_memory.load(large_buffer)
 content.append(f"Total messages after loading large buffer: {large_memory.get_message_count()}\n\n")
 content.append("Current history (should only have 5 most recent messages):\n")
@@ -101,7 +101,7 @@ print_panel("7. Testing loading a larger buffer than max_messages", content)
 
 # Test Case 8
 content = Text()
-mixed_memory = ChatMemory(max_messages=10)
+mixed_memory = AgentMemory(max_messages=10)
 mixed_memory.add_message("user", "Hello")
 mixed_memory.add_message("assistant", {"text": "Hi there!", "confidence": 0.95})
 mixed_memory.add_message("system", {"command": "reset_conversation"})

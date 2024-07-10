@@ -4,7 +4,7 @@ import instructor
 from pydantic import BaseModel, Field
 from rich.json import JSON
 
-from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
 
 
@@ -57,7 +57,7 @@ class BaseChatAgentOutputSchema(BaseAgentIO):
 class BaseChatAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field("gpt-3.5-turbo", description="The model to use for generating responses.")
-    memory: Optional[ChatMemory] = Field(None, description="Memory component for storing chat history.")
+    memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         None, description="Component for generating system prompts."
     )
@@ -80,9 +80,9 @@ class BaseChatAgent:
         output_schema (Type[BaseAgentIO]): Schema for the output data.
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
-        memory (ChatMemory): Memory component for storing chat history.
+        memory (AgentMemory): Memory component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
-        initial_memory (ChatMemory): Initial state of the memory.
+        initial_memory (AgentMemory): Initial state of the memory.
     """
 
     input_schema = BaseChatAgentInputSchema
@@ -99,7 +99,7 @@ class BaseChatAgent:
         self.output_schema = config.output_schema or self.output_schema
         self.client = config.client
         self.model = config.model
-        self.memory = config.memory or ChatMemory()
+        self.memory = config.memory or AgentMemory()
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.initial_memory = self.memory.copy()
         self.current_user_input = None

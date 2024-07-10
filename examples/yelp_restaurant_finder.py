@@ -6,7 +6,7 @@ import instructor
 import openai
 from rich.console import Console
 
-from atomic_agents.lib.components.chat_memory import ChatMemory
+from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.agents.base_chat_agent import BaseChatAgent, BaseChatAgentOutputSchema, BaseChatAgentConfig
 from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolSchema
@@ -38,7 +38,7 @@ system_prompt = SystemPromptInfo(
 system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Initialize chat memory to store conversation history
-memory = ChatMemory()
+memory = AgentMemory()
 # Define initial memory with a greeting message from the assistant
 initial_memory = [
     {'role': 'assistant', 'content': 'Hello, can I help you find a restaurant?'}
