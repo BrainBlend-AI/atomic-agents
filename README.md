@@ -50,7 +50,9 @@ Additionally, Atomic Agents should work with Ollama or LMStudio. If the default 
 
 ## Formatting
 To format the code before committing, you must run the following two commands:
+
 `black atomic_agents`
+
 `flake8 atomic_agents --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
 
 ## Testing
