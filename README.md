@@ -48,6 +48,18 @@ Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) pa
 
 Additionally, Atomic Agents should work with Ollama or LMStudio. If the default settings do not work due to your local server not supporting tool-calling, you can set the `mode` to JSON.
 
+## Formatting
+To format the code before committing, you must run the following two commands:
+`black atomic_agents`
+`flake8 atomic_agents --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
+
+## Testing
+To run the tests, run the following command:
+`pytest --cov atomic_agents`
+
+To view the coverage report, run the following command:
+`coverage html`
+
 ## Contributing
 We welcome contributions! Please follow these steps to contribute:
 
