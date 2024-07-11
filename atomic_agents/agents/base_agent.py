@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import Callable, Optional, Type
 
 import instructor
 from pydantic import BaseModel, Field
@@ -63,7 +63,7 @@ class BaseAgentConfig(BaseModel):
     )
     input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
-
+    
     class Config:
         arbitrary_types_allowed = True
 
@@ -138,51 +138,19 @@ class BaseAgent:
         Runs the chat agent with the given user input.
 
         Args:
-            user_input (Optional[str]): The input text from the user. If not provided, skips the initialization step.
+            user_input (Optional[Type[BaseAgentIO]]): The input from the user. If not provided, skips adding to memory.
 
         Returns:
-            str: The response from the chat agent.
+            Type[BaseAgentIO]: The response from the chat agent.
         """
         if user_input:
-            self._init_run(user_input)
-        self._pre_run()
-        response = self._get_and_handle_response()
-        self._post_run(response)
-        return response
+            self.current_user_input = user_input
+            self.memory.add_message("user", str(user_input))
 
-    def _get_and_handle_response(self):
-        """
-        Handles obtaining and processing the response.
-
-        Returns:
-            Type[BaseModel]: The processed response.
-        """
-        return self.get_response(response_model=self.output_schema)
-
-    def _init_run(self, user_input: Type[BaseAgentIO]):
-        """
-        Initializes the run with the given user input.
-
-        Args:
-            user_input (str): The input text from the user.
-        """
-        self.current_user_input = user_input
-        self.memory.add_message("user", str(user_input))
-
-    def _pre_run(self):
-        """
-        Prepares for the run. This method can be overridden by subclasses to add custom pre-run logic.
-        """
-        pass
-
-    def _post_run(self, response):
-        """
-        Finalizes the run with the given response.
-
-        Args:
-            response (Type[BaseModel]): The response from the chat agent.
-        """
+        response = self.get_response(response_model=self.output_schema)
         self.memory.add_message("assistant", str(response))
+        
+        return response
 
     def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
         """
