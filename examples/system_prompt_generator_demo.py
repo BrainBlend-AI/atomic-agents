@@ -40,22 +40,3 @@ system_prompt = SystemPromptInfo(
 
 system_prompt_generator = SystemPromptGenerator(system_prompt)
 print(system_prompt_generator.generate_prompt())
-
-
-def test_generate_prompt_with_empty_providers():
-    """Test generating a prompt with empty context providers."""
-    empty_provider = Mock(spec=SystemPromptContextProviderBase)
-    empty_provider.get_info.return_value = ""
-    empty_provider.title = "Empty Provider"
-
-    info = SystemPromptInfo(
-        background=["Test background"],
-        context_providers={"empty": empty_provider}
-    )
-    generator = SystemPromptGenerator(info)
-    prompt = generator.generate_prompt()
-
-    assert "# IDENTITY and PURPOSE" in prompt
-    assert "Test background" in prompt
-    assert "# EXTRA INFORMATION AND CONTEXT" in prompt
-    assert "## Empty Provider" not in prompt
