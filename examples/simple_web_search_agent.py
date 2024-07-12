@@ -29,11 +29,7 @@ def initialize_agent(client, searx_tool):
 
 def main():
     console = Console()
-    client = instructor.from_openai(
-    openai.OpenAI(
-            base_url='http://localhost:1234/v1'
-        )
-    )
+    client = instructor.from_openai(openai.OpenAI())
     searx_tool = initialize_searx_tool()
     agent = initialize_agent(client, searx_tool)
 
@@ -46,7 +42,7 @@ def main():
             break
         
         # Fix this
-        response = agent.run(agent.input_schema(tool_input=user_input))
+        response = agent.run(agent.input_schema(tool_input_SearxNGSearchTool=user_input))
         console.print(f'Agent: {response.chat_message}')
 
 if __name__ == "__main__":

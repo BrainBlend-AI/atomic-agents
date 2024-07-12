@@ -101,7 +101,7 @@ class ToolInterfaceAgent(BaseAgent):
             )
         )
 
-    def _get_and_handle_response(self):
+    def get_response(self, response_model=None):
         """
         Handles obtaining and processing the response from the tool.
 
@@ -112,7 +112,7 @@ class ToolInterfaceAgent(BaseAgent):
         Returns:
             BaseModel: The processed response or raw tool output.
         """
-        tool_input = self.get_response(response_model=self.tool_instance.input_schema)
+        tool_input = super().get_response(response_model=self.tool_instance.input_schema)
         formatted_tool_input = format_tool_message(tool_input)
 
         self.memory.add_message("assistant", "TOOL CALL: " + json.dumps(formatted_tool_input))
@@ -126,5 +126,5 @@ class ToolInterfaceAgent(BaseAgent):
             "assistant",
             "I will now formulate a response for the user based on the tool output.",
         )
-        response = self.get_response(response_model=self.output_schema)
+        response = super().get_response(response_model=self.output_schema)
         return response
