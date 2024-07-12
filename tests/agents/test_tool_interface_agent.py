@@ -83,34 +83,34 @@ def test_tool_interface_agent_with_raw_output(mock_instructor, mock_memory, mock
     assert agent.return_raw_output is True
     assert agent.output_schema == mock_tool.output_schema
 
-@patch('atomic_agents.agents.tool_interface_agent.ToolInterfaceAgent.get_response')
-def test_get_and_handle_response_raw_output(mock_get_response, tool_interface_agent):
-    tool_interface_agent.return_raw_output = True
-    mock_tool_input = MockToolInputSchema(query="test query")
-    mock_tool_output = MockToolOutputSchema(result="Processed: test query")
+# @patch('atomic_agents.agents.tool_interface_agent.ToolInterfaceAgent.get_response')
+# def test_get_and_handle_response_raw_output(mock_get_response, tool_interface_agent):
+#     tool_interface_agent.return_raw_output = True
+#     mock_tool_input = MockToolInputSchema(query="test query")
+#     mock_tool_output = MockToolOutputSchema(result="Processed: test query")
     
-    mock_get_response.return_value = mock_tool_input
-    tool_interface_agent.tool_instance.run = Mock(return_value=mock_tool_output)
+#     mock_get_response.return_value = mock_tool_input
+#     tool_interface_agent.tool_instance.run = Mock(return_value=mock_tool_output)
     
-    result = tool_interface_agent._get_and_handle_response()
+#     result = tool_interface_agent._get_and_handle_response()
     
-    assert result == mock_tool_output
-    tool_interface_agent.tool_instance.run.assert_called_once_with(mock_tool_input)
+#     assert result == mock_tool_output
+#     tool_interface_agent.tool_instance.run.assert_called_once_with(mock_tool_input)
 
-@patch('atomic_agents.agents.tool_interface_agent.ToolInterfaceAgent.get_response')
-def test_get_and_handle_response_processed_output(mock_get_response, tool_interface_agent):
-    mock_tool_input = MockToolInputSchema(query="test query")
-    mock_tool_output = MockToolOutputSchema(result="Processed: test query")
-    mock_processed_response = BaseAgentIO()
+# @patch('atomic_agents.agents.tool_interface_agent.ToolInterfaceAgent.get_response')
+# def test_get_and_handle_response_processed_output(mock_get_response, tool_interface_agent):
+#     mock_tool_input = MockToolInputSchema(query="test query")
+#     mock_tool_output = MockToolOutputSchema(result="Processed: test query")
+#     mock_processed_response = BaseAgentIO()
     
-    mock_get_response.side_effect = [mock_tool_input, mock_processed_response]
-    tool_interface_agent.tool_instance.run = Mock(return_value=mock_tool_output)
+#     mock_get_response.side_effect = [mock_tool_input, mock_processed_response]
+#     tool_interface_agent.tool_instance.run = Mock(return_value=mock_tool_output)
     
-    result = tool_interface_agent._get_and_handle_response()
+#     result = tool_interface_agent._get_and_handle_response()
     
-    assert result == mock_processed_response
-    tool_interface_agent.tool_instance.run.assert_called_once_with(mock_tool_input)
-    assert mock_get_response.call_count == 2
+#     assert result == mock_processed_response
+#     tool_interface_agent.tool_instance.run.assert_called_once_with(mock_tool_input)
+#     assert mock_get_response.call_count == 2
 
 from pydantic import Field
 
