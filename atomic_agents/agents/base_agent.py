@@ -63,7 +63,7 @@ class BaseAgentConfig(BaseModel):
     )
     input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
-    
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -149,7 +149,7 @@ class BaseAgent:
 
         response = self.get_response(response_model=self.output_schema)
         self.memory.add_message("assistant", str(response))
-        
+
         return response
 
     def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
