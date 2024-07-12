@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, patch
 from pydantic import Field
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig, ToolInputModel
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgentOutputSchema
 from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.components.agent_memory import AgentMemory
@@ -33,7 +33,9 @@ def mock_instructor():
 
 @pytest.fixture
 def mock_memory():
-    return Mock(spec=AgentMemory)
+    mock = Mock(spec=AgentMemory)
+    mock.get_history.return_value = []  # Return an empty list instead of a Mock object
+    return mock
 
 @pytest.fixture
 def mock_tool():
@@ -112,7 +114,10 @@ def test_get_and_handle_response_processed_output(mock_get_response, tool_interf
 
 from pydantic import Field
 
-def test_tool_interface_agent_run(tool_interface_agent):
+from unittest.mock import patch
+
+@patch('atomic_agents.agents.tool_interface_agent.ToolInterfaceAgent.get_response')
+def test_tool_interface_agent_run(mock_get_response, tool_interface_agent):
     # Inspect the input schema
     print(f"Input schema fields: {tool_interface_agent.input_schema.model_fields}")
 
@@ -136,20 +141,17 @@ def test_tool_interface_agent_run(tool_interface_agent):
         print(f"Error creating mock input: {e}")
         raise
 
-    mock_output = BaseAgentIO()
-
-    tool_interface_agent._init_run = Mock()
-    tool_interface_agent._pre_run = Mock()
-    tool_interface_agent._get_and_handle_response = Mock(return_value=mock_output)
-    tool_interface_agent._post_run = Mock()
+    # Mock the get_response method to return a BaseAgentOutputSchema
+    mock_output = BaseAgentOutputSchema(chat_message="Mocked response")
+    mock_get_response.return_value = mock_output
 
     result = tool_interface_agent.run(mock_input)
 
-    assert result == mock_output
-    tool_interface_agent._init_run.assert_called_once_with(mock_input)
-    tool_interface_agent._pre_run.assert_called_once()
-    tool_interface_agent._get_and_handle_response.assert_called_once()
-    tool_interface_agent._post_run.assert_called_once_with(mock_output)
+    assert isinstance(result, BaseAgentOutputSchema)
+    assert result.chat_message == "Mocked response"
+
+    # Verify that get_response was called
+    mock_get_response.assert_called_once()
 
 if __name__ == '__main__':
     pytest.main()

@@ -5,68 +5,11 @@
 > Auto-generated documentation for [atomic_agents.lib.components.system_prompt_generator](../../../../../atomic_agents/lib/components/system_prompt_generator.py) module.
 
 - [SystemPromptGenerator](#systempromptgenerator)
-  - [CurrentDateProvider](#currentdateprovider)
-    - [CurrentDateProvider().get_info](#currentdateprovider()get_info)
-  - [LoremIpsumProvider](#loremipsumprovider)
-    - [LoremIpsumProvider().get_info](#loremipsumprovider()get_info)
   - [SystemPromptContextProviderBase](#systempromptcontextproviderbase)
     - [SystemPromptContextProviderBase().get_info](#systempromptcontextproviderbase()get_info)
   - [SystemPromptGenerator](#systempromptgenerator-1)
     - [SystemPromptGenerator().generate_prompt](#systempromptgenerator()generate_prompt)
   - [SystemPromptInfo](#systempromptinfo)
-
-## CurrentDateProvider
-
-[Show source in system_prompt_generator.py:64](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L64)
-
-#### Signature
-
-```python
-class CurrentDateProvider(SystemPromptContextProviderBase):
-    def __init__(self, title, format: str = "%Y-%m-%d %H:%M:%S"): ...
-```
-
-#### See also
-
-- [SystemPromptContextProviderBase](#systempromptcontextproviderbase)
-
-### CurrentDateProvider().get_info
-
-[Show source in system_prompt_generator.py:69](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L69)
-
-#### Signature
-
-```python
-def get_info(self) -> str: ...
-```
-
-
-
-## LoremIpsumProvider
-
-[Show source in system_prompt_generator.py:72](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L72)
-
-#### Signature
-
-```python
-class LoremIpsumProvider(SystemPromptContextProviderBase): ...
-```
-
-#### See also
-
-- [SystemPromptContextProviderBase](#systempromptcontextproviderbase)
-
-### LoremIpsumProvider().get_info
-
-[Show source in system_prompt_generator.py:73](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L73)
-
-#### Signature
-
-```python
-def get_info(self) -> str: ...
-```
-
-
 
 ## SystemPromptContextProviderBase
 
@@ -94,13 +37,13 @@ def get_info(self) -> str: ...
 
 ## SystemPromptGenerator
 
-[Show source in system_prompt_generator.py:24](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L24)
+[Show source in system_prompt_generator.py:26](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L26)
 
 #### Signature
 
 ```python
 class SystemPromptGenerator:
-    def __init__(self, system_prompt_info: SystemPromptInfo = None): ...
+    def __init__(self, system_prompt_info: Optional[SystemPromptInfo] = None): ...
 ```
 
 #### See also
@@ -109,7 +52,7 @@ class SystemPromptGenerator:
 
 ### SystemPromptGenerator().generate_prompt
 
-[Show source in system_prompt_generator.py:38](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L38)
+[Show source in system_prompt_generator.py:39](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L39)
 
 #### Signature
 
@@ -121,7 +64,7 @@ def generate_prompt(self) -> str: ...
 
 ## SystemPromptInfo
 
-[Show source in system_prompt_generator.py:18](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L18)
+[Show source in system_prompt_generator.py:19](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L19)
 
 #### Signature
 

@@ -13,7 +13,7 @@
 
 ## CalculatorTool
 
-[Show source in calculator_tool.py:35](../../../../../atomic_agents/lib/tools/calculator_tool.py#L35)
+[Show source in calculator_tool.py:43](../../../../../atomic_agents/lib/tools/calculator_tool.py#L43)
 
 Tool for performing calculations based on the provided mathematical expression.
 
@@ -36,7 +36,7 @@ class CalculatorTool(BaseTool):
 
 ### CalculatorTool().run
 
-[Show source in calculator_tool.py:55](../../../../../atomic_agents/lib/tools/calculator_tool.py#L55)
+[Show source in calculator_tool.py:64](../../../../../atomic_agents/lib/tools/calculator_tool.py#L64)
 
 Runs the CalculatorTool with the given parameters.
 
@@ -47,10 +47,6 @@ Runs the CalculatorTool with the given parameters.
 #### Returns
 
 - [CalculatorToolOutputSchema](#calculatortooloutputschema) - The output of the tool, adhering to the output schema.
-
-#### Raises
-
-- `ValueError` - If there is an error evaluating the expression.
 
 #### Signature
 
@@ -67,7 +63,7 @@ def run(self, params: CalculatorToolSchema) -> CalculatorToolOutputSchema: ...
 
 ## CalculatorToolConfig
 
-[Show source in calculator_tool.py:32](../../../../../atomic_agents/lib/tools/calculator_tool.py#L32)
+[Show source in calculator_tool.py:39](../../../../../atomic_agents/lib/tools/calculator_tool.py#L39)
 
 #### Signature
 
@@ -83,7 +79,7 @@ class CalculatorToolConfig(BaseToolConfig): ...
 
 ## CalculatorToolOutputSchema
 
-[Show source in calculator_tool.py:25](../../../../../atomic_agents/lib/tools/calculator_tool.py#L25)
+[Show source in calculator_tool.py:32](../../../../../atomic_agents/lib/tools/calculator_tool.py#L32)
 
 #### Signature
 
@@ -99,7 +95,7 @@ class CalculatorToolOutputSchema(BaseAgentIO): ...
 
 ## CalculatorToolSchema
 
-[Show source in calculator_tool.py:11](../../../../../atomic_agents/lib/tools/calculator_tool.py#L11)
+[Show source in calculator_tool.py:13](../../../../../atomic_agents/lib/tools/calculator_tool.py#L13)
 
 #### Signature
 

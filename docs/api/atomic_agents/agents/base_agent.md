@@ -4,41 +4,22 @@
 
 > Auto-generated documentation for [atomic_agents.agents.base_agent](../../../../atomic_agents/agents/base_agent.py) module.
 
-- [BaseAgent](#baseAgent)
+- [BaseAgent](#baseagent)
+  - [BaseAgent](#baseagent-1)
+    - [BaseAgent().get_context_provider](#baseagent()get_context_provider)
+    - [BaseAgent().get_response](#baseagent()get_response)
+    - [BaseAgent().register_context_provider](#baseagent()register_context_provider)
+    - [BaseAgent().reset_memory](#baseagent()reset_memory)
+    - [BaseAgent().run](#baseagent()run)
+    - [BaseAgent().unregister_context_provider](#baseagent()unregister_context_provider)
+  - [BaseAgentConfig](#baseagentconfig)
   - [BaseAgentIO](#baseagentio)
-  - [BaseAgent](#baseAgent-1)
-    - [BaseAgent()._get_and_handle_response](#baseAgent()_get_and_handle_response)
-    - [BaseAgent()._init_run](#baseAgent()_init_run)
-    - [BaseAgent()._post_run](#baseAgent()_post_run)
-    - [BaseAgent()._pre_run](#baseAgent()_pre_run)
-    - [BaseAgent().get_context_provider](#baseAgent()get_context_provider)
-    - [BaseAgent().get_response](#baseAgent()get_response)
-    - [BaseAgent().get_system_prompt](#baseAgent()get_system_prompt)
-    - [BaseAgent().register_context_provider](#baseAgent()register_context_provider)
-    - [BaseAgent().reset_memory](#baseAgent()reset_memory)
-    - [BaseAgent().run](#baseAgent()run)
-    - [BaseAgent().unregister_context_provider](#baseAgent()unregister_context_provider)
-  - [BaseAgentConfig](#baseAgentconfig)
-  - [BaseAgentInputSchema](#baseAgentinputschema)
-  - [BaseAgentOutputSchema](#baseAgentoutputschema)
-
-## BaseAgentIO
-
-[Show source in base_agent.py:10](../../../../atomic_agents/agents/base_agent.py#L10)
-
-Base class for input and output schemas for chat agents.
-
-#### Signature
-
-```python
-class BaseAgentIO(BaseModel): ...
-```
-
-
+  - [BaseAgentInputSchema](#baseagentinputschema)
+  - [BaseAgentOutputSchema](#baseagentoutputschema)
 
 ## BaseAgent
 
-[Show source in base_agent.py:62](../../../../atomic_agents/agents/base_agent.py#L62)
+[Show source in base_agent.py:71](../../../../atomic_agents/agents/base_agent.py#L71)
 
 Base class for chat agents.
 
@@ -59,85 +40,16 @@ generating system prompts, and obtaining responses from a language model.
 
 ```python
 class BaseAgent:
-    def __init__(
-        self,
-        config: BaseAgentConfig = BaseAgentConfig(
-            client=instructor.from_openai(openai.OpenAI())
-        ),
-    ): ...
+    def __init__(self, config: BaseAgentConfig): ...
 ```
 
 #### See also
 
-- [BaseAgentConfig](#baseAgentconfig)
-
-### BaseAgent()._get_and_handle_response
-
-[Show source in base_agent.py:150](../../../../atomic_agents/agents/base_agent.py#L150)
-
-Handles obtaining and processing the response.
-
-#### Returns
-
-- `Type[BaseModel]` - The processed response.
-
-#### Signature
-
-```python
-def _get_and_handle_response(self): ...
-```
-
-### BaseAgent()._init_run
-
-[Show source in base_agent.py:159](../../../../atomic_agents/agents/base_agent.py#L159)
-
-Initializes the run with the given user input.
-
-#### Arguments
-
-- `user_input` *str* - The input text from the user.
-
-#### Signature
-
-```python
-def _init_run(self, user_input: Type[BaseAgentIO]): ...
-```
-
-#### See also
-
-- [BaseAgentIO](#baseagentio)
-
-### BaseAgent()._post_run
-
-[Show source in base_agent.py:175](../../../../atomic_agents/agents/base_agent.py#L175)
-
-Finalizes the run with the given response.
-
-#### Arguments
-
-- `response` *Type[BaseModel]* - The response from the chat agent.
-
-#### Signature
-
-```python
-def _post_run(self, response): ...
-```
-
-### BaseAgent()._pre_run
-
-[Show source in base_agent.py:169](../../../../atomic_agents/agents/base_agent.py#L169)
-
-Prepares for the run. This method can be overridden by subclasses to add custom pre-run logic.
-
-#### Signature
-
-```python
-def _pre_run(self): ...
-```
+- [BaseAgentConfig](#baseagentconfig)
 
 ### BaseAgent().get_context_provider
 
-[Show source in base_agent.py:184](../../../../atomic_agents/agents/base_agent.py#L184)
+[Show source in base_agent.py:155](../../../../atomic_agents/agents/base_agent.py#L155)
 
 Retrieves a context provider by name.
 
@@ -167,13 +79,14 @@ def get_context_provider(
 
 ### BaseAgent().get_response
 
-[Show source in base_agent.py:112](../../../../atomic_agents/agents/base_agent.py#L112)
+[Show source in base_agent.py:113](../../../../atomic_agents/agents/base_agent.py#L113)
 
 Obtains a response from the language model.
 
 #### Arguments
 
-- `response_model` *Type[BaseModel], optional* - The schema for the response data. If not set, self.output_schema is used.
+response_model (Type[BaseModel], optional):
+    The schema for the response data. If not set, self.output_schema is used.
 
 #### Returns
 
@@ -185,25 +98,9 @@ Obtains a response from the language model.
 def get_response(self, response_model=None) -> Type[BaseModel]: ...
 ```
 
-### BaseAgent().get_system_prompt
-
-[Show source in base_agent.py:103](../../../../atomic_agents/agents/base_agent.py#L103)
-
-Generates the system prompt.
-
-#### Returns
-
-- `str` - The generated system prompt.
-
-#### Signature
-
-```python
-def get_system_prompt(self) -> str: ...
-```
-
 ### BaseAgent().register_context_provider
 
-[Show source in base_agent.py:201](../../../../atomic_agents/agents/base_agent.py#L201)
+[Show source in base_agent.py:172](../../../../atomic_agents/agents/base_agent.py#L172)
 
 Registers a new context provider.
 
@@ -226,7 +123,7 @@ def register_context_provider(
 
 ### BaseAgent().reset_memory
 
-[Show source in base_agent.py:97](../../../../atomic_agents/agents/base_agent.py#L97)
+[Show source in base_agent.py:107](../../../../atomic_agents/agents/base_agent.py#L107)
 
 Resets the memory to its initial state.
 
@@ -238,17 +135,17 @@ def reset_memory(self): ...
 
 ### BaseAgent().run
 
-[Show source in base_agent.py:133](../../../../atomic_agents/agents/base_agent.py#L133)
+[Show source in base_agent.py:136](../../../../atomic_agents/agents/base_agent.py#L136)
 
 Runs the chat agent with the given user input.
 
 #### Arguments
 
-- `user_input` *Optional[str]* - The input text from the user. If not provided, skips the initialization step.
+- `user_input` *Optional[Type[BaseAgentIO]]* - The input from the user. If not provided, skips adding to memory.
 
 #### Returns
 
-- `str` - The response from the chat agent.
+- `Type[BaseAgentIO]` - The response from the chat agent.
 
 #### Signature
 
@@ -262,7 +159,7 @@ def run(self, user_input: Optional[Type[BaseAgentIO]] = None) -> Type[BaseAgentI
 
 ### BaseAgent().unregister_context_provider
 
-[Show source in base_agent.py:211](../../../../atomic_agents/agents/base_agent.py#L211)
+[Show source in base_agent.py:182](../../../../atomic_agents/agents/base_agent.py#L182)
 
 Unregisters an existing context provider.
 
@@ -280,7 +177,7 @@ def unregister_context_provider(self, provider_name: str): ...
 
 ## BaseAgentConfig
 
-[Show source in base_agent.py:51](../../../../atomic_agents/agents/base_agent.py#L51)
+[Show source in base_agent.py:57](../../../../atomic_agents/agents/base_agent.py#L57)
 
 #### Signature
 
@@ -290,9 +187,23 @@ class BaseAgentConfig(BaseModel): ...
 
 
 
+## BaseAgentIO
+
+[Show source in base_agent.py:11](../../../../atomic_agents/agents/base_agent.py#L11)
+
+Base class for input and output schemas for chat agents.
+
+#### Signature
+
+```python
+class BaseAgentIO(BaseModel): ...
+```
+
+
+
 ## BaseAgentInputSchema
 
-[Show source in base_agent.py:21](../../../../atomic_agents/agents/base_agent.py#L21)
+[Show source in base_agent.py:24](../../../../atomic_agents/agents/base_agent.py#L24)
 
 #### Signature
 
@@ -308,7 +219,7 @@ class BaseAgentInputSchema(BaseAgentIO): ...
 
 ## BaseAgentOutputSchema
 
-[Show source in base_agent.py:36](../../../../atomic_agents/agents/base_agent.py#L36)
+[Show source in base_agent.py:39](../../../../atomic_agents/agents/base_agent.py#L39)
 
 #### Signature
 

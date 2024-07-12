@@ -11,7 +11,7 @@
 
 ## BaseTool
 
-[Show source in base.py:11](../../../../../atomic_agents/lib/tools/base.py#L11)
+[Show source in base.py:13](../../../../../atomic_agents/lib/tools/base.py#L13)
 
 Base class for all tools in the Atomic Agents framework.
 
@@ -20,7 +20,8 @@ Base class for all tools in the Atomic Agents framework.
 - `input_schema` *Type[BaseAgentIO]* - The schema for the input data.
 - `output_schema` *Type[BaseAgentIO]* - The schema for the output data.
 - `tool_name` *str* - The name of the tool, derived from the input schema's title.
-- `tool_description` *str* - The description of the tool, derived from the input schema's description or overridden by the user.
+tool_description (str):
+    The description of the tool, derived from the input schema's description or overridden by the user.
 
 #### Signature
 
@@ -35,7 +36,7 @@ class BaseTool:
 
 ### BaseTool().run
 
-[Show source in base.py:35](../../../../../atomic_agents/lib/tools/base.py#L35)
+[Show source in base.py:38](../../../../../atomic_agents/lib/tools/base.py#L38)
 
 Runs the tool with the given parameters. This method should be implemented by subclasses.
 
@@ -65,7 +66,7 @@ def run(self, params: Type[BaseAgentIO]) -> BaseAgentIO: ...
 
 ## BaseToolConfig
 
-[Show source in base.py:7](../../../../../atomic_agents/lib/tools/base.py#L7)
+[Show source in base.py:8](../../../../../atomic_agents/lib/tools/base.py#L8)
 
 #### Signature
 

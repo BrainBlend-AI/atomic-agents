@@ -166,21 +166,6 @@ def test_base_agent_input_output_schema_config():
     assert BaseAgentOutputSchema.Config.title == "BaseAgentOutputSchema"
     assert "description" in BaseAgentOutputSchema.Config.json_schema_extra
 
-def test_init_run(agent, mock_memory):
-    input_schema = BaseAgentInputSchema(chat_message="Test message")
-    agent._init_run(input_schema)
-    assert agent.current_user_input == input_schema
-    mock_memory.add_message.assert_called_once_with("user", str(input_schema))
-
-def test_pre_run(agent):
-    # This test just ensures that _pre_run can be called without errors
-    agent._pre_run()
-
-def test_post_run(agent, mock_memory):
-    output_schema = BaseAgentOutputSchema(chat_message="Test response")
-    agent._post_run(output_schema)
-    mock_memory.add_message.assert_called_once_with("assistant", str(output_schema))
-
 # Update the existing test_run function to use the actual methods instead of mocks
 def test_run(agent, mock_memory):
     mock_input = BaseAgentInputSchema(chat_message="Test input")
@@ -192,6 +177,7 @@ def test_run(agent, mock_memory):
     
     assert result == mock_output
     assert agent.current_user_input == mock_input
+    
     mock_memory.add_message.assert_has_calls([
         call("user", str(mock_input)),
         call("assistant", str(mock_output))

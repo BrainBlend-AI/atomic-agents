@@ -4,42 +4,20 @@
 
 > Auto-generated documentation for [atomic_agents.lib.components.agent_memory](../../../../../atomic_agents/lib/components/agent_memory.py) module.
 
-#### Attributes
-
-- `memory` - Create a AgentMemory with a maximum of 5 messages: AgentMemory(max_messages=5)
-
-- `content` - Test Case 1: Text()
-
-- `content` - Test Case 2: Text()
-
-- `content` - Test Case 3: Text()
-
-- `content` - Test Case 4: Text()
-
-- `content` - Test Case 5: Text()
-
-- `content` - Test Case 6: Text()
-
-- `content` - Test Case 7: Text()
-
-- `content` - Test Case 8: Text()
-
-
-- [AgentMemory](#AgentMemory)
-  - [AgentMemory](#AgentMemory-1)
-    - [AgentMemory()._manage_overflow](#AgentMemory()_manage_overflow)
-    - [AgentMemory().add_message](#AgentMemory()add_message)
-    - [AgentMemory().copy](#AgentMemory()copy)
-    - [AgentMemory().dump](#AgentMemory()dump)
-    - [AgentMemory().get_history](#AgentMemory()get_history)
-    - [AgentMemory().get_message_count](#AgentMemory()get_message_count)
-    - [AgentMemory().load](#AgentMemory()load)
+- [AgentMemory](#agentmemory)
+  - [AgentMemory](#agentmemory-1)
+    - [AgentMemory()._manage_overflow](#agentmemory()_manage_overflow)
+    - [AgentMemory().add_message](#agentmemory()add_message)
+    - [AgentMemory().copy](#agentmemory()copy)
+    - [AgentMemory().dump](#agentmemory()dump)
+    - [AgentMemory().get_history](#agentmemory()get_history)
+    - [AgentMemory().get_message_count](#agentmemory()get_message_count)
+    - [AgentMemory().load](#agentmemory()load)
   - [Message](#message)
-  - [print_panel](#print_panel)
 
 ## AgentMemory
 
-[Show source in agent_memory.py:19](../../../../../atomic_agents/lib/components/agent_memory.py#L19)
+[Show source in agent_memory.py:23](../../../../../atomic_agents/lib/components/agent_memory.py#L23)
 
 Manages the chat history for an AI agent.
 
@@ -57,7 +35,7 @@ class AgentMemory:
 
 ### AgentMemory()._manage_overflow
 
-[Show source in agent_memory.py:61](../../../../../atomic_agents/lib/components/agent_memory.py#L61)
+[Show source in agent_memory.py:71](../../../../../atomic_agents/lib/components/agent_memory.py#L71)
 
 Manages the chat history overflow based on max_messages constraint.
 
@@ -69,7 +47,7 @@ def _manage_overflow(self) -> None: ...
 
 ### AgentMemory().add_message
 
-[Show source in agent_memory.py:38](../../../../../atomic_agents/lib/components/agent_memory.py#L38)
+[Show source in agent_memory.py:42](../../../../../atomic_agents/lib/components/agent_memory.py#L42)
 
 Adds a message to the chat history and manages overflow.
 
@@ -77,7 +55,7 @@ Adds a message to the chat history and manages overflow.
 
 - `role` *str* - The role of the message sender.
 content (Union[str, Dict]): The content of the message.
-- [tool_message](#AgentMemory) *Optional[Dict]* - Optional tool message to be included.
+- `tool_message` *Optional[Dict]* - Optional tool message to be included.
 - `tool_id` *Optional[str]* - Optional unique identifier for the tool call.
 
 #### Signature
@@ -94,13 +72,13 @@ def add_message(
 
 ### AgentMemory().copy
 
-[Show source in agent_memory.py:109](../../../../../atomic_agents/lib/components/agent_memory.py#L109)
+[Show source in agent_memory.py:119](../../../../../atomic_agents/lib/components/agent_memory.py#L119)
 
 Creates a copy of the chat memory.
 
 #### Returns
 
-- [AgentMemory](#AgentMemory) - A copy of the chat memory.
+- [AgentMemory](#agentmemory) - A copy of the chat memory.
 
 #### Signature
 
@@ -110,7 +88,7 @@ def copy(self) -> "AgentMemory": ...
 
 ### AgentMemory().dump
 
-[Show source in agent_memory.py:78](../../../../../atomic_agents/lib/components/agent_memory.py#L78)
+[Show source in agent_memory.py:88](../../../../../atomic_agents/lib/components/agent_memory.py#L88)
 
 Converts the chat history to a list of dictionaries.
 
@@ -126,7 +104,7 @@ def dump(self) -> List[Dict]: ...
 
 ### AgentMemory().get_history
 
-[Show source in agent_memory.py:69](../../../../../atomic_agents/lib/components/agent_memory.py#L69)
+[Show source in agent_memory.py:79](../../../../../atomic_agents/lib/components/agent_memory.py#L79)
 
 Retrieves the chat history.
 
@@ -146,7 +124,7 @@ def get_history(self) -> List[Message]: ...
 
 ### AgentMemory().get_message_count
 
-[Show source in agent_memory.py:121](../../../../../atomic_agents/lib/components/agent_memory.py#L121)
+[Show source in agent_memory.py:131](../../../../../atomic_agents/lib/components/agent_memory.py#L131)
 
 Returns the number of messages in the chat history.
 
@@ -162,7 +140,7 @@ def get_message_count(self) -> int: ...
 
 ### AgentMemory().load
 
-[Show source in agent_memory.py:87](../../../../../atomic_agents/lib/components/agent_memory.py#L87)
+[Show source in agent_memory.py:97](../../../../../atomic_agents/lib/components/agent_memory.py#L97)
 
 Loads the chat history from a list of dictionaries using Pydantic's parsing.
 
@@ -180,7 +158,7 @@ def load(self, dict_list: List[Dict]) -> None: ...
 
 ## Message
 
-[Show source in agent_memory.py:4](../../../../../atomic_agents/lib/components/agent_memory.py#L4)
+[Show source in agent_memory.py:6](../../../../../atomic_agents/lib/components/agent_memory.py#L6)
 
 Represents a message in the chat history.
 
@@ -195,16 +173,4 @@ content (Union[str, Dict]): The content of the message.
 
 ```python
 class Message(BaseModel): ...
-```
-
-
-
-## print_panel
-
-[Show source in agent_memory.py:139](../../../../../atomic_agents/lib/components/agent_memory.py#L139)
-
-#### Signature
-
-```python
-def print_panel(title, content): ...
 ```
