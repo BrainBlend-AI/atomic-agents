@@ -10,7 +10,7 @@
 
 ## WebDocument
 
-[Show source in web_document.py:12](../../../../../atomic_agents/lib/models/web_document.py#L12)
+[Show source in web_document.py:14](../../../../../atomic_agents/lib/models/web_document.py#L14)
 
 #### Signature
 
@@ -26,7 +26,7 @@ class WebDocument(BaseAgentIO): ...
 
 ## WebDocumentMetadata
 
-[Show source in web_document.py:5](../../../../../atomic_agents/lib/models/web_document.py#L5)
+[Show source in web_document.py:6](../../../../../atomic_agents/lib/models/web_document.py#L6)
 
 #### Signature
 

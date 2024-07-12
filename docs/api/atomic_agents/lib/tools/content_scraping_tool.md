@@ -24,7 +24,7 @@
 
 ## ContentScrapingTool
 
-[Show source in content_scraping_tool.py:44](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L44)
+[Show source in content_scraping_tool.py:50](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L50)
 
 Tool for scraping web pages or PDFs and converting content to markdown.
 
@@ -49,7 +49,7 @@ class ContentScrapingTool(BaseTool):
 
 ### ContentScrapingTool().run
 
-[Show source in content_scraping_tool.py:64](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L64)
+[Show source in content_scraping_tool.py:71](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L71)
 
 Runs the ContentScrapingTool with the given parameters.
 
@@ -76,7 +76,7 @@ def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSch
 
 ## ContentScrapingToolConfig
 
-[Show source in content_scraping_tool.py:40](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L40)
+[Show source in content_scraping_tool.py:46](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L46)
 
 #### Signature
 
@@ -92,7 +92,7 @@ class ContentScrapingToolConfig(BaseToolConfig): ...
 
 ## ContentScrapingToolOutputSchema
 
-[Show source in content_scraping_tool.py:32](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L32)
+[Show source in content_scraping_tool.py:38](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L38)
 
 #### Signature
 
@@ -108,7 +108,7 @@ class ContentScrapingToolOutputSchema(BaseAgentIO): ...
 
 ## ContentScrapingToolSchema
 
-[Show source in content_scraping_tool.py:18](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L18)
+[Show source in content_scraping_tool.py:21](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L21)
 
 #### Signature
 

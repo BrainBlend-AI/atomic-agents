@@ -16,7 +16,7 @@
 
 ## PriceRange
 
-[Show source in yelp_restaurant_finder_tool.py:36](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L36)
+[Show source in yelp_restaurant_finder_tool.py:39](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L39)
 
 #### Signature
 
@@ -28,7 +28,7 @@ class PriceRange(Enum): ...
 
 ## YelpCategory
 
-[Show source in yelp_restaurant_finder_tool.py:15](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L15)
+[Show source in yelp_restaurant_finder_tool.py:17](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L17)
 
 #### Signature
 
@@ -40,7 +40,7 @@ class YelpCategory(Enum): ...
 
 ## YelpSearchResultSchema
 
-[Show source in yelp_restaurant_finder_tool.py:62](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L62)
+[Show source in yelp_restaurant_finder_tool.py:78](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L78)
 
 #### Signature
 
@@ -56,7 +56,7 @@ class YelpSearchResultSchema(BaseAgentIO): ...
 
 ## YelpSearchTool
 
-[Show source in yelp_restaurant_finder_tool.py:89](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L89)
+[Show source in yelp_restaurant_finder_tool.py:110](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L110)
 
 Tool for performing searches using the Yelp API based on the provided queries.
 
@@ -81,7 +81,7 @@ class YelpSearchTool(BaseTool):
 
 ### YelpSearchTool().run
 
-[Show source in yelp_restaurant_finder_tool.py:113](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L113)
+[Show source in yelp_restaurant_finder_tool.py:136](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L136)
 
 Runs the YelpSearchTool with the given parameters.
 
@@ -114,7 +114,7 @@ def run(self, params: YelpSearchToolSchema) -> YelpSearchToolOutputSchema: ...
 
 ## YelpSearchToolConfig
 
-[Show source in yelp_restaurant_finder_tool.py:85](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L85)
+[Show source in yelp_restaurant_finder_tool.py:105](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L105)
 
 #### Signature
 
@@ -130,7 +130,7 @@ class YelpSearchToolConfig(BaseToolConfig): ...
 
 ## YelpSearchToolOutputSchema
 
-[Show source in yelp_restaurant_finder_tool.py:71](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L71)
+[Show source in yelp_restaurant_finder_tool.py:88](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L88)
 
 #### Signature
 
@@ -146,7 +146,7 @@ class YelpSearchToolOutputSchema(BaseAgentIO): ...
 
 ## YelpSearchToolSchema
 
-[Show source in yelp_restaurant_finder_tool.py:42](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L42)
+[Show source in yelp_restaurant_finder_tool.py:46](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L46)
 
 #### Signature
 

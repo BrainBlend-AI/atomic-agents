@@ -9,7 +9,7 @@
 
 ## format_tool_message
 
-[Show source in format_tool_message.py:8](../../../../../atomic_agents/lib/utils/format_tool_message.py#L8)
+[Show source in format_tool_message.py:7](../../../../../atomic_agents/lib/utils/format_tool_message.py#L7)
 
 Formats a message for a tool call.
 
@@ -26,5 +26,7 @@ Formats a message for a tool call.
 #### Signature
 
 ```python
-def format_tool_message(tool_call: Type[BaseModel], tool_id: str = None) -> Dict: ...
+def format_tool_message(
+    tool_call: Type[BaseModel], tool_id: Optional[str] = None
+) -> Dict: ...
 ```
