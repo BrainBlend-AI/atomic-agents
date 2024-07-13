@@ -24,6 +24,6 @@ def format_tool_message(tool_call: Type[BaseModel], tool_id: Optional[str] = Non
         "type": "function",
         "function": {
             "name": tool_call.model_config["title"],
-            "arguments": json.dumps(tool_call.model_dump(), separators=(', ', ': '))
+            "arguments": json.dumps(tool_call.model_dump(), separators=(", ", ": ")),
         },
     }
