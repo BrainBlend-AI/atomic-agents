@@ -1,4 +1,5 @@
 import uuid
+import json
 from typing import Dict, Optional, Type
 
 from pydantic import BaseModel
@@ -9,8 +10,7 @@ def format_tool_message(tool_call: Type[BaseModel], tool_id: Optional[str] = Non
     Formats a message for a tool call.
 
     Args:
-        tool_name (str): The type of the tool.
-        tool_calls (Dict): A dictionary containing the tool calls.
+        tool_call (Type[BaseModel]): The Pydantic model instance representing the tool call.
         tool_id (str, optional): The unique identifier for the tool call. If not provided, a random UUID will be generated.
 
     Returns:
@@ -24,6 +24,6 @@ def format_tool_message(tool_call: Type[BaseModel], tool_id: Optional[str] = Non
         "type": "function",
         "function": {
             "name": tool_call.model_config["title"],
-            "arguments": tool_call.model_dump_json(),
+            "arguments": json.dumps(tool_call.model_dump(), separators=(', ', ': '))
         },
     }
