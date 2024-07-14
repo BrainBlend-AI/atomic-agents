@@ -53,7 +53,7 @@ To format & lint the code before committing, you must run the following two comm
 
 `black atomic_agents`
 
-`flake8 atomic_agents --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
+`flake8 atomic_agents`
 
 ## Testing
 To run the tests, run the following command:
