@@ -1,5 +1,6 @@
 import uuid
 from pydantic import BaseModel
+import pytest
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
 
 # Mock classes for testing
