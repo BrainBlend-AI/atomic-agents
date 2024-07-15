@@ -3,6 +3,8 @@
 # but it uses the Google Mesop library for a simple and easy chat UI
 # simply do "pip install mesop" to install it.
 # https://google.github.io/mesop/
+#
+# To run, do "mesop simple_web_search_agent.py"
 ##########
 
 import os
