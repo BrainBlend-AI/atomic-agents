@@ -16,7 +16,8 @@ calc_tool = CalculatorTool(CalculatorToolConfig())
 
 search_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-3.5-turbo', tool_instance=searx_tool, return_raw_output=False)
 calculator_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-3.5-turbo', tool_instance=calc_tool, return_raw_output=False)
-searx_agent, calc_agent = ToolInterfaceAgent(config=search_agent_config), ToolInterfaceAgent(config=calculator_agent_config)
+searx_agent = ToolInterfaceAgent(config=search_agent_config)
+calc_agent = ToolInterfaceAgent(config=calculator_agent_config)
 
 UnionResponse = create_model('UnionResponse', __base__=BaseAgentIO, response=(Union[searx_agent.input_schema, calc_agent.input_schema], ...))
 
