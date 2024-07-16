@@ -3,4 +3,3 @@ max-line-length = 127
 max-complexity = 10
 count = true
 statistics = true
-exclude = .venv
