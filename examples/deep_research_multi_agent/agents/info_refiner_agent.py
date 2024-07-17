@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 import instructor
 import openai
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
-class RefineAnswerInputSchema(BaseAgentIO):
+class RefineAnswerInputSchema(BaseIOSchema):
     question: str = Field(..., description='The question that was asked.')
     answer: str = Field(..., description='The initial answer to the question.')
 

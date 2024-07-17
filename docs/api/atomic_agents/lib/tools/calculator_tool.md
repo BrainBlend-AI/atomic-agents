@@ -84,12 +84,12 @@ class CalculatorToolConfig(BaseToolConfig): ...
 #### Signature
 
 ```python
-class CalculatorToolOutputSchema(BaseAgentIO): ...
+class CalculatorToolOutputSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -100,9 +100,9 @@ class CalculatorToolOutputSchema(BaseAgentIO): ...
 #### Signature
 
 ```python
-class CalculatorToolSchema(BaseAgentIO): ...
+class CalculatorToolSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)

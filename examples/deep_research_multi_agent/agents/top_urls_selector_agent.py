@@ -2,14 +2,14 @@ from typing import List
 import instructor
 import openai
 from pydantic import BaseModel, Field, HttpUrl
-from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
-class TopUrlsSelectorInputSchema(BaseAgentIO):
+class TopUrlsSelectorInputSchema(BaseIOSchema):
     user_input: str = Field(..., description='The user input or question.')
     num_urls: int = Field(..., description='The number of top URLs to select.')
 
-class TopUrlsSelectorOutputSchema(BaseAgentIO):
+class TopUrlsSelectorOutputSchema(BaseIOSchema):
     top_urls: List[HttpUrl] = Field(..., description='The list of top URLs selected based on the user input.')
 
 # Create the top URLs selector agent

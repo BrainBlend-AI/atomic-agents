@@ -5,7 +5,7 @@ import requests
 from pydantic import Field
 from rich.console import Console
 
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
@@ -13,7 +13,7 @@ from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 ################
 
 
-class SearxNGSearchToolSchema(BaseAgentIO):
+class SearxNGSearchToolSchema(BaseIOSchema):
     queries: List[str] = Field(..., description="List of search queries.")
     category: Optional[Literal["general", "news", "social_media"]] = Field(
         "general", description="Category of the search queries."
@@ -33,13 +33,13 @@ class SearxNGSearchToolSchema(BaseAgentIO):
 ####################
 
 
-class SearxNGSearchResultSchema(BaseAgentIO):
+class SearxNGSearchResultSchema(BaseIOSchema):
     url: str
     title: str
     content: Optional[str] = None
 
 
-class SearxNGSearchToolOutputSchema(BaseAgentIO):
+class SearxNGSearchToolOutputSchema(BaseIOSchema):
     results: List[SearxNGSearchResultSchema]
     category: Optional[str] = None
 
@@ -47,8 +47,6 @@ class SearxNGSearchToolOutputSchema(BaseAgentIO):
 ##############
 # TOOL LOGIC #
 ##############
-
-
 class SearxNGSearchToolConfig(BaseToolConfig):
     base_url: str = ""
     max_results: int = 10

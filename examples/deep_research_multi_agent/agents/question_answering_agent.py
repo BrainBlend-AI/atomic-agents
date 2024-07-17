@@ -1,13 +1,13 @@
 import instructor
 import openai
 from pydantic import BaseModel, Field
-from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 
-class AnswerAgentInputSchema(BaseAgentIO):
+class AnswerAgentInputSchema(BaseIOSchema):
     question: str = Field(..., description='A question that needs to be answered based on the provided context.')
 
-class AnswerAgentOutputSchema(BaseAgentIO):
+class AnswerAgentOutputSchema(BaseIOSchema):
     markdown_output: str = Field(..., description='The answer to the question in markdown format.')
 
 # Create the answer agent

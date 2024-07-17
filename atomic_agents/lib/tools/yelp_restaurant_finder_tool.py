@@ -6,7 +6,7 @@ import requests
 from pydantic import Field
 from rich.console import Console
 
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
@@ -43,7 +43,7 @@ class PriceRange(Enum):
     FOUR = "4"
 
 
-class YelpSearchToolSchema(BaseAgentIO):
+class YelpSearchToolSchema(BaseIOSchema):
     location: str = Field(..., description="Location to search for food.")
     term: Optional[str] = Field(None, description="Search term (e.g., 'pizza', 'sushi').")
     categories: Optional[List[YelpCategory]] = Field(None, description="Categories to filter by (e.g., 'italian, mexican').")
@@ -75,7 +75,7 @@ class YelpSearchToolSchema(BaseAgentIO):
 ####################
 
 
-class YelpSearchResultSchema(BaseAgentIO):
+class YelpSearchResultSchema(BaseIOSchema):
     name: str
     url: str
     rating: float
@@ -85,7 +85,7 @@ class YelpSearchResultSchema(BaseAgentIO):
     categories: List[str]
 
 
-class YelpSearchToolOutputSchema(BaseAgentIO):
+class YelpSearchToolOutputSchema(BaseIOSchema):
     results: List[YelpSearchResultSchema]
 
     class Config:

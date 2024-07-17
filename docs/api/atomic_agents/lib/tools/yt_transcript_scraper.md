@@ -133,12 +133,12 @@ class YouTubeTranscriptToolConfig(BaseToolConfig): ...
 #### Signature
 
 ```python
-class YouTubeTranscriptToolOutputSchema(BaseAgentIO): ...
+class YouTubeTranscriptToolOutputSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -149,9 +149,9 @@ class YouTubeTranscriptToolOutputSchema(BaseAgentIO): ...
 #### Signature
 
 ```python
-class YouTubeTranscriptToolSchema(BaseAgentIO): ...
+class YouTubeTranscriptToolSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)

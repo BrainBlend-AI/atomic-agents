@@ -11,7 +11,7 @@ from atomic_agents.lib.tools.yelp_restaurant_finder_tool import (
     PriceRange
 )
 from atomic_agents.lib.tools.base import BaseTool
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 
 # Sample data
 SAMPLE_YELP_RESPONSE = {
@@ -39,14 +39,14 @@ def test_yelp_search_tool_initialization(yelp_search_tool):
     assert yelp_search_tool.max_results == 10
 
 def test_yelp_search_tool_input_schema():
-    assert issubclass(YelpSearchToolSchema, BaseAgentIO)
+    assert issubclass(YelpSearchToolSchema, BaseIOSchema)
     assert "location" in YelpSearchToolSchema.model_fields
     assert "term" in YelpSearchToolSchema.model_fields
     assert "categories" in YelpSearchToolSchema.model_fields
     assert "price" in YelpSearchToolSchema.model_fields
 
 def test_yelp_search_tool_output_schema():
-    assert issubclass(YelpSearchToolOutputSchema, BaseAgentIO)
+    assert issubclass(YelpSearchToolOutputSchema, BaseIOSchema)
     assert "results" in YelpSearchToolOutputSchema.model_fields
 
 @patch('atomic_agents.lib.tools.yelp_restaurant_finder_tool.requests.get')

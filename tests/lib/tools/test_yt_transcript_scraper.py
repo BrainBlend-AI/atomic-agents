@@ -10,7 +10,7 @@ from atomic_agents.lib.tools.yt_transcript_scraper import (
     YouTubeTranscriptToolOutputSchema,
 )
 from atomic_agents.lib.tools.base import BaseTool
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 from youtube_transcript_api import YouTubeTranscriptApi
 
 
@@ -37,12 +37,12 @@ def test_youtube_transcript_tool_initialization(youtube_transcript_tool):
     assert youtube_transcript_tool.api_key == "dummy_api_key"
 
 def test_youtube_transcript_tool_input_schema():
-    assert issubclass(YouTubeTranscriptToolSchema, BaseAgentIO)
+    assert issubclass(YouTubeTranscriptToolSchema, BaseIOSchema)
     assert "video_url" in YouTubeTranscriptToolSchema.model_fields
     assert "language" in YouTubeTranscriptToolSchema.model_fields
 
 def test_youtube_transcript_tool_output_schema():
-    assert issubclass(YouTubeTranscriptToolOutputSchema, BaseAgentIO)
+    assert issubclass(YouTubeTranscriptToolOutputSchema, BaseIOSchema)
     assert "transcript" in YouTubeTranscriptToolOutputSchema.model_fields
     assert "duration" in YouTubeTranscriptToolOutputSchema.model_fields
     assert "comments" in YouTubeTranscriptToolOutputSchema.model_fields

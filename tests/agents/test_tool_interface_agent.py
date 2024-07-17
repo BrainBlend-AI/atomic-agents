@@ -5,18 +5,18 @@ import instructor
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig, ToolInputModel
 from atomic_agents.lib.tools.base import BaseTool
-from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgentOutputSchema
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgentOutputSchema
 from atomic_agents.lib.components.agent_memory import Message
 
 class MockTool(BaseTool):
-    class InputSchema(BaseAgentIO):
+    class InputSchema(BaseIOSchema):
         query: str = Field(..., description="The query to process")
 
         class Config:
             title = "MockTool"
             description = "A mock tool for testing"
 
-    class OutputSchema(BaseAgentIO):
+    class OutputSchema(BaseIOSchema):
         result: str = Field(..., description="The result of the tool operation")
 
     input_schema = InputSchema

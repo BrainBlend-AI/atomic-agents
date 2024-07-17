@@ -17,12 +17,12 @@
 #### Signature
 
 ```python
-class ToolInputModel(BaseAgentIO): ...
+class ToolInputModel(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](./base_agent.md#baseagentio)
+- [BaseIOSchema](./base_agent.md#baseagentio)
 
 
 

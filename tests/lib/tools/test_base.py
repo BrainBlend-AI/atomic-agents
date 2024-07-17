@@ -1,15 +1,15 @@
 import pytest
 from pydantic import BaseModel
 from atomic_agents.lib.tools.base import BaseToolConfig, BaseTool
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 
 # Mock classes for testing
-class MockInputSchema(BaseAgentIO):
+class MockInputSchema(BaseIOSchema):
     class Config:
         title = "Mock Input"
         description = "Mock input description"
 
-class MockOutputSchema(BaseAgentIO):
+class MockOutputSchema(BaseIOSchema):
     result: str
 
 class MockTool(BaseTool):

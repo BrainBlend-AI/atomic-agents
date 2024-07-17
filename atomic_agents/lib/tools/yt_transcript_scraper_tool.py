@@ -6,7 +6,7 @@ from pydantic import Field
 from rich.console import Console
 from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled, YouTubeTranscriptApi
 
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
@@ -14,7 +14,7 @@ from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 ################
 
 
-class YouTubeTranscriptToolSchema(BaseAgentIO):
+class YouTubeTranscriptToolSchema(BaseIOSchema):
     video_url: str = Field(..., description="URL of the YouTube video to fetch the transcript for.")
     language: Optional[str] = Field(None, description="Language code for the transcript (e.g., 'en' for English).")
 
@@ -32,7 +32,7 @@ class YouTubeTranscriptToolSchema(BaseAgentIO):
 ####################
 
 
-class YouTubeTranscriptToolOutputSchema(BaseAgentIO):
+class YouTubeTranscriptToolOutputSchema(BaseIOSchema):
     transcript: str
     duration: float
     comments: List[str]

@@ -3,7 +3,7 @@ from unittest.mock import Mock, call
 from pydantic import BaseModel
 import instructor
 from atomic_agents.agents.base_agent import (
-    BaseAgentIO,
+    BaseIOSchema,
     BaseAgent,
     BaseAgentConfig,
     BaseAgentInputSchema,
@@ -152,7 +152,7 @@ def test_custom_input_output_schemas(mock_instructor):
     
 
 def test_base_agent_io_str_and_rich():
-    class TestIO(BaseAgentIO):
+    class TestIO(BaseIOSchema):
         field: str
 
     test_io = TestIO(field="test")

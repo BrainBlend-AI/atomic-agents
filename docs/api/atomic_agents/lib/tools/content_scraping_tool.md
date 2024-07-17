@@ -97,12 +97,12 @@ class ContentScrapingToolConfig(BaseToolConfig): ...
 #### Signature
 
 ```python
-class ContentScrapingToolOutputSchema(BaseAgentIO): ...
+class ContentScrapingToolOutputSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -113,9 +113,9 @@ class ContentScrapingToolOutputSchema(BaseAgentIO): ...
 #### Signature
 
 ```python
-class ContentScrapingToolSchema(BaseAgentIO): ...
+class ContentScrapingToolSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)

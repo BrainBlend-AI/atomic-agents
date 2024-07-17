@@ -6,7 +6,7 @@ import requests
 from pydantic import Field
 from rich.console import Console
 
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 
 ################
@@ -14,7 +14,7 @@ from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 ################
 
 
-class SerperSearchToolSchema(BaseAgentIO):
+class SerperSearchToolSchema(BaseIOSchema):
     queries: List[str] = Field(..., description="List of search queries.")
 
     class Config:
@@ -31,14 +31,14 @@ class SerperSearchToolSchema(BaseAgentIO):
 ####################
 
 
-class SerperSearchResultSchema(BaseAgentIO):
+class SerperSearchResultSchema(BaseIOSchema):
     url: str
     title: str
     content: Optional[str] = None
     position: Optional[int] = None
 
 
-class SerperSearchToolOutputSchema(BaseAgentIO):
+class SerperSearchToolOutputSchema(BaseIOSchema):
     results: List[SerperSearchResultSchema]
 
 

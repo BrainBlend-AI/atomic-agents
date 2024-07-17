@@ -17,13 +17,13 @@ A tool in the `atomic_agents` framework consists of the following components:
 
 #### 1. Define the Input Schema
 
-The input schema is a Pydantic `BaseModel` that specifies the input parameters for the tool. It should inherit from `BaseAgentIO` and include a `Config` class with `title`, `description`, and `json_schema_extra` attributes. Here's an example:
+The input schema is a Pydantic `BaseModel` that specifies the input parameters for the tool. It should inherit from `BaseIOSchema` and include a `Config` class with `title`, `description`, and `json_schema_extra` attributes. Here's an example:
 
 ```python
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 
-class MyToolInputSchema(BaseAgentIO):
+class MyToolInputSchema(BaseIOSchema):
     parameter: str = Field(..., description="Description of the parameter.")
     list_param: list[str] = Field(..., description="A list of strings.")
 
@@ -38,10 +38,10 @@ class MyToolInputSchema(BaseAgentIO):
 
 #### 2. Define the Output Schema
 
-The output schema is also a Pydantic `BaseModel` that inherits from `BaseAgentIO`. It specifies the structure of the tool's output. Here's an example:
+The output schema is also a Pydantic `BaseModel` that inherits from `BaseIOSchema`. It specifies the structure of the tool's output. Here's an example:
 
 ```python
-class MyToolOutputSchema(BaseAgentIO):
+class MyToolOutputSchema(BaseIOSchema):
     result: str = Field(..., description="Result of the tool's operation.")
     details: dict = Field(..., description="Additional details about the result.")
 ```
@@ -107,12 +107,12 @@ Here is a complete example of a new tool called `MyTool`:
 # my_tool.py
 
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
 from rich.console import Console
 
 # Input Schema
-class MyToolInputSchema(BaseAgentIO):
+class MyToolInputSchema(BaseIOSchema):
     parameter: str = Field(..., description="Description of the parameter.")
     list_param: list[str] = Field(..., description="A list of strings.")
 
@@ -125,7 +125,7 @@ class MyToolInputSchema(BaseAgentIO):
         }
 
 # Output Schema
-class MyToolOutputSchema(BaseAgentIO):
+class MyToolOutputSchema(BaseIOSchema):
     result: str = Field(..., description="Result of the tool's operation.")
     details: dict = Field(..., description="Additional details about the result.")
 
@@ -164,4 +164,4 @@ if __name__ == "__main__":
 
 ### Conclusion
 
-By following these steps, you can create a new tool in the `atomic_agents` framework. Define the input and output schemas, implement the tool logic, and provide an example usage to demonstrate how the tool works. Remember to inherit from the appropriate base classes (`BaseAgentIO`, `BaseToolConfig`, and `BaseTool`) and use the `rich` library for console output in your example usage.
+By following these steps, you can create a new tool in the `atomic_agents` framework. Define the input and output schemas, implement the tool logic, and provide an example usage to demonstrate how the tool works. Remember to inherit from the appropriate base classes (`BaseIOSchema`, `BaseToolConfig`, and `BaseTool`) and use the `rich` library for console output in your example usage.

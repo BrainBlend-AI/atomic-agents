@@ -2,7 +2,7 @@ import json
 
 from pydantic import Field, create_model
 
-from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.lib.tools.base import BaseTool
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
@@ -13,7 +13,7 @@ class ToolInterfaceAgentConfig(BaseAgentConfig):
     return_raw_output: bool = False
 
 
-class ToolInputModel(BaseAgentIO):
+class ToolInputModel(BaseIOSchema):
     tool_input: str = Field(..., description="Tool input. Presented as a single question or instruction")
 
     class Config:

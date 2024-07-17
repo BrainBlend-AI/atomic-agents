@@ -45,12 +45,12 @@ class YelpCategory(Enum): ...
 #### Signature
 
 ```python
-class YelpSearchResultSchema(BaseAgentIO): ...
+class YelpSearchResultSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -135,12 +135,12 @@ class YelpSearchToolConfig(BaseToolConfig): ...
 #### Signature
 
 ```python
-class YelpSearchToolOutputSchema(BaseAgentIO): ...
+class YelpSearchToolOutputSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
 
 
 
@@ -151,9 +151,9 @@ class YelpSearchToolOutputSchema(BaseAgentIO): ...
 #### Signature
 
 ```python
-class YelpSearchToolSchema(BaseAgentIO): ...
+class YelpSearchToolSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)

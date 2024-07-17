@@ -17,8 +17,8 @@ Base class for all tools in the Atomic Agents framework.
 
 #### Attributes
 
-- `input_schema` *Type[BaseAgentIO]* - The schema for the input data.
-- `output_schema` *Type[BaseAgentIO]* - The schema for the output data.
+- `input_schema` *Type[BaseIOSchema]* - The schema for the input data.
+- `output_schema` *Type[BaseIOSchema]* - The schema for the output data.
 - `tool_name` *str* - The name of the tool, derived from the input schema's title.
 tool_description (str):
     The description of the tool, derived from the input schema's description or overridden by the user.
@@ -42,11 +42,11 @@ Runs the tool with the given parameters. This method should be implemented by su
 
 #### Arguments
 
-- `params` *BaseAgentIO* - The input parameters for the tool, adhering to the input schema.
+- `params` *BaseIOSchema* - The input parameters for the tool, adhering to the input schema.
 
 #### Returns
 
-- `BaseAgentIO` - The output of the tool, adhering to the output schema.
+- `BaseIOSchema` - The output of the tool, adhering to the output schema.
 
 #### Raises
 
@@ -55,12 +55,12 @@ Runs the tool with the given parameters. This method should be implemented by su
 #### Signature
 
 ```python
-def run(self, params: Type[BaseAgentIO]) -> BaseAgentIO: ...
+def run(self, params: Type[BaseIOSchema]) -> BaseIOSchema: ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
 
 
 

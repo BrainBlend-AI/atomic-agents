@@ -15,12 +15,12 @@
 #### Signature
 
 ```python
-class WebDocument(BaseAgentIO): ...
+class WebDocument(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
 
 
 
