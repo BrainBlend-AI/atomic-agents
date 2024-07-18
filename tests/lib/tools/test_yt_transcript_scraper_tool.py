@@ -2,11 +2,11 @@ import pytest
 from unittest.mock import patch, Mock
 from pydantic import ValidationError
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
-from atomic_agents.lib.tools.yt_transcript_scraper_tool import YouTubeTranscriptToolSchema
+from atomic_agents.lib.tools.yt_transcript_scraper_tool import YouTubeTranscriptToolInputSchema
 from atomic_agents.lib.tools.yt_transcript_scraper_tool import (
     YouTubeTranscriptTool,
     YouTubeTranscriptToolConfig,
-    YouTubeTranscriptToolSchema,
+    YouTubeTranscriptToolInputSchema,
     YouTubeTranscriptToolOutputSchema,
 )
 from atomic_agents.lib.tools.base_tool import BaseTool
@@ -37,9 +37,9 @@ def test_youtube_transcript_tool_initialization(youtube_transcript_tool):
     assert youtube_transcript_tool.api_key == "dummy_api_key"
 
 def test_youtube_transcript_tool_input_schema():
-    assert issubclass(YouTubeTranscriptToolSchema, BaseIOSchema)
-    assert "video_url" in YouTubeTranscriptToolSchema.model_fields
-    assert "language" in YouTubeTranscriptToolSchema.model_fields
+    assert issubclass(YouTubeTranscriptToolInputSchema, BaseIOSchema)
+    assert "video_url" in YouTubeTranscriptToolInputSchema.model_fields
+    assert "language" in YouTubeTranscriptToolInputSchema.model_fields
 
 def test_youtube_transcript_tool_output_schema():
     assert issubclass(YouTubeTranscriptToolOutputSchema, BaseIOSchema)
@@ -61,7 +61,7 @@ def test_run(mock_get_transcript, mock_fetch_metadata, mock_extract_video_id, yo
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
     mock_get_transcript.return_value = SAMPLE_TRANSCRIPT
     
-    input_data = YouTubeTranscriptToolSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    input_data = YouTubeTranscriptToolInputSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     result = youtube_transcript_tool.run(input_data)
     
     assert isinstance(result, YouTubeTranscriptToolOutputSchema)
@@ -78,7 +78,7 @@ def test_run_with_language(mock_get_transcript, mock_fetch_metadata, mock_extrac
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
     mock_get_transcript.return_value = SAMPLE_TRANSCRIPT
     
-    input_data = YouTubeTranscriptToolSchema(
+    input_data = YouTubeTranscriptToolInputSchema(
         video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         language="en"
     )
@@ -94,7 +94,7 @@ def test_run_transcript_not_found(mock_get_transcript, mock_fetch_metadata, mock
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
     mock_get_transcript.side_effect = Exception("No transcript found")
     
-    input_data = YouTubeTranscriptToolSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    input_data = YouTubeTranscriptToolInputSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     
     with pytest.raises(Exception, match="No transcript found"):
         youtube_transcript_tool.run(input_data)
@@ -114,7 +114,7 @@ def test_run_no_transcript_found(mock_extract_video_id, mock_fetch_metadata, moc
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
     mock_get_transcript.side_effect = NoTranscriptFound("dQw4w9WgXcQ", "en", "Transcript not found")
     
-    input_data = YouTubeTranscriptToolSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    input_data = YouTubeTranscriptToolInputSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     
     with pytest.raises(Exception, match="Failed to fetch transcript for video 'dQw4w9WgXcQ': "):
         youtube_transcript_tool.run(input_data)
@@ -127,7 +127,7 @@ def test_run_transcripts_disabled(mock_extract_video_id, mock_fetch_metadata, mo
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
     mock_get_transcript.side_effect = TranscriptsDisabled("Transcripts are disabled for this video")
     
-    input_data = YouTubeTranscriptToolSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    input_data = YouTubeTranscriptToolInputSchema(video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     
     with pytest.raises(Exception, match="Failed to fetch transcript for video 'dQw4w9WgXcQ': "):
         youtube_transcript_tool.run(input_data)

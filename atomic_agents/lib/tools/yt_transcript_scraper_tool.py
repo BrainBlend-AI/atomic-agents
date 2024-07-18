@@ -14,7 +14,7 @@ from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 ################
 
 
-class YouTubeTranscriptToolSchema(BaseIOSchema):
+class YouTubeTranscriptToolInputSchema(BaseIOSchema):
     video_url: str = Field(..., description="URL of the YouTube video to fetch the transcript for.")
     language: Optional[str] = Field(None, description="Language code for the transcript (e.g., 'en' for English).")
 
@@ -61,11 +61,11 @@ class YouTubeTranscriptTool(BaseTool):
     Tool for fetching the transcript of a YouTube video using the YouTube Transcript API.
 
     Attributes:
-        input_schema (YouTubeTranscriptToolSchema): The schema for the input data.
+        input_schema (YouTubeTranscriptToolInputSchema): The schema for the input data.
         output_schema (YouTubeTranscriptToolOutputSchema): The schema for the output data.
     """
 
-    input_schema = YouTubeTranscriptToolSchema
+    input_schema = YouTubeTranscriptToolInputSchema
     output_schema = YouTubeTranscriptToolOutputSchema
 
     def __init__(self, config: YouTubeTranscriptToolConfig):
@@ -78,12 +78,12 @@ class YouTubeTranscriptTool(BaseTool):
         super().__init__(config)
         self.api_key = config.api_key
 
-    def run(self, params: YouTubeTranscriptToolSchema) -> YouTubeTranscriptToolOutputSchema:
+    def run(self, params: YouTubeTranscriptToolInputSchema) -> YouTubeTranscriptToolOutputSchema:
         """
         Runs the YouTubeTranscriptTool with the given parameters.
 
         Args:
-            params (YouTubeTranscriptToolSchema): The input parameters for the tool, adhering to the input schema.
+            params (YouTubeTranscriptToolInputSchema): The input parameters for the tool, adhering to the input schema.
 
         Returns:
             YouTubeTranscriptToolOutputSchema: The output of the tool, adhering to the output schema.

@@ -5,19 +5,19 @@ import openai
 from rich.console import Console
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
+from atomic_agents.lib.tools.search.searx_tool import SearxNGTool, SearxNGToolConfig
 
 def initialize_searx_tool():
     """
-    Initialize the SearxNGSearchTool with configuration.
+    Initialize the SearxNGTool with configuration.
     """
     base_url = os.getenv('SEARXNG_BASE_URL')
-    config = SearxNGSearchToolConfig(base_url=base_url, max_results=10)
-    return SearxNGSearchTool(config)
+    config = SearxNGToolConfig(base_url=base_url, max_results=10)
+    return SearxNGTool(config)
 
 def initialize_agent(client, searx_tool):
     """
-    Initialize the ToolInterfaceAgent with the given client and SearxNGSearchTool.
+    Initialize the ToolInterfaceAgent with the given client and SearxNGTool.
     """
     agent_config = ToolInterfaceAgentConfig(
         client=client,
@@ -33,7 +33,7 @@ def main():
     searx_tool = initialize_searx_tool()
     agent = initialize_agent(client, searx_tool)
 
-    console.print("ToolInterfaceAgent with SearxNGSearchTool is ready.")
+    console.print("ToolInterfaceAgent with SearxNGTool is ready.")
 
     while True:
         user_input = input('You: ')
@@ -42,7 +42,7 @@ def main():
             break
         
         # Fix this
-        response = agent.run(agent.input_schema(tool_input_SearxNGSearchTool=user_input))
+        response = agent.run(agent.input_schema(tool_input_SearxNGTool=user_input))
         console.print(f'Agent: {response.chat_message}')
 
 if __name__ == "__main__":

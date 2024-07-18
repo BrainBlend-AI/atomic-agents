@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from atomic_agents.lib.tools.content_scraping_tool import (
     ContentScrapingTool,
-    ContentScrapingToolSchema,
+    ContentScrapingToolInputSchema,
     ContentScrapingToolOutputSchema,
     ContentScrapingToolConfig,
 )
@@ -24,7 +24,7 @@ def test_content_scraping_tool_with_custom_config():
 
 def test_content_scraping_tool_input_schema():
     tool = ContentScrapingTool()
-    assert tool.input_schema == ContentScrapingToolSchema
+    assert tool.input_schema == ContentScrapingToolInputSchema
 
 def test_content_scraping_tool_output_schema():
     tool = ContentScrapingTool()
@@ -46,7 +46,7 @@ def test_content_scraping_tool_run(mock_head, content_type, expected_converter):
 
     with patch.object(expected_converter, "convert", return_value=mock_document):
         tool = ContentScrapingTool()
-        result = tool.run(ContentScrapingToolSchema(url="https://example.com"))
+        result = tool.run(ContentScrapingToolInputSchema(url="https://example.com"))
 
     assert isinstance(result, ContentScrapingToolOutputSchema)
     assert result.content == "Mocked content"
@@ -64,14 +64,14 @@ def test_content_scraping_tool_run_unknown_content_type(mock_head):
 
     with patch.object(UrlToMarkdownConverter, "convert", return_value=mock_document):
         tool = ContentScrapingTool()
-        result = tool.run(ContentScrapingToolSchema(url="https://example.com"))
+        result = tool.run(ContentScrapingToolInputSchema(url="https://example.com"))
 
     assert isinstance(result, ContentScrapingToolOutputSchema)
     assert result.content == "Mocked content"
     assert result.metadata == {"key": "value"}
 
 def test_content_scraping_tool_schema_fields():
-    schema = ContentScrapingToolSchema(url="https://example.com")
+    schema = ContentScrapingToolInputSchema(url="https://example.com")
     assert schema.url == "https://example.com"
 
 def test_content_scraping_tool_output_schema_fields():

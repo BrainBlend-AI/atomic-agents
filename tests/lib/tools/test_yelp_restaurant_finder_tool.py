@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from atomic_agents.lib.tools.yelp_restaurant_finder_tool import (
     YelpSearchTool,
     YelpSearchToolConfig,
-    YelpSearchToolSchema,
+    YelpSearchToolInputSchema,
     YelpSearchToolOutputSchema,
     YelpCategory,
     PriceRange
@@ -39,11 +39,11 @@ def test_yelp_search_tool_initialization(yelp_search_tool):
     assert yelp_search_tool.max_results == 10
 
 def test_yelp_search_tool_input_schema():
-    assert issubclass(YelpSearchToolSchema, BaseIOSchema)
-    assert "location" in YelpSearchToolSchema.model_fields
-    assert "term" in YelpSearchToolSchema.model_fields
-    assert "categories" in YelpSearchToolSchema.model_fields
-    assert "price" in YelpSearchToolSchema.model_fields
+    assert issubclass(YelpSearchToolInputSchema, BaseIOSchema)
+    assert "location" in YelpSearchToolInputSchema.model_fields
+    assert "term" in YelpSearchToolInputSchema.model_fields
+    assert "categories" in YelpSearchToolInputSchema.model_fields
+    assert "price" in YelpSearchToolInputSchema.model_fields
 
 def test_yelp_search_tool_output_schema():
     assert issubclass(YelpSearchToolOutputSchema, BaseIOSchema)
@@ -56,7 +56,7 @@ def test_run_success(mock_get, yelp_search_tool):
     mock_response.json.return_value = SAMPLE_YELP_RESPONSE
     mock_get.return_value = mock_response
 
-    input_data = YelpSearchToolSchema(
+    input_data = YelpSearchToolInputSchema(
         location="Sample City",
         term="pizza",
         categories=[YelpCategory.ITALIAN],
@@ -88,7 +88,7 @@ def test_run_api_error(mock_get, yelp_search_tool):
     mock_response.reason = "Bad Request"
     mock_get.return_value = mock_response
 
-    input_data = YelpSearchToolSchema(location="Sample City")
+    input_data = YelpSearchToolInputSchema(location="Sample City")
 
     with pytest.raises(Exception, match="Failed to fetch search results: 400 Bad Request"):
         yelp_search_tool.run(input_data)
@@ -100,7 +100,7 @@ def test_run_with_all_parameters(mock_get, yelp_search_tool):
     mock_response.json.return_value = SAMPLE_YELP_RESPONSE
     mock_get.return_value = mock_response
 
-    input_data = YelpSearchToolSchema(
+    input_data = YelpSearchToolInputSchema(
         location="Sample City",
         term="pizza",
         categories=[YelpCategory.ITALIAN, YelpCategory.PIZZA],
@@ -126,7 +126,7 @@ def test_run_no_results(mock_get, yelp_search_tool):
     mock_response.json.return_value = {"businesses": []}
     mock_get.return_value = mock_response
 
-    input_data = YelpSearchToolSchema(location="Sample City")
+    input_data = YelpSearchToolInputSchema(location="Sample City")
     result = yelp_search_tool.run(input_data)
 
     assert isinstance(result, YelpSearchToolOutputSchema)
@@ -135,7 +135,7 @@ def test_run_no_results(mock_get, yelp_search_tool):
 def test_run_missing_api_key():
     config = YelpSearchToolConfig(api_key="", max_results=10)
     tool = YelpSearchTool(config)
-    input_data = YelpSearchToolSchema(location="Sample City")
+    input_data = YelpSearchToolInputSchema(location="Sample City")
 
     with pytest.raises(ValueError, match="API key is required to use the Yelp API."):
         tool.run(input_data)

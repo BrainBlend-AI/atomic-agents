@@ -11,7 +11,7 @@
     - [YouTubeTranscriptTool().run](#youtubetranscripttool()run)
   - [YouTubeTranscriptToolConfig](#youtubetranscripttoolconfig)
   - [YouTubeTranscriptToolOutputSchema](#youtubetranscripttooloutputschema)
-  - [YouTubeTranscriptToolSchema](#youtubetranscripttoolschema)
+  - [YouTubeTranscriptToolInputSchema](#YouTubeTranscriptToolInputSchema)
 
 ## YouTubeTranscriptTool
 
@@ -21,7 +21,7 @@ Tool for fetching the transcript of a YouTube video using the YouTube Transcript
 
 #### Attributes
 
-- `input_schema` *YouTubeTranscriptToolSchema* - The schema for the input data.
+- `input_schema` *YouTubeTranscriptToolInputSchema* - The schema for the input data.
 - `output_schema` *YouTubeTranscriptToolOutputSchema* - The schema for the output data.
 
 #### Signature
@@ -85,7 +85,7 @@ Runs the YouTubeTranscriptTool with the given parameters.
 
 #### Arguments
 
-- `params` *YouTubeTranscriptToolSchema* - The input parameters for the tool, adhering to the input schema.
+- `params` *YouTubeTranscriptToolInputSchema* - The input parameters for the tool, adhering to the input schema.
 
 #### Returns
 
@@ -99,14 +99,14 @@ Runs the YouTubeTranscriptTool with the given parameters.
 
 ```python
 def run(
-    self, params: YouTubeTranscriptToolSchema
+    self, params: YouTubeTranscriptToolInputSchema
 ) -> YouTubeTranscriptToolOutputSchema: ...
 ```
 
 #### See also
 
 - [YouTubeTranscriptToolOutputSchema](#youtubetranscripttooloutputschema)
-- [YouTubeTranscriptToolSchema](#youtubetranscripttoolschema)
+- [YouTubeTranscriptToolInputSchema](#YouTubeTranscriptToolInputSchema)
 
 
 
@@ -142,14 +142,14 @@ class YouTubeTranscriptToolOutputSchema(BaseIOSchema): ...
 
 
 
-## YouTubeTranscriptToolSchema
+## YouTubeTranscriptToolInputSchema
 
 [Show source in yt_transcript_scraper_tool.py:17](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L17)
 
 #### Signature
 
 ```python
-class YouTubeTranscriptToolSchema(BaseIOSchema): ...
+class YouTubeTranscriptToolInputSchema(BaseIOSchema): ...
 ```
 
 #### See also

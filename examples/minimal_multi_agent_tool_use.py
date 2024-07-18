@@ -6,12 +6,12 @@ from pydantic import create_model
 from rich.console import Console
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
+from atomic_agents.lib.tools.search.searx_tool import SearxNGTool, SearxNGToolConfig
 from atomic_agents.lib.tools.calculator_tool import CalculatorTool, CalculatorToolConfig
 
 console = Console()
 client = instructor.from_openai(openai.OpenAI())
-searx_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10))
+searx_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10))
 calc_tool = CalculatorTool(CalculatorToolConfig())
 
 search_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-3.5-turbo', tool_instance=searx_tool, return_raw_output=False)

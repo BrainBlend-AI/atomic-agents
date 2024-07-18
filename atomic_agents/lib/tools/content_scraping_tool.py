@@ -18,7 +18,7 @@ from atomic_agents.lib.utils.scraping.url_to_markdown import UrlToMarkdownConver
 ################
 
 
-class ContentScrapingToolSchema(BaseIOSchema):
+class ContentScrapingToolInputSchema(BaseIOSchema):
     url: str = Field(..., description="URL of the web page or PDF to scrape.")
 
     class Config:
@@ -52,11 +52,11 @@ class ContentScrapingTool(BaseTool):
     Tool for scraping web pages or PDFs and converting content to markdown.
 
     Attributes:
-        input_schema (ContentScrapingToolSchema): The schema for the input data.
+        input_schema (ContentScrapingToolInputSchema): The schema for the input data.
         output_schema (ContentScrapingToolOutputSchema): The schema for the output data.
     """
 
-    input_schema = ContentScrapingToolSchema
+    input_schema = ContentScrapingToolInputSchema
     output_schema = ContentScrapingToolOutputSchema
 
     def __init__(self, config: ContentScrapingToolConfig = ContentScrapingToolConfig()):
@@ -68,12 +68,12 @@ class ContentScrapingTool(BaseTool):
         """
         super().__init__(config)
 
-    def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSchema:
+    def run(self, params: ContentScrapingToolInputSchema) -> ContentScrapingToolOutputSchema:
         """
         Runs the ContentScrapingTool with the given parameters.
 
         Args:
-            params (ContentScrapingToolSchema): The input parameters for the tool, adhering to the input schema.
+            params (ContentScrapingToolInputSchema): The input parameters for the tool, adhering to the input schema.
 
         Returns:
             ContentScrapingToolOutputSchema: The output of the tool, adhering to the output schema.

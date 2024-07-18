@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.lib.tools.yt_transcript_scraper import YouTubeTranscriptTool, YouTubeTranscriptToolConfig, YouTubeTranscriptToolSchema
+from atomic_agents.lib.tools.yt_transcript_scraper import YouTubeTranscriptTool, YouTubeTranscriptToolConfig, YouTubeTranscriptToolInputSchema
 
 console = Console()
 
@@ -68,7 +68,7 @@ agent = BaseAgent(
 )
 
 video_url = input('Enter the YouTube video URL: ')
-scraped_transcript = yt_scraper_tool.run(YouTubeTranscriptToolSchema(video_url=video_url))
+scraped_transcript = yt_scraper_tool.run(YouTubeTranscriptToolInputSchema(video_url=video_url))
 transcript_provider.transcript = scraped_transcript.transcript
 transcript_provider.duration = scraped_transcript.duration
 transcript_provider.metadata = scraped_transcript.metadata

@@ -43,7 +43,7 @@ class PriceRange(Enum):
     FOUR = "4"
 
 
-class YelpSearchToolSchema(BaseIOSchema):
+class YelpSearchToolInputSchema(BaseIOSchema):
     location: str = Field(..., description="Location to search for food.")
     term: Optional[str] = Field(None, description="Search term (e.g., 'pizza', 'sushi').")
     categories: Optional[List[YelpCategory]] = Field(None, description="Categories to filter by (e.g., 'italian, mexican').")
@@ -112,13 +112,13 @@ class YelpSearchTool(BaseTool):
     Tool for performing searches using the Yelp API based on the provided queries.
 
     Attributes:
-        input_schema (YelpSearchToolSchema): The schema for the input data.
+        input_schema (YelpSearchToolInputSchema): The schema for the input data.
         output_schema (YelpSearchToolOutputSchema): The schema for the output data.
         api_key (str): The API key for the Yelp API.
         max_results (int): The maximum number of search results to return.
     """
 
-    input_schema = YelpSearchToolSchema
+    input_schema = YelpSearchToolInputSchema
     output_schema = YelpSearchToolOutputSchema
 
     def __init__(self, config: YelpSearchToolConfig = YelpSearchToolConfig()):
@@ -133,12 +133,12 @@ class YelpSearchTool(BaseTool):
         self.api_key = config.api_key
         self.max_results = config.max_results
 
-    def run(self, params: YelpSearchToolSchema) -> YelpSearchToolOutputSchema:
+    def run(self, params: YelpSearchToolInputSchema) -> YelpSearchToolOutputSchema:
         """
         Runs the YelpSearchTool with the given parameters.
 
         Args:
-            params (YelpSearchToolSchema): The input parameters for the tool, adhering to the input schema.
+            params (YelpSearchToolInputSchema): The input parameters for the tool, adhering to the input schema.
             max_results (Optional[int]): The maximum number of search results to return.
 
         Returns:

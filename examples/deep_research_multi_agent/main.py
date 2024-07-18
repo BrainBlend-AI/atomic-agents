@@ -5,7 +5,7 @@ from examples.deep_research_multi_agent.agents.top_urls_selector_agent import to
 from examples.deep_research_multi_agent.agents.info_refiner_agent import refine_answer_agent
 from examples.deep_research_multi_agent.providers import search_results_provider, vector_db_chunks_provider
 from examples.deep_research_multi_agent.in_memory_faiss import InMemFaiss
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
+from atomic_agents.lib.tools.search.searx_tool import SearxNGTool, SearxNGToolConfig
 from rich.console import Console
 import asyncio
 
@@ -14,7 +14,7 @@ async def main():
     console = Console()
 
     # Initialize the search tool
-    search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=30))
+    search_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=30))
     in_mem_faiss = InMemFaiss(openai_api_key=os.getenv('OPENAI_API_KEY'))
 
     user_input = input("Enter your question (or type 'exit' to quit): ")

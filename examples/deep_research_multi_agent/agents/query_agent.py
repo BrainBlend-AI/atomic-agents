@@ -2,7 +2,7 @@ import instructor
 import openai
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool
+from atomic_agents.lib.tools.search.searx_tool import SearxNGTool
 
 class QueryAgentInputSchema(BaseIOSchema):
     instruction: str = 'A detailed instruction or request to generate deep research queries for.'
@@ -31,6 +31,6 @@ query_agent = BaseAgent(
             )
         ),
         input_schema=QueryAgentInputSchema,
-        output_schema=SearxNGSearchTool.input_schema
+        output_schema=SearxNGTool.input_schema
     )
 )

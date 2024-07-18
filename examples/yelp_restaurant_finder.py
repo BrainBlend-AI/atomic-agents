@@ -9,7 +9,7 @@ from rich.console import Console
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
-from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolSchema
+from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolInputSchema
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -57,7 +57,7 @@ yelp_tool = YelpSearchTool(YelpSearchToolConfig(api_key=os.getenv('YELP_API_KEY'
 
 # Define a custom response schema that can handle both chat responses and Yelp search tool responses
 class OutputSchema(BaseModel):
-    chosen_schema: Union[BaseAgentOutputSchema, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
+    chosen_schema: Union[BaseAgentOutputSchema, YelpSearchToolInputSchema] = Field(..., description='The response from the chat agent.')
 
     class Config:
         title = 'OutputSchema'
@@ -94,7 +94,7 @@ while True:
     logger.info(f'Chosen schema: {response.chosen_schema}')
     
     # Check the type of the response schema
-    if isinstance(response.chosen_schema, YelpSearchToolSchema):
+    if isinstance(response.chosen_schema, YelpSearchToolInputSchema):
         output = yelp_tool.run(response.chosen_schema)
         
         # In this example, we will add a simple "internal thought" to the chat memory followed by an empty agent.run() call. 

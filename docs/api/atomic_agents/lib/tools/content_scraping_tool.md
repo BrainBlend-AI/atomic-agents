@@ -20,7 +20,7 @@
     - [ContentScrapingTool().run](#contentscrapingtool()run)
   - [ContentScrapingToolConfig](#contentscrapingtoolconfig)
   - [ContentScrapingToolOutputSchema](#contentscrapingtooloutputschema)
-  - [ContentScrapingToolSchema](#contentscrapingtoolschema)
+  - [ContentScrapingToolInputSchema](#ContentScrapingToolInputSchema)
 
 ## ContentScrapingTool
 
@@ -30,7 +30,7 @@ Tool for scraping web pages or PDFs and converting content to markdown.
 
 #### Attributes
 
-- `input_schema` *ContentScrapingToolSchema* - The schema for the input data.
+- `input_schema` *ContentScrapingToolInputSchema* - The schema for the input data.
 - `output_schema` *ContentScrapingToolOutputSchema* - The schema for the output data.
 
 #### Signature
@@ -55,7 +55,7 @@ Runs the ContentScrapingTool with the given parameters.
 
 #### Arguments
 
-- `params` *ContentScrapingToolSchema* - The input parameters for the tool, adhering to the input schema.
+- `params` *ContentScrapingToolInputSchema* - The input parameters for the tool, adhering to the input schema.
 
 #### Returns
 
@@ -64,13 +64,13 @@ Runs the ContentScrapingTool with the given parameters.
 #### Signature
 
 ```python
-def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSchema: ...
+def run(self, params: ContentScrapingToolInputSchema) -> ContentScrapingToolOutputSchema: ...
 ```
 
 #### See also
 
 - [ContentScrapingToolOutputSchema](#contentscrapingtooloutputschema)
-- [ContentScrapingToolSchema](#contentscrapingtoolschema)
+- [ContentScrapingToolInputSchema](#ContentScrapingToolInputSchema)
 
 
 
@@ -106,14 +106,14 @@ class ContentScrapingToolOutputSchema(BaseIOSchema): ...
 
 
 
-## ContentScrapingToolSchema
+## ContentScrapingToolInputSchema
 
 [Show source in content_scraping_tool.py:21](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L21)
 
 #### Signature
 
 ```python
-class ContentScrapingToolSchema(BaseIOSchema): ...
+class ContentScrapingToolInputSchema(BaseIOSchema): ...
 ```
 
 #### See also
