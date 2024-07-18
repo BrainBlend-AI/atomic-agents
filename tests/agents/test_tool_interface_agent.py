@@ -122,10 +122,5 @@ def test_tool_interface_agent_memory_updates(mock_format_tool_message, mock_get_
     # Check if the mocked result is in the memory
     assert any("Mocked result" in msg.content for msg in history if isinstance(msg.content, str))
     
-    # Print the memory contents for debugging
-    print("Memory contents:")
-    for msg in history:
-        print(f"Role: {msg.role}, Content: {msg.content}")
-
     # Assert that at least 3 messages were added (TOOL CALL, TOOL RESPONSE, and possibly the final response)
     assert len(history) >= 3

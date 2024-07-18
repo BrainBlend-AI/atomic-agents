@@ -3,7 +3,7 @@ import json
 from pydantic import Field, create_model
 
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from atomic_agents.lib.tools.base_tool import BaseTool
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
 
@@ -74,19 +74,17 @@ class ToolInterfaceAgent(BaseAgent):
             output_instructions.append("Return the raw output of the tool.")
 
         self.system_prompt_generator = SystemPromptGenerator(
-            system_prompt_info=SystemPromptInfo(
-                background=[
-                    f"This AI agent is designed to interact with the {self.tool_instance.tool_name} tool.",
-                    f"Tool description: {self.tool_instance.tool_description}",
-                ],
-                steps=[
-                    "Get the user input.",
-                    "Convert the input to the proper parameters to call the tool.",
-                    "Call the tool with the parameters.",
-                    "Respond to the user",
-                ],
-                output_instructions=output_instructions,
-            )
+            background=[
+                f"This AI agent is designed to interact with the {self.tool_instance.tool_name} tool.",
+                f"Tool description: {self.tool_instance.tool_description}",
+            ],
+            steps=[
+                "Get the user input.",
+                "Convert the input to the proper parameters to call the tool.",
+                "Call the tool with the parameters.",
+                "Respond to the user",
+            ],
+            output_instructions=output_instructions
         )
 
     def get_response(self, response_model=None):

@@ -12,7 +12,6 @@ from atomic_agents.agents.base_agent import (
     AgentMemory,
     SystemPromptContextProviderBase
 )
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptInfo
 
 @pytest.fixture
 def mock_instructor():
@@ -32,8 +31,7 @@ def mock_memory():
 def mock_system_prompt_generator():
     mock = Mock(spec=SystemPromptGenerator)
     mock.generate_prompt.return_value = "Mocked system prompt"
-    mock.system_prompt_info = Mock(spec=SystemPromptInfo)
-    mock.system_prompt_info.context_providers = {}
+    mock.context_providers = {}
     return mock
 
 @pytest.fixture
@@ -102,7 +100,7 @@ def test_run(agent):
 
 def test_get_context_provider(agent, mock_system_prompt_generator):
     mock_provider = Mock(spec=SystemPromptContextProviderBase)
-    mock_system_prompt_generator.system_prompt_info.context_providers = {
+    mock_system_prompt_generator.context_providers = {
         'test_provider': mock_provider
     }
     
@@ -116,17 +114,17 @@ def test_register_context_provider(agent, mock_system_prompt_generator):
     mock_provider = Mock(spec=SystemPromptContextProviderBase)
     agent.register_context_provider('new_provider', mock_provider)
     
-    assert 'new_provider' in mock_system_prompt_generator.system_prompt_info.context_providers
-    assert mock_system_prompt_generator.system_prompt_info.context_providers['new_provider'] == mock_provider
+    assert 'new_provider' in mock_system_prompt_generator.context_providers
+    assert mock_system_prompt_generator.context_providers['new_provider'] == mock_provider
 
 def test_unregister_context_provider(agent, mock_system_prompt_generator):
     mock_provider = Mock(spec=SystemPromptContextProviderBase)
-    mock_system_prompt_generator.system_prompt_info.context_providers = {
+    mock_system_prompt_generator.context_providers = {
         'test_provider': mock_provider
     }
     
     agent.unregister_context_provider('test_provider')
-    assert 'test_provider' not in mock_system_prompt_generator.system_prompt_info.context_providers
+    assert 'test_provider' not in mock_system_prompt_generator.context_providers
     
     with pytest.raises(KeyError):
         agent.unregister_context_provider('non_existent_provider')

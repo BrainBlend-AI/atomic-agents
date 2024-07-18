@@ -165,9 +165,9 @@ class BaseAgent:
         Raises:
             KeyError: If the context provider is not found.
         """
-        if provider_name not in self.system_prompt_generator.system_prompt_info.context_providers:
+        if provider_name not in self.system_prompt_generator.context_providers:
             raise KeyError(f"Context provider '{provider_name}' not found.")
-        return self.system_prompt_generator.system_prompt_info.context_providers[provider_name]
+        return self.system_prompt_generator.context_providers[provider_name]
 
     def register_context_provider(self, provider_name: str, provider: SystemPromptContextProviderBase):
         """
@@ -177,7 +177,7 @@ class BaseAgent:
             provider_name (str): The name of the context provider.
             provider (SystemPromptContextProviderBase): The context provider instance.
         """
-        self.system_prompt_generator.system_prompt_info.context_providers[provider_name] = provider
+        self.system_prompt_generator.context_providers[provider_name] = provider
 
     def unregister_context_provider(self, provider_name: str):
         """
@@ -186,7 +186,7 @@ class BaseAgent:
         Args:
             provider_name (str): The name of the context provider to remove.
         """
-        if provider_name in self.system_prompt_generator.system_prompt_info.context_providers:
-            del self.system_prompt_generator.system_prompt_info.context_providers[provider_name]
+        if provider_name in self.system_prompt_generator.context_providers:
+            del self.system_prompt_generator.context_providers[provider_name]
         else:
             raise KeyError(f"Context provider '{provider_name}' not found.")
