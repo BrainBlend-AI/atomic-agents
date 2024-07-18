@@ -2,14 +2,14 @@ import pytest
 from unittest.mock import patch, Mock
 from pydantic import ValidationError
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, TranscriptsDisabled
-from atomic_agents.lib.tools.yt_transcript_scraper import YouTubeTranscriptToolSchema
-from atomic_agents.lib.tools.yt_transcript_scraper import (
+from atomic_agents.lib.tools.yt_transcript_scraper_tool import YouTubeTranscriptToolSchema
+from atomic_agents.lib.tools.yt_transcript_scraper_tool import (
     YouTubeTranscriptTool,
     YouTubeTranscriptToolConfig,
     YouTubeTranscriptToolSchema,
     YouTubeTranscriptToolOutputSchema,
 )
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base_tool import BaseTool
 from atomic_agents.agents.base_agent import BaseIOSchema
 from youtube_transcript_api import YouTubeTranscriptApi
 
@@ -53,9 +53,9 @@ def test_extract_video_id():
     video_id = YouTubeTranscriptTool.extract_video_id(url)
     assert video_id == "dQw4w9WgXcQ"
 
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.extract_video_id')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.fetch_video_metadata')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptApi.get_transcript')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.extract_video_id')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.fetch_video_metadata')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptApi.get_transcript')
 def test_run(mock_get_transcript, mock_fetch_metadata, mock_extract_video_id, youtube_transcript_tool):
     mock_extract_video_id.return_value = "dQw4w9WgXcQ"
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
@@ -70,9 +70,9 @@ def test_run(mock_get_transcript, mock_fetch_metadata, mock_extract_video_id, yo
     assert result.comments == []
     assert result.metadata == SAMPLE_VIDEO_INFO
 
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.extract_video_id')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.fetch_video_metadata')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptApi.get_transcript')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.extract_video_id')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.fetch_video_metadata')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptApi.get_transcript')
 def test_run_with_language(mock_get_transcript, mock_fetch_metadata, mock_extract_video_id, youtube_transcript_tool):
     mock_extract_video_id.return_value = "dQw4w9WgXcQ"
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
@@ -86,9 +86,9 @@ def test_run_with_language(mock_get_transcript, mock_fetch_metadata, mock_extrac
     
     mock_get_transcript.assert_called_once_with("dQw4w9WgXcQ", languages=["en"])
 
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.extract_video_id')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.fetch_video_metadata')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptApi.get_transcript')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.extract_video_id')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.fetch_video_metadata')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptApi.get_transcript')
 def test_run_transcript_not_found(mock_get_transcript, mock_fetch_metadata, mock_extract_video_id, youtube_transcript_tool):
     mock_extract_video_id.return_value = "dQw4w9WgXcQ"
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
@@ -107,8 +107,8 @@ def test_youtube_transcript_tool_config_validation():
     assert config.api_key == "dummy_api_key"
     
 @patch.object(YouTubeTranscriptApi, 'get_transcript')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.fetch_video_metadata')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.extract_video_id')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.fetch_video_metadata')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.extract_video_id')
 def test_run_no_transcript_found(mock_extract_video_id, mock_fetch_metadata, mock_get_transcript, youtube_transcript_tool):
     mock_extract_video_id.return_value = "dQw4w9WgXcQ"
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
@@ -120,8 +120,8 @@ def test_run_no_transcript_found(mock_extract_video_id, mock_fetch_metadata, moc
         youtube_transcript_tool.run(input_data)
 
 @patch.object(YouTubeTranscriptApi, 'get_transcript')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.fetch_video_metadata')
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.YouTubeTranscriptTool.extract_video_id')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.fetch_video_metadata')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.YouTubeTranscriptTool.extract_video_id')
 def test_run_transcripts_disabled(mock_extract_video_id, mock_fetch_metadata, mock_get_transcript, youtube_transcript_tool):
     mock_extract_video_id.return_value = "dQw4w9WgXcQ"
     mock_fetch_metadata.return_value = SAMPLE_VIDEO_INFO
@@ -132,7 +132,7 @@ def test_run_transcripts_disabled(mock_extract_video_id, mock_fetch_metadata, mo
     with pytest.raises(Exception, match="Failed to fetch transcript for video 'dQw4w9WgXcQ': "):
         youtube_transcript_tool.run(input_data)
 
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.build')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.build')
 def test_fetch_video_metadata_success(mock_build, youtube_transcript_tool):
     mock_youtube = Mock()
     mock_build.return_value = mock_youtube
@@ -162,7 +162,7 @@ def test_fetch_video_metadata_success(mock_build, youtube_transcript_tool):
     mock_build.assert_called_once_with("youtube", "v3", developerKey=youtube_transcript_tool.api_key)
     mock_youtube.videos().list.assert_called_once_with(part="snippet", id=video_id)
 
-@patch('atomic_agents.lib.tools.yt_transcript_scraper.build')
+@patch('atomic_agents.lib.tools.yt_transcript_scraper_tool.build')
 def test_fetch_video_metadata_no_items(mock_build, youtube_transcript_tool):
     mock_youtube = Mock()
     mock_build.return_value = mock_youtube

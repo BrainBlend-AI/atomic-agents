@@ -2,7 +2,7 @@
 
 [Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Yt Transcript Scraper
 
-> Auto-generated documentation for [atomic_agents.lib.tools.yt_transcript_scraper](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py) module.
+> Auto-generated documentation for [atomic_agents.lib.tools.yt_transcript_scraper](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py) module.
 
 - [Yt Transcript Scraper](#yt-transcript-scraper)
   - [YouTubeTranscriptTool](#youtubetranscripttool)
@@ -15,7 +15,7 @@
 
 ## YouTubeTranscriptTool
 
-[Show source in yt_transcript_scraper.py:59](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py#L59)
+[Show source in yt_transcript_scraper_tool.py:59](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L59)
 
 Tool for fetching the transcript of a YouTube video using the YouTube Transcript API.
 
@@ -38,7 +38,7 @@ class YouTubeTranscriptTool(BaseTool):
 
 ### YouTubeTranscriptTool.extract_video_id
 
-[Show source in yt_transcript_scraper.py:115](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py#L115)
+[Show source in yt_transcript_scraper_tool.py:115](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L115)
 
 Extracts the video ID from a YouTube URL.
 
@@ -59,7 +59,7 @@ def extract_video_id(url: str) -> str: ...
 
 ### YouTubeTranscriptTool().fetch_video_metadata
 
-[Show source in yt_transcript_scraper.py:128](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py#L128)
+[Show source in yt_transcript_scraper_tool.py:128](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L128)
 
 Fetches metadata for a YouTube video.
 
@@ -79,7 +79,7 @@ def fetch_video_metadata(self, video_id: str) -> dict: ...
 
 ### YouTubeTranscriptTool().run
 
-[Show source in yt_transcript_scraper.py:81](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py#L81)
+[Show source in yt_transcript_scraper_tool.py:81](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L81)
 
 Runs the YouTubeTranscriptTool with the given parameters.
 
@@ -112,7 +112,7 @@ def run(
 
 ## YouTubeTranscriptToolConfig
 
-[Show source in yt_transcript_scraper.py:52](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py#L52)
+[Show source in yt_transcript_scraper_tool.py:52](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L52)
 
 #### Signature
 
@@ -128,7 +128,7 @@ class YouTubeTranscriptToolConfig(BaseToolConfig): ...
 
 ## YouTubeTranscriptToolOutputSchema
 
-[Show source in yt_transcript_scraper.py:35](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py#L35)
+[Show source in yt_transcript_scraper_tool.py:35](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L35)
 
 #### Signature
 
@@ -144,7 +144,7 @@ class YouTubeTranscriptToolOutputSchema(BaseIOSchema): ...
 
 ## YouTubeTranscriptToolSchema
 
-[Show source in yt_transcript_scraper.py:17](../../../../../atomic_agents/lib/tools/yt_transcript_scraper.py#L17)
+[Show source in yt_transcript_scraper_tool.py:17](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L17)
 
 #### Signature
 

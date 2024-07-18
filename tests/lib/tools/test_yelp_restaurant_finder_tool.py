@@ -10,7 +10,7 @@ from atomic_agents.lib.tools.yelp_restaurant_finder_tool import (
     YelpCategory,
     PriceRange
 )
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base_tool import BaseTool
 from atomic_agents.agents.base_agent import BaseIOSchema
 
 # Sample data

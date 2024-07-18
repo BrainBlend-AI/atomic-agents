@@ -3,10 +3,9 @@ from unittest.mock import Mock, patch
 from pydantic import Field
 import instructor
 
-from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig, ToolInputModel
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
+from atomic_agents.lib.tools.base_tool import BaseTool
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgentOutputSchema
-from atomic_agents.lib.components.agent_memory import Message
 
 class MockTool(BaseTool):
     class InputSchema(BaseIOSchema):
@@ -49,7 +48,7 @@ def test_tool_interface_agent_initialization(tool_interface_agent, mock_tool):
     assert tool_interface_agent.tool_instance == mock_tool
     assert tool_interface_agent.return_raw_output == False
     assert tool_interface_agent.input_schema.__name__ == "MockTool"
-    assert issubclass(tool_interface_agent.input_schema, ToolInputModel)
+    assert issubclass(tool_interface_agent.input_schema, BaseIOSchema)
     assert tool_interface_agent.output_schema == BaseAgentOutputSchema
 
 def test_tool_interface_agent_input_schema(tool_interface_agent):

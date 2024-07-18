@@ -4,25 +4,13 @@ from pydantic import Field, create_model
 
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.lib.tools.base_tool import BaseTool
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
 
 
 class ToolInterfaceAgentConfig(BaseAgentConfig):
     tool_instance: BaseTool
     return_raw_output: bool = False
-
-
-class ToolInputModel(BaseIOSchema):
-    tool_input: str = Field(..., description="Tool input. Presented as a single question or instruction")
-
-    class Config:
-        title = "Default Tool"
-        description = "Default tool description"
-        json_schema_extra = {
-            "title": "Default Tool",
-            "description": "Default tool description",
-        }
 
 
 class ToolInterfaceAgent(BaseAgent):
@@ -60,7 +48,7 @@ class ToolInterfaceAgent(BaseAgent):
                     alias=f"tool_input_{self.tool_instance.tool_name}",
                 ),
             ),
-            __base__=ToolInputModel,
+            __base__=BaseIOSchema,
         )
 
         # Manually set the configuration attributes

@@ -1,6 +1,6 @@
 import pytest
 from atomic_agents.lib.tools.calculator_tool import CalculatorTool, CalculatorToolSchema, CalculatorToolOutputSchema, CalculatorToolConfig
-from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
+from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 
 def test_calculator_tool_initialization():
     tool = CalculatorTool()
