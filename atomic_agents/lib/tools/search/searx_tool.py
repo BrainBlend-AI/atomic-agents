@@ -31,8 +31,6 @@ class SearxNGToolInputSchema(BaseIOSchema):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-
-
 class SearxNGResultSchema(BaseIOSchema):
     url: str
     title: str
