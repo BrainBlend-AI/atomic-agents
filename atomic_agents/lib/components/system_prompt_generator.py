@@ -20,17 +20,19 @@ class SystemPromptGenerator:
         background: Optional[List[str]] = None,
         steps: Optional[List[str]] = None,
         output_instructions: Optional[List[str]] = None,
-        context_providers: Optional[Dict[str, SystemPromptContextProviderBase]] = None
+        context_providers: Optional[Dict[str, SystemPromptContextProviderBase]] = None,
     ):
         self.background = background or ["This is a conversation with a helpful and friendly AI assistant."]
         self.steps = steps or []
         self.output_instructions = output_instructions or []
         self.context_providers = context_providers or {}
 
-        self.output_instructions.extend([
-            "Always respond using the proper JSON schema.",
-            "Always use the available additional information and context to enhance the response.",
-        ])
+        self.output_instructions.extend(
+            [
+                "Always respond using the proper JSON schema.",
+                "Always use the available additional information and context to enhance the response.",
+            ]
+        )
 
     def generate_prompt(self) -> str:
         sections = [

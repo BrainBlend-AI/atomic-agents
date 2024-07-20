@@ -154,9 +154,7 @@ class SearxNGTool(BaseTool):
 #################
 if __name__ == "__main__":
     rich_console = Console()
-    search_tool_instance = SearxNGTool(
-        config=SearxNGToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5)
-    )
+    search_tool_instance = SearxNGTool(config=SearxNGToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
 
     search_input = SearxNGTool.input_schema(
         queries=["Python programming", "Machine learning", "Artificial intelligence"],

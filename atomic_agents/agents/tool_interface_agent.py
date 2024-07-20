@@ -84,7 +84,7 @@ class ToolInterfaceAgent(BaseAgent):
                 "Call the tool with the parameters.",
                 "Respond to the user",
             ],
-            output_instructions=output_instructions
+            output_instructions=output_instructions,
         )
 
     def get_response(self, response_model=None):
