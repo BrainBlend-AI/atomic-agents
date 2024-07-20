@@ -5,11 +5,10 @@ from sympy import sympify
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 
+
 ################
 # INPUT SCHEMA #
 ################
-
-
 class CalculatorToolInputSchema(BaseIOSchema):
     expression: str = Field(..., description="Mathematical expression to evaluate. For example, '2 + 2'.")
 

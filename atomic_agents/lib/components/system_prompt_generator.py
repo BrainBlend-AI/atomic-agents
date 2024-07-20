@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
+
 class SystemPromptContextProviderBase(ABC):
     def __init__(self, title: str):
         self.title = title
@@ -11,6 +12,7 @@ class SystemPromptContextProviderBase(ABC):
 
     def __repr__(self) -> str:
         return self.get_info()
+
 
 class SystemPromptGenerator:
     def __init__(
