@@ -9,7 +9,7 @@ from rich.console import Console
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
-from atomic_agents.lib.tools.search.searx_tool import SearxNGTool, SearxNGToolConfig, SearxNGToolInputSchema
+from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig, SearxNGToolInputSchema
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -50,7 +50,7 @@ console = Console()
 client = instructor.from_openai(openai.OpenAI())
 
 # Initialize the SearxNGTool
-searx_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=5))
+searxng_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=5))
 
 # Define a custom response schema
 class OutputSchema(BaseModel):
@@ -86,7 +86,7 @@ while True:
     logger.info(f'Chosen schema: {response.chosen_schema}')
     
     if isinstance(response.chosen_schema, SearxNGToolInputSchema):
-        search_results = searx_tool.run(response.chosen_schema)
+        search_results = searxng_tool.run(response.chosen_schema)
         
         agent.memory.add_message('assistant', f'INTERNAL THOUGHT: I have found the following products: {search_results.results}\n\n I will now summarize the results for the user.')
         output = agent.run().chosen_schema.chat_message

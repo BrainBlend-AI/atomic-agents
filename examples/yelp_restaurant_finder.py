@@ -7,7 +7,7 @@ import openai
 from rich.console import Console
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
 from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolInputSchema
 
@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Define system prompt information including background, steps, and output instructions
-system_prompt = SystemPromptInfo(
+system_prompt_generator = SystemPromptGenerator(
     background=[
         'This assistant is a restaurant finder AI designed to help users find the best restaurants based on their preferences by asking clarifying questions.',
     ],
@@ -33,9 +33,6 @@ system_prompt = SystemPromptInfo(
         'Ensure that the chat responses are used to ask clarifying questions and gather information, and the Yelp schema is used to perform the actual search.'
     ]
 )
-
-# Initialize the system prompt generator with the defined system prompt and dynamic info providers
-system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Initialize chat memory to store conversation history
 memory = AgentMemory()

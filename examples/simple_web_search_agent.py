@@ -5,9 +5,9 @@ import openai
 from rich.console import Console
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
-from atomic_agents.lib.tools.search.searx_tool import SearxNGTool, SearxNGToolConfig
+from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig
 
-def initialize_searx_tool():
+def initialize_searxng_tool():
     """
     Initialize the SearxNGTool with configuration.
     """
@@ -15,14 +15,14 @@ def initialize_searx_tool():
     config = SearxNGToolConfig(base_url=base_url, max_results=10)
     return SearxNGTool(config)
 
-def initialize_agent(client, searx_tool):
+def initialize_agent(client, searxng_tool):
     """
     Initialize the ToolInterfaceAgent with the given client and SearxNGTool.
     """
     agent_config = ToolInterfaceAgentConfig(
         client=client,
         model='gpt-3.5-turbo',
-        tool_instance=searx_tool,
+        tool_instance=searxng_tool,
         return_raw_output=False
     )
     return ToolInterfaceAgent(config=agent_config)
@@ -30,8 +30,8 @@ def initialize_agent(client, searx_tool):
 def main():
     console = Console()
     client = instructor.from_openai(openai.OpenAI())
-    searx_tool = initialize_searx_tool()
-    agent = initialize_agent(client, searx_tool)
+    searxng_tool = initialize_searxng_tool()
+    agent = initialize_agent(client, searxng_tool)
 
     console.print("ToolInterfaceAgent with SearxNGTool is ready.")
 

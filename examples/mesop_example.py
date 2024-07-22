@@ -16,29 +16,29 @@ import mesop.labs as mel
 from dataclasses import field
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
-from atomic_agents.lib.tools.search.searx_tool import SearxNGTool, SearxNGToolConfig
+from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig
 
 # Initialize the console, client, and tools
 console = Console()
 client = instructor.from_openai(openai.OpenAI())
 
-def initialize_searx_tool():
+def initialize_searxng_tool():
     base_url = os.getenv('SEARXNG_BASE_URL')
     config = SearxNGToolConfig(base_url=base_url, max_results=10)
     return SearxNGTool(config)
 
-searx_tool = initialize_searx_tool()
+searxng_tool = initialize_searxng_tool()
 
-def initialize_agent(client, searx_tool):
+def initialize_agent(client, searxng_tool):
     agent_config = ToolInterfaceAgentConfig(
         client=client,
         model='gpt-3.5-turbo',
-        tool_instance=searx_tool,
+        tool_instance=searxng_tool,
         return_raw_output=False
     )
     return ToolInterfaceAgent(config=agent_config)
 
-agent = initialize_agent(client, searx_tool)
+agent = initialize_agent(client, searxng_tool)
 
 # Mesop state class
 @me.stateclass

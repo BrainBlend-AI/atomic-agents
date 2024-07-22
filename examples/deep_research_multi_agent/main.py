@@ -5,7 +5,7 @@ from examples.deep_research_multi_agent.agents.top_urls_selector_agent import to
 from examples.deep_research_multi_agent.agents.info_refiner_agent import refine_answer_agent
 from examples.deep_research_multi_agent.providers import search_results_provider, vector_db_chunks_provider
 from examples.deep_research_multi_agent.in_memory_faiss import InMemFaiss
-from atomic_agents.lib.tools.search.searx_tool import SearxNGTool, SearxNGToolConfig
+from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig
 from rich.console import Console
 import asyncio
 
