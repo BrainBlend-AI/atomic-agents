@@ -7,8 +7,8 @@ from rich.markdown import Markdown
 from typing import List, Optional
 
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.lib.tools.yt_transcript_scraper import YouTubeTranscriptTool, YouTubeTranscriptToolConfig, YouTubeTranscriptToolInputSchema
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
+from atomic_agents.lib.tools.yt_transcript_scraper_tool import YouTubeTranscriptTool, YouTubeTranscriptToolConfig, YouTubeTranscriptToolInputSchema
 
 console = Console()
 
@@ -31,7 +31,7 @@ class YtTranscriptProvider(SystemPromptContextProviderBase):
 transcript_provider = YtTranscriptProvider(title='YouTube Transcript')
 
 # Define the system prompt information
-system_prompt_info = SystemPromptInfo(
+system_prompt_generator = SystemPromptGenerator(
     background=[
         'This Assistant is an expert at extracting knowledge and other insightful and interesting information from YouTube transcripts.'
     ],
@@ -62,7 +62,7 @@ agent = BaseAgent(
     config = BaseAgentConfig(
         client=client,
         model='gpt-3.5-turbo',
-        system_prompt_generator=SystemPromptGenerator(system_prompt_info),
+        system_prompt_generator=system_prompt_generator,
         output_schema=ResponseModel
     )
 )
