@@ -32,7 +32,7 @@ searxng_tool = initialize_searxng_tool()
 def initialize_agent(client, searxng_tool):
     agent_config = ToolInterfaceAgentConfig(
         client=client,
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         tool_instance=searxng_tool,
         return_raw_output=False
     )
@@ -56,7 +56,7 @@ def transform(input: str, history: list[mel.ChatMessage]):
 
 # Mesop page
 @me.page(
-    path="/chat",
+    path="/",
     title="ToolInterfaceAgent Chat"
 )
 def page():

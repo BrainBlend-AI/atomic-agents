@@ -6,12 +6,12 @@ import os
 from rich.console import Console
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 import instructor
 import openai
 
 # Define system prompt information including background, steps, and output instructions
-system_prompt = SystemPromptInfo(
+system_prompt_generator = SystemPromptGenerator(
     background=[
         'This assistant is a general-purpose AI designed to be helpful and friendly.',
     ],
@@ -25,8 +25,6 @@ system_prompt = SystemPromptInfo(
         'Always answer in rhyming verse.'
     ]
 )
-# Initialize the system prompt generator with the defined system prompt and dynamic info providers
-system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Initialize chat memory to store conversation history
 memory = AgentMemory()
