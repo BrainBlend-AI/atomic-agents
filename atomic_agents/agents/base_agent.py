@@ -8,7 +8,7 @@ from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
 
 
-class BaseAgentIO(BaseModel):
+class BaseIOSchema(BaseModel):
     """
     Base class for input and output schemas for chat agents.
     """
@@ -21,7 +21,7 @@ class BaseAgentIO(BaseModel):
         return JSON(json_str)
 
 
-class BaseAgentInputSchema(BaseAgentIO):
+class BaseAgentInputSchema(BaseIOSchema):
     chat_message: str = Field(
         ...,
         description="The chat message sent by the user to the assistant.",
@@ -36,7 +36,7 @@ class BaseAgentInputSchema(BaseAgentIO):
         }
 
 
-class BaseAgentOutputSchema(BaseAgentIO):
+class BaseAgentOutputSchema(BaseIOSchema):
     chat_message: str = Field(
         ...,
         description=(
@@ -56,7 +56,7 @@ class BaseAgentOutputSchema(BaseAgentIO):
 
 class BaseAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
-    model: str = Field("gpt-3.5-turbo", description="The model to use for generating responses.")
+    model: str = Field("gpt-4o-mini", description="The model to use for generating responses.")
     memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         None, description="Component for generating system prompts."
@@ -76,8 +76,8 @@ class BaseAgent:
     generating system prompts, and obtaining responses from a language model.
 
     Attributes:
-        input_schema (Type[BaseAgentIO]): Schema for the input data.
-        output_schema (Type[BaseAgentIO]): Schema for the output data.
+        input_schema (Type[BaseIOSchema]): Schema for the input data.
+        output_schema (Type[BaseIOSchema]): Schema for the output data.
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
         memory (AgentMemory): Memory component for storing chat history.
@@ -133,15 +133,15 @@ class BaseAgent:
         response = self.client.chat.completions.create(model=self.model, messages=messages, response_model=response_model)
         return response
 
-    def run(self, user_input: Optional[Type[BaseAgentIO]] = None) -> Type[BaseAgentIO]:
+    def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
         """
         Runs the chat agent with the given user input.
 
         Args:
-            user_input (Optional[Type[BaseAgentIO]]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
 
         Returns:
-            Type[BaseAgentIO]: The response from the chat agent.
+            Type[BaseIOSchema]: The response from the chat agent.
         """
         if user_input:
             self.current_user_input = user_input
@@ -165,9 +165,9 @@ class BaseAgent:
         Raises:
             KeyError: If the context provider is not found.
         """
-        if provider_name not in self.system_prompt_generator.system_prompt_info.context_providers:
+        if provider_name not in self.system_prompt_generator.context_providers:
             raise KeyError(f"Context provider '{provider_name}' not found.")
-        return self.system_prompt_generator.system_prompt_info.context_providers[provider_name]
+        return self.system_prompt_generator.context_providers[provider_name]
 
     def register_context_provider(self, provider_name: str, provider: SystemPromptContextProviderBase):
         """
@@ -177,7 +177,7 @@ class BaseAgent:
             provider_name (str): The name of the context provider.
             provider (SystemPromptContextProviderBase): The context provider instance.
         """
-        self.system_prompt_generator.system_prompt_info.context_providers[provider_name] = provider
+        self.system_prompt_generator.context_providers[provider_name] = provider
 
     def unregister_context_provider(self, provider_name: str):
         """
@@ -186,7 +186,7 @@ class BaseAgent:
         Args:
             provider_name (str): The name of the context provider to remove.
         """
-        if provider_name in self.system_prompt_generator.system_prompt_info.context_providers:
-            del self.system_prompt_generator.system_prompt_info.context_providers[provider_name]
+        if provider_name in self.system_prompt_generator.context_providers:
+            del self.system_prompt_generator.context_providers[provider_name]
         else:
             raise KeyError(f"Context provider '{provider_name}' not found.")

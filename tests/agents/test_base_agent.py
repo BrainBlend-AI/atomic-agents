@@ -3,7 +3,7 @@ from unittest.mock import Mock, call
 from pydantic import BaseModel
 import instructor
 from atomic_agents.agents.base_agent import (
-    BaseAgentIO,
+    BaseIOSchema,
     BaseAgent,
     BaseAgentConfig,
     BaseAgentInputSchema,
@@ -12,7 +12,6 @@ from atomic_agents.agents.base_agent import (
     AgentMemory,
     SystemPromptContextProviderBase
 )
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptInfo
 
 @pytest.fixture
 def mock_instructor():
@@ -32,15 +31,14 @@ def mock_memory():
 def mock_system_prompt_generator():
     mock = Mock(spec=SystemPromptGenerator)
     mock.generate_prompt.return_value = "Mocked system prompt"
-    mock.system_prompt_info = Mock(spec=SystemPromptInfo)
-    mock.system_prompt_info.context_providers = {}
+    mock.context_providers = {}
     return mock
 
 @pytest.fixture
 def agent_config(mock_instructor, mock_memory, mock_system_prompt_generator):
     return BaseAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator
     )
@@ -51,7 +49,7 @@ def agent(agent_config):
 
 def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_generator):
     assert agent.client == mock_instructor
-    assert agent.model == "gpt-3.5-turbo"
+    assert agent.model == "gpt-4o-mini"
     assert agent.memory == mock_memory
     assert agent.system_prompt_generator == mock_system_prompt_generator
     assert agent.input_schema == BaseAgentInputSchema
@@ -75,7 +73,7 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
     assert response == mock_response
     
     mock_instructor.chat.completions.create.assert_called_once_with(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {'role': 'system', 'content': 'System prompt'},
             {'role': 'user', 'content': 'Hello'}
@@ -102,7 +100,7 @@ def test_run(agent):
 
 def test_get_context_provider(agent, mock_system_prompt_generator):
     mock_provider = Mock(spec=SystemPromptContextProviderBase)
-    mock_system_prompt_generator.system_prompt_info.context_providers = {
+    mock_system_prompt_generator.context_providers = {
         'test_provider': mock_provider
     }
     
@@ -116,17 +114,17 @@ def test_register_context_provider(agent, mock_system_prompt_generator):
     mock_provider = Mock(spec=SystemPromptContextProviderBase)
     agent.register_context_provider('new_provider', mock_provider)
     
-    assert 'new_provider' in mock_system_prompt_generator.system_prompt_info.context_providers
-    assert mock_system_prompt_generator.system_prompt_info.context_providers['new_provider'] == mock_provider
+    assert 'new_provider' in mock_system_prompt_generator.context_providers
+    assert mock_system_prompt_generator.context_providers['new_provider'] == mock_provider
 
 def test_unregister_context_provider(agent, mock_system_prompt_generator):
     mock_provider = Mock(spec=SystemPromptContextProviderBase)
-    mock_system_prompt_generator.system_prompt_info.context_providers = {
+    mock_system_prompt_generator.context_providers = {
         'test_provider': mock_provider
     }
     
     agent.unregister_context_provider('test_provider')
-    assert 'test_provider' not in mock_system_prompt_generator.system_prompt_info.context_providers
+    assert 'test_provider' not in mock_system_prompt_generator.context_providers
     
     with pytest.raises(KeyError):
         agent.unregister_context_provider('non_existent_provider')
@@ -140,7 +138,7 @@ def test_custom_input_output_schemas(mock_instructor):
 
     custom_config = BaseAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         input_schema=CustomInputSchema,
         output_schema=CustomOutputSchema
     )
@@ -152,7 +150,7 @@ def test_custom_input_output_schemas(mock_instructor):
     
 
 def test_base_agent_io_str_and_rich():
-    class TestIO(BaseAgentIO):
+    class TestIO(BaseIOSchema):
         field: str
 
     test_io = TestIO(field="test")

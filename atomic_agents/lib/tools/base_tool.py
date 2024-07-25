@@ -2,7 +2,7 @@ from typing import Optional, Type
 
 from pydantic import BaseModel
 
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 
 
 class BaseToolConfig(BaseModel):
@@ -15,15 +15,15 @@ class BaseTool:
     Base class for all tools in the Atomic Agents framework.
 
     Attributes:
-        input_schema (Type[BaseAgentIO]): The schema for the input data.
-        output_schema (Type[BaseAgentIO]): The schema for the output data.
+        input_schema (Type[BaseIOSchema]): The schema for the input data.
+        output_schema (Type[BaseIOSchema]): The schema for the output data.
         tool_name (str): The name of the tool, derived from the input schema's title.
         tool_description (str):
             The description of the tool, derived from the input schema's description or overridden by the user.
     """
 
-    input_schema: Type[BaseAgentIO]
-    output_schema: Type[BaseAgentIO]
+    input_schema: Type[BaseIOSchema]
+    output_schema: Type[BaseIOSchema]
 
     def __init__(self, config: BaseToolConfig = BaseToolConfig()):
         """
@@ -35,15 +35,15 @@ class BaseTool:
         self.tool_name = config.title or self.input_schema.Config.title
         self.tool_description = config.description or self.input_schema.Config.description
 
-    def run(self, params: Type[BaseAgentIO]) -> BaseAgentIO:
+    def run(self, params: Type[BaseIOSchema]) -> BaseIOSchema:
         """
         Runs the tool with the given parameters. This method should be implemented by subclasses.
 
         Args:
-            params (BaseAgentIO): The input parameters for the tool, adhering to the input schema.
+            params (BaseIOSchema): The input parameters for the tool, adhering to the input schema.
 
         Returns:
-            BaseAgentIO: The output of the tool, adhering to the output schema.
+            BaseIOSchema: The output of the tool, adhering to the output schema.
 
         Raises:
             NotImplementedError: If the method is not implemented by a subclass.

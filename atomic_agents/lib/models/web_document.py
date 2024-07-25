@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 
 
 class WebDocumentMetadata(BaseModel):
@@ -11,6 +11,6 @@ class WebDocumentMetadata(BaseModel):
     author: str = Field(default="")
 
 
-class WebDocument(BaseAgentIO):
+class WebDocument(BaseIOSchema):
     content: str
     metadata: WebDocumentMetadata = Field(default_factory=lambda: WebDocumentMetadata(url=""))

@@ -5,22 +5,22 @@ import requests
 from pydantic import Field
 from rich.console import Console
 
-from atomic_agents.agents.base_agent import BaseAgentIO
-from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
+from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 
 ################
 # INPUT SCHEMA #
 ################
 
 
-class SearxNGSearchToolSchema(BaseAgentIO):
+class SearxNGToolInputSchema(BaseIOSchema):
     queries: List[str] = Field(..., description="List of search queries.")
     category: Optional[Literal["general", "news", "social_media"]] = Field(
         "general", description="Category of the search queries."
     )
 
     class Config:
-        title = "SearxNGSearchTool"
+        title = "SearxNGTool"
         description = (
             "Tool for searching for information, news, references, and other content on the SearxNG. "
             "Returns a list of search results with a short description or content snippet and URLs for further exploration."
@@ -31,65 +31,61 @@ class SearxNGSearchToolSchema(BaseAgentIO):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-
-
-class SearxNGSearchResultSchema(BaseAgentIO):
+class SearxNGResultSchema(BaseIOSchema):
     url: str
     title: str
     content: Optional[str] = None
 
 
-class SearxNGSearchToolOutputSchema(BaseAgentIO):
-    results: List[SearxNGSearchResultSchema]
+class SearxNGToolOutputSchema(BaseIOSchema):
+    results: List[SearxNGResultSchema]
     category: Optional[str] = None
 
 
 ##############
 # TOOL LOGIC #
 ##############
-
-
-class SearxNGSearchToolConfig(BaseToolConfig):
+class SearxNGToolConfig(BaseToolConfig):
     base_url: str = ""
     max_results: int = 10
 
 
-class SearxNGSearchTool(BaseTool):
+class SearxNGTool(BaseTool):
     """
     Tool for performing searches on SearxNG based on the provided queries and category.
 
     Attributes:
-        input_schema (SearxNGSearchToolSchema): The schema for the input data.
-        output_schema (SearxNGSearchToolOutputSchema): The schema for the output data.
+        input_schema (SearxNGToolInputSchema): The schema for the input data.
+        output_schema (SearxNGToolOutputSchema): The schema for the output data.
         max_results (int): The maximum number of search results to return.
         base_url (str): The base URL for the SearxNG instance to use.
     """
 
-    input_schema = SearxNGSearchToolSchema
-    output_schema = SearxNGSearchToolOutputSchema
+    input_schema = SearxNGToolInputSchema
+    output_schema = SearxNGToolOutputSchema
 
-    def __init__(self, config: SearxNGSearchToolConfig = SearxNGSearchToolConfig()):
+    def __init__(self, config: SearxNGToolConfig = SearxNGToolConfig()):
         """
-        Initializes the SearxNGSearchTool.
+        Initializes the SearxNGTool.
 
         Args:
-            config (SearxNGSearchToolConfig):
+            config (SearxNGToolConfig):
                 Configuration for the tool, including base URL, max results, and optional title and description overrides.
         """
         super().__init__(config)
         self.base_url = config.base_url
         self.max_results = config.max_results
 
-    def run(self, params: SearxNGSearchToolSchema, max_results: Optional[int] = None) -> SearxNGSearchToolOutputSchema:
+    def run(self, params: SearxNGToolInputSchema, max_results: Optional[int] = None) -> SearxNGToolOutputSchema:
         """
-        Runs the SearxNGSearchTool with the given parameters.
+        Runs the SearxNGTool with the given parameters.
 
         Args:
-            params (SearxNGSearchToolSchema): The input parameters for the tool, adhering to the input schema.
+            params (SearxNGToolInputSchema): The input parameters for the tool, adhering to the input schema.
             max_results (Optional[int]): The maximum number of search results to return.
 
         Returns:
-            SearxNGSearchToolOutputSchema: The output of the tool, adhering to the output schema.
+            SearxNGToolOutputSchema: The output of the tool, adhering to the output schema.
 
         Raises:
             ValueError: If the base URL is not provided.
@@ -148,7 +144,7 @@ class SearxNGSearchTool(BaseTool):
 
         filtered_results = filtered_results[: max_results or self.max_results]
 
-        return SearxNGSearchToolOutputSchema(results=filtered_results, category=params.category)
+        return SearxNGToolOutputSchema(results=filtered_results, category=params.category)
 
 
 #################
@@ -156,11 +152,9 @@ class SearxNGSearchTool(BaseTool):
 #################
 if __name__ == "__main__":
     rich_console = Console()
-    search_tool_instance = SearxNGSearchTool(
-        config=SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5)
-    )
+    search_tool_instance = SearxNGTool(config=SearxNGToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
 
-    search_input = SearxNGSearchTool.input_schema(
+    search_input = SearxNGTool.input_schema(
         queries=["Python programming", "Machine learning", "Artificial intelligence"],
         category="news",
     )

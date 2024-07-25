@@ -9,14 +9,13 @@
 
 ## format_tool_message
 
-[Show source in format_tool_message.py:7](../../../../../atomic_agents/lib/utils/format_tool_message.py#L7)
+[Show source in format_tool_message.py:8](../../../../../atomic_agents/lib/utils/format_tool_message.py#L8)
 
 Formats a message for a tool call.
 
 #### Arguments
 
-- `tool_name` *str* - The type of the tool.
-- `tool_calls` *Dict* - A dictionary containing the tool calls.
+- `tool_call` *Type[BaseModel]* - The Pydantic model instance representing the tool call.
 - `tool_id` *str, optional* - The unique identifier for the tool call. If not provided, a random UUID will be generated.
 
 #### Returns

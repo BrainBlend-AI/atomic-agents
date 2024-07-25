@@ -2,15 +2,14 @@ from pydantic import Field
 from rich.console import Console
 from sympy import sympify
 
-from atomic_agents.agents.base_agent import BaseAgentIO
-from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
+from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
+
 
 ################
 # INPUT SCHEMA #
 ################
-
-
-class CalculatorToolSchema(BaseAgentIO):
+class CalculatorToolInputSchema(BaseIOSchema):
     expression: str = Field(..., description="Mathematical expression to evaluate. For example, '2 + 2'.")
 
     class Config:
@@ -27,9 +26,7 @@ class CalculatorToolSchema(BaseAgentIO):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-
-
-class CalculatorToolOutputSchema(BaseAgentIO):
+class CalculatorToolOutputSchema(BaseIOSchema):
     result: str = Field(..., description="Result of the calculation.")
 
 
@@ -45,11 +42,11 @@ class CalculatorTool(BaseTool):
     Tool for performing calculations based on the provided mathematical expression.
 
     Attributes:
-        input_schema (CalculatorToolSchema): The schema for the input data.
+        input_schema (CalculatorToolInputSchema): The schema for the input data.
         output_schema (CalculatorToolOutputSchema): The schema for the output data.
     """
 
-    input_schema = CalculatorToolSchema
+    input_schema = CalculatorToolInputSchema
     output_schema = CalculatorToolOutputSchema
 
     def __init__(self, config: CalculatorToolConfig = CalculatorToolConfig()):
@@ -61,12 +58,12 @@ class CalculatorTool(BaseTool):
         """
         super().__init__(config)
 
-    def run(self, params: CalculatorToolSchema) -> CalculatorToolOutputSchema:
+    def run(self, params: CalculatorToolInputSchema) -> CalculatorToolOutputSchema:
         """
         Runs the CalculatorTool with the given parameters.
 
         Args:
-            params (CalculatorToolSchema): The input parameters for the tool, adhering to the input schema.
+            params (CalculatorToolInputSchema): The input parameters for the tool, adhering to the input schema.
 
         Returns:
             CalculatorToolOutputSchema: The output of the tool, adhering to the output schema.
@@ -83,4 +80,4 @@ class CalculatorTool(BaseTool):
 #################
 if __name__ == "__main__":
     rich_console = Console()
-    rich_console.print(CalculatorTool().run(CalculatorToolSchema(expression="2 + 2")))
+    rich_console.print(CalculatorTool().run(CalculatorToolInputSchema(expression="2 + 2")))

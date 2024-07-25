@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 from atomic_agents.lib.models.web_document import WebDocumentMetadata, WebDocument
-from atomic_agents.agents.base_agent import BaseAgentIO
+from atomic_agents.agents.base_agent import BaseIOSchema
 
 def test_web_document_metadata_creation():
     metadata = WebDocumentMetadata(url="https://example.com")
@@ -49,7 +49,7 @@ def test_web_document_content_required():
 def test_web_document_inheritance():
     doc = WebDocument(content="This is the content")
     assert isinstance(doc, WebDocument)
-    assert isinstance(doc, BaseAgentIO)
+    assert isinstance(doc, BaseIOSchema)
 
 def test_web_document_metadata_serialization():
     metadata = WebDocumentMetadata(url="https://example.com", title="Example")

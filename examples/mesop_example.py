@@ -16,29 +16,29 @@ import mesop.labs as mel
 from dataclasses import field
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig
+from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig
 
 # Initialize the console, client, and tools
 console = Console()
 client = instructor.from_openai(openai.OpenAI())
 
-def initialize_searx_tool():
+def initialize_searxng_tool():
     base_url = os.getenv('SEARXNG_BASE_URL')
-    config = SearxNGSearchToolConfig(base_url=base_url, max_results=10)
-    return SearxNGSearchTool(config)
+    config = SearxNGToolConfig(base_url=base_url, max_results=10)
+    return SearxNGTool(config)
 
-searx_tool = initialize_searx_tool()
+searxng_tool = initialize_searxng_tool()
 
-def initialize_agent(client, searx_tool):
+def initialize_agent(client, searxng_tool):
     agent_config = ToolInterfaceAgentConfig(
         client=client,
-        model='gpt-3.5-turbo',
-        tool_instance=searx_tool,
+        model='gpt-4o-mini',
+        tool_instance=searxng_tool,
         return_raw_output=False
     )
     return ToolInterfaceAgent(config=agent_config)
 
-agent = initialize_agent(client, searx_tool)
+agent = initialize_agent(client, searxng_tool)
 
 # Mesop state class
 @me.stateclass
@@ -48,7 +48,7 @@ class State:
 # Mesop transform function
 def transform(input: str, history: list[mel.ChatMessage]):
     state = me.state(State)
-    response = agent.run(agent.input_schema(tool_input_SearxNGSearchTool=input))
+    response = agent.run(agent.input_schema(tool_input_SearxNGTool=input))
     state.chat_history.append(mel.ChatMessage(content=f"You: {input}"))
     state.chat_history.append(mel.ChatMessage(content=f"Agent: {response.chat_message}"))
     yield response.chat_message
@@ -56,11 +56,11 @@ def transform(input: str, history: list[mel.ChatMessage]):
 
 # Mesop page
 @me.page(
-    path="/chat",
+    path="/",
     title="ToolInterfaceAgent Chat"
 )
 def page():
-    mel.chat(transform, title="ToolInterfaceAgent with SearxNGSearchTool", bot_user="Agent")
+    mel.chat(transform, title="ToolInterfaceAgent with SearxNGTool", bot_user="Agent")
 
 # Main function to run the Mesop app
 if __name__ == "__main__":

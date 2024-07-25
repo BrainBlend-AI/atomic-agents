@@ -6,16 +6,16 @@ import instructor
 import openai
 from rich.console import Console
 from atomic_agents.agents.base_agent import BaseAgentConfig, BaseAgent, BaseAgentInputSchema, BaseAgentOutputSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # Initialize the system prompts. For simplicity, we use the same system prompt for both agents.
-agent1_system_prompt_info = SystemPromptInfo(
+agent1_system_prompt_generator = SystemPromptGenerator(
     background=['You are an agent that adds 1 to the number said by the previous person in the conversation.'],
     steps=['If the previous message contains a number, add 1 to it.'],
     output_instructions=['Respond with only the resulting added number and never anything else. Do not include any additional text.']
 )
 
-agent2_system_prompt_info = SystemPromptInfo(
+agent2_system_prompt_generator = SystemPromptGenerator(
     background=['You are an agent that adds 1 to the number said by the previous person in the conversation.'],
     steps=['If the previous message contains a number, add 1 to it.'],
     output_instructions=['Respond with only the resulting added number and never anything else. Do not include any additional text.']
@@ -27,15 +27,15 @@ agent1 = BaseAgent(
     config=BaseAgentConfig(
         client=instructor.from_groq(groq.Groq(api_key=os.getenv('GROQ_API_KEY'))),
         model=os.getenv('GROQ_CHAT_MODEL'),
-        system_prompt_generator=SystemPromptGenerator(system_prompt_info=agent1_system_prompt_info)
+        system_prompt_generator=agent1_system_prompt_generator
     )
 )
 
 agent2 = BaseAgent(
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
-        model='gpt-3.5-turbo',
-        system_prompt_generator=SystemPromptGenerator(system_prompt_info=agent2_system_prompt_info)
+        model='gpt-4o-mini',
+        system_prompt_generator=agent2_system_prompt_generator
     )
 )
 
