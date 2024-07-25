@@ -11,8 +11,8 @@
   - [YelpSearchTool](#yelpsearchtool)
     - [YelpSearchTool().run](#yelpsearchtool()run)
   - [YelpSearchToolConfig](#yelpsearchtoolconfig)
+  - [YelpSearchToolInputSchema](#yelpsearchtoolinputschema)
   - [YelpSearchToolOutputSchema](#yelpsearchtooloutputschema)
-  - [YelpSearchToolSchema](#yelpsearchtoolschema)
 
 ## PriceRange
 
@@ -45,12 +45,12 @@ class YelpCategory(Enum): ...
 #### Signature
 
 ```python
-class YelpSearchResultSchema(BaseAgentIO): ...
+class YelpSearchResultSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
 
 
 
@@ -62,7 +62,7 @@ Tool for performing searches using the Yelp API based on the provided queries.
 
 #### Attributes
 
-- `input_schema` *YelpSearchToolSchema* - The schema for the input data.
+- `input_schema` *YelpSearchToolInputSchema* - The schema for the input data.
 - `output_schema` *YelpSearchToolOutputSchema* - The schema for the output data.
 - `api_key` *str* - The API key for the Yelp API.
 - `max_results` *int* - The maximum number of search results to return.
@@ -76,7 +76,7 @@ class YelpSearchTool(BaseTool):
 
 #### See also
 
-- [BaseTool](./base.md#basetool)
+- [BaseTool](./base_tool.md#basetool)
 - [YelpSearchToolConfig](#yelpsearchtoolconfig)
 
 ### YelpSearchTool().run
@@ -87,7 +87,7 @@ Runs the YelpSearchTool with the given parameters.
 
 #### Arguments
 
-- `params` *YelpSearchToolSchema* - The input parameters for the tool, adhering to the input schema.
+- `params` *YelpSearchToolInputSchema* - The input parameters for the tool, adhering to the input schema.
 - `max_results` *Optional[int]* - The maximum number of search results to return.
 
 #### Returns
@@ -102,13 +102,13 @@ Runs the YelpSearchTool with the given parameters.
 #### Signature
 
 ```python
-def run(self, params: YelpSearchToolSchema) -> YelpSearchToolOutputSchema: ...
+def run(self, params: YelpSearchToolInputSchema) -> YelpSearchToolOutputSchema: ...
 ```
 
 #### See also
 
+- [YelpSearchToolInputSchema](#yelpsearchtoolinputschema)
 - [YelpSearchToolOutputSchema](#yelpsearchtooloutputschema)
-- [YelpSearchToolSchema](#yelpsearchtoolschema)
 
 
 
@@ -124,7 +124,23 @@ class YelpSearchToolConfig(BaseToolConfig): ...
 
 #### See also
 
-- [BaseToolConfig](./base.md#basetoolconfig)
+- [BaseToolConfig](./base_tool.md#basetoolconfig)
+
+
+
+## YelpSearchToolInputSchema
+
+[Show source in yelp_restaurant_finder_tool.py:46](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L46)
+
+#### Signature
+
+```python
+class YelpSearchToolInputSchema(BaseIOSchema): ...
+```
+
+#### See also
+
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
 
 
 
@@ -135,25 +151,9 @@ class YelpSearchToolConfig(BaseToolConfig): ...
 #### Signature
 
 ```python
-class YelpSearchToolOutputSchema(BaseAgentIO): ...
+class YelpSearchToolOutputSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
-
-
-
-## YelpSearchToolSchema
-
-[Show source in yelp_restaurant_finder_tool.py:46](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L46)
-
-#### Signature
-
-```python
-class YelpSearchToolSchema(BaseAgentIO): ...
-```
-
-#### See also
-
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)

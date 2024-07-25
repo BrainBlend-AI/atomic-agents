@@ -8,19 +8,19 @@
 
 - `result` - ################
   TEST WEB PAGE #
-  ################: client.chat.completions.create(model='gpt-3.5-turbo', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://brainblendai.com'}])
+  ################: client.chat.completions.create(model='gpt-4o-mini', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://brainblendai.com'}])
 
 - `result` - ###############
   TEST PDF URL #
-  ###############: client.chat.completions.create(model='gpt-3.5-turbo', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://pdfobject.com/pdf/sample.pdf'}])
+  ###############: client.chat.completions.create(model='gpt-4o-mini', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://pdfobject.com/pdf/sample.pdf'}])
 
 
 - [ContentScrapingTool](#contentscrapingtool)
   - [ContentScrapingTool](#contentscrapingtool-1)
     - [ContentScrapingTool().run](#contentscrapingtool()run)
   - [ContentScrapingToolConfig](#contentscrapingtoolconfig)
+  - [ContentScrapingToolInputSchema](#contentscrapingtoolinputschema)
   - [ContentScrapingToolOutputSchema](#contentscrapingtooloutputschema)
-  - [ContentScrapingToolSchema](#contentscrapingtoolschema)
 
 ## ContentScrapingTool
 
@@ -30,7 +30,7 @@ Tool for scraping web pages or PDFs and converting content to markdown.
 
 #### Attributes
 
-- `input_schema` *ContentScrapingToolSchema* - The schema for the input data.
+- `input_schema` *ContentScrapingToolInputSchema* - The schema for the input data.
 - `output_schema` *ContentScrapingToolOutputSchema* - The schema for the output data.
 
 #### Signature
@@ -44,7 +44,7 @@ class ContentScrapingTool(BaseTool):
 
 #### See also
 
-- [BaseTool](./base.md#basetool)
+- [BaseTool](./base_tool.md#basetool)
 - [ContentScrapingToolConfig](#contentscrapingtoolconfig)
 
 ### ContentScrapingTool().run
@@ -55,7 +55,7 @@ Runs the ContentScrapingTool with the given parameters.
 
 #### Arguments
 
-- `params` *ContentScrapingToolSchema* - The input parameters for the tool, adhering to the input schema.
+- `params` *ContentScrapingToolInputSchema* - The input parameters for the tool, adhering to the input schema.
 
 #### Returns
 
@@ -64,13 +64,15 @@ Runs the ContentScrapingTool with the given parameters.
 #### Signature
 
 ```python
-def run(self, params: ContentScrapingToolSchema) -> ContentScrapingToolOutputSchema: ...
+def run(
+    self, params: ContentScrapingToolInputSchema
+) -> ContentScrapingToolOutputSchema: ...
 ```
 
 #### See also
 
+- [ContentScrapingToolInputSchema](#contentscrapingtoolinputschema)
 - [ContentScrapingToolOutputSchema](#contentscrapingtooloutputschema)
-- [ContentScrapingToolSchema](#contentscrapingtoolschema)
 
 
 
@@ -86,7 +88,23 @@ class ContentScrapingToolConfig(BaseToolConfig): ...
 
 #### See also
 
-- [BaseToolConfig](./base.md#basetoolconfig)
+- [BaseToolConfig](./base_tool.md#basetoolconfig)
+
+
+
+## ContentScrapingToolInputSchema
+
+[Show source in content_scraping_tool.py:21](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L21)
+
+#### Signature
+
+```python
+class ContentScrapingToolInputSchema(BaseIOSchema): ...
+```
+
+#### See also
+
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
 
 
 
@@ -97,25 +115,9 @@ class ContentScrapingToolConfig(BaseToolConfig): ...
 #### Signature
 
 ```python
-class ContentScrapingToolOutputSchema(BaseAgentIO): ...
+class ContentScrapingToolOutputSchema(BaseIOSchema): ...
 ```
 
 #### See also
 
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
-
-
-
-## ContentScrapingToolSchema
-
-[Show source in content_scraping_tool.py:21](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L21)
-
-#### Signature
-
-```python
-class ContentScrapingToolSchema(BaseAgentIO): ...
-```
-
-#### See also
-
-- [BaseAgentIO](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)

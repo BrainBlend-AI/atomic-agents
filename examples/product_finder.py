@@ -7,16 +7,16 @@ import openai
 from rich.console import Console
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
-from atomic_agents.lib.tools.search.searx_tool import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolSchema
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig, BaseIOSchema
+from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig, SearxNGToolInputSchema
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Define system prompt information
-system_prompt = SystemPromptInfo(
+system_prompt_generator = SystemPromptGenerator(
     background=[
         'This assistant is a product finder AI designed to help users find products based on their preferences by asking clarifying questions.',
     ],
@@ -24,18 +24,16 @@ system_prompt = SystemPromptInfo(
         'Greet the user and introduce yourself as a product finder assistant.',
         'Ask the user questions to gather information about the product they are looking for.',
         'Use the chat responses to gather all necessary information from the user.',
-        'Once sufficient information is gathered, use the SearxNGSearchTool to search for products.',
+        'Once sufficient information is gathered, use the SearxNGTool to search for products.',
         'Summarize the search results and provide recommendations to the user.',
     ],
     output_instructions=[
+        'Always think in steps before answering using internal reasoning.',
         'Provide helpful and relevant information to assist the user.',
         'Be friendly and respectful in all interactions.',
         'Ensure that the chat responses are used to ask clarifying questions and gather information, and the search tool is used to find products.'
     ]
 )
-
-# Initialize the system prompt generator
-system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Initialize chat memory
 memory = AgentMemory()
@@ -49,12 +47,13 @@ console = Console()
 # Initialize the client
 client = instructor.from_openai(openai.OpenAI())
 
-# Initialize the SearxNGSearchTool
-searx_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=5))
+# Initialize the SearxNGTool
+searxng_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=5))
 
 # Define a custom response schema
-class OutputSchema(BaseModel):
-    chosen_schema: Union[BaseAgentOutputSchema, SearxNGSearchToolSchema] = Field(..., description='The response from the chat agent.')
+class OutputSchema(BaseIOSchema):
+    internal_reasoning: List[str] = Field(..., description='The internal reasoning behind the response.')
+    chosen_schema: Union[BaseAgentOutputSchema, SearxNGToolInputSchema] = Field(..., description='The response from the chat agent. Every response must use chosen_schema to indicate the type of response (A chat message, or a search request)')
 
     class Config:
         title = 'OutputSchema'
@@ -64,7 +63,7 @@ class OutputSchema(BaseModel):
 agent_config = BaseAgentConfig(
     client=client,
     system_prompt_generator=system_prompt_generator,
-    model='gpt-3.5-turbo',
+    model='gpt-4o-mini',
     memory=memory,
     output_schema=OutputSchema
 )
@@ -85,8 +84,8 @@ while True:
     
     logger.info(f'Chosen schema: {response.chosen_schema}')
     
-    if isinstance(response.chosen_schema, SearxNGSearchToolSchema):
-        search_results = searx_tool.run(response.chosen_schema)
+    if isinstance(response.chosen_schema, SearxNGToolInputSchema):
+        search_results = searxng_tool.run(response.chosen_schema)
         
         agent.memory.add_message('assistant', f'INTERNAL THOUGHT: I have found the following products: {search_results.results}\n\n I will now summarize the results for the user.')
         output = agent.run().chosen_schema.chat_message

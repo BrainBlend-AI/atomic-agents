@@ -2,27 +2,15 @@ import json
 
 from pydantic import Field, create_model
 
-from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
-from atomic_agents.lib.tools.base import BaseTool
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.lib.tools.base_tool import BaseTool
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
 
 
 class ToolInterfaceAgentConfig(BaseAgentConfig):
     tool_instance: BaseTool
     return_raw_output: bool = False
-
-
-class ToolInputModel(BaseAgentIO):
-    tool_input: str = Field(..., description="Tool input. Presented as a single question or instruction")
-
-    class Config:
-        title = "Default Tool"
-        description = "Default tool description"
-        json_schema_extra = {
-            "title": "Default Tool",
-            "description": "Default tool description",
-        }
 
 
 class ToolInterfaceAgent(BaseAgent):
@@ -60,7 +48,7 @@ class ToolInterfaceAgent(BaseAgent):
                     alias=f"tool_input_{self.tool_instance.tool_name}",
                 ),
             ),
-            __base__=ToolInputModel,
+            __base__=BaseIOSchema,
         )
 
         # Manually set the configuration attributes
@@ -86,19 +74,17 @@ class ToolInterfaceAgent(BaseAgent):
             output_instructions.append("Return the raw output of the tool.")
 
         self.system_prompt_generator = SystemPromptGenerator(
-            system_prompt_info=SystemPromptInfo(
-                background=[
-                    f"This AI agent is designed to interact with the {self.tool_instance.tool_name} tool.",
-                    f"Tool description: {self.tool_instance.tool_description}",
-                ],
-                steps=[
-                    "Get the user input.",
-                    "Convert the input to the proper parameters to call the tool.",
-                    "Call the tool with the parameters.",
-                    "Respond to the user",
-                ],
-                output_instructions=output_instructions,
-            )
+            background=[
+                f"This AI agent is designed to interact with the {self.tool_instance.tool_name} tool.",
+                f"Tool description: {self.tool_instance.tool_description}",
+            ],
+            steps=[
+                "Get the user input.",
+                "Convert the input to the proper parameters to call the tool.",
+                "Call the tool with the parameters.",
+                "Respond to the user",
+            ],
+            output_instructions=output_instructions,
         )
 
     def get_response(self, response_model=None):

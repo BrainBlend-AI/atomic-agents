@@ -7,16 +7,16 @@ import openai
 from rich.console import Console
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
-from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolSchema
+from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolInputSchema
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Define system prompt information including background, steps, and output instructions
-system_prompt = SystemPromptInfo(
+system_prompt_generator = SystemPromptGenerator(
     background=[
         'This assistant is a restaurant finder AI designed to help users find the best restaurants based on their preferences by asking clarifying questions.',
     ],
@@ -33,9 +33,6 @@ system_prompt = SystemPromptInfo(
         'Ensure that the chat responses are used to ask clarifying questions and gather information, and the Yelp schema is used to perform the actual search.'
     ]
 )
-
-# Initialize the system prompt generator with the defined system prompt and dynamic info providers
-system_prompt_generator = SystemPromptGenerator(system_prompt)
 
 # Initialize chat memory to store conversation history
 memory = AgentMemory()
@@ -57,7 +54,7 @@ yelp_tool = YelpSearchTool(YelpSearchToolConfig(api_key=os.getenv('YELP_API_KEY'
 
 # Define a custom response schema that can handle both chat responses and Yelp search tool responses
 class OutputSchema(BaseModel):
-    chosen_schema: Union[BaseAgentOutputSchema, YelpSearchToolSchema] = Field(..., description='The response from the chat agent.')
+    chosen_schema: Union[BaseAgentOutputSchema, YelpSearchToolInputSchema] = Field(..., description='The response from the chat agent.')
 
     class Config:
         title = 'OutputSchema'
@@ -71,7 +68,7 @@ class OutputSchema(BaseModel):
 agent_config = BaseAgentConfig(
     client=client,
     system_prompt_generator=system_prompt_generator,
-    model='gpt-3.5-turbo',
+    model='gpt-4o-mini',
     memory=memory,
     output_schema=OutputSchema
 )
@@ -94,7 +91,7 @@ while True:
     logger.info(f'Chosen schema: {response.chosen_schema}')
     
     # Check the type of the response schema
-    if isinstance(response.chosen_schema, YelpSearchToolSchema):
+    if isinstance(response.chosen_schema, YelpSearchToolInputSchema):
         output = yelp_tool.run(response.chosen_schema)
         
         # In this example, we will add a simple "internal thought" to the chat memory followed by an empty agent.run() call. 

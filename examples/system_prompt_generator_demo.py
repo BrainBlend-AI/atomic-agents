@@ -1,6 +1,6 @@
 from datetime import datetime
 from unittest.mock import Mock
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator, SystemPromptInfo
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
 
 
 class CurrentDateProvider(SystemPromptContextProviderBase):
@@ -19,7 +19,7 @@ class LoremIpsumProvider(SystemPromptContextProviderBase):
             "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
         )
 
-system_prompt = SystemPromptInfo(
+system_prompt_generator = SystemPromptGenerator(
     background=[
         'This assistant is a general-purpose AI designed to be helpful and friendly.',
     ],
@@ -38,5 +38,4 @@ system_prompt = SystemPromptInfo(
     }
 )
 
-system_prompt_generator = SystemPromptGenerator(system_prompt)
 print(system_prompt_generator.generate_prompt())

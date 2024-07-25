@@ -9,11 +9,10 @@
     - [SystemPromptContextProviderBase().get_info](#systempromptcontextproviderbase()get_info)
   - [SystemPromptGenerator](#systempromptgenerator-1)
     - [SystemPromptGenerator().generate_prompt](#systempromptgenerator()generate_prompt)
-  - [SystemPromptInfo](#systempromptinfo)
 
 ## SystemPromptContextProviderBase
 
-[Show source in system_prompt_generator.py:6](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L6)
+[Show source in system_prompt_generator.py:5](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L5)
 
 #### Signature
 
@@ -24,7 +23,7 @@ class SystemPromptContextProviderBase(ABC):
 
 ### SystemPromptContextProviderBase().get_info
 
-[Show source in system_prompt_generator.py:10](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L10)
+[Show source in system_prompt_generator.py:9](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L9)
 
 #### Signature
 
@@ -37,37 +36,31 @@ def get_info(self) -> str: ...
 
 ## SystemPromptGenerator
 
-[Show source in system_prompt_generator.py:26](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L26)
+[Show source in system_prompt_generator.py:17](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L17)
 
 #### Signature
 
 ```python
 class SystemPromptGenerator:
-    def __init__(self, system_prompt_info: Optional[SystemPromptInfo] = None): ...
+    def __init__(
+        self,
+        background: Optional[List[str]] = None,
+        steps: Optional[List[str]] = None,
+        output_instructions: Optional[List[str]] = None,
+        context_providers: Optional[Dict[str, SystemPromptContextProviderBase]] = None,
+    ): ...
 ```
 
 #### See also
 
-- [SystemPromptInfo](#systempromptinfo)
+- [SystemPromptContextProviderBase](#systempromptcontextproviderbase)
 
 ### SystemPromptGenerator().generate_prompt
 
-[Show source in system_prompt_generator.py:39](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L39)
+[Show source in system_prompt_generator.py:37](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L37)
 
 #### Signature
 
 ```python
 def generate_prompt(self) -> str: ...
-```
-
-
-
-## SystemPromptInfo
-
-[Show source in system_prompt_generator.py:19](../../../../../atomic_agents/lib/components/system_prompt_generator.py#L19)
-
-#### Signature
-
-```python
-class SystemPromptInfo: ...
 ```

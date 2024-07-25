@@ -5,30 +5,13 @@
 > Auto-generated documentation for [atomic_agents.agents.tool_interface_agent](../../../../atomic_agents/agents/tool_interface_agent.py) module.
 
 - [ToolInterfaceAgent](#toolinterfaceagent)
-  - [ToolInputModel](#toolinputmodel)
   - [ToolInterfaceAgent](#toolinterfaceagent-1)
-    - [ToolInterfaceAgent()._get_and_handle_response](#toolinterfaceagent()_get_and_handle_response)
+    - [ToolInterfaceAgent().get_response](#toolinterfaceagent()get_response)
   - [ToolInterfaceAgentConfig](#toolinterfaceagentconfig)
-
-## ToolInputModel
-
-[Show source in tool_interface_agent.py:16](../../../../atomic_agents/agents/tool_interface_agent.py#L16)
-
-#### Signature
-
-```python
-class ToolInputModel(BaseAgentIO): ...
-```
-
-#### See also
-
-- [BaseAgentIO](./base_agent.md#baseagentio)
-
-
 
 ## ToolInterfaceAgent
 
-[Show source in tool_interface_agent.py:28](../../../../atomic_agents/agents/tool_interface_agent.py#L28)
+[Show source in tool_interface_agent.py:16](../../../../atomic_agents/agents/tool_interface_agent.py#L16)
 
 A specialized chat agent designed to interact with a specific tool.
 
@@ -52,9 +35,9 @@ class ToolInterfaceAgent(BaseAgent):
 - [BaseAgent](./base_agent.md#baseagent)
 - [ToolInterfaceAgentConfig](#toolinterfaceagentconfig)
 
-### ToolInterfaceAgent()._get_and_handle_response
+### ToolInterfaceAgent().get_response
 
-[Show source in tool_interface_agent.py:104](../../../../atomic_agents/agents/tool_interface_agent.py#L104)
+[Show source in tool_interface_agent.py:90](../../../../atomic_agents/agents/tool_interface_agent.py#L90)
 
 Handles obtaining and processing the response from the tool.
 
@@ -69,7 +52,7 @@ the raw tool output; otherwise, it processes the output and returns the response
 #### Signature
 
 ```python
-def _get_and_handle_response(self): ...
+def get_response(self, response_model=None): ...
 ```
 
 

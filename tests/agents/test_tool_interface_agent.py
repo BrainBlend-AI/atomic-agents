@@ -3,20 +3,19 @@ from unittest.mock import Mock, patch
 from pydantic import Field
 import instructor
 
-from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig, ToolInputModel
-from atomic_agents.lib.tools.base import BaseTool
-from atomic_agents.agents.base_agent import BaseAgentIO, BaseAgentOutputSchema
-from atomic_agents.lib.components.agent_memory import Message
+from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
+from atomic_agents.lib.tools.base_tool import BaseTool
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgentOutputSchema
 
 class MockTool(BaseTool):
-    class InputSchema(BaseAgentIO):
+    class InputSchema(BaseIOSchema):
         query: str = Field(..., description="The query to process")
 
         class Config:
             title = "MockTool"
             description = "A mock tool for testing"
 
-    class OutputSchema(BaseAgentIO):
+    class OutputSchema(BaseIOSchema):
         result: str = Field(..., description="The result of the tool operation")
 
     input_schema = InputSchema
@@ -39,7 +38,7 @@ def mock_instructor():
 def tool_interface_agent(mock_tool, mock_instructor):
     config = ToolInterfaceAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         tool_instance=mock_tool,
         return_raw_output=False
     )
@@ -49,7 +48,7 @@ def test_tool_interface_agent_initialization(tool_interface_agent, mock_tool):
     assert tool_interface_agent.tool_instance == mock_tool
     assert tool_interface_agent.return_raw_output == False
     assert tool_interface_agent.input_schema.__name__ == "MockTool"
-    assert issubclass(tool_interface_agent.input_schema, ToolInputModel)
+    assert issubclass(tool_interface_agent.input_schema, BaseIOSchema)
     assert tool_interface_agent.output_schema == BaseAgentOutputSchema
 
 def test_tool_interface_agent_input_schema(tool_interface_agent):
@@ -80,7 +79,7 @@ def test_tool_interface_agent_get_response_without_raw_output(mock_format_tool_m
 def test_tool_interface_agent_get_response_with_raw_output(mock_format_tool_message, mock_get_response, mock_tool, mock_instructor):
     config = ToolInterfaceAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         tool_instance=mock_tool,
         return_raw_output=True
     )
@@ -123,10 +122,5 @@ def test_tool_interface_agent_memory_updates(mock_format_tool_message, mock_get_
     # Check if the mocked result is in the memory
     assert any("Mocked result" in msg.content for msg in history if isinstance(msg.content, str))
     
-    # Print the memory contents for debugging
-    print("Memory contents:")
-    for msg in history:
-        print(f"Role: {msg.role}, Content: {msg.content}")
-
     # Assert that at least 3 messages were added (TOOL CALL, TOOL RESPONSE, and possibly the final response)
     assert len(history) >= 3

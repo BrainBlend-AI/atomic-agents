@@ -6,19 +6,19 @@ import requests
 from pydantic import Field
 from rich.console import Console
 
-from atomic_agents.agents.base_agent import BaseAgentIO
-from atomic_agents.lib.tools.base import BaseTool, BaseToolConfig
+from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 
 ################
 # INPUT SCHEMA #
 ################
 
 
-class SerperSearchToolSchema(BaseAgentIO):
+class SerperToolSchema(BaseIOSchema):
     queries: List[str] = Field(..., description="List of search queries.")
 
     class Config:
-        title = "SerperSearchTool"
+        title = "SerperTool"
         description = (
             "Tool for searching for information, news, references, and other content using the Serper API. "
             "Returns a list of search results with a short description or content snippet and URLs for further exploration."
@@ -31,15 +31,15 @@ class SerperSearchToolSchema(BaseAgentIO):
 ####################
 
 
-class SerperSearchResultSchema(BaseAgentIO):
+class SerperResultSchema(BaseIOSchema):
     url: str
     title: str
     content: Optional[str] = None
     position: Optional[int] = None
 
 
-class SerperSearchToolOutputSchema(BaseAgentIO):
-    results: List[SerperSearchResultSchema]
+class SerperToolOutputSchema(BaseIOSchema):
+    results: List[SerperResultSchema]
 
 
 ##############
@@ -47,47 +47,47 @@ class SerperSearchToolOutputSchema(BaseAgentIO):
 ##############
 
 
-class SerperSearchToolConfig(BaseToolConfig):
+class SerperToolConfig(BaseToolConfig):
     api_key: str = ""
     max_results: int = 10
 
 
-class SerperSearchTool(BaseTool):
+class SerperTool(BaseTool):
     """
     Tool for performing searches using the Serper API based on the provided queries.
 
     Attributes:
-        input_schema (SerperSearchToolSchema): The schema for the input data.
-        output_schema (SerperSearchToolOutputSchema): The schema for the output data.
+        input_schema (SerperToolSchema): The schema for the input data.
+        output_schema (SerperToolOutputSchema): The schema for the output data.
         api_key (str): The API key for the Serper API.
         max_results (int): The maximum number of search results to return.
     """
 
-    input_schema = SerperSearchToolSchema
-    output_schema = SerperSearchToolOutputSchema
+    input_schema = SerperToolSchema
+    output_schema = SerperToolOutputSchema
 
-    def __init__(self, config: SerperSearchToolConfig = SerperSearchToolConfig()):
+    def __init__(self, config: SerperToolConfig = SerperToolConfig()):
         """
-        Initializes the SerperSearchTool.
+        Initializes the SerperTool.
 
         Args:
-            config (SerperSearchToolConfig):
+            config (SerperToolConfig):
                 Configuration for the tool, including API key, max results, and optional title and description overrides.
         """
         super().__init__(config)
         self.api_key = config.api_key
         self.max_results = config.max_results
 
-    def run(self, params: SerperSearchToolSchema, max_results: Optional[int] = None) -> SerperSearchToolOutputSchema:
+    def run(self, params: SerperToolSchema, max_results: Optional[int] = None) -> SerperToolOutputSchema:
         """
-        Runs the SerperSearchTool with the given parameters.
+        Runs the SerperTool with the given parameters.
 
         Args:
-            params (SerperSearchToolSchema): The input parameters for the tool, adhering to the input schema.
+            params (SerperToolSchema): The input parameters for the tool, adhering to the input schema.
             max_results (Optional[int]): The maximum number of search results to return.
 
         Returns:
-            SerperSearchToolOutputSchema: The output of the tool, adhering to the output schema.
+            SerperToolOutputSchema: The output of the tool, adhering to the output schema.
 
         Raises:
             ValueError: If the API key is not provided.
@@ -129,7 +129,7 @@ class SerperSearchTool(BaseTool):
 
         # Convert to output schema format
         output_results = [
-            SerperSearchResultSchema(
+            SerperResultSchema(
                 url=result["link"],
                 title=result["title"],
                 content=result.get("snippet"),
@@ -138,7 +138,7 @@ class SerperSearchTool(BaseTool):
             for result in filtered_results
         ]
 
-        return SerperSearchToolOutputSchema(results=output_results)
+        return SerperToolOutputSchema(results=output_results)
 
 
 #################
@@ -146,9 +146,9 @@ class SerperSearchTool(BaseTool):
 #################
 if __name__ == "__main__":
     rich_console = Console()
-    search_tool_instance = SerperSearchTool(config=SerperSearchToolConfig(api_key=os.getenv("SERPER_API_KEY"), max_results=5))
+    search_tool_instance = SerperTool(config=SerperToolConfig(api_key=os.getenv("SERPER_API_KEY"), max_results=5))
 
-    search_input = SerperSearchTool.input_schema(queries=["Python programming", "Machine learning", "Quantum computing"])
+    search_input = SerperTool.input_schema(queries=["Python programming", "Machine learning", "Quantum computing"])
 
     output = search_tool_instance.run(search_input)
 
