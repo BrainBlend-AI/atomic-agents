@@ -47,7 +47,7 @@ agent = BaseAgent(
             api_key=api_key or os.getenv('OPENAI_API_KEY')
         )), 
         system_prompt_generator=system_prompt_generator,
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         memory=memory,
     )
 )

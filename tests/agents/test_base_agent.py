@@ -38,7 +38,7 @@ def mock_system_prompt_generator():
 def agent_config(mock_instructor, mock_memory, mock_system_prompt_generator):
     return BaseAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator
     )
@@ -49,7 +49,7 @@ def agent(agent_config):
 
 def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_generator):
     assert agent.client == mock_instructor
-    assert agent.model == "gpt-3.5-turbo"
+    assert agent.model == "gpt-4o-mini"
     assert agent.memory == mock_memory
     assert agent.system_prompt_generator == mock_system_prompt_generator
     assert agent.input_schema == BaseAgentInputSchema
@@ -73,7 +73,7 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
     assert response == mock_response
     
     mock_instructor.chat.completions.create.assert_called_once_with(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {'role': 'system', 'content': 'System prompt'},
             {'role': 'user', 'content': 'Hello'}
@@ -138,7 +138,7 @@ def test_custom_input_output_schemas(mock_instructor):
 
     custom_config = BaseAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         input_schema=CustomInputSchema,
         output_schema=CustomOutputSchema
     )

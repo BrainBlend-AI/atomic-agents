@@ -102,7 +102,7 @@ if __name__ == "__main__":
     # TEST WEB PAGE #
     #################
     result = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         response_model=ContentScrapingTool.input_schema,
         messages=[
             {
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     # TEST PDF URL #
     ################
     result = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         response_model=ContentScrapingTool.input_schema,
         messages=[
             {

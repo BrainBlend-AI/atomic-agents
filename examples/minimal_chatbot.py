@@ -10,7 +10,7 @@ from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 agent = BaseAgent(
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
-        model='gpt-3.5-turbo'
+        model='gpt-4o-mini'
     )
 )
 

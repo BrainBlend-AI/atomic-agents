@@ -38,7 +38,7 @@ def mock_instructor():
 def tool_interface_agent(mock_tool, mock_instructor):
     config = ToolInterfaceAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         tool_instance=mock_tool,
         return_raw_output=False
     )
@@ -79,7 +79,7 @@ def test_tool_interface_agent_get_response_without_raw_output(mock_format_tool_m
 def test_tool_interface_agent_get_response_with_raw_output(mock_format_tool_message, mock_get_response, mock_tool, mock_instructor):
     config = ToolInterfaceAgentConfig(
         client=mock_instructor,
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         tool_instance=mock_tool,
         return_raw_output=True
     )

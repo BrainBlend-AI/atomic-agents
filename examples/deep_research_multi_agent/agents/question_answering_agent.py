@@ -14,7 +14,7 @@ class AnswerAgentOutputSchema(BaseIOSchema):
 answer_agent = BaseAgent(
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()), 
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         system_prompt_generator=SystemPromptGenerator(
             background=[
                 "You are an intelligent answering expert.",

@@ -21,7 +21,7 @@ def initialize_agent(client, searxng_tool):
     """
     agent_config = ToolInterfaceAgentConfig(
         client=client,
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         tool_instance=searxng_tool,
         return_raw_output=False
     )

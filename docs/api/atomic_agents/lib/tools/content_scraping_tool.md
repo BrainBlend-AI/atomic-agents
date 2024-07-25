@@ -8,11 +8,11 @@
 
 - `result` - ################
   TEST WEB PAGE #
-  ################: client.chat.completions.create(model='gpt-3.5-turbo', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://brainblendai.com'}])
+  ################: client.chat.completions.create(model='gpt-4o-mini', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://brainblendai.com'}])
 
 - `result` - ###############
   TEST PDF URL #
-  ###############: client.chat.completions.create(model='gpt-3.5-turbo', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://pdfobject.com/pdf/sample.pdf'}])
+  ###############: client.chat.completions.create(model='gpt-4o-mini', response_model=ContentScrapingTool.input_schema, messages=[{'role': 'user', 'content': 'Scrape the content of https://pdfobject.com/pdf/sample.pdf'}])
 
 
 - [ContentScrapingTool](#contentscrapingtool)

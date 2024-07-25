@@ -14,14 +14,14 @@ client = instructor.from_openai(openai.OpenAI())
 searxng_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10))
 calc_tool = CalculatorTool(CalculatorToolConfig())
 
-search_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-3.5-turbo', tool_instance=searxng_tool, return_raw_output=False)
-calculator_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-3.5-turbo', tool_instance=calc_tool, return_raw_output=False)
+search_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-4o-mini', tool_instance=searxng_tool, return_raw_output=False)
+calculator_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-4o-mini', tool_instance=calc_tool, return_raw_output=False)
 searx_agent = ToolInterfaceAgent(config=search_agent_config)
 calc_agent = ToolInterfaceAgent(config=calculator_agent_config)
 
 UnionResponse = create_model('UnionResponse', __base__=BaseIOSchema, response=(Union[searx_agent.input_schema, calc_agent.input_schema], ...))
 
-orchestration_agent = BaseAgent(config=BaseAgentConfig(client=client, model='gpt-3.5-turbo', output_schema=UnionResponse))
+orchestration_agent = BaseAgent(config=BaseAgentConfig(client=client, model='gpt-4o-mini', output_schema=UnionResponse))
 
 while True:
     user_input = input('You: ')

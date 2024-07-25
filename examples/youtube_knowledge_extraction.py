@@ -61,7 +61,7 @@ class ResponseModel(BaseModel):
 agent = BaseAgent(
     config = BaseAgentConfig(
         client=client,
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         system_prompt_generator=system_prompt_generator,
         output_schema=ResponseModel
     )

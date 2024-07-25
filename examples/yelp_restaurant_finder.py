@@ -68,7 +68,7 @@ class OutputSchema(BaseModel):
 agent_config = BaseAgentConfig(
     client=client,
     system_prompt_generator=system_prompt_generator,
-    model='gpt-3.5-turbo',
+    model='gpt-4o-mini',
     memory=memory,
     output_schema=OutputSchema
 )
