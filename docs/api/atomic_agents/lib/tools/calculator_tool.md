@@ -8,12 +8,12 @@
   - [CalculatorTool](#calculatortool-1)
     - [CalculatorTool().run](#calculatortool()run)
   - [CalculatorToolConfig](#calculatortoolconfig)
+  - [CalculatorToolInputSchema](#calculatortoolinputschema)
   - [CalculatorToolOutputSchema](#calculatortooloutputschema)
-  - [CalculatorToolInputSchema](#CalculatorToolInputSchema)
 
 ## CalculatorTool
 
-[Show source in calculator_tool.py:43](../../../../../atomic_agents/lib/tools/calculator_tool.py#L43)
+[Show source in calculator_tool.py:40](../../../../../atomic_agents/lib/tools/calculator_tool.py#L40)
 
 Tool for performing calculations based on the provided mathematical expression.
 
@@ -31,12 +31,12 @@ class CalculatorTool(BaseTool):
 
 #### See also
 
-- [BaseTool](./base.md#basetool)
+- [BaseTool](./base_tool.md#basetool)
 - [CalculatorToolConfig](#calculatortoolconfig)
 
 ### CalculatorTool().run
 
-[Show source in calculator_tool.py:64](../../../../../atomic_agents/lib/tools/calculator_tool.py#L64)
+[Show source in calculator_tool.py:61](../../../../../atomic_agents/lib/tools/calculator_tool.py#L61)
 
 Runs the CalculatorTool with the given parameters.
 
@@ -56,14 +56,14 @@ def run(self, params: CalculatorToolInputSchema) -> CalculatorToolOutputSchema: 
 
 #### See also
 
+- [CalculatorToolInputSchema](#calculatortoolinputschema)
 - [CalculatorToolOutputSchema](#calculatortooloutputschema)
-- [CalculatorToolInputSchema](#CalculatorToolInputSchema)
 
 
 
 ## CalculatorToolConfig
 
-[Show source in calculator_tool.py:39](../../../../../atomic_agents/lib/tools/calculator_tool.py#L39)
+[Show source in calculator_tool.py:36](../../../../../atomic_agents/lib/tools/calculator_tool.py#L36)
 
 #### Signature
 
@@ -73,29 +73,13 @@ class CalculatorToolConfig(BaseToolConfig): ...
 
 #### See also
 
-- [BaseToolConfig](./base.md#basetoolconfig)
-
-
-
-## CalculatorToolOutputSchema
-
-[Show source in calculator_tool.py:32](../../../../../atomic_agents/lib/tools/calculator_tool.py#L32)
-
-#### Signature
-
-```python
-class CalculatorToolOutputSchema(BaseIOSchema): ...
-```
-
-#### See also
-
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseToolConfig](./base_tool.md#basetoolconfig)
 
 
 
 ## CalculatorToolInputSchema
 
-[Show source in calculator_tool.py:13](../../../../../atomic_agents/lib/tools/calculator_tool.py#L13)
+[Show source in calculator_tool.py:12](../../../../../atomic_agents/lib/tools/calculator_tool.py#L12)
 
 #### Signature
 
@@ -105,4 +89,20 @@ class CalculatorToolInputSchema(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
+
+
+
+## CalculatorToolOutputSchema
+
+[Show source in calculator_tool.py:29](../../../../../atomic_agents/lib/tools/calculator_tool.py#L29)
+
+#### Signature
+
+```python
+class CalculatorToolOutputSchema(BaseIOSchema): ...
+```
+
+#### See also
+
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)

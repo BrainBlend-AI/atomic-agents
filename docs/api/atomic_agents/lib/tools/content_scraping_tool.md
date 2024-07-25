@@ -19,8 +19,8 @@
   - [ContentScrapingTool](#contentscrapingtool-1)
     - [ContentScrapingTool().run](#contentscrapingtool()run)
   - [ContentScrapingToolConfig](#contentscrapingtoolconfig)
+  - [ContentScrapingToolInputSchema](#contentscrapingtoolinputschema)
   - [ContentScrapingToolOutputSchema](#contentscrapingtooloutputschema)
-  - [ContentScrapingToolInputSchema](#ContentScrapingToolInputSchema)
 
 ## ContentScrapingTool
 
@@ -44,7 +44,7 @@ class ContentScrapingTool(BaseTool):
 
 #### See also
 
-- [BaseTool](./base.md#basetool)
+- [BaseTool](./base_tool.md#basetool)
 - [ContentScrapingToolConfig](#contentscrapingtoolconfig)
 
 ### ContentScrapingTool().run
@@ -64,13 +64,15 @@ Runs the ContentScrapingTool with the given parameters.
 #### Signature
 
 ```python
-def run(self, params: ContentScrapingToolInputSchema) -> ContentScrapingToolOutputSchema: ...
+def run(
+    self, params: ContentScrapingToolInputSchema
+) -> ContentScrapingToolOutputSchema: ...
 ```
 
 #### See also
 
+- [ContentScrapingToolInputSchema](#contentscrapingtoolinputschema)
 - [ContentScrapingToolOutputSchema](#contentscrapingtooloutputschema)
-- [ContentScrapingToolInputSchema](#ContentScrapingToolInputSchema)
 
 
 
@@ -86,23 +88,7 @@ class ContentScrapingToolConfig(BaseToolConfig): ...
 
 #### See also
 
-- [BaseToolConfig](./base.md#basetoolconfig)
-
-
-
-## ContentScrapingToolOutputSchema
-
-[Show source in content_scraping_tool.py:38](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L38)
-
-#### Signature
-
-```python
-class ContentScrapingToolOutputSchema(BaseIOSchema): ...
-```
-
-#### See also
-
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseToolConfig](./base_tool.md#basetoolconfig)
 
 
 
@@ -118,4 +104,20 @@ class ContentScrapingToolInputSchema(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
+
+
+
+## ContentScrapingToolOutputSchema
+
+[Show source in content_scraping_tool.py:38](../../../../../atomic_agents/lib/tools/content_scraping_tool.py#L38)
+
+#### Signature
+
+```python
+class ContentScrapingToolOutputSchema(BaseIOSchema): ...
+```
+
+#### See also
+
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)

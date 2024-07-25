@@ -1,17 +1,17 @@
-# Yt Transcript Scraper
+# Yt Transcript Scraper Tool
 
-[Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Yt Transcript Scraper
+[Atomic_agents Index](../../../README.md#atomic_agents-index) / [Atomic Agents](../../index.md#atomic-agents) / [Lib](../index.md#lib) / [Tools](./index.md#tools) / Yt Transcript Scraper Tool
 
-> Auto-generated documentation for [atomic_agents.lib.tools.yt_transcript_scraper](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py) module.
+> Auto-generated documentation for [atomic_agents.lib.tools.yt_transcript_scraper_tool](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py) module.
 
-- [Yt Transcript Scraper](#yt-transcript-scraper)
+- [Yt Transcript Scraper Tool](#yt-transcript-scraper-tool)
   - [YouTubeTranscriptTool](#youtubetranscripttool)
     - [YouTubeTranscriptTool.extract_video_id](#youtubetranscripttoolextract_video_id)
     - [YouTubeTranscriptTool().fetch_video_metadata](#youtubetranscripttool()fetch_video_metadata)
     - [YouTubeTranscriptTool().run](#youtubetranscripttool()run)
   - [YouTubeTranscriptToolConfig](#youtubetranscripttoolconfig)
+  - [YouTubeTranscriptToolInputSchema](#youtubetranscripttoolinputschema)
   - [YouTubeTranscriptToolOutputSchema](#youtubetranscripttooloutputschema)
-  - [YouTubeTranscriptToolInputSchema](#YouTubeTranscriptToolInputSchema)
 
 ## YouTubeTranscriptTool
 
@@ -33,7 +33,7 @@ class YouTubeTranscriptTool(BaseTool):
 
 #### See also
 
-- [BaseTool](./base.md#basetool)
+- [BaseTool](./base_tool.md#basetool)
 - [YouTubeTranscriptToolConfig](#youtubetranscripttoolconfig)
 
 ### YouTubeTranscriptTool.extract_video_id
@@ -105,8 +105,8 @@ def run(
 
 #### See also
 
+- [YouTubeTranscriptToolInputSchema](#youtubetranscripttoolinputschema)
 - [YouTubeTranscriptToolOutputSchema](#youtubetranscripttooloutputschema)
-- [YouTubeTranscriptToolInputSchema](#YouTubeTranscriptToolInputSchema)
 
 
 
@@ -122,23 +122,7 @@ class YouTubeTranscriptToolConfig(BaseToolConfig): ...
 
 #### See also
 
-- [BaseToolConfig](./base.md#basetoolconfig)
-
-
-
-## YouTubeTranscriptToolOutputSchema
-
-[Show source in yt_transcript_scraper_tool.py:35](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L35)
-
-#### Signature
-
-```python
-class YouTubeTranscriptToolOutputSchema(BaseIOSchema): ...
-```
-
-#### See also
-
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseToolConfig](./base_tool.md#basetoolconfig)
 
 
 
@@ -154,4 +138,20 @@ class YouTubeTranscriptToolInputSchema(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
+
+
+
+## YouTubeTranscriptToolOutputSchema
+
+[Show source in yt_transcript_scraper_tool.py:35](../../../../../atomic_agents/lib/tools/yt_transcript_scraper_tool.py#L35)
+
+#### Signature
+
+```python
+class YouTubeTranscriptToolOutputSchema(BaseIOSchema): ...
+```
+
+#### See also
+
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)

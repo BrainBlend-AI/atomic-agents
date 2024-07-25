@@ -20,7 +20,7 @@ class WebDocument(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
 
 
 

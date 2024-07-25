@@ -11,8 +11,8 @@
   - [YelpSearchTool](#yelpsearchtool)
     - [YelpSearchTool().run](#yelpsearchtool()run)
   - [YelpSearchToolConfig](#yelpsearchtoolconfig)
+  - [YelpSearchToolInputSchema](#yelpsearchtoolinputschema)
   - [YelpSearchToolOutputSchema](#yelpsearchtooloutputschema)
-  - [YelpSearchToolInputSchema](#YelpSearchToolInputSchema)
 
 ## PriceRange
 
@@ -50,7 +50,7 @@ class YelpSearchResultSchema(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
 
 
 
@@ -76,7 +76,7 @@ class YelpSearchTool(BaseTool):
 
 #### See also
 
-- [BaseTool](./base.md#basetool)
+- [BaseTool](./base_tool.md#basetool)
 - [YelpSearchToolConfig](#yelpsearchtoolconfig)
 
 ### YelpSearchTool().run
@@ -107,8 +107,8 @@ def run(self, params: YelpSearchToolInputSchema) -> YelpSearchToolOutputSchema: 
 
 #### See also
 
+- [YelpSearchToolInputSchema](#yelpsearchtoolinputschema)
 - [YelpSearchToolOutputSchema](#yelpsearchtooloutputschema)
-- [YelpSearchToolInputSchema](#YelpSearchToolInputSchema)
 
 
 
@@ -124,23 +124,7 @@ class YelpSearchToolConfig(BaseToolConfig): ...
 
 #### See also
 
-- [BaseToolConfig](./base.md#basetoolconfig)
-
-
-
-## YelpSearchToolOutputSchema
-
-[Show source in yelp_restaurant_finder_tool.py:88](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L88)
-
-#### Signature
-
-```python
-class YelpSearchToolOutputSchema(BaseIOSchema): ...
-```
-
-#### See also
-
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseToolConfig](./base_tool.md#basetoolconfig)
 
 
 
@@ -156,4 +140,20 @@ class YelpSearchToolInputSchema(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](../../agents/base_agent.md#baseagentio)
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)
+
+
+
+## YelpSearchToolOutputSchema
+
+[Show source in yelp_restaurant_finder_tool.py:88](../../../../../atomic_agents/lib/tools/yelp_restaurant_finder_tool.py#L88)
+
+#### Signature
+
+```python
+class YelpSearchToolOutputSchema(BaseIOSchema): ...
+```
+
+#### See also
+
+- [BaseIOSchema](../../agents/base_agent.md#baseioschema)

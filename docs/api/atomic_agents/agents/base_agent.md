@@ -13,9 +13,9 @@
     - [BaseAgent().run](#baseagent()run)
     - [BaseAgent().unregister_context_provider](#baseagent()unregister_context_provider)
   - [BaseAgentConfig](#baseagentconfig)
-  - [BaseIOSchema](#baseagentio)
   - [BaseAgentInputSchema](#baseagentinputschema)
   - [BaseAgentOutputSchema](#baseagentoutputschema)
+  - [BaseIOSchema](#baseioschema)
 
 ## BaseAgent
 
@@ -155,7 +155,7 @@ def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSch
 
 #### See also
 
-- [BaseIOSchema](#baseagentio)
+- [BaseIOSchema](#baseioschema)
 
 ### BaseAgent().unregister_context_provider
 
@@ -187,20 +187,6 @@ class BaseAgentConfig(BaseModel): ...
 
 
 
-## BaseIOSchema
-
-[Show source in base_agent.py:11](../../../../atomic_agents/agents/base_agent.py#L11)
-
-Base class for input and output schemas for chat agents.
-
-#### Signature
-
-```python
-class BaseIOSchema(BaseModel): ...
-```
-
-
-
 ## BaseAgentInputSchema
 
 [Show source in base_agent.py:24](../../../../atomic_agents/agents/base_agent.py#L24)
@@ -213,7 +199,7 @@ class BaseAgentInputSchema(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](#baseagentio)
+- [BaseIOSchema](#baseioschema)
 
 
 
@@ -229,4 +215,18 @@ class BaseAgentOutputSchema(BaseIOSchema): ...
 
 #### See also
 
-- [BaseIOSchema](#baseagentio)
+- [BaseIOSchema](#baseioschema)
+
+
+
+## BaseIOSchema
+
+[Show source in base_agent.py:11](../../../../atomic_agents/agents/base_agent.py#L11)
+
+Base class for input and output schemas for chat agents.
+
+#### Signature
+
+```python
+class BaseIOSchema(BaseModel): ...
+```
