@@ -61,8 +61,3 @@ def transform(input: str, history: list[mel.ChatMessage]):
 @me.page(path="/", title="ToolInterfaceAgent Chat")
 def page():
     mel.chat(transform, title="ToolInterfaceAgent with SearxNGTool", bot_user="Agent")
-
-
-# Main function to run the Mesop app
-if __name__ == "__main__":
-    me.run(page)
