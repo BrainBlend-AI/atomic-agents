@@ -32,8 +32,8 @@ class BaseTool:
         Args:
             config (BaseToolConfig): Configuration for the tool, including optional title and description overrides.
         """
-        self.tool_name = config.title or self.input_schema.Config.title
-        self.tool_description = config.description or self.input_schema.Config.description
+        self.tool_name = config.title or self.input_schema.model_json_schema()['title']
+        self.tool_description = config.description or self.input_schema.model_json_schema()['description']
 
     def run(self, params: Type[BaseIOSchema]) -> BaseIOSchema:
         """

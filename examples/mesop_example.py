@@ -22,28 +22,31 @@ from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGTool
 console = Console()
 client = instructor.from_openai(openai.OpenAI())
 
+
 def initialize_searxng_tool():
-    base_url = os.getenv('SEARXNG_BASE_URL')
+    base_url = os.getenv("SEARXNG_BASE_URL")
     config = SearxNGToolConfig(base_url=base_url, max_results=10)
     return SearxNGTool(config)
 
+
 searxng_tool = initialize_searxng_tool()
+
 
 def initialize_agent(client, searxng_tool):
     agent_config = ToolInterfaceAgentConfig(
-        client=client,
-        model='gpt-4o-mini',
-        tool_instance=searxng_tool,
-        return_raw_output=False
+        client=client, model="gpt-4o-mini", tool_instance=searxng_tool, return_raw_output=False
     )
     return ToolInterfaceAgent(config=agent_config)
 
+
 agent = initialize_agent(client, searxng_tool)
+
 
 # Mesop state class
 @me.stateclass
 class State:
     chat_history: list[mel.ChatMessage] = field(default_factory=list)
+
 
 # Mesop transform function
 def transform(input: str, history: list[mel.ChatMessage]):
@@ -55,12 +58,10 @@ def transform(input: str, history: list[mel.ChatMessage]):
 
 
 # Mesop page
-@me.page(
-    path="/",
-    title="ToolInterfaceAgent Chat"
-)
+@me.page(path="/", title="ToolInterfaceAgent Chat")
 def page():
     mel.chat(transform, title="ToolInterfaceAgent with SearxNGTool", bot_user="Agent")
+
 
 # Main function to run the Mesop app
 if __name__ == "__main__":

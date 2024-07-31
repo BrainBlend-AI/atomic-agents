@@ -9,22 +9,23 @@ from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGTool
 from rich.console import Console
 import asyncio
 
+
 async def main():
-    
+
     console = Console()
 
     # Initialize the search tool
-    search_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=30))
-    in_mem_faiss = InMemFaiss(openai_api_key=os.getenv('OPENAI_API_KEY'))
+    search_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=30))
+    in_mem_faiss = InMemFaiss(openai_api_key=os.getenv("OPENAI_API_KEY"))
 
     user_input = input("Enter your question (or type 'exit' to quit): ")
 
-    answer_agent.register_context_provider('search_results', search_results_provider)
-    top_urls_selector_agent.register_context_provider('search_results', search_results_provider)
-    refine_answer_agent.register_context_provider('vector_db_chunks', vector_db_chunks_provider)
+    answer_agent.register_context_provider("search_results", search_results_provider)
+    top_urls_selector_agent.register_context_provider("search_results", search_results_provider)
+    refine_answer_agent.register_context_provider("vector_db_chunks", vector_db_chunks_provider)
 
     while True:
-        if user_input.lower() == 'exit':
+        if user_input.lower() == "exit":
             break
 
         console.print("[bold green]Getting queries...[/bold green]")
@@ -35,13 +36,10 @@ async def main():
 
         console.print("[bold green]Getting search results...[/bold green]")
         search_results_provider.search_results = search_tool.run(search_tool.input_schema(**queries.model_dump()))
-        
+
         # Select top URLs
         console.print("[bold green]Selecting top URLs...[/bold green]")
-        top_urls = top_urls_selector_agent.run(top_urls_selector_agent.input_schema(
-            user_input=user_input,
-            num_urls=5
-        ))
+        top_urls = top_urls_selector_agent.run(top_urls_selector_agent.input_schema(user_input=user_input, num_urls=5))
 
         # Call the answer agent
         console.print("[bold green]Calling the answer agent...[/bold green]")
@@ -62,10 +60,9 @@ async def main():
         vector_db_chunks_provider.chunks = chunks
 
         console.print("[bold green]Refining the answer...[/bold green]")
-        refined_answer = refine_answer_agent.run(refine_answer_agent.input_schema(
-            question=user_input,
-            answer=initial_answer.markdown_output
-        ))
+        refined_answer = refine_answer_agent.run(
+            refine_answer_agent.input_schema(question=user_input, answer=initial_answer.markdown_output)
+        )
 
         console.print("Refined Answer:")
         console.print(refined_answer.refined_answer, markup=True)
@@ -74,6 +71,7 @@ async def main():
         refine_answer_agent.reset_memory()
 
         user_input = input("Enter your question (or type 'exit' to quit): ")
+
 
 # Run the main function
 asyncio.run(main())
