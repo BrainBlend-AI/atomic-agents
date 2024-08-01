@@ -150,6 +150,7 @@ class BaseAgent:
             Type[BaseIOSchema]: The response from the chat agent.
         """
         if user_input:
+            self.memory.initialize_turn()
             self.current_user_input = user_input
             self.memory.add_message("user", str(user_input))
 

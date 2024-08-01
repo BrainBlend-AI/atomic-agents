@@ -29,11 +29,12 @@ agent2_system_prompt_generator = SystemPromptGenerator(
 # You can use the same client for both agents if you prefer. For a list of supported clients, refer to the `instructor` library documentation.
 agent1 = BaseAgent(
     config=BaseAgentConfig(
-        client=instructor.from_groq(groq.Groq(api_key=os.getenv("GROQ_API_KEY"))),
-        model=os.getenv("GROQ_CHAT_MODEL"),
-        system_prompt_generator=agent1_system_prompt_generator,
+        client=instructor.from_openai(openai.OpenAI()),
+        model="gpt-4o-mini",
+        system_prompt_generator=agent2_system_prompt_generator,
     )
 )
+
 
 agent2 = BaseAgent(
     config=BaseAgentConfig(
@@ -57,6 +58,8 @@ def simulate_conversation(num_turns=5):
         agent2_response = agent2.run(agent2.input_schema(chat_message=next_input))
         console.print(f"[bold green]Agent 2:[/bold green] {agent2_response.chat_message}")
         next_input = agent2_response.chat_message
+
+    print("Done")
 
 
 if __name__ == "__main__":
