@@ -56,15 +56,13 @@ searxng_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv("SEARXNG_BASE_UR
 
 # Define a custom response schema
 class OutputSchema(BaseIOSchema):
+    """Output schema for the agent."""
+
     internal_reasoning: List[str] = Field(..., description="The internal reasoning behind the response.")
     chosen_schema: Union[BaseAgentOutputSchema, SearxNGToolInputSchema] = Field(
         ...,
         description="The response from the chat agent. Every response must use chosen_schema to indicate the type of response (A chat message, or a search request)",
     )
-
-    class Config:
-        title = "OutputSchema"
-        description = "The response schema for the chat agent."
 
 
 # Create a config for the chat agent

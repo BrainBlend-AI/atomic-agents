@@ -26,17 +26,10 @@ class BaseIOSchema(BaseModel):
     @classmethod
     def _validate_description(cls):
         description = cls.__doc__
-        
-        if not description and cls.__module__ == 'instructor.function_calls':
-            return
-        
-        if not description or not description.strip():
-            raise ValueError(f"{cls.__name__} must have a non-empty docstring to serve as its description")
 
-        # Add the description to the schema
-        # if not hasattr(cls, "__pydantic_core_schema__"):
-        #     cls.__pydantic_core_schema__ = {}
-        # cls.__pydantic_core_schema__["description"] = inspect.cleandoc(description)
+        if not description or not description.strip():
+            if cls.__module__ != "instructor.function_calls":
+                raise ValueError(f"{cls.__name__} must have a non-empty docstring to serve as its description")
 
     @classmethod
     def model_json_schema(cls, *args, **kwargs):

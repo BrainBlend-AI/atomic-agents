@@ -24,16 +24,10 @@ from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema
 
 class MyToolInputSchema(BaseIOSchema):
+    """Describe the tool / input schema here, this docstring is used in the LLM's prompt"""
+
     parameter: str = Field(..., description="Description of the parameter.")
     list_param: list[str] = Field(..., description="A list of strings.")
-
-    class Config:
-        title = "MyTool"
-        description = "Description of what MyTool does."
-        json_schema_extra = {
-            "title": title,
-            "description": description
-        }
 ```
 
 #### 2. Define the Output Schema
@@ -113,16 +107,10 @@ from rich.console import Console
 
 # Input Schema
 class MyToolInputSchema(BaseIOSchema):
+    """Input schema for the MyTool tool."""
+
     parameter: str = Field(..., description="Description of the parameter.")
     list_param: list[str] = Field(..., description="A list of strings.")
-
-    class Config:
-        title = "MyTool"
-        description = "Description of what MyTool does."
-        json_schema_extra = {
-            "title": title,
-            "description": description
-        }
 
 # Output Schema
 class MyToolOutputSchema(BaseIOSchema):

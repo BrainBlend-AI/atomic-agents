@@ -53,17 +53,11 @@ yelp_tool = YelpSearchTool(YelpSearchToolConfig(api_key=os.getenv("YELP_API_KEY"
 
 # Define a custom response schema that can handle both chat responses and Yelp search tool responses
 class OutputSchema(BaseModel):
+    """The output schema for the agent."""
+
     chosen_schema: Union[BaseAgentOutputSchema, YelpSearchToolInputSchema] = Field(
         ..., description="The response from the chat agent."
     )
-
-    class Config:
-        title = "OutputSchema"
-        description = "The response schema for the chat agent."
-        json_schema_extra = {
-            "title": title,
-            "description": description,
-        }
 
 
 # Create a config for the chat agent

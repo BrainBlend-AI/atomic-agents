@@ -10,23 +10,22 @@ from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 # INPUT SCHEMA #
 ################
 class CalculatorToolInputSchema(BaseIOSchema):
-    expression: str = Field(..., description="Mathematical expression to evaluate. For example, '2 + 2'.")
+    """
+    Tool for performing calculations. Supports basic arithmetic operations
+    like addition, subtraction, multiplication, and division, but also more
+    complex operations like exponentiation and trigonometric functions.
+    Use this tool to evaluate mathematical expressions.
+    """
 
-    class Config:
-        title = "CalculatorTool"
-        description = (
-            "Tool for performing calculations. Supports basic arithmetic operations "
-            "like addition, subtraction, multiplication, and division, but also more "
-            "complex operations like exponentiation and trigonometric functions. "
-            "Use this tool to evaluate mathematical expressions."
-        )
-        json_schema_extra = {"title": title, "description": description}
+    expression: str = Field(..., description="Mathematical expression to evaluate. For example, '2 + 2'.")
 
 
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
 class CalculatorToolOutputSchema(BaseIOSchema):
+    """This schema defines the output of the CalculatorTool."""
+
     result: str = Field(..., description="Result of the calculation.")
 
 

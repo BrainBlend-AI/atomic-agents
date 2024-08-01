@@ -9,28 +9,22 @@ from rich.console import Console
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 
+
 ################
 # INPUT SCHEMA #
 ################
+class SerperToolInputSchema(BaseIOSchema):
+    """
+    Tool for searching for information, news, references, and other content using the Serper API.
+    Returns a list of search results with a short description or content snippet and URLs for further exploration.
+    """
 
-
-class SerperToolSchema(BaseIOSchema):
     queries: List[str] = Field(..., description="List of search queries.")
-
-    class Config:
-        title = "SerperTool"
-        description = (
-            "Tool for searching for information, news, references, and other content using the Serper API. "
-            "Returns a list of search results with a short description or content snippet and URLs for further exploration."
-        )
-        json_schema_extra = {"title": title, "description": description}
 
 
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-
-
 class SerperResultSchema(BaseIOSchema):
     url: str
     title: str
@@ -45,8 +39,6 @@ class SerperToolOutputSchema(BaseIOSchema):
 ##############
 # TOOL LOGIC #
 ##############
-
-
 class SerperToolConfig(BaseToolConfig):
     api_key: str = ""
     max_results: int = 10
@@ -57,13 +49,13 @@ class SerperTool(BaseTool):
     Tool for performing searches using the Serper API based on the provided queries.
 
     Attributes:
-        input_schema (SerperToolSchema): The schema for the input data.
+        input_schema (SerperToolInputSchema): The schema for the input data.
         output_schema (SerperToolOutputSchema): The schema for the output data.
         api_key (str): The API key for the Serper API.
         max_results (int): The maximum number of search results to return.
     """
 
-    input_schema = SerperToolSchema
+    input_schema = SerperToolInputSchema
     output_schema = SerperToolOutputSchema
 
     def __init__(self, config: SerperToolConfig = SerperToolConfig()):
@@ -78,12 +70,12 @@ class SerperTool(BaseTool):
         self.api_key = config.api_key
         self.max_results = config.max_results
 
-    def run(self, params: SerperToolSchema, max_results: Optional[int] = None) -> SerperToolOutputSchema:
+    def run(self, params: SerperToolInputSchema, max_results: Optional[int] = None) -> SerperToolOutputSchema:
         """
         Runs the SerperTool with the given parameters.
 
         Args:
-            params (SerperToolSchema): The input parameters for the tool, adhering to the input schema.
+            params (SerperToolInputSchema): The input parameters for the tool, adhering to the input schema.
             max_results (Optional[int]): The maximum number of search results to return.
 
         Returns:
