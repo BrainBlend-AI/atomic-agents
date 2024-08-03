@@ -1,3 +1,4 @@
+import uuid
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ValidationError
@@ -12,12 +13,14 @@ class Message(BaseModel):
         content (Union[str, Dict]): The content of the message.
         tool_calls (Optional[List[Dict]]): Optional list of tool call messages.
         tool_call_id (Optional[str]): Optional unique identifier for the tool call.
+        turn_id (Optional[str]): Unique identifier for the turn this message belongs to.
     """
 
     role: str
     content: Union[str, Dict]
     tool_calls: Optional[List[Dict]] = None
     tool_call_id: Optional[str] = None
+    turn_id: Optional[str] = None
 
 
 class AgentMemory:
@@ -27,6 +30,7 @@ class AgentMemory:
     Attributes:
         history (List[Message]): A list of messages representing the chat history.
         max_messages (Optional[int]): Maximum number of turns to keep in history.
+        current_turn_id (Optional[str]): The ID of the current turn.
     """
 
     def __init__(self, max_messages: Optional[int] = None):
@@ -38,6 +42,13 @@ class AgentMemory:
         """
         self.history: List[Message] = []
         self.max_messages = max_messages
+        self.current_turn_id: Optional[str] = None
+
+    def initialize_turn(self) -> None:
+        """
+        Initializes a new turn by generating a random turn ID.
+        """
+        self.current_turn_id = str(uuid.uuid4())
 
     def add_message(
         self,
@@ -55,13 +66,13 @@ class AgentMemory:
             tool_message (Optional[Dict]): Optional tool message to be included.
             tool_id (Optional[str]): Optional unique identifier for the tool call.
         """
-        message = Message(role=role, content=content)
-        if tool_message:
-            if tool_id is None:
-                tool_id = tool_message["id"]
+        if self.current_turn_id is None:
+            self.initialize_turn()
 
+        message = Message(role=role, content=content, turn_id=self.current_turn_id)
+        if tool_message:
             message.tool_calls = [tool_message]
-            message.tool_call_id = tool_id
+            message.tool_call_id = tool_id or tool_message.get("id")
         elif role == "tool":
             message.tool_call_id = tool_id
 
@@ -76,23 +87,31 @@ class AgentMemory:
             while len(self.history) > self.max_messages:
                 self.history.pop(0)
 
-    def get_history(self) -> List[Message]:
+    def get_history(self) -> List[Dict]:
         """
-        Retrieves the chat history.
+        Retrieves the chat history, filtering out unnecessary fields.
 
         Returns:
-            List[Message]: The list of messages in the chat history.
+            List[Dict]: The list of messages in the chat history as dictionaries.
         """
-        return self.history
+        return [
+            {
+                "role": message.role,
+                "content": message.content,
+                **({"tool_calls": message.tool_calls} if message.tool_calls else {}),
+                **({"tool_call_id": message.tool_call_id} if message.tool_call_id else {}),
+            }
+            for message in self.history
+        ]
 
     def dump(self) -> List[Dict]:
         """
-        Converts the chat history to a list of dictionaries.
+        Converts the chat history to a list of dictionaries, including turn_id.
 
         Returns:
-            List[Dict]: The list of messages as dictionaries.
+            List[Dict]: The list of messages as dictionaries, including turn_id.
         """
-        return [message.model_dump() for message in self.history]
+        return [message.model_dump(exclude_none=True) for message in self.history]
 
     def load(self, dict_list: List[Dict]) -> None:
         """
@@ -107,14 +126,11 @@ class AgentMemory:
                 message = Message.model_validate(message_dict)
                 self.history.append(message)
             except ValidationError as e:
-                # Handle validation errors, e.g., log them or raise a custom exception
                 print(f"Error parsing message: {e}")
-                # Optionally, you might want to skip invalid messages or raise an exception
-                # depending on your error handling strategy
                 continue
-
-        # Optionally, manage overflow after loading all messages
-        self._manage_overflow()
+        # Set the current_turn_id to the last message's turn_id if available
+        if self.history:
+            self.current_turn_id = self.history[-1].turn_id
 
     def copy(self) -> "AgentMemory":
         """
@@ -125,8 +141,17 @@ class AgentMemory:
         """
         new_memory = AgentMemory(max_messages=self.max_messages)
         new_memory.load(self.dump())
-
+        new_memory.current_turn_id = self.current_turn_id
         return new_memory
+
+    def get_current_turn_id(self) -> Optional[str]:
+        """
+        Returns the current turn ID.
+
+        Returns:
+            Optional[str]: The current turn ID, or None if not set.
+        """
+        return self.current_turn_id
 
     def get_message_count(self) -> int:
         """

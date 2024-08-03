@@ -44,6 +44,11 @@ class PriceRange(Enum):
 
 
 class YelpSearchToolInputSchema(BaseIOSchema):
+    """
+    Tool for searching for food using the Yelp API.
+    Returns a list of businesses with details such as name, rating, and address.
+    """
+
     location: str = Field(..., description="Location to search for food.")
     term: Optional[str] = Field(None, description="Search term (e.g., 'pizza', 'sushi').")
     categories: Optional[List[YelpCategory]] = Field(None, description="Categories to filter by (e.g., 'italian, mexican').")
@@ -61,21 +66,13 @@ class YelpSearchToolInputSchema(BaseIOSchema):
     )
     limit: Optional[int] = Field(10, description="Number of results to return.")
 
-    class Config:
-        title = "YelpSearchTool"
-        description = (
-            "Tool for searching for food using the Yelp API. "
-            "Returns a list of businesses with details such as name, rating, and address."
-        )
-        json_schema_extra = {"title": title, "description": description}
-
 
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-
-
 class YelpSearchResultSchema(BaseIOSchema):
+    """This schema represents a single result from the Yelp API."""
+
     name: str
     url: str
     rating: float
@@ -86,22 +83,17 @@ class YelpSearchResultSchema(BaseIOSchema):
 
 
 class YelpSearchToolOutputSchema(BaseIOSchema):
-    results: List[YelpSearchResultSchema]
+    """
+    Output schema for the YelpSearchTool,
+    containing a list of search results with details such as name, rating, and address.
+    """
 
-    class Config:
-        title = "YelpSearchToolOutput"
-        description = (
-            "Output schema for the YelpSearchTool, containing a list of search results with details"
-            "such as name, rating, and address."
-        )
-        json_schema_extra = {"title": title, "description": description}
+    results: List[YelpSearchResultSchema]
 
 
 ##############
 # TOOL LOGIC #
 ##############
-
-
 class YelpSearchToolConfig(BaseToolConfig):
     api_key: str = ""
     max_results: int = 10

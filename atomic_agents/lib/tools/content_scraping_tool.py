@@ -19,15 +19,12 @@ from atomic_agents.lib.utils.scraping.url_to_markdown import UrlToMarkdownConver
 
 
 class ContentScrapingToolInputSchema(BaseIOSchema):
-    url: str = Field(..., description="URL of the web page or PDF to scrape.")
+    """
+    Tool for scraping web pages or PDFs and converting content to markdown
+    in order to extract information or summarize the content.
+    """
 
-    class Config:
-        title = "ContentScrapingTool"
-        description = (
-            "Tool for scraping web pages or PDFs and converting content to markdown "
-            "in order to extract information or summarize the content."
-        )
-        json_schema_extra = {"title": title, "description": description}
+    url: str = Field(..., description="URL of the web page or PDF to scrape.")
 
 
 ####################
@@ -36,6 +33,8 @@ class ContentScrapingToolInputSchema(BaseIOSchema):
 
 
 class ContentScrapingToolOutputSchema(BaseIOSchema):
+    """This schema defines the output of the ContentScrapingTool."""
+
     content: str
     metadata: Optional[dict] = None
 

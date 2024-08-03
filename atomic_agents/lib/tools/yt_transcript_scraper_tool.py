@@ -9,41 +9,30 @@ from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled, YouTu
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 
+
 ################
 # INPUT SCHEMA #
 ################
-
-
 class YouTubeTranscriptToolInputSchema(BaseIOSchema):
+    """
+    Tool for fetching the transcript of a YouTube video using the YouTube Transcript API.
+    Returns the transcript with text, start time, and duration.
+    """
+
     video_url: str = Field(..., description="URL of the YouTube video to fetch the transcript for.")
     language: Optional[str] = Field(None, description="Language code for the transcript (e.g., 'en' for English).")
-
-    class Config:
-        title = "YouTubeTranscriptTool"
-        description = (
-            "Tool for fetching the transcript of a YouTube video using the YouTube Transcript API. "
-            "Returns the transcript with text, start time, and duration."
-        )
-        json_schema_extra = {"title": title, "description": description}
 
 
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-
-
 class YouTubeTranscriptToolOutputSchema(BaseIOSchema):
+    """Output schema for the YouTubeTranscriptTool. Contains the transcript text, duration, comments, and metadata."""
+
     transcript: str
     duration: float
     comments: List[str]
     metadata: dict
-
-    class Config:
-        title = "YouTubeTranscriptToolOutput"
-        description = (
-            "Output schema for the YouTubeTranscriptTool. " "Contains the transcript text, duration, comments, and metadata."
-        )
-        json_schema_extra = {"title": title, "description": description}
 
 
 ##############

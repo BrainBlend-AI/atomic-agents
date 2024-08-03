@@ -141,3 +141,5 @@ chromadb_tmp/
 personal_experiments/
 
 *.psd
+
+.output/

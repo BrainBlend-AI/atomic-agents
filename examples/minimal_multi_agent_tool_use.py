@@ -9,34 +9,50 @@ from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolIn
 from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig
 from atomic_agents.lib.tools.calculator_tool import CalculatorTool, CalculatorToolConfig
 
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
 console = Console()
 client = instructor.from_openai(openai.OpenAI())
-searxng_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv('SEARXNG_BASE_URL'), max_results=10))
+searxng_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=10))
 calc_tool = CalculatorTool(CalculatorToolConfig())
 
-search_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-4o-mini', tool_instance=searxng_tool, return_raw_output=False)
-calculator_agent_config = ToolInterfaceAgentConfig(client=client, model='gpt-4o-mini', tool_instance=calc_tool, return_raw_output=False)
+search_agent_config = ToolInterfaceAgentConfig(
+    client=client, model="gpt-4o-mini", tool_instance=searxng_tool, return_raw_output=False
+)
+calculator_agent_config = ToolInterfaceAgentConfig(
+    client=client, model="gpt-4o-mini", tool_instance=calc_tool, return_raw_output=False
+)
 searx_agent = ToolInterfaceAgent(config=search_agent_config)
 calc_agent = ToolInterfaceAgent(config=calculator_agent_config)
 
-UnionResponse = create_model('UnionResponse', __base__=BaseIOSchema, response=(Union[searx_agent.input_schema, calc_agent.input_schema], ...))
+UnionResponse = create_model(
+    "UnionResponse",
+    __base__=BaseIOSchema,
+    response=(Union[searx_agent.input_schema, calc_agent.input_schema], ...),
+    __doc__="This schema represents the output of the orchestration agent, which can be any of the provided agents.",
+)
 
-orchestration_agent = BaseAgent(config=BaseAgentConfig(client=client, model='gpt-4o-mini', output_schema=UnionResponse))
+orchestration_agent = BaseAgent(config=BaseAgentConfig(client=client, model="gpt-4o-mini", output_schema=UnionResponse))
 
 while True:
-    user_input = input('You: ')
-    if user_input.lower() in ['exit', 'quit']:
-        print('Exiting chat...')
+    # user_input = input("You: ")
+    user_input = "5log(10)-69"
+    if user_input.lower() in ["exit", "quit"]:
+        print("Exiting chat...")
         break
 
     orchestration_agent_output = orchestration_agent.run(orchestration_agent.input_schema(chat_message=user_input))
-    console.print(f'Agent: {orchestration_agent_output.response}')
+    console.print(f"Agent: {orchestration_agent_output.response}")
 
     if isinstance(orchestration_agent_output.response, searx_agent.input_schema):
-        console.print(f'Using searx agent')
+        console.print(f"Using searx agent")
         response = searx_agent.run(orchestration_agent_output.response)
     elif isinstance(orchestration_agent_output.response, calc_agent.input_schema):
-        console.print(f'Using calc agent')
+        console.print(f"Using calc agent")
         response = calc_agent.run(orchestration_agent_output.response)
 
-    console.print(f'Agent: {response}')
+    console.print(f"Agent: {response}")

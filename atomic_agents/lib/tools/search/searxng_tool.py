@@ -8,38 +8,38 @@ from rich.console import Console
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
 
+
 ################
 # INPUT SCHEMA #
 ################
-
-
 class SearxNGToolInputSchema(BaseIOSchema):
+    """
+    Schema for input to a tool for searching for information, news, references, and other content using SearxNG.
+    Returns a list of search results with a short description or content snippet and URLs for further exploration
+    """
+
     queries: List[str] = Field(..., description="List of search queries.")
     category: Optional[Literal["general", "news", "social_media"]] = Field(
         "general", description="Category of the search queries."
     )
 
-    class Config:
-        title = "SearxNGTool"
-        description = (
-            "Tool for searching for information, news, references, and other content on the SearxNG. "
-            "Returns a list of search results with a short description or content snippet and URLs for further exploration."
-        )
-        json_schema_extra = {"title": title, "description": description}
-
 
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class SearxNGResultSchema(BaseIOSchema):
-    url: str
-    title: str
-    content: Optional[str] = None
+class SearxNGSearchResultItemSchema(BaseIOSchema):
+    """This schema represents a single seaarch result item"""
+
+    url: str = Field(..., description="The URL of the search result")
+    title: str = Field(..., description="The title of the search result")
+    content: Optional[str] = Field(None, description="The content snippet of the search result")
 
 
 class SearxNGToolOutputSchema(BaseIOSchema):
-    results: List[SearxNGResultSchema]
-    category: Optional[str] = None
+    """This schema represents the output of the SearxNG search tool."""
+
+    results: List[SearxNGSearchResultItemSchema] = Field(..., description="List of search result items")
+    category: Optional[str] = Field(None, description="The category of the search results")
 
 
 ##############
