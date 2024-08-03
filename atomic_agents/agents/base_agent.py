@@ -1,9 +1,8 @@
-from pydantic import BaseModel, ConfigDict, Field, validator
-from typing import Dict, Any, Optional, Type
+from pydantic import BaseModel, Field
+from typing import Optional, Type
 import inspect
 
 import instructor
-from pydantic import BaseModel, ConfigDict, Field
 from rich.json import JSON
 
 from atomic_agents.lib.components.agent_memory import AgentMemory

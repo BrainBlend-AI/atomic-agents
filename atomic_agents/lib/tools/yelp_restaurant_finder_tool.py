@@ -83,7 +83,10 @@ class YelpSearchResultSchema(BaseIOSchema):
 
 
 class YelpSearchToolOutputSchema(BaseIOSchema):
-    """Output schema for the YelpSearchTool, containing a list of search results with details such as name, rating, and address."""
+    """
+    Output schema for the YelpSearchTool,
+    containing a list of search results with details such as name, rating, and address.
+    """
 
     results: List[YelpSearchResultSchema]
 

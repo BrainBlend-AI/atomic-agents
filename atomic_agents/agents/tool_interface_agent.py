@@ -41,7 +41,9 @@ class ToolInterfaceAgent(BaseAgent):
                 str,
                 Field(
                     ...,
-                    description=f"{self.tool_instance.__class__.__name__} tool input. Presented as a single question or instruction",
+                    description=(
+                        f"{self.tool_instance.__class__.__name__} tool input. " "Presented as a single question or instruction"
+                    ),
                     alias=f"tool_input_{self.tool_instance.__class__.__name__}",
                 ),
             ),
@@ -107,7 +109,6 @@ if __name__ == "__main__":
     from rich import box
     import instructor
     import openai
-    from pydantic import BaseModel, Field
     from atomic_agents.lib.tools.calculator_tool import CalculatorTool
 
     # Initialize the console
