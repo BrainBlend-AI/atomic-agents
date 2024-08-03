@@ -1,13 +1,16 @@
 import instructor
 import openai
+from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool
 
 
 class QueryAgentInputSchema(BaseIOSchema):
-    instruction: str = "A detailed instruction or request to generate deep research queries for."
-    num_queries: int = "The number of queries to generate."
+    """This is the input schema for the QueryAgent."""
+
+    instruction: str = Field(..., "A detailed instruction or request to generate deep research queries for.")
+    num_queries: int = Field(..., "The number of queries to generate.")
 
 
 # Create the query agent

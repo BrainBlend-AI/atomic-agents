@@ -6,10 +6,14 @@ from atomic_agents.lib.components.system_prompt_generator import SystemPromptGen
 
 
 class AnswerAgentInputSchema(BaseIOSchema):
+    """This schema defines the input schema for the AnswerAgent."""
+
     question: str = Field(..., description="A question that needs to be answered based on the provided context.")
 
 
 class AnswerAgentOutputSchema(BaseIOSchema):
+    """This schema defines the output schema for the AnswerAgent."""
+
     markdown_output: str = Field(..., description="The answer to the question in markdown format.")
 
 

@@ -7,11 +7,15 @@ from atomic_agents.lib.components.system_prompt_generator import SystemPromptGen
 
 
 class TopUrlsSelectorInputSchema(BaseIOSchema):
+    """This schema defines the input schema for the TopUrlsSelector agent."""
+
     user_input: str = Field(..., description="The user input or question.")
     num_urls: int = Field(..., description="The number of top URLs to select.")
 
 
 class TopUrlsSelectorOutputSchema(BaseIOSchema):
+    """This schema defines the output schema for the TopUrlsSelector agent."""
+
     top_urls: List[HttpUrl] = Field(..., description="The list of top URLs selected based on the user input.")
 
 

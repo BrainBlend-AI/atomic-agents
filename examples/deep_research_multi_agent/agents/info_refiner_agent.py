@@ -7,11 +7,15 @@ from atomic_agents.lib.components.system_prompt_generator import SystemPromptGen
 
 
 class RefineAnswerInputSchema(BaseIOSchema):
+    """This schema defines the input for the RefineAnswer agent."""
+
     question: str = Field(..., description="The question that was asked.")
     answer: str = Field(..., description="The initial answer to the question.")
 
 
-class RefineAnswerOutputSchema(BaseModel):
+class RefineAnswerOutputSchema(BaseIOSchema):
+    """This schema defines the output for the RefineAnswer agent."""
+
     refined_answer: str = Field(..., description="The refined answer to the question.")
 
 
