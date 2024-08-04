@@ -1,7 +1,3 @@
-"""
-This example demonstrates how to create a custom chatbot with custom personality using the Atomic Agents library.
-"""
-
 import os
 from rich.console import Console
 from atomic_agents.lib.components.agent_memory import AgentMemory

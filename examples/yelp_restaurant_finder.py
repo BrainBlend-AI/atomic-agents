@@ -1,6 +1,9 @@
+###########
+# IMPORTS #
+###########
 import os
 import logging
-from typing import Union
+from typing import Union, List
 from pydantic import BaseModel, Field
 import instructor
 import openai
@@ -8,14 +11,13 @@ from rich.console import Console
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig, BaseIOSchema
 from atomic_agents.lib.tools.yelp_restaurant_finder_tool import YelpSearchTool, YelpSearchToolConfig, YelpSearchToolInputSchema
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
-# Define system prompt information including background, steps, and output instructions
+#######################
+# AGENT CONFIGURATION #
+#######################
+# Define system prompt information
 system_prompt_generator = SystemPromptGenerator(
     background=[
         "This assistant is a restaurant finder AI designed to help users find the best restaurants based on their preferences by asking clarifying questions.",
@@ -26,37 +28,59 @@ system_prompt_generator = SystemPromptGenerator(
         "Ask the user questions to gather information for each filter until all required information is clear.",
         "Use the chat responses to gather all necessary information from the user.",
         "Once all required information is gathered, use the YelpSearchTool schema to search Yelp for restaurants.",
+        "Summarize the search results and provide recommendations to the user.",
     ],
     output_instructions=[
+        "Always think in steps before answering using internal reasoning.",
         "Provide helpful and relevant information to assist the user.",
         "Be friendly and respectful in all interactions.",
         "Ensure that the chat responses are used to ask clarifying questions and gather information, and the Yelp schema is used to perform the actual search.",
     ],
 )
 
-# Initialize chat memory to store conversation history
+# Initialize chat memory
 memory = AgentMemory()
-# Define initial memory with a greeting message from the assistant
-initial_memory = [{"role": "assistant", "content": "Hello, can I help you find a restaurant?"}]
-# Load the initial memory into the chat memory
+initial_memory = [
+    {
+        "role": "assistant",
+        "content": "Hello! I'm your restaurant finder assistant. How can I help you find a great place to eat today?",
+    }
+]
 memory.load(initial_memory)
 
+# Initialize the console
 console = Console()
 
-# Initialize the client
-# For all supported clients such as Anthropic & Gemini, have a look at the `instructor` library documentation.
+# Initialize the OpenAI client
 client = instructor.from_openai(openai.OpenAI())
 
 # Initialize the YelpSearchTool
 yelp_tool = YelpSearchTool(YelpSearchToolConfig(api_key=os.getenv("YELP_API_KEY"), max_results=10))
 
 
-# Define a custom response schema that can handle both chat responses and Yelp search tool responses
-class OutputSchema(BaseModel):
-    """The output schema for the agent."""
+######################
+# SCHEMA DEFINITIONS #
+######################
+class ChatOutputSchema(BaseIOSchema):
+    """This schema defines a markdown-enabled chat output."""
 
-    chosen_schema: Union[BaseAgentOutputSchema, YelpSearchToolInputSchema] = Field(
-        ..., description="The response from the chat agent."
+    markdown_output: str = Field(..., description="The answer to the question in markdown format.")
+
+
+class OutputSchema(BaseIOSchema):
+    """
+    Output schema for the agent.
+
+    This schema defines the structure of the agent's output, including its internal reasoning
+    and the next action it plans to take.
+    """
+
+    internal_reasoning: List[str] = Field(
+        ..., description="A list of strings representing the agent's step-by-step thought process leading to its decision."
+    )
+    action: Union[ChatOutputSchema, YelpSearchToolInputSchema] = Field(
+        ...,
+        description="The next action to be taken by the agent. This can be either a chat response (ChatOutputSchema) or a Yelp search request (YelpSearchToolInputSchema), depending on whether the agent needs to communicate with the user or perform a restaurant search.",
     )
 
 
@@ -69,10 +93,13 @@ agent_config = BaseAgentConfig(
     output_schema=OutputSchema,
 )
 
-# Create a chat agent with the specified config
+# Create a chat agent
 agent = BaseAgent(config=agent_config)
 
-console.print("BaseAgent with YelpSearchTool is ready.")
+#############
+# MAIN LOOP #
+#############
+console.print("Restaurant Finder Agent is ready.")
 console.print(f'Agent: {initial_memory[0]["content"]}')
 
 while True:
@@ -83,22 +110,15 @@ while True:
 
     response = agent.run(agent.input_schema(chat_message=user_input))
 
-    # Log the chosen schema
-    logger.info(f"Chosen schema: {response.chosen_schema}")
+    if isinstance(response.action, YelpSearchToolInputSchema):
+        search_results = yelp_tool.run(response.action)
 
-    # Check the type of the response schema
-    if isinstance(response.chosen_schema, YelpSearchToolInputSchema):
-        output = yelp_tool.run(response.chosen_schema)
-
-        # In this example, we will add a simple "internal thought" to the chat memory followed by an empty agent.run() call.
-        # This will make the agent continue the conversation without user input.
-        # In a more complex example, it might be preferable to extend the BaseAgent class and override the _get_and_handle_response method.
         agent.memory.add_message(
             "assistant",
-            f"INTERNAL THOUGHT: I have found the following information: {output.results}\n\n I will now summarize the results for the user.",
+            f"INTERNAL THOUGHT: I have found the following restaurants: {search_results.results}\n\n I will now summarize the results for the user.",
         )
-        output = agent.run().chosen_schema.chat_message
+        output = agent.run().action.markdown_output
     else:
-        output = response.chosen_schema.chat_message
+        output = response.action.markdown_output
 
     console.print(f"Agent: {output}")

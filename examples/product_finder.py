@@ -1,3 +1,6 @@
+###########
+# IMPORTS #
+###########
 import os
 import logging
 from typing import Union, List
@@ -11,10 +14,9 @@ from atomic_agents.lib.components.system_prompt_generator import SystemPromptGen
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentOutputSchema, BaseAgentConfig, BaseIOSchema
 from atomic_agents.lib.tools.search.searxng_tool import SearxNGTool, SearxNGToolConfig, SearxNGToolInputSchema
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-
+#######################
+# AGENT CONFIGURATION #
+#######################
 # Define system prompt information
 system_prompt_generator = SystemPromptGenerator(
     background=[
@@ -45,23 +47,39 @@ initial_memory = [
 ]
 memory.load(initial_memory)
 
+# Initialize the console
 console = Console()
 
-# Initialize the client
+# Initialize the OpenAI client
 client = instructor.from_openai(openai.OpenAI())
 
 # Initialize the SearxNGTool
 searxng_tool = SearxNGTool(SearxNGToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
 
 
-# Define a custom response schema
-class OutputSchema(BaseIOSchema):
-    """Output schema for the agent."""
+class ChatOutputSchema(BaseIOSchema):
+    """This schema defines a markdown-enabled chat output."""
 
-    internal_reasoning: List[str] = Field(..., description="The internal reasoning behind the response.")
-    chosen_schema: Union[BaseAgentOutputSchema, SearxNGToolInputSchema] = Field(
+    markdown_output: str = Field(..., description="The answer to the question in markdown format.")
+
+
+######################
+# SCHEMA DEFINITIONS #
+######################
+class OutputSchema(BaseIOSchema):
+    """
+    Output schema for the agent.
+
+    This schema defines the structure of the agent's output, including its internal reasoning
+    and the next action it plans to take.
+    """
+
+    internal_reasoning: List[str] = Field(
+        ..., description="A list of strings representing the agent's step-by-step thought process leading to its decision."
+    )
+    action: Union[ChatOutputSchema, SearxNGToolInputSchema] = Field(
         ...,
-        description="The response from the chat agent. Every response must use chosen_schema to indicate the type of response (A chat message, or a search request)",
+        description="The next action to be taken by the agent. This can be either a chat response (ChatOutputSchema) or a search request (SearxNGToolInputSchema), depending on whether the agent needs to communicate with the user or perform a product search.",
     )
 
 
@@ -77,6 +95,9 @@ agent_config = BaseAgentConfig(
 # Create a chat agent
 agent = BaseAgent(config=agent_config)
 
+#############
+# MAIN LOOP #
+#############
 console.print("Product Finder Agent is ready.")
 console.print(f'Agent: {initial_memory[0]["content"]}')
 
@@ -88,17 +109,15 @@ while True:
 
     response = agent.run(agent.input_schema(chat_message=user_input))
 
-    logger.info(f"Chosen schema: {response.chosen_schema}")
-
-    if isinstance(response.chosen_schema, SearxNGToolInputSchema):
-        search_results = searxng_tool.run(response.chosen_schema)
+    if isinstance(response.action, SearxNGToolInputSchema):
+        search_results = searxng_tool.run(response.action)
 
         agent.memory.add_message(
             "assistant",
             f"INTERNAL THOUGHT: I have found the following products: {search_results.results}\n\n I will now summarize the results for the user.",
         )
-        output = agent.run().chosen_schema.chat_message
+        output = agent.run().action.markdown_output
     else:
-        output = response.chosen_schema.chat_message
+        output = response.action.markdown_output
 
     console.print(f"Agent: {output}")

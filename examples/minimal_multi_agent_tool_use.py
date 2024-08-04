@@ -39,8 +39,7 @@ UnionResponse = create_model(
 orchestration_agent = BaseAgent(config=BaseAgentConfig(client=client, model="gpt-4o-mini", output_schema=UnionResponse))
 
 while True:
-    # user_input = input("You: ")
-    user_input = "5log(10)-69"
+    user_input = input("You: ")
     if user_input.lower() in ["exit", "quit"]:
         print("Exiting chat...")
         break
