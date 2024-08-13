@@ -35,6 +35,8 @@ class BaseIOSchema(BaseModel):
         schema = super().model_json_schema(*args, **kwargs)
         if "description" not in schema and cls.__doc__:
             schema["description"] = inspect.cleandoc(cls.__doc__)
+        if "title" not in schema:
+            schema["title"] = cls.__name__
         return schema
 
 
