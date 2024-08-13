@@ -1,7 +1,9 @@
 import os
 from typing import List, Literal, Optional
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
-import requests
+import aiohttp
 from pydantic import Field
 from rich.console import Console
 
@@ -28,11 +30,12 @@ class SearxNGToolInputSchema(BaseIOSchema):
 # OUTPUT SCHEMA(S) #
 ####################
 class SearxNGSearchResultItemSchema(BaseIOSchema):
-    """This schema represents a single seaarch result item"""
+    """This schema represents a single search result item"""
 
     url: str = Field(..., description="The URL of the search result")
     title: str = Field(..., description="The title of the search result")
     content: Optional[str] = Field(None, description="The content snippet of the search result")
+    query: str = Field(..., description="The query used to obtain this search result")
 
 
 class SearxNGToolOutputSchema(BaseIOSchema):
@@ -76,9 +79,47 @@ class SearxNGTool(BaseTool):
         self.base_url = config.base_url
         self.max_results = config.max_results
 
-    def run(self, params: SearxNGToolInputSchema, max_results: Optional[int] = None) -> SearxNGToolOutputSchema:
+    async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str, category: Optional[str]) -> List[dict]:
         """
-        Runs the SearxNGTool with the given parameters.
+        Fetches search results for a single query asynchronously.
+
+        Args:
+            session (aiohttp.ClientSession): The aiohttp session to use for the request.
+            query (str): The search query.
+            category (Optional[str]): The category of the search query.
+
+        Returns:
+            List[dict]: A list of search result dictionaries.
+
+        Raises:
+            Exception: If the request to SearxNG fails.
+        """
+        query_params = {
+            "q": query,
+            "safesearch": "0",
+            "format": "json",
+            "language": "en",
+            "engines": "bing,duckduckgo,google,startpage,yandex",
+        }
+
+        if category:
+            query_params["categories"] = category
+
+        async with session.get(f"{self.base_url}/search", params=query_params) as response:
+            if response.status != 200:
+                raise Exception(f"Failed to fetch search results for query '{query}': {response.status} {response.reason}")
+            data = await response.json()
+            results = data.get("results", [])
+
+            # Add the query to each result
+            for result in results:
+                result["query"] = query
+
+            return results
+
+    async def run_async(self, params: SearxNGToolInputSchema, max_results: Optional[int] = None) -> SearxNGToolOutputSchema:
+        """
+        Runs the SearxNGTool asynchronously with the given parameters.
 
         Args:
             params (SearxNGToolInputSchema): The input parameters for the tool, adhering to the input schema.
@@ -91,33 +132,11 @@ class SearxNGTool(BaseTool):
             ValueError: If the base URL is not provided.
             Exception: If the request to SearxNG fails.
         """
-        all_results = []
+        async with aiohttp.ClientSession() as session:
+            tasks = [self._fetch_search_results(session, query, params.category) for query in params.queries]
+            results = await asyncio.gather(*tasks)
 
-        for query in params.queries:
-            # Prepare the query parameters
-            query_params = {
-                "q": query,
-                "safesearch": "0",
-                "format": "json",
-                "language": "en",
-                "engines": "bing,duckduckgo,google,startpage,yandex",
-            }
-
-            # Add category to query parameters if it is set
-            if params.category:
-                query_params["categories"] = params.category
-
-            # Make the GET request
-            response = requests.get(f"{self.base_url}/search", params=query_params)
-
-            # Check if the request was successful
-            if response.status_code != 200:
-                raise Exception(
-                    f"Failed to fetch search results for query '{query}': {response.status_code} {response.reason}"
-                )
-
-            results = response.json().get("results", [])
-            all_results.extend(results)
+        all_results = [item for sublist in results for item in sublist]
 
         # Sort the combined results by score in descending order
         sorted_results = sorted(all_results, key=lambda x: x.get("score", 0), reverse=True)
@@ -126,7 +145,7 @@ class SearxNGTool(BaseTool):
         seen_urls = set()
         unique_results = []
         for result in sorted_results:
-            if "content" not in result or "title" not in result or "url" not in result:
+            if "content" not in result or "title" not in result or "url" not in result or "query" not in result:
                 continue
             if result["url"] not in seen_urls:
                 unique_results.append(result)
@@ -144,7 +163,38 @@ class SearxNGTool(BaseTool):
 
         filtered_results = filtered_results[: max_results or self.max_results]
 
-        return SearxNGToolOutputSchema(results=filtered_results, category=params.category)
+        return SearxNGToolOutputSchema(
+            results=[
+                SearxNGSearchResultItemSchema(
+                    url=result["url"],
+                    title=result["title"],
+                    content=result.get("content"),
+                    query=result["query"]
+                )
+                for result in filtered_results
+            ],
+            category=params.category
+        )
+
+    def run(self, params: SearxNGToolInputSchema, max_results: Optional[int] = None) -> SearxNGToolOutputSchema:
+        """
+        Runs the SearxNGTool synchronously with the given parameters.
+
+        This method creates an event loop in a separate thread to run the asynchronous operations.
+
+        Args:
+            params (SearxNGToolInputSchema): The input parameters for the tool, adhering to the input schema.
+            max_results (Optional[int]): The maximum number of search results to return.
+
+        Returns:
+            SearxNGToolOutputSchema: The output of the tool, adhering to the output schema.
+
+        Raises:
+            ValueError: If the base URL is not provided.
+            Exception: If the request to SearxNG fails.
+        """
+        with ThreadPoolExecutor() as executor:
+            return executor.submit(asyncio.run, self.run_async(params, max_results)).result()
 
 
 #################
