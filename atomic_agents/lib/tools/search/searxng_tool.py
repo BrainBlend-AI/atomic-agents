@@ -166,14 +166,11 @@ class SearxNGTool(BaseTool):
         return SearxNGToolOutputSchema(
             results=[
                 SearxNGSearchResultItemSchema(
-                    url=result["url"],
-                    title=result["title"],
-                    content=result.get("content"),
-                    query=result["query"]
+                    url=result["url"], title=result["title"], content=result.get("content"), query=result["query"]
                 )
                 for result in filtered_results
             ],
-            category=params.category
+            category=params.category,
         )
 
     def run(self, params: SearxNGToolInputSchema, max_results: Optional[int] = None) -> SearxNGToolOutputSchema:
