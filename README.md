@@ -75,4 +75,4 @@ We welcome contributions! Please follow these steps to contribute:
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-[![Star History Chart](https://api.star-history.com/svg?repos=BrainBlend_AI/atomic_agents&type=Date)](https://star-history.com/#BrainBlend_AI/atomic_agents&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=atomic agents/atomic agents,BrainBlend-AI/atomic-agents&type=Date)](https://star-history.com/#atomic%20agents/atomic%20agents&BrainBlend-AI/atomic-agents&Date)
