@@ -1,5 +1,5 @@
 # Atomic Agents
-<img src="./.assets/logo.png" alt="Atomic Agents" width="350"/>
+<img src="./.assets/logo.png" alt="Atomic Agents" width="600"/>
 
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
