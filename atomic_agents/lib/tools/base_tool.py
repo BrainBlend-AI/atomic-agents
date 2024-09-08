@@ -6,6 +6,14 @@ from atomic_agents.agents.base_agent import BaseIOSchema
 
 
 class BaseToolConfig(BaseModel):
+    """
+    Tool configuration class.
+
+    Attributes:
+        title (Optional[str]): Override the title of the tool.
+        description (Optional[str]): Override the description of the tool.
+    """
+
     title: Optional[str] = None
     description: Optional[str] = None
 
