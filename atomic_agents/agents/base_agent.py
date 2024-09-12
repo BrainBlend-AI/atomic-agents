@@ -71,8 +71,7 @@ class BaseAgentConfig(BaseModel):
     input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class BaseAgent:
