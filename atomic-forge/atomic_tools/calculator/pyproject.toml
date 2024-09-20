@@ -1,0 +1,21 @@
+[project]
+name = "calculator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "atomic-agents",
+    "pydantic>=2.8.2,<3",
+    "sympy>=1.12,<2",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "coverage>=7.6.1",
+    "pytest-cov>=5.0.0",
+    "pytest>=8.3.3",
+]
+
+[tool.uv.sources]
+atomic-agents = { path = "../../../atomic-agents" }

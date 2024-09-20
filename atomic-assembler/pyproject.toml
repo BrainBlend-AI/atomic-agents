@@ -1,0 +1,20 @@
+[project]
+name = "atomic-assembler"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyfiglet>=1.0.2,<2.0.0",
+    "rich>=13.7.1,<14.0.0",
+    "textual>=0.77.0,<0.78.0",
+    "gitpython>=3.1.43,<3.2.0",
+    "pyyaml>=6.0.2,<7.0.0",
+]
+
+[project.scripts]
+atomic = "atomic_assembler.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

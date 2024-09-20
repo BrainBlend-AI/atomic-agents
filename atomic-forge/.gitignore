@@ -1,0 +1,20 @@
+# Python virtual environments
+.venv
+.python-version
+
+# Python cache files
+__pycache__/
+.pytest_cache/
+.pytest-cache/
+.cache/
+
+# Build and distribution
+build/
+*.egg-info
+
+# Coverage reports
+.coverage
+.coverage.*
+
+# IDE configurations
+.vscode/

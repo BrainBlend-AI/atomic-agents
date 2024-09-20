@@ -1,0 +1,4 @@
+atomic_agents>=0.3.3,<0.4
+pydantic>=2.8.2,<3
+sympy>=1.12,<2
+
