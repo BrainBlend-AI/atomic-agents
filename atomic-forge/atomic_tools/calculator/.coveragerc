@@ -1,5 +1,4 @@
 [run]
-# this is the same as --omit=tests/*
 omit = */tests/*
 
 [report]

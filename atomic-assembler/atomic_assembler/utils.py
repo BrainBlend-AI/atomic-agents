@@ -6,21 +6,23 @@ import tempfile
 import git
 import yaml
 from pathlib import Path
+from atomic_assembler.constants import GITHUB_BASE_URL, TOOLS_SUBFOLDER
 
 
 class GithubRepoCloner:
-    def __init__(self, owner, repo):
-        self.owner = owner
-        self.repo = repo
-        self.repo_url = f"https://github.com/{self.owner}/{self.repo}.git"
+    def __init__(self, base_url: str, branch: str = "main"):
+        self.repo_url = base_url
+        self.branch = branch
         self.temp_dir = tempfile.mkdtemp()
-        self.repo_path = os.path.join(self.temp_dir, self.repo)
-        self.tools_path = os.path.join(self.repo_path, "atomic_tools")
+        self.repo_path = os.path.join(
+            self.temp_dir, os.path.basename(base_url).replace('.git', '')
+        )
+        self.tools_path = os.path.join(self.repo_path, TOOLS_SUBFOLDER)
 
     def clone(self):
         try:
-            git.Repo.clone_from(self.repo_url, self.repo_path)
-            logging.info(f"Repository cloned to {self.repo_path}")
+            repo = git.Repo.clone_from(self.repo_url, self.repo_path, branch=self.branch)
+            logging.info(f"Repository cloned to {self.repo_path} on branch {self.branch}")
         except git.GitCommandError as e:
             logging.error(f"Failed to clone repository: {e}")
             raise

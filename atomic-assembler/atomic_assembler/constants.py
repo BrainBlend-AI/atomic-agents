@@ -10,6 +10,11 @@ BORDER_STYLE: str = f"bold {SECONDARY_COLOR}"
 # Title configuration
 TITLE_FONT: str = "big"
 
+# Repository configuration
+TOOLS_SUBFOLDER: str = "atomic-forge/atomic_tools"
+
+# Base URL for GitHub repository
+GITHUB_BASE_URL: str = "https://github.com/BrainBlend-AI/atomic-agents.git"
 
 @dataclass
 class MenuOption:
@@ -19,16 +24,12 @@ class MenuOption:
     action: str
     params: Optional[Dict[str, Any]] = None
 
-
 # Define menu options as a list of MenuOption instances
 MENU_OPTIONS: List[MenuOption] = [
-    # MenuOption("Browse Files", "browse_files"),
-    # MenuOption("Browse Folders", "browse_folders"),
     MenuOption("Download Tools", "download_tools"),
-    MenuOption("Open Atomic Agents on GitHub", "open_github"),  # Added this line
+    MenuOption("Open Atomic Agents on GitHub", "open_github"),
     MenuOption("Quit", "exit"),
 ]
-
 
 class Mode(Enum):
     FILE_MODE = "file_mode"

@@ -7,7 +7,7 @@ from textual import on
 from pathlib import Path
 import logging
 
-from atomic_assembler.constants import BORDER_STYLE, PRIMARY_COLOR, Mode
+from atomic_assembler.constants import BORDER_STYLE, PRIMARY_COLOR, Mode, GITHUB_BASE_URL
 from atomic_assembler.screens.file_explorer import FileExplorerScreen
 from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner
 from atomic_assembler.widgets.generic_list import GenericList
@@ -53,8 +53,9 @@ class AtomicToolExplorerScreen(Screen):
             self.tool_info = tool_info
             super().__init__()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, branch: str = "main", **kwargs):
         super().__init__(*args, **kwargs)
+        self.branch = branch  # Store the branch name
         self._initialize_components()
         self._setup_github_repo()
 
@@ -68,7 +69,7 @@ class AtomicToolExplorerScreen(Screen):
         self.highlighted_tool = None
 
     def _setup_github_repo(self):
-        self.github_repo_cloner = GithubRepoCloner("KennyVaneetvelde", "atomic_tools")
+        self.github_repo_cloner = GithubRepoCloner(GITHUB_BASE_URL, branch=self.branch)
         try:
             self.github_repo_cloner.clone()
             logging.info("Repository cloned successfully")
@@ -131,14 +132,12 @@ class AtomicToolExplorerScreen(Screen):
                 self.current_tool["path"], selected_dir
             )
             logging.info(f"Tool successfully copied to {local_tool_path}")
-            # Replace notification with ConfirmationModal in "continue" mode
             modal = ConfirmationModal(
                 f"Tool copied to {local_tool_path}. Press any key to continue.",
                 callback=lambda _: None,
                 mode="continue",
             )
             self.app.push_screen(modal)
-            # Tool copying is complete, no further actions
         except Exception as e:
             logging.error(f"Error copying tool: {str(e)}", exc_info=True)
             self.notify(f"Error copying tool: {str(e)}")

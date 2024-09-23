@@ -3,12 +3,12 @@ from textual import on
 from textual.app import App
 from textual.screen import Screen
 from pathlib import Path
-import webbrowser  # Import webbrowser module
+import webbrowser
 
 from atomic_assembler.screens.main_menu import MainMenuScreen
 from atomic_assembler.screens.file_explorer import FileExplorerScreen
 from atomic_assembler.screens.atomic_tool_explorer import AtomicToolExplorerScreen
-from atomic_assembler.constants import MENU_OPTIONS, Mode
+from atomic_assembler.constants import MENU_OPTIONS, Mode, GITHUB_BASE_URL
 
 
 class AtomicAssembler(App):
@@ -26,9 +26,10 @@ class AtomicAssembler(App):
         "file_explorer": FileExplorerScreen,
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, branch: str = "main", **kwargs):
         super().__init__(*args, **kwargs)
-        self.selected_path = None  # Renamed from selected_file to selected_path
+        self.selected_path = None
+        self.branch = branch
 
     def on_mount(self) -> None:
         """Handler called when app is mounted."""
@@ -40,7 +41,7 @@ class AtomicAssembler(App):
             "browse_files": self.push_file_explorer,
             "browse_folders": self.push_folder_explorer,
             "download_tools": self.push_atomic_tool_explorer,
-            "open_github": self.open_github,  # Added this line
+            "open_github": self.open_github,
             "exit": self.exit_app,
         }
 
@@ -53,14 +54,14 @@ class AtomicAssembler(App):
         """Open the Atomic Agents GitHub page in a web browser."""
         webbrowser.open(
             "https://github.com/BrainBlend-AI/atomic-agents"
-        )  # Open the URL
+        )
 
     def push_file_explorer(self, **kwargs):
         """Push the file explorer screen in file mode."""
         self.push_screen(
             FileExplorerScreen(
                 mode=Mode.FILE_MODE,
-                callback=self.handle_selection,  # Ensure this is set
+                callback=self.handle_selection,
             )
         )
 
@@ -69,25 +70,25 @@ class AtomicAssembler(App):
         self.push_screen(
             FileExplorerScreen(
                 mode=Mode.DIRECTORY_MODE,
-                callback=self.handle_selection,  # Renamed callback
+                callback=self.handle_selection,
             )
         )
 
     def push_atomic_tool_explorer(self, **kwargs) -> None:
         """Push the Atomic Tool Explorer screen."""
-        self.push_screen("atomic_tool_explorer")
+        self.push_screen(AtomicToolExplorerScreen(branch=self.branch))
 
     def exit_app(self, **kwargs):
         """Exit the application."""
         self.exit()
 
-    def handle_selection(self, selected_path: Path) -> None:  # Renamed method
+    def handle_selection(self, selected_path: Path) -> None:
         """Handle the selection of a file or folder."""
         logging.debug(f"File or folder selected in main app: {selected_path}")
-        self.selected_path = selected_path  # Updated to use selected_path
+        self.selected_path = selected_path
 
     @on(FileExplorerScreen.FileSelected)
     def handle_file_selected(self, message: FileExplorerScreen.FileSelected) -> None:
         """Handle the file selected event."""
         logging.debug(f"File selected in main app: {message.path}")
-        self.selected_path = message.path  # Updated to use selected_path
+        self.selected_path = message.path
