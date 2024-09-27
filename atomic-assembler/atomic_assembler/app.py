@@ -8,7 +8,7 @@ import webbrowser
 from atomic_assembler.screens.main_menu import MainMenuScreen
 from atomic_assembler.screens.file_explorer import FileExplorerScreen
 from atomic_assembler.screens.atomic_tool_explorer import AtomicToolExplorerScreen
-from atomic_assembler.constants import MENU_OPTIONS, Mode, GITHUB_BASE_URL
+from atomic_assembler.constants import GITHUB_BRANCH, Mode
 
 
 class AtomicAssembler(App):
@@ -26,10 +26,9 @@ class AtomicAssembler(App):
         "file_explorer": FileExplorerScreen,
     }
 
-    def __init__(self, *args, branch: str = "main", **kwargs):
+    def __init__(self, *args,  **kwargs):
         super().__init__(*args, **kwargs)
         self.selected_path = None
-        self.branch = branch
 
     def on_mount(self) -> None:
         """Handler called when app is mounted."""
@@ -76,7 +75,7 @@ class AtomicAssembler(App):
 
     def push_atomic_tool_explorer(self, **kwargs) -> None:
         """Push the Atomic Tool Explorer screen."""
-        self.push_screen(AtomicToolExplorerScreen(branch=self.branch))
+        self.push_screen(AtomicToolExplorerScreen())
 
     def exit_app(self, **kwargs):
         """Exit the application."""

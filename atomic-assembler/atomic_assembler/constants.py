@@ -15,6 +15,7 @@ TOOLS_SUBFOLDER: str = "atomic-forge/atomic_tools"
 
 # Base URL for GitHub repository
 GITHUB_BASE_URL: str = "https://github.com/BrainBlend-AI/atomic-agents.git"
+GITHUB_BRANCH: str = "feature/monorepo"
 
 @dataclass
 class MenuOption:

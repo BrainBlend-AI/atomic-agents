@@ -7,7 +7,7 @@ from textual import on
 from pathlib import Path
 import logging
 
-from atomic_assembler.constants import BORDER_STYLE, PRIMARY_COLOR, Mode, GITHUB_BASE_URL
+from atomic_assembler.constants import BORDER_STYLE, GITHUB_BRANCH, PRIMARY_COLOR, Mode, GITHUB_BASE_URL
 from atomic_assembler.screens.file_explorer import FileExplorerScreen
 from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner
 from atomic_assembler.widgets.generic_list import GenericList
@@ -53,9 +53,8 @@ class AtomicToolExplorerScreen(Screen):
             self.tool_info = tool_info
             super().__init__()
 
-    def __init__(self, *args, branch: str = "main", **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.branch = branch  # Store the branch name
         self._initialize_components()
         self._setup_github_repo()
 
@@ -69,7 +68,7 @@ class AtomicToolExplorerScreen(Screen):
         self.highlighted_tool = None
 
     def _setup_github_repo(self):
-        self.github_repo_cloner = GithubRepoCloner(GITHUB_BASE_URL, branch=self.branch)
+        self.github_repo_cloner = GithubRepoCloner(GITHUB_BASE_URL, branch=GITHUB_BRANCH)
         try:
             self.github_repo_cloner.clone()
             logging.info("Repository cloned successfully")
