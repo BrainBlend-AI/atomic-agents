@@ -1,254 +1,628 @@
-# Anatomy of a Tool in Atomic Agents
+# Creating Your Own Atomic Tool: A Comprehensive Guide
 
 ## Introduction
 
-The **Atomic Agents** framework enables developers to create modular, extensible, and efficient AI tools. This guide outlines the core anatomy of a tool within the Atomic Agents ecosystem, providing a structured approach to building new tools that seamlessly integrate into the framework.
+Welcome to this (hopefully) comprehensive (enough) guide on creating your own **Atomic Tool** within the **Atomic Agents** framework. This guide is designed to be a step-by-step tutorial, walking you through the entire process of building an Atomic Tool—from understanding the fundamental concepts to implementing and testing your tool.
 
-## Components of a Tool
+## The Principles
 
-Each tool in Atomic Agents is constructed using a standardized architecture to ensure consistency and ease of integration. The primary components include:
+An **Atomic Tool** is a self-contained, modular component within the Atomic Agents framework. It encapsulates a specific piece of functionality, for example a calculator, a youtube transcript scraper, or a twitter search tool, allowing for easy integration, maintenance, and extension. Each tool is designed to perform a single task and can be combined with other tools to build more complex applications.
+
+**Key Characteristics of an Atomic Tool:**
+
+- **Single Responsibility:** Focuses on one specific task.
+- **Modular and Reusable:** Can be easily integrated into different agents or applications.
+- **Self-Contained:** Includes all necessary components to function independently.
+- **Clear Interfaces:** Defines explicit input and output schemas for consistent data handling.
+- **Configurable:** Allows customization through configuration settings.
+- **Executable Independently:** Can run on its own or as part of an Atomic Agent.
+
+## Principles of Atomic Tool Design
+
+### Modularity
+
+Each tool should be an independent module that can function on its own. Modularity ensures that tools can be developed, tested, and debugged in isolation, leading to more reliable and maintainable code.
+
+### Reusability
+
+Design tools with reusability in mind. Avoid hardcoding values or making assumptions that limit where and how the tool can be used.
+
+### Single Responsibility Principle
+
+Adhere to the Single Responsibility Principle by ensuring that each tool does one thing and does it well. This makes your tools easier to understand, test, and maintain.
+
+### Clear Interfaces
+
+Define explicit input and output schemas using Pydantic models. This ensures consistent data handling and makes your tools predictable and reliable.
+
+### Configurability
+
+Provide configuration options to allow users to customize the tool's behavior without modifying the code. Use default values where appropriate to make tools easy to use out of the box.
+
+## Anatomy of an Atomic Tool
+
+An Atomic Tool in the Atomic Agents framework follows a highly standardized structure. This consistency is crucial for maintainability, interoperability, and ease of understanding.
+
+**The structure of an Atomic Tool includes the following sections, in this specific order:**
 
 1. **Input Schema**
-2. **Output Schema**
-3. **Tool Logic**
-4. **Configuration**
+2. **Output Schema(s)**
+3. **Configuration**
+4. **Main Tool & Logic**
 5. **Example Usage**
+
+The input and output schemas must always extend from `BaseIOSchema` and the main tool class must always extend from `BaseTool`.
+
+**Note:** Each section should be clearly delineated with a comment block that includes the section's name. For example:
+
+```python
+################
+# Input Schema #
+################
+```
+
+Let's explore each of these sections in detail.
 
 ### 1. Input Schema
 
-The Input Schema defines the structure and validation rules for the data the tool expects. Utilizing Pydantic's `BaseModel`, it ensures that all inputs meet the required criteria before processing.
+The **Input Schema** defines the structure and validation rules for the data your tool accepts. It uses Pydantic models to enforce data types, provide default values, and include descriptions.
 
-**Example: `CalculatorToolInputSchema`**
+**Guidelines:**
 
-```python:atomic_tools/calculator/tool/calculator.py
-class CalculatorToolInputSchema(BaseIOSchema):
+- Use `BaseIOSchema` as the base class.
+- Define all input fields with appropriate types and descriptions.
+- Use `Field(..., description="...")` to make a field required and to provide a description.
+- Include a docstring that briefly explains the purpose of the input schema.
+
+**Example:**
+
+```python
+################
+# Input Schema #
+################
+
+class MyToolInputSchema(BaseIOSchema):
     """
-    Tool for performing calculations. Supports basic arithmetic operations
-    like addition, subtraction, multiplication, and division, as well as more
-    complex operations like exponentiation and trigonometric functions.
-    Use this tool to evaluate mathematical expressions.
+    Captures input data required for MyTool.
     """
+    input_field1: str = Field(..., description="Description of input_field1.")
+    input_field2: int = Field(42, description="Description of input_field2 with a default value.")
+```
 
-    expression: str = Field(
-        ..., description="Mathematical expression to evaluate. For example, '2 + 2'."
+### 2. Output Schema(s)
+
+The **Output Schema(s)** define the structure of the data your tool outputs. You can have multiple output schemas if your tool produces different types of outputs.
+
+**Guidelines:**
+
+- Use `BaseIOSchema` as the base class.
+- Define all output fields with appropriate types and descriptions.
+- Include a docstring that briefly explains the purpose of the output schema.
+
+**Example:**
+
+```python
+#################
+# Output Schema #
+#################
+
+class MyToolOutputSchema(BaseIOSchema):
+    """
+    Contains the results produced by MyTool.
+    """
+    output_field1: str = Field(..., description="Description of output_field1.")
+```
+
+### 3. Configuration
+
+The **Configuration** section allows you to define settings that can customize the tool's behavior. This is where you include API keys, endpoints, or any other parameters that might change between environments or use cases.
+
+**Guidelines:**
+
+- Inherit from `BaseToolConfig`.
+- Define configuration parameters with default values and descriptions.
+- Use environment variables where appropriate to avoid hardcoding sensitive information.
+- Include a docstring that explains the purpose of the configuration class.
+
+**Example:**
+
+```python
+#################
+# Configuration #
+#################
+
+class MyToolConfig(BaseToolConfig):
+    """
+    Configuration settings for MyTool.
+    """
+    api_endpoint: str = Field(
+        default="https://api.example.com/v1",
+        description="API endpoint for MyTool."
+    )
+    api_key: str = Field(
+        default=os.getenv("MY_TOOL_API_KEY"),
+        description="API key for authenticating with the service."
     )
 ```
 
-### 2. Output Schema
+### 4. Main Tool & Logic
 
-The Output Schema defines the structure and validation rules for the data the tool returns after execution. It ensures that the output adheres to a consistent format, facilitating seamless integration with other components.
+This is the core of your tool, where you implement the main functionality.
 
-**Example: `CalculatorToolOutputSchema`**
+**Guidelines:**
 
-```python:atomic_tools/calculator/tool/calculator.py
-class CalculatorToolOutputSchema(BaseIOSchema):
-    """This schema defines the output of the CalculatorTool."""
+- Inherit from `BaseTool`.
+- Set `input_schema` and `output_schema` as class variables.
+- Implement the `run` method, which takes an instance of the input schema and returns an instance of the output schema.
+- Include a docstring that explains what the tool does.
+- Use helper methods to break down complex logic.
+- Handle exceptions gracefully, providing meaningful error messages.
 
-    result: str = Field(..., description="Result of the calculation.")
-```
+**Example:**
 
-### 3. Tool Logic
+```python
+#####################
+# Main Tool & Logic #
+#####################
 
-The Tool Logic encapsulates the core functionality of the tool, detailing how inputs are processed to produce outputs. It inherits from a base tool class and implements the `run` method, which orchestrates the tool's operations.
-
-**Example: `CalculatorTool`**
-
-```python:atomic_tools/calculator/tool/calculator.py
-class CalculatorTool(BaseTool):
+class MyTool(BaseTool):
     """
-    Tool for performing calculations based on the provided mathematical expression.
-
-    Attributes:
-        input_schema (CalculatorToolInputSchema): The schema for the input data.
-        output_schema (CalculatorToolOutputSchema): The schema for the output data.
+    Performs the main functionality of MyTool.
     """
 
-    input_schema = CalculatorToolInputSchema
-    output_schema = CalculatorToolOutputSchema
+    input_schema = MyToolInputSchema
+    output_schema = MyToolOutputSchema
 
-    def __init__(self, config: CalculatorToolConfig = CalculatorToolConfig()):
+    def __init__(self, config: MyToolConfig = MyToolConfig()):
         """
-        Initializes the CalculatorTool.
-
-        Args:
-            config (CalculatorToolConfig): Configuration for the tool.
+        Initializes MyTool with the provided configuration.
         """
         super().__init__(config)
+        self.api_endpoint = config.api_endpoint
+        self.api_key = config.api_key
 
-    def run(self, params: CalculatorToolInputSchema) -> CalculatorToolOutputSchema:
+    def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
         """
-        Executes the CalculatorTool with the given parameters.
-
-        Args:
-            params (CalculatorToolInputSchema): The input parameters for the tool.
-
-        Returns:
-            CalculatorToolOutputSchema: The result of the calculation.
+        Executes the tool's main logic.
         """
-        # Convert the expression string to a symbolic expression
-        parsed_expr = sympify(params.expression)
+        # Implement the logic here
+        result = self.perform_action(params.input_field1, params.input_field2)
+        return MyToolOutputSchema(output_field1=result)
 
-        # Evaluate the expression numerically
-        result = parsed_expr.evalf()
-        return CalculatorToolOutputSchema(result=str(result))
-```
-
-### 4. Configuration
-
-Configuration handles the settings required by the tool, such as API keys or environment variables. It ensures that sensitive information is managed securely and can be easily modified without altering the tool's core logic.
-
-**Example: `YouTubeTranscriptToolConfig`**
-
-```python:atomic_tools/youtube_transcript_scraper/tool/youtube_transcript_scraper.py
-class YouTubeTranscriptToolConfig(BaseToolConfig):
-    api_key: str = Field(
-        description="YouTube API key for fetching video metadata.",
-        default=os.getenv("YOUTUBE_API_KEY"),
-    )
+    def perform_action(self, field1: str, field2: int) -> str:
+        """
+        Helper method to perform a specific action.
+        """
+        # Example logic
+        return f"Processed {field1} with value {field2}"
 ```
 
 ### 5. Example Usage
 
-Example Usage demonstrates how to instantiate and utilize the tool within an application. It provides a practical reference for developers to integrate the tool into their workflows effectively.
+The **Example Usage** section demonstrates how to instantiate and run your tool. This is invaluable for testing and serves as documentation for users.
 
-**Example Usage: `CalculatorTool`**
+**Guidelines:**
 
-```python:atomic_tools/calculator/tool/calculator.py
+- Include a `__main__` guard to prevent code from running on import.
+- Use `rich.console` for formatted output.
+- Provide sample input data.
+- Print or log the output in a readable format.
+
+**Example:**
+
+```python
+#################
+# Example Usage #
+#################
+
 if __name__ == "__main__":
-    calculator = CalculatorTool()
-    result = calculator.run(
-        CalculatorToolInputSchema(expression="sin(pi/2) + cos(pi/4)")
+    from rich.console import Console
+
+    console = Console()
+    tool = MyTool()
+
+    input_data = MyToolInputSchema(
+        input_field1="Sample Input",
+        input_field2=123
     )
-    print(result)  # Expected output: {"result":"1.70710678118655"}
+
+    output = tool.run(input_data)
+    console.print(output)
 ```
 
-## Creating a New Tool
+## Step-by-Step Guide to Creating an Atomic Tool
 
-To create a new tool within the Atomic Agents framework, follow these steps:
+Now that we've covered the structure, let's go through the steps to create your own Atomic Tool.
 
-1. **Define the Input Schema:**
-   Specify the input parameters the tool will accept using a Pydantic `BaseModel`.
+### Step 1: Define the Purpose of Your Tool
 
-   **Example:**
-   ```python:your_tool/tool/your_tool.py
-   class YourToolInputSchema(BaseIOSchema):
-       """
-       Description of your tool's input parameters.
-       """
-       param1: str = Field(..., description="Description of param1.")
-       param2: int = Field(..., description="Description of param2.")
-   ```
+Before writing any code, clearly define what your tool will do.
 
-2. **Define the Output Schema:**
-   Specify the structure of the data the tool will return after execution.
+- **Example:** "I want to create a tool that fetches the current weather for a given city."
 
-   **Example:**
-   ```python:your_tool/tool/your_tool.py
-   class YourToolOutputSchema(BaseIOSchema):
-       """
-       Description of the tool's output.
-       """
-       result: str = Field(..., description="Description of the result.")
-   ```
+### Step 2: Design the Input Schema
 
-3. **Implement the Tool Logic:**
-   Create a class that inherits from `BaseTool`, set the `input_schema` and `output_schema`, and implement the `run` method with the tool's functionality.
+Identify what inputs your tool requires.
 
-   **Example:**
-   ```python:your_tool/tool/your_tool.py
-   class YourTool(BaseTool):
-       """
-       Tool for [brief description of what your tool does].
+- **Example Input Fields:**
+  - `city_name`: Name of the city.
+  - `units`: Units of measurement (e.g., metric or imperial).
 
-       Attributes:
-           input_schema (YourToolInputSchema): The schema for the input data.
-           output_schema (YourToolOutputSchema): The schema for the output data.
-       """
+Implement the input schema:
 
-       input_schema = YourToolInputSchema
-       output_schema = YourToolOutputSchema
+```python
+################
+# Input Schema #
+################
 
-       def __init__(self, config: YourToolConfig = YourToolConfig()):
-           """
-           Initializes the YourTool.
+class WeatherToolInputSchema(BaseIOSchema):
+    """
+    Input data required to fetch the weather.
+    """
+    city_name: str = Field(..., description="Name of the city to fetch the weather for.")
+    units: str = Field('metric', description="Units of measurement (metric or imperial).")
+```
 
-           Args:
-               config (YourToolConfig): Configuration for the tool.
-           """
-           super().__init__(config)
+### Step 3: Design the Output Schema
 
-       def run(self, params: YourToolInputSchema) -> YourToolOutputSchema:
-           """
-           Executes the YourTool with the given parameters.
+Determine what outputs your tool will produce.
 
-           Args:
-               params (YourToolInputSchema): The input parameters for the tool.
+- **Example Output Fields:**
+  - `temperature`: Current temperature.
+  - `description`: Weather description (e.g., sunny, cloudy).
 
-           Returns:
-               YourToolOutputSchema: The result of the tool's execution.
-           """
-           # Implement your tool's logic here
-           result = "your_result_based_on_params"
-           return YourToolOutputSchema(result=result)
-   ```
+Implement the output schema:
 
-4. **Configure the Tool:**
-   Create a configuration class inheriting from `BaseToolConfig` to manage any necessary settings or environment variables.
+```python
+####################
+# Output Schema(s) #
+####################
 
-   **Example:**
-   ```python:your_tool/tool/your_tool.py
-   class YourToolConfig(BaseToolConfig):
-       """
-       Configuration for YourTool.
+class WeatherToolOutputSchema(BaseIOSchema):
+    """
+    Weather data for the specified city.
+    """
+    temperature: float = Field(..., description="Current temperature in the specified units.")
+    description: str = Field(..., description="Weather description.")
+```
 
-       Attributes:
-           setting1 (str): Description of setting1.
-           setting2 (int): Description of setting2.
-       """
-       setting1: str = Field(..., description="Description of setting1.")
-       setting2: int = Field(..., description="Description of setting2.")
-   ```
+### Step 4: Set Up Configuration
 
-5. **Provide Example Usage:**
-   Add examples demonstrating how to use the tool, aiding developers in integration.
+Identify any configuration parameters, such as API keys or endpoints.
 
-   **Example Usage:**
-   ```python:your_tool/tool/your_tool.py
-   if __name__ == "__main__":
-       tool = YourTool()
-       input_data = YourToolInputSchema(param1="value1", param2=42)
-       output = tool.run(input_data)
-       print(output)  # Expected output: {"result":"expected_result"}
-   ```
+Implement the configuration class:
 
-6. **Write Tests:**
-   Develop test cases to validate the tool's functionality, ensuring it behaves as expected.
+```python
+#################
+# Configuration #
+#################
 
-   **Example Test:**
-   ```python:your_tool/tests/test_your_tool.py
-   import pytest
-   from your_tool.tool.your_tool import YourTool, YourToolInputSchema, YourToolOutputSchema, YourToolConfig
+class WeatherToolConfig(BaseToolConfig):
+    """
+    Configuration for the WeatherTool.
+    """
+    api_key: str = Field(
+        default=os.getenv("WEATHER_API_KEY"),
+        description="API key for the weather service."
+    )
+    api_endpoint: str = Field(
+        default="https://api.openweathermap.org/data/2.5/weather",
+        description="API endpoint for fetching weather data."
+    )
+```
 
-   def test_your_tool():
-       config = YourToolConfig(setting1="value1", setting2=2)
-       tool = YourTool(config=config)
-       input_data = YourToolInputSchema(param1="test", param2=10)
-       result = tool.run(input_data)
-       assert isinstance(result, YourToolOutputSchema)
-       assert result.result == "expected_result_based_on_input"
-   ```
+### Step 5: Implement the Main Tool & Logic
 
-## Best Practices
+Create the tool class and implement the logic.
 
-- **Modularity:** Design tools to perform single, well-defined tasks to enhance reusability and maintainability.
-- **Validation:** Utilize Pydantic schemas for rigorous input and output validation, ensuring data integrity.
-- **Error Handling:** Implement comprehensive error checks to manage unexpected scenarios gracefully.
-- **Configuration Management:** Securely handle sensitive information like API keys using environment variables and configuration classes.
-- **Documentation:** Provide clear docstrings and usage examples to aid developers in understanding and utilizing the tools effectively.
-- **Testing:** Develop thorough test cases to validate the tool's functionality and reliability across different scenarios.
+```python
+#####################
+# Main Tool & Logic #
+#####################
 
-## Conclusion
+class WeatherTool(BaseTool):
+    """
+    Fetches the current weather for a specified city.
+    """
 
-Mastering the anatomy of a tool within the Atomic Agents framework enables the creation of robust and efficient AI-driven applications. By adhering to the structured approach outlined in this guide, developers can ensure consistency, reliability, and scalability in their tool development endeavors.
+    input_schema = WeatherToolInputSchema
+    output_schema = WeatherToolOutputSchema
 
-For more detailed information and advanced configurations, refer to the [Atomic Agents Documentation](https://github.com/BrainBlend-AI/atomic-agents).
+    def __init__(self, config: WeatherToolConfig = WeatherToolConfig()):
+        super().__init__(config)
+        self.api_key = config.api_key
+        self.api_endpoint = config.api_endpoint
+
+    def run(self, params: WeatherToolInputSchema) -> WeatherToolOutputSchema:
+        response = self.fetch_weather(params.city_name, params.units)
+        temperature = response['main']['temp']
+        description = response['weather'][0]['description']
+        return WeatherToolOutputSchema(
+            temperature=temperature,
+            description=description
+        )
+
+    def fetch_weather(self, city_name: str, units: str) -> dict:
+        import requests
+        params = {
+            'q': city_name,
+            'units': units,
+            'appid': self.api_key
+        }
+        response = requests.get(self.api_endpoint, params=params)
+        if response.status_code != 200:
+            raise Exception(f"Error fetching weather data: {response.text}")
+        return response.json()
+```
+
+**Notes:**
+
+- **Error Handling:** We check the response status code and raise an exception if the request fails.
+- **Helper Methods:** `fetch_weather` is a helper method that encapsulates the API call.
+
+### Step 6: Test Your Tool
+
+Write an example usage to test the tool.
+
+```python
+#################
+# Example Usage #
+#################
+
+if __name__ == "__main__":
+    from rich.console import Console
+
+    console = Console()
+    tool = WeatherTool()
+
+    input_data = WeatherToolInputSchema(
+        city_name="New York",
+        units="metric"
+    )
+
+    try:
+        output = tool.run(input_data)
+        console.print(output)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+```
+
+**Testing Tips:**
+
+- Test with valid and invalid inputs.
+- Check how the tool handles exceptions.
+- Ensure the output matches the expected schema.
+
+## Best Practices and Guidelines
+
+### Do's
+
+- **Follow the Standard Structure:** Adhere to the prescribed order and format for consistency.
+- **Use Clear and Descriptive Names:** Make your code self-explanatory.
+- **Document Your Code:** Include docstrings and comments to explain the purpose and functionality.
+- **Validate Inputs Thoroughly:** Use Pydantic's features to enforce data integrity.
+- **Handle Errors Gracefully:** Provide informative error messages and handle exceptions where appropriate.
+- **Keep Functions Small and Focused:** Break down complex logic into helper methods.
+- **Test Extensively:** Use the example usage section to test various scenarios.
+
+### Don'ts
+
+- **Don't Hardcode Values:** Use configuration parameters or environment variables instead.
+- **Avoid Global Variables:** Keep the state within your tool's scope.
+- **Don't Overcomplicate:** Stick to the tool's single responsibility; avoid adding unrelated features.
+- **Don't Ignore Security:** Be cautious with sensitive information like API keys; use environment variables.
+- **Don't Neglect Performance:** Optimize your code, especially when dealing with large datasets or external API calls.
+- **Don't Skip Input Validation:** Never assume inputs are valid; always validate.
+
+## Example: Pizza Ordering Tool
+
+To illustrate the concepts, let's revisit the **Pizza Ordering Tool** example, explaining each section in detail.
+
+### Input Schema
+
+We need to capture customer details and order specifics.
+
+```python
+################
+# Input Schema #
+################
+
+class PizzaOrderInputSchema(BaseIOSchema):
+    """
+    Captures customer details and order specifics for placing a pizza order.
+    """
+    customer_name: str = Field(..., description="Name of the customer placing the order.")
+    pizza_type: str = Field(..., description="Type of pizza to order (e.g., Margherita, Pepperoni).")
+    size: str = Field(..., description="Size of the pizza (e.g., Small, Medium, Large).")
+    quantity: int = Field(..., description="Number of pizzas to order.")
+```
+
+**Explanation:**
+
+- All fields are required, indicated by `...`.
+- Each field has a descriptive message.
+- The schema is clear and self-explanatory.
+
+### Output Schemas
+
+We have two outputs: order confirmation and payment details.
+
+```python
+####################
+# Output Schemas #
+####################
+
+class OrderConfirmationSchema(BaseIOSchema):
+    """
+    Confirmation details of the placed order.
+    """
+    order_id: str = Field(..., description="Unique identifier for the order.")
+    estimated_delivery_time: str = Field(..., description="Estimated time for order delivery.")
+
+class PaymentDetailsSchema(BaseIOSchema):
+    """
+    Payment information for the order.
+    """
+    amount: float = Field(..., description="Total amount to be paid.")
+    payment_status: str = Field(..., description="Status of the payment (e.g., Paid, Pending).")
+```
+
+**Explanation:**
+
+- Separate schemas for different types of outputs.
+- Clear and descriptive fields.
+
+### Configuration
+
+Defines API endpoints and supported pizzas.
+
+```python
+#################
+# Configuration #
+#################
+
+class PizzaOrderingToolConfig(BaseToolConfig):
+    """
+    Configuration for the PizzaOrderingTool.
+    """
+    api_endpoint: str = Field(
+        default="https://api.pizzaorders.com/v1/orders",
+        description="API endpoint for processing pizza orders."
+    )
+    supported_pizzas: List[str] = Field(
+        default=["Margherita", "Pepperoni", "Veggie", "Hawaiian"],
+        description="List of supported pizza types."
+    )
+```
+
+**Explanation:**
+
+- Allows the tool to be customized without changing the code.
+- Uses defaults that can be overridden if necessary.
+
+### Main Tool & Logic
+
+Implements the tool's functionality.
+
+```python
+#####################
+# Main Tool & Logic #
+#####################
+
+class PizzaOrderingTool(BaseTool):
+    """
+    Tool for placing pizza orders through the Pizza Orders API.
+    """
+
+    input_schema = PizzaOrderInputSchema
+    output_schemas = {
+        "confirmation": OrderConfirmationSchema,
+        "payment": PaymentDetailsSchema
+    }
+
+    def __init__(self, config: PizzaOrderingToolConfig = PizzaOrderingToolConfig()):
+        super().__init__(config)
+        self.api_endpoint = config.api_endpoint
+        self.supported_pizzas = config.supported_pizzas
+
+    def run(self, params: PizzaOrderInputSchema) -> Dict[str, BaseIOSchema]:
+        # Validate pizza type
+        if params.pizza_type not in self.supported_pizzas:
+            raise ValueError(f"Pizza type '{params.pizza_type}' is not supported.")
+
+        # Simulate placing the order
+        order_id = self.place_order(params)
+        estimated_time = self.get_estimated_delivery_time(order_id)
+        amount = self.calculate_payment(params)
+        payment_status = self.process_payment(order_id, amount)
+
+        # Prepare outputs
+        confirmation = OrderConfirmationSchema(
+            order_id=order_id,
+            estimated_delivery_time=estimated_time
+        )
+        payment = PaymentDetailsSchema(
+            amount=amount,
+            payment_status=payment_status
+        )
+
+        return {
+            "confirmation": confirmation,
+            "payment": payment
+        }
+
+    def place_order(self, params: PizzaOrderInputSchema) -> str:
+        """
+        Simulates placing an order and returns an order ID.
+        """
+        # Placeholder logic; in reality, this would involve an API call.
+        return "ORD123456"
+
+    def get_estimated_delivery_time(self, order_id: str) -> str:
+        """
+        Simulates retrieving the estimated delivery time.
+        """
+        # Placeholder logic.
+        return "30 minutes"
+
+    def calculate_payment(self, params: PizzaOrderInputSchema) -> float:
+        """
+        Calculates the total amount to be paid.
+        """
+        price_per_pizza = {
+            "Margherita": 8.99,
+            "Pepperoni": 9.99,
+            "Veggie": 10.99,
+            "Hawaiian": 9.49
+        }
+        return price_per_pizza[params.pizza_type] * params.quantity
+
+    def process_payment(self, order_id: str, amount: float) -> str:
+        """
+        Simulates payment processing.
+        """
+        # Placeholder logic.
+        return "Paid"
+```
+
+**Explanation:**
+
+- **Validation:** Checks if the pizza type is supported.
+- **Modularity:** Uses helper methods for each step.
+- **Error Handling:** Raises exceptions for invalid inputs.
+- **Output Preparation:** Constructs output schemas to return.
+
+### Example Usage
+
+Testing the tool.
+
+```python
+#################
+# Example Usage #
+#################
+
+if __name__ == "__main__":
+    from rich.console import Console
+
+    console = Console()
+    pizza_tool = PizzaOrderingTool()
+
+    order_input = PizzaOrderInputSchema(
+        customer_name="Jane Smith",
+        pizza_type="Veggie",
+        size="Medium",
+        quantity=1
+    )
+
+    try:
+        outputs = pizza_tool.run(order_input)
+        console.print(outputs)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+```
+
+**Remember:** The goal of the Atomic Agents framework is to build powerful applications by composing small, well-defined tools and agents. Your contributions help make the framework more robust and versatile.
+
+---
+
+By following this guide and adhering to the best practices outlined, you'll be well on your way to creating effective and reusable Atomic Tools that can be combined to build powerful AI applications. Happy coding!

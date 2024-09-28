@@ -30,21 +30,23 @@ class YouTubeTranscriptToolInputSchema(BaseIOSchema):
     )
 
 
-####################
-# OUTPUT SCHEMA(S) #
-####################
+#################
+# OUTPUT SCHEMA #
+#################
 class YouTubeTranscriptToolOutputSchema(BaseIOSchema):
-    """Output schema for the YouTubeTranscriptTool. Contains the transcript text, duration, comments, and metadata."""
+    """
+    Output schema for the YouTubeTranscriptTool. Contains the transcript text, duration, comments, and metadata.
+    """
 
-    transcript: str
-    duration: float
-    comments: List[str]
-    metadata: dict
+    transcript: str = Field(..., description="Transcript of the YouTube video.")
+    duration: float = Field(..., description="Duration of the YouTube video.")
+    comments: List[str] = Field(..., description="Comments on the YouTube video.")
+    metadata: dict = Field(..., description="Metadata of the YouTube video.")
 
 
-##############
-# TOOL LOGIC #
-##############
+#################
+# CONFIGURATION #
+#################
 class YouTubeTranscriptToolConfig(BaseToolConfig):
     api_key: str = Field(
         description="YouTube API key for fetching video metadata.",
@@ -52,6 +54,9 @@ class YouTubeTranscriptToolConfig(BaseToolConfig):
     )
 
 
+#####################
+# MAIN TOOL & LOGIC #
+#####################
 class YouTubeTranscriptTool(BaseTool):
     """
     Tool for fetching the transcript of a YouTube video using the YouTube Transcript API.

@@ -21,22 +21,31 @@ class CalculatorToolInputSchema(BaseIOSchema):
     )
 
 
-####################
-# OUTPUT SCHEMA(S) #
-####################
+#################
+# OUTPUT SCHEMA #
+#################
 class CalculatorToolOutputSchema(BaseIOSchema):
-    """This schema defines the output of the CalculatorTool."""
+    """
+    Schema for the output of the CalculatorTool.
+    """
 
     result: str = Field(..., description="Result of the calculation.")
 
 
-##############
-# TOOL LOGIC #
-##############
+#################
+# CONFIGURATION #
+#################
 class CalculatorToolConfig(BaseToolConfig):
+    """
+    Configuration for the CalculatorTool.
+    """
+
     pass
 
 
+#####################
+# MAIN TOOL & LOGIC #
+#####################
 class CalculatorTool(BaseTool):
     """
     Tool for performing calculations based on the provided mathematical expression.
