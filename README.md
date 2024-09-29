@@ -1,3 +1,7 @@
+# NOTICE:
+A NEW VERSION OF ATOMIC AGENTS IS UNDER DEVELOPMENT. THIS README IS OUTDATED.
+CHECK BACK SOON FOR AN UPDATE.
+
 # Atomic Agents
 
 Atomic Agents is a framework for building and running AI agents using a modular approach. It is designed to be easy to understand, extend, and maintain.
