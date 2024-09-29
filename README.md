@@ -19,7 +19,7 @@ There are two main components to the Atomic Agents framework:
    pip install atomic-agents
    ```
 
-2. Install the Atomic Assembler CLI. This is optional, but it provides a convenient way to grab new Atomic Tools from the [Atomic Forge](@atomic-forge):
+2. Install the Atomic Assembler CLI. This is optional, but it provides a convenient way to grab new Atomic Tools from the [Atomic Forge](atomic-forge):
    ```bash
    pip install atomic-assembler
    ```
