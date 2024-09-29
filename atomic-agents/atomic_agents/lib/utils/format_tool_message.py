@@ -1,8 +1,7 @@
-import uuid
 import json
-from typing import Dict, Optional, Type
-
+import uuid
 from pydantic import BaseModel
+from typing import Dict, Optional, Type
 
 
 def format_tool_message(tool_call: Type[BaseModel], tool_id: Optional[str] = None) -> Dict:

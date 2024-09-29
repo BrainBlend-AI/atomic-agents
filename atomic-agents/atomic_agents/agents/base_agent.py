@@ -1,9 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Type
 import inspect
-
 import instructor
+from pydantic import BaseModel, Field
 from rich.json import JSON
+from typing import Optional, Type
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
