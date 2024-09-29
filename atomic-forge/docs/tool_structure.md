@@ -4,6 +4,9 @@
 
 This guide aims to explain the anatomy of an **Atomic Tool** within the **Atomic Agents** framework and help you get started adding your own tools, either to your own project or to the repository to share with others. We'll walk through the entire process step-by-step, using a mock **Pizza Ordering Tool** as our running example.
 
+## Prerequisites
+- **uv**: Install the [uv](https://docs.astral.sh/uv/) dependency manager.
+
 ## The Principles
 
 An **Atomic Tool** should always be self-contained and modular. This means it should encapsulate specific functionality, such as a calculator, a YouTube transcript scraper, or, in our case, a pizza ordering service. Each tool should be runnable both standalone and by an AI Agent, allowing for easy integration, maintenance, and extension.
@@ -18,6 +21,35 @@ An **Atomic Tool** should always be self-contained and modular. This means it sh
 - **Executable Independently:** Can run on its own or as part of an Atomic Agent.
 
 ## Anatomy of an Atomic Tool
+
+### Folder Structure
+Each tool should be placed in its own folder with the following structure:
+
+```
+tool_name/
+│   .coveragerc
+│   pyproject.toml
+│   README.md
+│   requirements.txt
+│   uv.lock
+│
+├── tool/
+│   │   tool_name.py
+│   │   some_util_file.py
+│   │   another_util_file.py
+│
+└── tests/
+    │   test_tool_name.py
+    │   test_some_util_file.py
+    │   test_another_util_file.py
+```
+
+In order to keep things modular and organized, you should place your tool code in the `tool/` folder and your test code in the `tests/` folder. Other than that, there are the following files to consider:
+- `pyproject.toml`: This is the Python project file that contains metadata about your project and its dependencies. It is used by [`uv`](https://docs.astral.sh/uv/) to install dependencies and run the tool. Remember to run `uv venv` before starting development to make sure you are working in a clean stand-alone environment.
+- `README.md`: This is the readme file that contains information about your tool. This is where you will add information about how to use your tool, its purpose, environment variables, etc. Be sure to look at existing READMEs for examples.
+- `requirements.txt`: This is the requirements file that contains just the runtime dependencies for your tool. These should match exactly the dependencies in `pyproject.toml` without any development dependencies.
+- `.coveragerc`: This is the coverage configuration file that contains the configuration for the coverage tool. This file is the same accross all tools and should always be included.
+- `uv.lock`: This is the lock file that contains the exact versions of the dependencies that were installed when `uv sync` was last run. This file should be committed as well.
 
 ### Inheritance and Base Classes
 
