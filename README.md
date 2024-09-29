@@ -14,9 +14,14 @@ There are two main components to the Atomic Agents framework:
 
 ### Installation
 
-1. Install the Atomic Agents package through pip:
+1. Either install the Atomic Agents package through pip, or locally from source:
    ```bash
    pip install atomic-agents
+   ```
+   or
+   ```bash
+   cd atomic-agents
+   pip install -e .
    ```
 
 2. Install the Atomic Assembler CLI. This is optional, but it provides a convenient way to grab new Atomic Tools from the [Atomic Forge](atomic-forge):
