@@ -4,12 +4,26 @@ CHECK BACK SOON FOR AN UPDATE.
 
 # Atomic Agents
 
-Atomic Agents is a framework for building and running AI agents using a modular approach. It is designed to be easy to understand, extend, and maintain.
+A versatile framework designed to facilitate the creation and management of intelligent agents, with an optional CLI tool.
 
-There are two main components to the Atomic Agents framework:
+## Installation
 
-1. **Atomic Agents** - The core framework for building and running AI agents.
-2. **Atomic Assembler** - A CLI tool for creating, testing, and publishing your own Atomic Tools.
+You can install Atomic Agents with different options:
+
+- Full installation (framework + CLI):
+  ```bash
+  pip install atomic-agents
+  ```
+
+- Core framework only:
+  ```bash
+  pip install atomic-agents[core]
+  ```
+
+- CLI tool only:
+  ```bash
+  pip install atomic-agents[cli]
+  ```
 
 ## Getting Started
 

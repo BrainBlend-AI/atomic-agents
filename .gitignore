@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -14,6 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+lib/
 lib64/
 parts/
 sdist/
@@ -26,16 +27,18 @@ share/python-wheels/
 MANIFEST
 site-packages/
 
-# Virtual environment
-venv/
-ENV/
+# Virtual environments
+.env
+.env.*
+.venv
+.venv.*
 env/
-venv.bak/
+env.bak/
 venv/
+venv.bak/
+ENV/
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -62,20 +65,19 @@ cover/
 *.mo
 *.pot
 
-# Django stuff:
+# Django stuff
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
+# Flask stuff
 instance/
 .webassets-cache
 
-# Scrapy stuff:
+# Scrapy stuff
 .scrapy
-# Virtual environment
-venv/
+
 # Sphinx documentation
 docs/_build/
 
@@ -97,16 +99,6 @@ celerybeat-schedule
 
 # SageMath parsed files
 *.sage.py
-
-# Environments
-.env
-.env.*
-.venv
-.venv.*
-env/
-env.bak/
-venv/
-venv.bak/
 
 # Spyder project settings
 .spyderproject
@@ -132,14 +124,26 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Chroma related
 chromadb_persist/
 chroma_data/
 chromadb_tmp/
 
+# IDEs and editors
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Project specific
 personal_experiments/
-
 *.psd
-
 .output/
+
+# Logs
+debug.log
