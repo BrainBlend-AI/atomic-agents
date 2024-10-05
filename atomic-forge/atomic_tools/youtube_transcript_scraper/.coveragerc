@@ -1,4 +1,5 @@
 [run]
+source = tool
 omit = */tests/*
 
 [report]
