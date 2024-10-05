@@ -127,7 +127,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
+from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 ```
 
 ### 2. Input Schema

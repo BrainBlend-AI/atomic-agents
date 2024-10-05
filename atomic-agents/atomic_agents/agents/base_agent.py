@@ -1,42 +1,10 @@
-import inspect
 import instructor
 from pydantic import BaseModel, Field
-from rich.json import JSON
 from typing import Optional, Type
 
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
-
-
-class BaseIOSchema(BaseModel):
-    def __str__(self):
-        return self.model_dump_json()
-
-    def __rich__(self):
-        json_str = self.model_dump_json()
-        return JSON(json_str)
-
-    @classmethod
-    def __pydantic_init_subclass__(cls, **kwargs):
-        super().__pydantic_init_subclass__(**kwargs)
-        cls._validate_description()
-
-    @classmethod
-    def _validate_description(cls):
-        description = cls.__doc__
-
-        if not description or not description.strip():
-            if cls.__module__ != "instructor.function_calls":
-                raise ValueError(f"{cls.__name__} must have a non-empty docstring to serve as its description")
-
-    @classmethod
-    def model_json_schema(cls, *args, **kwargs):
-        schema = super().model_json_schema(*args, **kwargs)
-        if "description" not in schema and cls.__doc__:
-            schema["description"] = inspect.cleandoc(cls.__doc__)
-        if "title" not in schema:
-            schema["title"] = cls.__name__
-        return schema
+from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 
 class BaseAgentInputSchema(BaseIOSchema):
@@ -267,3 +235,8 @@ if __name__ == "__main__":
     )
 
     console.print("\n[bold]Agent initialized and ready to use![/bold]")
+
+    # Run the agent with a sample input
+    sample_input = agent.input_schema(chat_message="Hello, how are you?")
+    response = agent.run(sample_input)
+    console.print(f"[bold]Response:[/bold] {response.chat_message}")

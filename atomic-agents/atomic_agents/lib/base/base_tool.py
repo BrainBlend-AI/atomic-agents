@@ -1,7 +1,7 @@
 from typing import Optional, Type
 from pydantic import BaseModel
 
-from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 
 class BaseToolConfig(BaseModel):

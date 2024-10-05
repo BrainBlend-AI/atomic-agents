@@ -2,7 +2,7 @@ from pydantic import Field
 from sympy import sympify
 
 from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
+from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 
 
 ################
@@ -16,9 +16,7 @@ class CalculatorToolInputSchema(BaseIOSchema):
     Use this tool to evaluate mathematical expressions.
     """
 
-    expression: str = Field(
-        ..., description="Mathematical expression to evaluate. For example, '2 + 2'."
-    )
+    expression: str = Field(..., description="Mathematical expression to evaluate. For example, '2 + 2'.")
 
 
 #################
@@ -90,7 +88,5 @@ class CalculatorTool(BaseTool):
 #################
 if __name__ == "__main__":
     calculator = CalculatorTool()
-    result = calculator.run(
-        CalculatorToolInputSchema(expression="sin(pi/2) + cos(pi/4)")
-    )
+    result = calculator.run(CalculatorToolInputSchema(expression="sin(pi/2) + cos(pi/4)"))
     print(result)  # Expected output: {"result":"1.70710678118655"}

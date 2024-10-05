@@ -4,7 +4,7 @@ from pydantic import Field
 import instructor
 
 from atomic_agents.agents.tool_interface_agent import ToolInterfaceAgent, ToolInterfaceAgentConfig
-from atomic_agents.lib.tools.base_tool import BaseTool
+from atomic_agents.lib.base.base_tool import BaseTool
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgentOutputSchema
 
 

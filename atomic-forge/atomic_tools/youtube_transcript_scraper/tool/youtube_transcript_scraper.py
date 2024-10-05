@@ -10,7 +10,7 @@ from youtube_transcript_api import (
 )
 
 from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.tools.base_tool import BaseTool, BaseToolConfig
+from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 
 
 ################
@@ -22,12 +22,8 @@ class YouTubeTranscriptToolInputSchema(BaseIOSchema):
     Returns the transcript with text, start time, and duration.
     """
 
-    video_url: str = Field(
-        ..., description="URL of the YouTube video to fetch the transcript for."
-    )
-    language: Optional[str] = Field(
-        None, description="Language code for the transcript (e.g., 'en' for English)."
-    )
+    video_url: str = Field(..., description="URL of the YouTube video to fetch the transcript for.")
+    language: Optional[str] = Field(None, description="Language code for the transcript (e.g., 'en' for English).")
 
 
 #################
@@ -79,9 +75,7 @@ class YouTubeTranscriptTool(BaseTool):
         super().__init__(config)
         self.api_key = config.api_key
 
-    def run(
-        self, params: YouTubeTranscriptToolInputSchema
-    ) -> YouTubeTranscriptToolOutputSchema:
+    def run(self, params: YouTubeTranscriptToolInputSchema) -> YouTubeTranscriptToolOutputSchema:
         """
         Runs the YouTubeTranscriptTool with the given parameters.
 
@@ -97,15 +91,11 @@ class YouTubeTranscriptTool(BaseTool):
         video_id = self.extract_video_id(params.video_url)
         try:
             if params.language:
-                transcripts = YouTubeTranscriptApi.get_transcript(
-                    video_id, languages=[params.language]
-                )
+                transcripts = YouTubeTranscriptApi.get_transcript(video_id, languages=[params.language])
             else:
                 transcripts = YouTubeTranscriptApi.get_transcript(video_id)
         except (NoTranscriptFound, TranscriptsDisabled) as e:
-            raise Exception(
-                f"Failed to fetch transcript for video '{video_id}': {str(e)}"
-            )
+            raise Exception(f"Failed to fetch transcript for video '{video_id}': {str(e)}")
 
         transcript_text = " ".join([transcript["text"] for transcript in transcripts])
         total_duration = sum([transcript["duration"] for transcript in transcripts])
@@ -167,13 +157,9 @@ if __name__ == "__main__":
 
     rich_console = Console()
     api_key = os.getenv("YOUTUBE_API_KEY")
-    search_tool_instance = YouTubeTranscriptTool(
-        config=YouTubeTranscriptToolConfig(api_key=api_key)
-    )
+    search_tool_instance = YouTubeTranscriptTool(config=YouTubeTranscriptToolConfig(api_key=api_key))
 
-    search_input = YouTubeTranscriptTool.input_schema(
-        video_url="https://www.youtube.com/watch?v=t1e8gqXLbsU", language="en"
-    )
+    search_input = YouTubeTranscriptTool.input_schema(video_url="https://www.youtube.com/watch?v=t1e8gqXLbsU", language="en")
 
     output = search_tool_instance.run(search_input)
     rich_console.print(output)
