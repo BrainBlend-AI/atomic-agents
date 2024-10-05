@@ -138,9 +138,7 @@ class FileExplorerScreen(Screen):
 
     def update_current_path_display(self):
         """Update the display of the current path."""
-        self.current_path_widget.update(
-            f"Current directory: [bold {PRIMARY_COLOR}]{self.current_path}[/bold {PRIMARY_COLOR}]"
-        )
+        self.current_path_widget.update(f"Current directory: [bold {PRIMARY_COLOR}]{self.current_path}[/bold {PRIMARY_COLOR}]")
 
     @on(GenericList.Highlighted)
     def on_highlighted(self, list_view):
@@ -154,15 +152,11 @@ class FileExplorerScreen(Screen):
     def _get_file_items(self):
         """Get the list of file items to display."""
         items = []
-        for item in sorted(
-            self.current_path.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())
-        ):
+        for item in sorted(self.current_path.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower())):
             if self.mode == Mode.DIRECTORY_MODE and item.is_file():
                 continue  # Skip files in directory mode
             if self._is_allowed_file(item):
-                items.append(
-                    {"path": item, "is_dir": item.is_dir(), "is_parent": False}
-                )
+                items.append({"path": item, "is_dir": item.is_dir(), "is_parent": False})
         return items
 
     def _is_allowed_file(self, path: Path) -> bool:
@@ -199,9 +193,7 @@ class FileExplorerScreen(Screen):
 
     def handle_item_selection(self, item: dict):
         """Handle the selection of an item based on the current mode."""
-        if (self.mode == Mode.DIRECTORY_MODE and item["is_dir"]) or (
-            self.mode == Mode.FILE_MODE and not item["is_dir"]
-        ):
+        if (self.mode == Mode.DIRECTORY_MODE and item["is_dir"]) or (self.mode == Mode.FILE_MODE and not item["is_dir"]):
             self.selected_file = item["path"]
             item_type = "folder" if item["is_dir"] else "file"
             logging.info(f"{item_type.capitalize()} selected: {self.selected_file}")
@@ -238,9 +230,7 @@ class FileExplorerScreen(Screen):
         if confirmed and self.selected_file:
             logging.info(f"Selection confirmed: {self.selected_file}")
             if self.callback:
-                logging.info(
-                    f"Calling callback with selected file: {self.selected_file}"
-                )
+                logging.info(f"Calling callback with selected file: {self.selected_file}")
                 self.app.pop_screen()  # Pop the screen after callback
 
                 self.callback(self.selected_file)  # Ensure this is called
@@ -280,9 +270,7 @@ class FileExplorerScreen(Screen):
                     logging.info(f"New file created: {new_item_path}")
                 self.refresh_file_list()
             except FileExistsError:
-                logging.warning(
-                    f"Failed to create item, already exists: {new_item_path}"
-                )
+                logging.warning(f"Failed to create item, already exists: {new_item_path}")
                 self.bell()
             finally:
                 self.new_item_input.value = ""
@@ -321,9 +309,7 @@ class FileExplorerScreen(Screen):
             # Store the current selection before going up
             highlighted_item = self.file_list.highlighted_child
             if highlighted_item:
-                self.directory_selections[self.current_path] = (
-                    highlighted_item.item_data["path"]
-                )
+                self.directory_selections[self.current_path] = highlighted_item.item_data["path"]
             self.current_path = self.current_path.parent
             logging.info(f"Moved up to directory: {self.current_path}")
 
@@ -336,11 +322,7 @@ class FileExplorerScreen(Screen):
         if action == "new_folder":
             can_run = self.enable_folder_creation and not self.new_item_mode
         elif action == "new_file":
-            can_run = (
-                self.enable_file_creation
-                and not self.new_item_mode
-                and self.mode == Mode.FILE_MODE
-            )  # Check mode
+            can_run = self.enable_file_creation and not self.new_item_mode and self.mode == Mode.FILE_MODE  # Check mode
         elif action == "handle_escape":
             can_run = True
         elif action in ["go_up_folder", "enter_folder"]:

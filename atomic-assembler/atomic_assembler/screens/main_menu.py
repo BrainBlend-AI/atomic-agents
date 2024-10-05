@@ -72,9 +72,7 @@ class MainMenuScreen(Screen):
         """Handle the selection of a menu item."""
         selected_option = MENU_OPTIONS[event.index]
 
-        self.app.handle_menu_action(
-            selected_option.action, **(selected_option.params or {})
-        )
+        self.app.handle_menu_action(selected_option.action, **(selected_option.params or {}))
 
     def action_quit(self) -> None:
         """Quit the application."""

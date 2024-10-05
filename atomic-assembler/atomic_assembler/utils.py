@@ -13,9 +13,7 @@ class GithubRepoCloner:
     def __init__(self, base_url: str, branch: str = "main"):
         self.repo_url = base_url
         self.temp_dir = tempfile.mkdtemp()
-        self.repo_path = os.path.join(
-            self.temp_dir, os.path.basename(base_url).replace('.git', '')
-        )
+        self.repo_path = os.path.join(self.temp_dir, os.path.basename(base_url).replace(".git", ""))
         self.tools_path = os.path.join(self.repo_path, TOOLS_SUBFOLDER)
 
     def clone(self):
@@ -69,9 +67,7 @@ class AtomicToolManager:
 
     @staticmethod
     def copy_atomic_tool(tool_path, destination):
-        logging.info(
-            f"copy_atomic_tool called with tool_path: {tool_path}, destination: {destination}"
-        )
+        logging.info(f"copy_atomic_tool called with tool_path: {tool_path}, destination: {destination}")
         try:
             tool_name = os.path.basename(tool_path)
             local_tool_path = os.path.join(destination, tool_name)
@@ -83,9 +79,7 @@ class AtomicToolManager:
 
             if not os.path.exists(destination):
                 logging.error(f"Destination path does not exist: {destination}")
-                raise FileNotFoundError(
-                    f"Destination path does not exist: {destination}"
-                )
+                raise FileNotFoundError(f"Destination path does not exist: {destination}")
 
             shutil.copytree(
                 tool_path,

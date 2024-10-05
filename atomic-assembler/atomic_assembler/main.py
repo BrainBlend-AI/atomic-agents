@@ -4,6 +4,7 @@ import argparse
 from atomic_assembler.constants import GITHUB_BASE_URL
 from atomic_assembler.app import AtomicAssembler
 
+
 def setup_logging(enable_logging: bool):
     if enable_logging:
         logging.basicConfig(
@@ -16,7 +17,9 @@ def setup_logging(enable_logging: bool):
     else:
         logging.basicConfig(level=logging.CRITICAL)
 
+
 logger = logging.getLogger(__name__)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Atomic Assembler")
@@ -27,6 +30,7 @@ def main():
 
     app = AtomicAssembler()
     app.run()
+
 
 if __name__ == "__main__":
     main()

@@ -10,16 +10,12 @@ from typing import Callable
 class ConfirmationModal(ModalScreen):
     """A modal widget for confirming file selection."""
 
-    def __init__(
-        self, message: str, callback: Callable[[bool], None], mode: str = "yes_no"
-    ):
+    def __init__(self, message: str, callback: Callable[[bool], None], mode: str = "yes_no"):
         super().__init__()
         self.message = message
         self.callback = callback
         self.mode = mode
-        logging.info(
-            f"ConfirmationModal initialized with message: {message} and mode: {mode}"
-        )
+        logging.info(f"ConfirmationModal initialized with message: {message} and mode: {mode}")
 
     BINDINGS = [
         ("y", "confirm", "Yes"),

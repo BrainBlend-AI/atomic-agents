@@ -47,9 +47,7 @@ class GenericList(ListView):
         self.item_renderer = item_renderer
         self.highlighted_index = 0
 
-    def update_list(
-        self, new_items: list, highlighted_item: Optional[Any] = None
-    ):  # Improved parameter name
+    def update_list(self, new_items: list, highlighted_item: Optional[Any] = None):  # Improved parameter name
         """Update the list with new items and optionally highlight one.
 
         Args:

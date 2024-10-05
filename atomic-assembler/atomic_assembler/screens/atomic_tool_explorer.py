@@ -90,9 +90,7 @@ class AtomicToolExplorerScreen(Screen):
         self.github_repo_cloner.cleanup()
 
     def refresh_tool_list(self):
-        tools = self.atomic_tool_manager.get_atomic_tools(
-            self.github_repo_cloner.tools_path
-        )
+        tools = self.atomic_tool_manager.get_atomic_tools(self.github_repo_cloner.tools_path)
         self.tool_list.update_list(tools)
 
     def _render_tool_item(self, tool: dict) -> str:
@@ -111,11 +109,7 @@ class AtomicToolExplorerScreen(Screen):
 
     def _open_file_explorer_for_directory(self):
         logging.info("Opening FileExplorerScreen in directory mode")
-        self.app.push_screen(
-            FileExplorerScreen(
-                mode=Mode.DIRECTORY_MODE, callback=self.handle_directory_selection
-            )
-        )
+        self.app.push_screen(FileExplorerScreen(mode=Mode.DIRECTORY_MODE, callback=self.handle_directory_selection))
 
     def handle_directory_selection(self, selected_dir: Path):
         logging.info(f"Directory selected: {selected_dir}")
@@ -127,9 +121,7 @@ class AtomicToolExplorerScreen(Screen):
 
     def _copy_tool_to_directory(self, selected_dir: Path):
         try:
-            local_tool_path = self.atomic_tool_manager.copy_atomic_tool(
-                self.current_tool["path"], selected_dir
-            )
+            local_tool_path = self.atomic_tool_manager.copy_atomic_tool(self.current_tool["path"], selected_dir)
             logging.info(f"Tool successfully copied to {local_tool_path}")
             modal = ConfirmationModal(
                 f"Tool copied to {local_tool_path}. Press any key to continue.",
@@ -151,9 +143,7 @@ class AtomicToolExplorerScreen(Screen):
 
     def update_current_tool(self, tool: dict):
         if tool:
-            self.current_tool_widget.update(
-                f"Current tool: [bold {PRIMARY_COLOR}]{tool['name']}[/bold {PRIMARY_COLOR}]"
-            )
+            self.current_tool_widget.update(f"Current tool: [bold {PRIMARY_COLOR}]{tool['name']}[/bold {PRIMARY_COLOR}]")
         else:
             self.current_tool_widget.update("")
 

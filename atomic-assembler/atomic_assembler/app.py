@@ -26,7 +26,7 @@ class AtomicAssembler(App):
         "file_explorer": FileExplorerScreen,
     }
 
-    def __init__(self, *args,  **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.selected_path = None
 
@@ -51,9 +51,7 @@ class AtomicAssembler(App):
 
     def open_github(self) -> None:
         """Open the Atomic Agents GitHub page in a web browser."""
-        webbrowser.open(
-            "https://github.com/BrainBlend-AI/atomic-agents"
-        )
+        webbrowser.open("https://github.com/BrainBlend-AI/atomic-agents")
 
     def push_file_explorer(self, **kwargs):
         """Push the file explorer screen in file mode."""

@@ -50,9 +50,7 @@ class MenuWidget(Widget):
         for index, item in enumerate(self._menu_items):
             is_selected = index == self._selected_index
             menu_text = (
-                f"[{PRIMARY_COLOR} bold][ {item.label} ][/{PRIMARY_COLOR} bold]"
-                if is_selected
-                else f"  {item.label}  "
+                f"[{PRIMARY_COLOR} bold][ {item.label} ][/{PRIMARY_COLOR} bold]" if is_selected else f"  {item.label}  "
             )
             rendered_menu_items.append(f"[center]{menu_text}[/center]")
 
@@ -72,6 +70,4 @@ class MenuWidget(Widget):
 
     def _move_selection(self, direction: int) -> None:
         """Move the selection up or down, wrapping around if necessary."""
-        self._selected_index = (self._selected_index + direction) % len(
-            self._menu_items
-        )
+        self._selected_index = (self._selected_index + direction) % len(self._menu_items)

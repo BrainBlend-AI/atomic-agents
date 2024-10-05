@@ -72,9 +72,7 @@ class ToolInfoDisplay(Widget):
             # Tool Details Section
             with Static(classes="tool-details"):
                 yield Static("🔧 Tool Details", id="tool-header")
-                yield Static(
-                    f"Name: {self.tool_info.get('tool_name', 'N/A')}", id="tool-name"
-                )
+                yield Static(f"Name: {self.tool_info.get('tool_name', 'N/A')}", id="tool-name")
                 yield Static(
                     f"Description: {self.tool_info.get('tool_description', 'No description available.')}",
                     id="tool-description",
@@ -97,9 +95,7 @@ class ToolInfoDisplay(Widget):
                                 classes="env-var-default",
                             )
             else:
-                yield Static(
-                    "No environment variables available.", classes="env-var-description"
-                )
+                yield Static("No environment variables available.", classes="env-var-description")
 
     def watch_tool_info(self, new_info: dict) -> None:
         """React to changes in the tool_info."""

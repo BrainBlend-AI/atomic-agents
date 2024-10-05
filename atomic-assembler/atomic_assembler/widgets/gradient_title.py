@@ -57,9 +57,7 @@ class GradientTitle(Static):
                 continue
 
             mix_ratio = (math.sin(self.gradient_offset + line_index * 0.33) + 1) / 2
-            interpolated_color = interpolate_color(
-                self.start_color, self.end_color, mix_ratio
-            )
+            interpolated_color = interpolate_color(self.start_color, self.end_color, mix_ratio)
 
             styled_line = Text(line, Style(color=interpolated_color, bold=True))
             gradient_lines.append(styled_line)
@@ -75,8 +73,6 @@ class GradientTitle(Static):
         """
         gradient_lines = self.create_gradient_text_lines()
 
-        centered_lines = [
-            Align.center(line, width=self.max_width) for line in gradient_lines
-        ]
+        centered_lines = [Align.center(line, width=self.max_width) for line in gradient_lines]
 
         return Align.center(Group(*centered_lines), vertical="middle")

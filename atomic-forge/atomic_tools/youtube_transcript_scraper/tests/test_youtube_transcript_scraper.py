@@ -36,13 +36,9 @@ def test_youtube_transcript_tool():
     ), patch("tool.youtube_transcript_scraper.build") as mock_build:
         mock_youtube = MagicMock()
         mock_build.return_value = mock_youtube
-        mock_youtube.videos().list().execute.return_value = {
-            "items": [{"snippet": mock_metadata}]
-        }
+        mock_youtube.videos().list().execute.return_value = {"items": [{"snippet": mock_metadata}]}
 
-        youtube_transcript_tool = YouTubeTranscriptTool(
-            YouTubeTranscriptToolConfig(api_key=mock_api_key)
-        )
+        youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key=mock_api_key))
         input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url)
         result = youtube_transcript_tool.run(input_schema)
 
@@ -77,16 +73,10 @@ def test_youtube_transcript_tool_with_language():
     ), patch("tool.youtube_transcript_scraper.build") as mock_build:
         mock_youtube = MagicMock()
         mock_build.return_value = mock_youtube
-        mock_youtube.videos().list().execute.return_value = {
-            "items": [{"snippet": mock_metadata}]
-        }
+        mock_youtube.videos().list().execute.return_value = {"items": [{"snippet": mock_metadata}]}
 
-        youtube_transcript_tool = YouTubeTranscriptTool(
-            YouTubeTranscriptToolConfig(api_key=mock_api_key)
-        )
-        input_schema = YouTubeTranscriptToolInputSchema(
-            video_url=mock_video_url, language="en"
-        )
+        youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key=mock_api_key))
+        input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url, language="en")
         result = youtube_transcript_tool.run(input_schema)
 
         assert isinstance(result, YouTubeTranscriptToolOutputSchema)
@@ -105,9 +95,7 @@ def test_youtube_transcript_tool_no_transcript():
             transcript_data=None,
         ),
     ):
-        youtube_transcript_tool = YouTubeTranscriptTool(
-            YouTubeTranscriptToolConfig(api_key=mock_api_key)
-        )
+        youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key=mock_api_key))
         input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url)
 
         with pytest.raises(Exception) as excinfo:
@@ -124,9 +112,7 @@ def test_youtube_transcript_tool_transcripts_disabled():
         "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
         side_effect=TranscriptsDisabled("Transcripts are disabled"),
     ):
-        youtube_transcript_tool = YouTubeTranscriptTool(
-            YouTubeTranscriptToolConfig(api_key=mock_api_key)
-        )
+        youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key=mock_api_key))
         input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url)
 
         with pytest.raises(Exception) as excinfo:
@@ -144,9 +130,7 @@ def test_fetch_video_metadata_no_items():
         mock_build.return_value = mock_youtube
         mock_youtube.videos().list().execute.return_value = {"items": []}
 
-        youtube_transcript_tool = YouTubeTranscriptTool(
-            YouTubeTranscriptToolConfig(api_key=mock_api_key)
-        )
+        youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key=mock_api_key))
 
         with pytest.raises(Exception) as excinfo:
             youtube_transcript_tool.fetch_video_metadata("dQw4w9WgXcQ")
@@ -155,9 +139,7 @@ def test_fetch_video_metadata_no_items():
 
 
 def test_extract_video_id():
-    youtube_transcript_tool = YouTubeTranscriptTool(
-        YouTubeTranscriptToolConfig(api_key="mock_api_key")
-    )
+    youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key="mock_api_key"))
     video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     video_id = youtube_transcript_tool.extract_video_id(video_url)
     assert video_id == "dQw4w9WgXcQ"
