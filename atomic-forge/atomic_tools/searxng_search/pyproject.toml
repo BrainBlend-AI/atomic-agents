@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "searxng-search"
+version = "1.0"
+description = "A tool for performing searches using SearxNG"
+authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<4"
+atomic-agents = {path = "../../../", develop = true}
+pydantic = ">=2.8.2,<3"
+aiohttp = ">=3.9.0,<4"
+
+[tool.poetry.group.dev.dependencies]
+coverage = ">=7.6.1,<8.0.0"
+pytest = ">=8.3.3,<9.0.0"
+pytest-asyncio = ">=0.23.5,<1.0.0"
+pytest-cov = ">=5.0.0,<6.0.0"
+python-dotenv = ">=1.0.0,<2.0.0"
+rich = ">=13.7.0,<14.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

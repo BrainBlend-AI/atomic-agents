@@ -11,6 +11,18 @@ You can install the tool using any of the following options:
 
 ## Configuration
 
+### Parameters
+
+- `api_key` (str): Your YouTube API key. Obtain this key by following the steps outlined in the [Obtaining a YouTube API Key](#obtaining-a-youtube-api-key) section.
+
+### Example
+
+```python
+config = YouTubeTranscriptToolConfig(
+    api_key="your_youtube_api_key"
+)
+```
+
 ### Obtaining a YouTube API Key
 
 To use this tool, you'll need a YouTube API key. Follow these steps to obtain one:
@@ -31,7 +43,7 @@ To use this tool, you'll need a YouTube API key. Follow these steps to obtain on
 4. **Generate Your API Key**
    - Navigate to "Credentials" in the left sidebar.
    - Click on "Create Credentials" and select "API Key."
-   - Copy the generated API key and add it to your `.env` file as shown above.
+   - Copy the generated API key and use it in your configuration as shown above.
 
 ## Input & Output Structure
 
