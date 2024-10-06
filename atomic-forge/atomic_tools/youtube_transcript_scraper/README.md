@@ -6,7 +6,8 @@ The **YouTube Transcript Scraper Tool** is a tool within the Atomic Agents ecosy
 ## Installation
 You can install the tool using any of the following options:
 
-1. Good old fashioned copy/paste: Just like any other tool inside the Atomic Forge, you can copy the code from this repo directly into your own project, provided you already have atomic-agents installed according to the instructions in the main [README](/README.md).
+1. Using the CLI tool that comes with Atomic Agents. Simply run `atomic` and select the tool from the list of available tools. After doing so you will be asked for a target directory to download the tool into.
+2. Good old fashioned copy/paste: Just like any other tool inside the Atomic Forge, you can copy the code from this repo directly into your own project, provided you already have atomic-agents installed according to the instructions in the main [README](/README.md).
 
 ## Configuration
 
@@ -32,7 +33,17 @@ To use this tool, you'll need a YouTube API key. Follow these steps to obtain on
    - Click on "Create Credentials" and select "API Key."
    - Copy the generated API key and add it to your `.env` file as shown above.
 
-> **Note:** Keep your API key secure and avoid sharing it publicly.
+## Input & Output Structure
+
+### Input Schema
+- `video_url` (str): URL of the YouTube video to fetch the transcript for.
+- `language` (Optional[str]): Language code for the transcript (e.g., `'en'` for English).
+
+### Output Schema
+- `transcript` (str): Transcript of the YouTube video.
+- `duration` (float): Duration of the YouTube video.
+- `comments` (List[str]): Comments on the YouTube video.
+- `metadata` (dict): Metadata of the YouTube video.
 
 ## Usage
 
@@ -55,25 +66,6 @@ input_data = YouTubeTranscriptTool.input_schema(
 result = transcript_tool.run(input_data)
 print(result)
 ```
-
-## Input & Output Structure
-
-### Input Schema
-- `video_url` (str): URL of the YouTube video to fetch the transcript for.
-- `language` (Optional[str]): Language code for the transcript (e.g., `'en'` for English).
-
-### Output Schema
-- `transcript` (str): Transcript of the YouTube video.
-- `duration` (float): Duration of the YouTube video.
-- `comments` (List[str]): Comments on the YouTube video.
-- `metadata` (dict): Metadata of the YouTube video.
-
-## Error Handling
-
-The tool includes comprehensive error handling to manage common issues such as:
-- Invalid video URLs.
-- Missing transcripts in the specified language.
-- API rate limits and authentication errors.
 
 ## Contributing
 

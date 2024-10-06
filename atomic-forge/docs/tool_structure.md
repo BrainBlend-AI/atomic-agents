@@ -5,7 +5,8 @@
 This guide aims to explain the anatomy of an **Atomic Tool** within the **Atomic Agents** framework and help you get started adding your own tools, either to your own project or to the repository to share with others. We'll walk through the entire process step-by-step, using a mock **Pizza Ordering Tool** as our running example.
 
 ## Prerequisites
-- **uv**: Install the [uv](https://docs.astral.sh/uv/) dependency manager.
+
+Set up the main Atomic Agents library for development by following the instructions in the [development setup guide](/guides/dev-setup.md).
 
 ## The Principles
 
@@ -23,6 +24,7 @@ An **Atomic Tool** should always be self-contained and modular. This means it sh
 ## Anatomy of an Atomic Tool
 
 ### Folder Structure
+
 Each tool should be placed in its own folder with the following structure:
 
 ```
@@ -31,7 +33,7 @@ tool_name/
 │   pyproject.toml
 │   README.md
 │   requirements.txt
-│   uv.lock
+│   poetry.lock
 │
 ├── tool/
 │   │   tool_name.py
@@ -44,12 +46,64 @@ tool_name/
     │   test_another_util_file.py
 ```
 
-In order to keep things modular and organized, you should place your tool code in the `tool/` folder and your test code in the `tests/` folder. Other than that, there are the following files to consider:
-- `pyproject.toml`: This is the Python project file that contains metadata about your project and its dependencies. It is used by [`uv`](https://docs.astral.sh/uv/) to install dependencies and run the tool. Remember to run `uv venv` before starting development to make sure you are working in a clean stand-alone environment.
-- `README.md`: This is the readme file that contains information about your tool. This is where you will add information about how to use your tool, its purpose, environment variables, etc. Be sure to look at existing READMEs for examples.
-- `requirements.txt`: This is the requirements file that contains just the runtime dependencies for your tool. These should match exactly the dependencies in `pyproject.toml` without any development dependencies.
-- `.coveragerc`: This is the coverage configuration file that contains the configuration for the coverage tool. This file is the same accross all tools and should always be included.
-- `uv.lock`: This is the lock file that contains the exact versions of the dependencies that were installed when `uv sync` was last run. This file should be committed as well.
+To keep things modular and organized, you should place your tool code in the `tool/` folder and your test code in the `tests/` folder. Let's go over the important files:
+
+- **`pyproject.toml`:** This is the Python project file that contains metadata about your project and its dependencies. It is used by [Poetry](https://python-poetry.org/) to install dependencies and manage the tool. Remember to run `poetry install` before starting development to ensure you are working in a clean, stand-alone environment.
+
+- **`README.md`:** This file contains information about your tool, including how to use it, its purpose, environment variables, etc. Be sure to look at existing READMEs for examples.
+
+- **`requirements.txt`:** This file lists just the runtime dependencies for your tool. These should match exactly the non-development dependencies in `pyproject.toml`, excluding the `python` version specification. **You should create this file manually** to ensure it is clean and contains only the necessary runtime dependencies.
+
+- **`.coveragerc`:** This is the coverage configuration file that contains the configuration for the coverage tool. This file is the same across all tools and should always be included.
+
+- **`poetry.lock`:** This is the lock file that contains the exact versions of the dependencies that were installed when `poetry install` was last run. This file should be committed as well to ensure consistency across different environments.
+
+#### Creating `requirements.txt`
+
+Since exporting `requirements.txt` using `poetry export` can sometimes include unnecessary details or development dependencies, it's recommended to create this file manually. Your `requirements.txt` should include all the non-development dependencies specified in your `pyproject.toml`, excluding the `python` version.
+
+**Example `pyproject.toml`:**
+
+```toml
+[tool.poetry]
+name = "pizza-ordering-tool"
+version = "1.0"
+description = "A tool for placing and processing pizza orders"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+atomic-agents = {path = "../../../", develop = true}
+pydantic = ">=2.8.2,<3.0.0"
+requests = ">=2.28.0,<3.0.0"
+
+[tool.poetry.group.dev.dependencies]
+coverage = ">=7.0.0,<8.0.0"
+pytest = ">=8.0.0,<9.0.0"
+pytest-cov = ">=5.0.0,<6.0.0"
+python-dotenv = ">=1.0.0,<2.0.0"
+rich = ">=13.7.0,<14.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+```
+
+**Corresponding `requirements.txt`:**
+
+```
+atomic-agents>=1.0.0,<2.0.0
+pydantic>=2.8.2,<3.0.0
+requests>=2.28.0,<3.0.0
+```
+
+**Explanation:**
+
+- The `requirements.txt` includes all the runtime dependencies specified under `[tool.poetry.dependencies]` in `pyproject.toml`, excluding `python`.
+- It does **not** include any of the development dependencies specified under `[tool.poetry.group.dev.dependencies]`.
+- This manual approach ensures that `requirements.txt` is clean and only contains the necessary packages for running your tool.
 
 ### Inheritance and Base Classes
 
@@ -63,11 +117,11 @@ By adhering to these inheritance rules upfront, you guarantee that your tool ali
 
 #### Overriding Title and Description
 
-The `BaseToolConfig` allows you to override the default title and description of your tool. By default, the title and description are derived from the input schema's title and description, so usually you will not need to set them.
+The `BaseToolConfig` allows you to override the default title and description of your tool. By default, the title and description are derived from the input schema's title and description, so usually, you will not need to set them.
 
-However there are certain edge cases where you may want to override the title and description, such as when the default title and description are not descriptive or clear enough for your agent.
+However, there are certain edge cases where you may want to override the title and description, such as when the default title and description are not descriptive or clear enough for your agent.
 
-One example of this could be when you have a tool that performs a web search, and another that performs a search in a vector DB filled with internal company documents. You may want to override the title and description of these tools to make them more clear to the LLM that if a question is asked about the company's internal documents, the vector search tool is the appropriate tool to use and not the web search tool.
+One example of this could be when you have a tool that performs a web search and another that performs a search in a vector DB filled with internal company documents. You may want to override the title and description of these tools to make it clearer to the LLM that if a question is asked about the company's internal documents, the vector search tool is the appropriate tool to use and not the web search tool.
 
 ### Modularity
 
@@ -124,6 +178,7 @@ All necessary imports should be placed at the top of your script. This includes 
 import os
 from enum import Enum
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 from atomic_agents.agents.base_agent import BaseIOSchema
@@ -419,6 +474,7 @@ if __name__ == "__main__":
 ## Best Practices and Guidelines
 
 ### Do's
+
 - **Keep Imports at the Top:** Place all import statements at the beginning of your script without a section comment block.
 - **Follow the Standard Structure:** Adhere to the prescribed order and format for consistency.
 - **Use Clear and Descriptive Names:** Make your code self-explanatory.
@@ -426,13 +482,17 @@ if __name__ == "__main__":
 - **Validate Inputs Thoroughly:** Use Pydantic's features to enforce data integrity.
 - **Handle Errors Gracefully:** Provide informative error messages and handle exceptions where appropriate.
 - **Keep Functions Small and Focused:** Break down complex logic into helper methods.
+- **Commit `poetry.lock`:** Ensure you commit your `poetry.lock` file to maintain consistent dependencies across environments.
+- **Manually Create `requirements.txt`:** Ensure your `requirements.txt` file matches the non-development dependencies in your `pyproject.toml`, excluding `python`, and create it manually for clarity.
 
 ### Don'ts
+
 - **Don't Hardcode Values:** Use configuration parameters or environment variables instead.
 - **Avoid Global Variables:** Keep the state within your tool's scope.
 - **Don't Overcomplicate:** Stick to the tool's single responsibility; avoid adding unrelated features.
 - **Don't Ignore Security:** Be cautious with sensitive information like API keys; use environment variables.
 - **Don't Neglect Performance:** Optimize your code, especially when dealing with large datasets or external API calls.
 - **Don't Skip Input Validation:** Never assume inputs are valid; always validate.
+- **Don't Auto-Generate `requirements.txt`:** Avoid using automated tools that may include unnecessary or development dependencies; manually specify only the required runtime dependencies.
 
 Best of luck creating your own Atomic Tools!

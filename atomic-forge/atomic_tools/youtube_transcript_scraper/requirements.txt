@@ -1,0 +1,4 @@
+atomic-agents>=1.0.0,<2.0.0
+google-api-python-client>=2.118.0,<3.0.0
+pydantic>=2.8.2,<3.0.0
+youtube-transcript-api>=0.6.2,<1.0.0

@@ -1,8 +1,9 @@
 import os
 from typing import List, Optional
+from pydantic import Field, BaseModel
+from datetime import datetime
 
 from googleapiclient.discovery import build
-from pydantic import Field
 from youtube_transcript_api import (
     NoTranscriptFound,
     TranscriptsDisabled,
@@ -29,15 +30,24 @@ class YouTubeTranscriptToolInputSchema(BaseIOSchema):
 #################
 # OUTPUT SCHEMA #
 #################
+class VideoMetadata(BaseModel):
+    """Schema for YouTube video metadata."""
+
+    id: str = Field(..., description="The YouTube video ID.")
+    title: str = Field(..., description="The title of the YouTube video.")
+    channel: str = Field(..., description="The name of the YouTube channel.")
+    published_at: datetime = Field(..., description="The publication date and time of the video.")
+
+
 class YouTubeTranscriptToolOutputSchema(BaseIOSchema):
     """
     Output schema for the YouTubeTranscriptTool. Contains the transcript text, duration, comments, and metadata.
     """
 
     transcript: str = Field(..., description="Transcript of the YouTube video.")
-    duration: float = Field(..., description="Duration of the YouTube video.")
-    comments: List[str] = Field(..., description="Comments on the YouTube video.")
-    metadata: dict = Field(..., description="Metadata of the YouTube video.")
+    duration: float = Field(..., description="Duration of the YouTube video in seconds.")
+    comments: List[str] = Field(default_factory=list, description="Comments on the YouTube video.")
+    metadata: VideoMetadata = Field(..., description="Metadata of the YouTube video.")
 
 
 #################
@@ -122,7 +132,7 @@ class YouTubeTranscriptTool(BaseTool):
         """
         return url.split("v=")[-1].split("&")[0]
 
-    def fetch_video_metadata(self, video_id: str) -> dict:
+    def fetch_video_metadata(self, video_id: str) -> VideoMetadata:
         """
         Fetches metadata for a YouTube video.
 
@@ -130,7 +140,10 @@ class YouTubeTranscriptTool(BaseTool):
             video_id (str): The YouTube video ID.
 
         Returns:
-            dict: The metadata of the video.
+            VideoMetadata: The metadata of the video.
+
+        Raises:
+            Exception: If no metadata is found for the video.
         """
         youtube = build("youtube", "v3", developerKey=self.api_key)
         request = youtube.videos().list(part="snippet", id=video_id)
@@ -140,13 +153,12 @@ class YouTubeTranscriptTool(BaseTool):
             raise Exception(f"No metadata found for video '{video_id}'")
 
         video_info = response["items"][0]["snippet"]
-        metadata = {
-            "id": video_id,
-            "title": video_info["title"],
-            "channel": video_info["channelTitle"],
-            "published_at": video_info["publishedAt"],
-        }
-        return metadata
+        return VideoMetadata(
+            id=video_id,
+            title=video_info["title"],
+            channel=video_info["channelTitle"],
+            published_at=datetime.fromisoformat(video_info["publishedAt"].rstrip("Z")),
+        )
 
 
 #################
