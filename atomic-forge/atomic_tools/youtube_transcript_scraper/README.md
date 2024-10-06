@@ -6,7 +6,7 @@ The **YouTube Transcript Scraper Tool** is a tool within the Atomic Agents ecosy
 ## Installation
 You can install the tool using any of the following options:
 
-1. Good old fashioned copy/paste: Just like any other tool inside the Atomic Forge, you can copy the code from this repo directly into your own project, provided you already have atomic-agents installed according to the instructions in the main [README](../../../../README.md).
+1. Good old fashioned copy/paste: Just like any other tool inside the Atomic Forge, you can copy the code from this repo directly into your own project, provided you already have atomic-agents installed according to the instructions in the main [README](/README.md).
 
 ## Configuration
 
