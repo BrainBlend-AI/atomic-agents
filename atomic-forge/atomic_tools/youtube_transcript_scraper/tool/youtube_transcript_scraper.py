@@ -154,6 +154,9 @@ class YouTubeTranscriptTool(BaseTool):
 #################
 if __name__ == "__main__":
     from rich.console import Console
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
     rich_console = Console()
     api_key = os.getenv("YOUTUBE_API_KEY")
