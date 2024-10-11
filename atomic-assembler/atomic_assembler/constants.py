@@ -11,7 +11,7 @@ BORDER_STYLE: str = f"bold {SECONDARY_COLOR}"
 TITLE_FONT: str = "big"
 
 # Repository configuration
-TOOLS_SUBFOLDER: str = "atomic-forge/atomic_tools"
+TOOLS_SUBFOLDER: str = "atomic-forge/tools"
 
 # Base URL for GitHub repository
 GITHUB_BASE_URL: str = "https://github.com/BrainBlend-AI/atomic-agents.git"

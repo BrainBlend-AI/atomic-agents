@@ -16,24 +16,7 @@ if not API_KEY:
 if not API_KEY:
     raise ValueError("API key is not set. Please set the API key as a static variable or in the environment variable OPENAI_API_KEY.")
 
-# System prompt setup
-system_prompt_generator = SystemPromptGenerator(
-    background=[
-        "This assistant is a general-purpose AI designed to be helpful and friendly.",
-    ],
-    steps=[
-        "Understand the user's input and provide a relevant response.",
-        "Respond to the user."
-    ],
-    output_instructions=[
-        "Provide helpful and relevant information to assist the user.",
-        "Be friendly and respectful in all interactions.",
-        "Always answer in rhyming verse."
-    ]
-)
-
 console = Console()
-console.print(Panel(system_prompt_generator.generate_prompt(), width=console.width, style="bold cyan"), style="bold cyan")
 
 # Memory setup
 memory = AgentMemory()
@@ -49,7 +32,6 @@ client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
 agent = BaseAgent(
     config=BaseAgentConfig(
         client=client,
-        system_prompt_generator=system_prompt_generator,
         model="gpt-4o-mini",
         memory=memory,
     )
