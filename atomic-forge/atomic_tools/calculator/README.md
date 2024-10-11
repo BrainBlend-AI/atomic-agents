@@ -1,7 +1,13 @@
 # Calculator Tool
 
 ## Overview
-The Calculator Tool is a Python-based utility within the Atomic Agents ecosystem designed for performing a variety of mathematical calculations. It supports basic arithmetic operations such as addition, subtraction, multiplication, and division, as well as more complex operations including exponentiation and trigonometric functions.
+The Calculator Tool is a utility within the Atomic Agents ecosystem designed for performing a variety of mathematical calculations. It's essentially a wrapper around the sympy library to allow for expression-based calculations.
+
+## Prerequisites and Dependencies
+- Python 3.9 or later
+- atomic-agents (See [here](/README.md) for installation instructions)
+- pydantic
+- sympy
 
 ## Installation
 You can install the tool using any of the following options:

@@ -112,6 +112,6 @@ Set-PyPIToken
 
 # Upload to PyPI
 Write-Host "Uploading atomic-agents to PyPI..."
-# poetry publish
+poetry publish
 
 Write-Host "Build and deploy process completed successfully!"

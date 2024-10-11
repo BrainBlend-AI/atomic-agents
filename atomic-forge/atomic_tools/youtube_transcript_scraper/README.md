@@ -3,6 +3,13 @@
 ## Overview
 The **YouTube Transcript Scraper Tool** is a tool within the Atomic Agents ecosystem that allows you to fetch the transcript of a YouTube video.
 
+## Prerequisites and Dependencies
+- Python 3.9 or later
+- atomic-agents (See [here](/README.md) for installation instructions)
+- pydantic
+- google-api-python-client
+- youtube-transcript-api
+
 ## Installation
 You can install the tool using any of the following options:
 

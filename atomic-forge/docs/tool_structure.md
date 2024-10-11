@@ -12,7 +12,7 @@ Set up the main Atomic Agents library for development by following the instructi
 
 An **Atomic Tool** should always be self-contained and modular. This means it should encapsulate specific functionality, such as a calculator, a YouTube transcript scraper, or, in our case, a pizza ordering service. Each tool should be runnable both standalone and by an AI Agent, allowing for easy integration, maintenance, and extension.
 
-**An Atomic Tool should always have or be:**
+**An Atomic Tool should always have / be:**
 
 - **Single Responsibility:** Focuses on one specific task.
 - **Modular and Reusable:** Easily integrated into different agents or applications.
