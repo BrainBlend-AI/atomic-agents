@@ -169,12 +169,12 @@ trio = ["trio (>=0.26.1)"]
 
 [[package]]
 name = "atomic-agents"
-version = "1.0.6"
+version = "1.0.7"
 description = "A versatile framework for creating and managing intelligent agents."
 optional = false
 python-versions = ">=3.11,<4.0"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 gitpython = ">=3.1.43,<4.0.0"
@@ -1351,4 +1351,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "f2b55dc03d96818e81c5351740a7fdd05588dc8a0e3b14b255ec603978a31cfa"
+content-hash = "2715a8bf2b609cccd0c86792a613a484c0de839d18c5a5abb5568841ffaf85b9"

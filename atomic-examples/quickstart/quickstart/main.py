@@ -56,14 +56,16 @@ agent = BaseAgent(
 )
 
 agent_message = Text(initial_memory[0]["content"], style="bold green")
-console.print(Text("Agent:", style="bold green"), agent_message, end="")
+console.print(Text("Agent:", style="bold green"), end=" ")
+console.print(agent_message)
 
 while True:
-    user_input = console.input("\n[bold blue]You:[/bold blue] ")
+    user_input = console.input("[bold blue]You:[/bold blue] ")
     if user_input.lower() in ["/exit", "/quit"]:
         console.print("Exiting chat...")
         break
 
     response = agent.run(agent.input_schema(chat_message=user_input))
     agent_message = Text(response.chat_message, style="bold green")
-    console.print(Text("Agent:", style="bold green"), agent_message, end="")
+    console.print(Text("Agent:", style="bold green"), end=" ")
+    console.print(agent_message)

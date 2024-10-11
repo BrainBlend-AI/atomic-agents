@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-atomic-agents = {path = "../.."}
+atomic-agents = {path = "../..", develop = true}
 
 
 [build-system]
