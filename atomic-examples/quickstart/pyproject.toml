@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "quickstart"
 version = "0.1.0"
-description = ""
+description = "Quickstart example for Atomic Agents"
 authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
 
