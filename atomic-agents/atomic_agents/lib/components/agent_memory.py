@@ -1,7 +1,9 @@
 import uuid
-
+import json
 from typing import Dict, List, Optional, Union
 from pydantic import BaseModel, ValidationError
+
+from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 
 class Message(BaseModel):
@@ -10,14 +12,14 @@ class Message(BaseModel):
 
     Attributes:
         role (str): The role of the message sender (e.g., 'user', 'system', 'tool').
-        content (Union[str, Dict]): The content of the message.
+        content (Union[str, BaseIOSchema]): The content of the message.
         tool_calls (Optional[List[Dict]]): Optional list of tool call messages.
         tool_call_id (Optional[str]): Optional unique identifier for the tool call.
         turn_id (Optional[str]): Unique identifier for the turn this message belongs to.
     """
 
     role: str
-    content: Union[str, Dict]
+    content: Union[str, BaseIOSchema]
     tool_calls: Optional[List[Dict]] = None
     tool_call_id: Optional[str] = None
     turn_id: Optional[str] = None
@@ -53,7 +55,7 @@ class AgentMemory:
     def add_message(
         self,
         role: str,
-        content: Union[str, Dict],
+        content: Union[str, BaseIOSchema],
         tool_message: Optional[Dict] = None,
         tool_id: Optional[str] = None,
     ) -> None:
@@ -62,7 +64,7 @@ class AgentMemory:
 
         Args:
             role (str): The role of the message sender.
-            content (Union[str, Dict]): The content of the message.
+            content (Union[str, BaseIOSchema]): The content of the message.
             tool_message (Optional[Dict]): Optional tool message to be included.
             tool_id (Optional[str]): Optional unique identifier for the tool call.
         """
@@ -87,9 +89,23 @@ class AgentMemory:
             while len(self.history) > self.max_messages:
                 self.history.pop(0)
 
+    def _serialize_content(self, content: Union[str, BaseIOSchema]) -> str:
+        """
+        Serializes the content of a message to a JSON string if it's a BaseIOSchema instance.
+
+        Args:
+            content (Union[str, BaseIOSchema]): The content to serialize.
+
+        Returns:
+            str: The serialized content.
+        """
+        if isinstance(content, BaseIOSchema):
+            return json.dumps(content.model_dump())
+        return content
+
     def get_history(self) -> List[Dict]:
         """
-        Retrieves the chat history, filtering out unnecessary fields.
+        Retrieves the chat history, filtering out unnecessary fields and serializing content.
 
         Returns:
             List[Dict]: The list of messages in the chat history as dictionaries.
@@ -97,7 +113,7 @@ class AgentMemory:
         return [
             {
                 "role": message.role,
-                "content": message.content,
+                "content": self._serialize_content(message.content),
                 **({"tool_calls": message.tool_calls} if message.tool_calls else {}),
                 **({"tool_call_id": message.tool_call_id} if message.tool_call_id else {}),
             }
@@ -106,12 +122,18 @@ class AgentMemory:
 
     def dump(self) -> List[Dict]:
         """
-        Converts the chat history to a list of dictionaries, including turn_id.
+        Converts the chat history to a list of dictionaries, including turn_id and serializing content.
 
         Returns:
             List[Dict]: The list of messages as dictionaries, including turn_id.
         """
-        return [message.model_dump(exclude_none=True) for message in self.history]
+        return [
+            {
+                **message.model_dump(exclude_none=True),
+                "content": self._serialize_content(message.content),
+            }
+            for message in self.history
+        ]
 
     def load(self, dict_list: List[Dict]) -> None:
         """
@@ -123,6 +145,12 @@ class AgentMemory:
         self.history = []
         for message_dict in dict_list:
             try:
+                content = message_dict["content"]
+                if isinstance(content, dict):
+                    # Assume it's a BaseIOSchema subclass, but we don't know which one
+                    # For now, we'll keep it as a dict, but in practice, you might want to
+                    # implement a way to determine the correct BaseIOSchema subclass
+                    message_dict["content"] = content
                 message = Message.model_validate(message_dict)
                 self.history.append(message)
             except ValidationError as e:
