@@ -1,9 +1,10 @@
+========
 # Atomic Agents
 <img src="./.assets/logo.png" alt="Atomic Agents" width="600"/>
 
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
-The Atomic Agents framework is designed to be modular, extensible, and easy to use. The main goal of the framework is to get rid of redundant complexity, unnecessary abstractions, and hidden assumptions while still providing a flexible and powerful framework for building AI applications through atomicity. The resulting framework provides a set of tools and agents that can be combined to create powerful applications. The framework is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data/schema validation and serialization.
+The Atomic Agents framework is designed to be modular, extensible, and easy to use. Its main goal is to eliminate redundant complexity, unnecessary abstractions, and hidden assumptions while still providing a flexible and powerful platform for building AI applications through atomicity. The framework provides a set of tools and agents that can be combined to create powerful applications. It is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data and schema validation and serialization.
 
 <!-- ![alt text](./.assets/architecture_highlevel_overview.png) -->
 <img src="./.assets/architecture_highlevel_overview.png" alt="High-level architecture overview of Atomic Agents" width="600"/>
@@ -16,12 +17,12 @@ To install Atomic Agents, you can use pip:
 pip install atomic-agents
 ```
 
-This also installs the CLI *Atomic Assembler* which can be used to download Tools (and soon also Agents and Pipelines).
+This also installs the CLI *Atomic Assembler*, which can be used to download Tools (and soon also Agents and Pipelines).
 
 ## Quickstart & Examples
 A complete list of examples can be found in the [examples](./atomic-examples/) directory.
 
-We do our best to thoroughly document each example, but if something is unclear, please don't hesitate to open an issue or a pull request in order to improve the documentation.
+We strive to thoroughly document each example, but if something is unclear, please don't hesitate to open an issue or pull request to improve the documentation.
 
 Here's a quick snippet demonstrating how easy it is to create a powerful agent with Atomic Agents:
 
@@ -76,34 +77,32 @@ This snippet showcases how to create a customizable agent that responds to user 
   An advanced example featuring a custom output schema.
 
 - [Multi-Provider Chatbot](/atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py)
-  Demonstrates how to use different providers like Ollama or Groq.
+  Demonstrates how to use different providers such as Ollama or Groq.
 
 These examples provide a great starting point for understanding and using Atomic Agents.
 
 ## Running the CLI
-To run the CLI simply run the following command:
+To run the CLI, simply run the following command:
 
 ```bash
 atomic
 ```
 
-After running this command you should be presented with a menu, allowing you to download tools.
+After running this command, you will be presented with a menu allowing you to download tools.
 
 <img src="./.assets/atomic-cli.png" alt="Atomic CLI menu" width="400"/>
 
 ## Provider & Model Compatibility
-Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) package. This means that in all examples where OpenAI is used, any other API supported by Instructor can be used, such as Ollama, Groq, Mistral, Cohere, Anthropic, Gemini, and more. For a complete list please refer to the instructor documentation on its [GitHub page](https://github.com/jxnl/instructor).
+Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) package. This means that in all examples where OpenAI is used, any other API supported by Instructor can also be used—such as Ollama, Groq, Mistral, Cohere, Anthropic, Gemini, and more. For a complete list, please refer to the Instructor documentation on its [GitHub page](https://github.com/jxnl/instructor).
 
 ## API Documentation
 API documentation can be found [here](https://brainblend-ai.github.io/atomic-agents/).
 
 ## Contributing
-We welcome contributions! Please follow these steps to contribute:
-
-See the [Developer Guide](/guides/DEV_GUIDE.md) for more information on how to contribute to Atomic Agents.
+We welcome contributions! Please see the [Developer Guide](/guides/DEV_GUIDE.md) for more information on how to contribute to Atomic Agents.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License—see the [LICENSE](LICENSE) file for details.
 
 ## Star History
 
