@@ -66,16 +66,16 @@ for question in response.suggested_questions:
 
 This snippet showcases how to create a customizable agent that responds to user queries and suggests follow-up questions. For full, runnable examples, please refer to the following files in the `atomic-examples/quickstart/quickstart/` directory:
 
-- [Basic Chatbot](./atomic-examples/quickstart/quickstart/1_basic_chatbot.py)
+- [Basic Chatbot](/atomic-examples/quickstart/quickstart/1_basic_chatbot.py)
   A minimal chatbot example to get you started.
 
-- [Custom Chatbot](./atomic-examples/quickstart/quickstart/2_basic_custom_chatbot.py)
+- [Custom Chatbot](/atomic-examples/quickstart/quickstart/2_basic_custom_chatbot.py)
   A more advanced example with a custom system prompt.
 
-- [Custom Chatbot with Schema](./atomic-examples/quickstart/quickstart/3_basic_custom_chatbot_with_custom_schema.py)
+- [Custom Chatbot with Schema](/atomic-examples/quickstart/quickstart/3_basic_custom_chatbot_with_custom_schema.py)
   An advanced example featuring a custom output schema.
 
-- [Multi-Provider Chatbot](./atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py)
+- [Multi-Provider Chatbot](/atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py)
   Demonstrates how to use different providers like Ollama or Groq.
 
 These examples provide a great starting point for understanding and using Atomic Agents.
@@ -99,7 +99,7 @@ API documentation can be found [here](https://brainblend-ai.github.io/atomic-age
 ## Contributing
 We welcome contributions! Please follow these steps to contribute:
 
-See the [Developer Guide](./DEV_GUIDE.md) for more information on how to contribute to Atomic Agents.
+See the [Developer Guide](/guides/DEV_GUIDE.md) for more information on how to contribute to Atomic Agents.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
