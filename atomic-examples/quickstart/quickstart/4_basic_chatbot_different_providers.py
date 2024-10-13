@@ -32,14 +32,8 @@ def setup_client(provider):
         from groq import Groq
 
         api_key = os.getenv("GROQ_API_KEY")
-        client = instructor.from_groq(Groq(api_key=api_key), mode=instructor.Mode.TOOLS)
+        client = instructor.from_groq(Groq(api_key=api_key), mode=instructor.Mode.JSON)
         model = "mixtral-8x7b-32768"
-    elif provider == "mistral":
-        from mistralai.client import MistralClient
-
-        api_key = os.getenv("MISTRAL_API_KEY")
-        client = instructor.from_mistral(MistralClient(api_key=api_key), model="mistral-large-latest")
-        model = "mistral-large-latest"
     elif provider == "ollama":
         from openai import OpenAI as OllamaClient
 
@@ -52,7 +46,7 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider
-provider = console.input("[bold yellow]Choose a provider (openai/groq/mistral/ollama): [/bold yellow]").lower()
+provider = console.input("[bold yellow]Choose a provider (openai/groq/ollama): [/bold yellow]").lower()
 
 # Set up the client and model based on the chosen provider
 client, model = setup_client(provider)
