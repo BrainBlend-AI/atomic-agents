@@ -1,0 +1,12 @@
+[report]
+show_missing=true
+exclude_lines =
+    @abstractmethod
+    @abc.abstractmethod
+exclude_also =
+    if __name__ == .__main__.:
+
+[run]
+omit =
+    */__init__.py
+    */tests/*

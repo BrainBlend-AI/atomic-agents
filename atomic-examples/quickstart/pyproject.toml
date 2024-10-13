@@ -8,6 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 atomic-agents = {path = "../..", develop = true}
+groq = "^0.11.0"
+mistralai = "^1.1.0"
 
 
 [build-system]

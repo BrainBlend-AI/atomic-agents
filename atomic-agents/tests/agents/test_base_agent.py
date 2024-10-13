@@ -85,22 +85,18 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
     )
 
 
-def test_run(agent):
+def test_run(agent, mock_memory):
     mock_input = BaseAgentInputSchema(chat_message="Test input")
     mock_output = BaseAgentOutputSchema(chat_message="Test output")
 
-    agent._init_run = Mock()
-    agent._pre_run = Mock()
-    agent._post_run = Mock()
     agent.get_response = Mock(return_value=mock_output)
 
     result = agent.run(mock_input)
 
     assert result == mock_output
-    agent._init_run.assert_called_once_with(mock_input)
-    agent._pre_run.assert_called_once()
-    agent.get_response.assert_called_once()
-    agent._post_run.assert_called_once_with(mock_output)
+    assert agent.current_user_input == mock_input
+
+    mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
 
 def test_get_context_provider(agent, mock_system_prompt_generator):
@@ -173,7 +169,7 @@ def test_run(agent, mock_memory):
     assert result == mock_output
     assert agent.current_user_input == mock_input
 
-    mock_memory.add_message.assert_has_calls([call("user", str(mock_input)), call("assistant", str(mock_output))])
+    mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
 
 def test_base_io_schema_empty_docstring():
