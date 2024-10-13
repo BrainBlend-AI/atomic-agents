@@ -93,6 +93,9 @@ After running this command you should be presented with a menu, allowing you to 
 ## Provider & Model Compatibility
 Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) package. This means that in all examples where OpenAI is used, any other API supported by Instructor can be used, such as Ollama, Groq, Mistral, Cohere, Anthropic, Gemini, and more. For a complete list please refer to the instructor documentation on its [GitHub page](https://github.com/jxnl/instructor).
 
+## API Documentation
+API documentation can be found [here](https://brainblend-ai.github.io/atomic-agents/).
+
 ## Contributing
 We welcome contributions! Please follow these steps to contribute:
 
