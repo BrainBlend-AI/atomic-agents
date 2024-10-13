@@ -66,10 +66,17 @@ for question in response.suggested_questions:
 
 This snippet showcases how to create a customizable agent that responds to user queries and suggests follow-up questions. For full, runnable examples, please refer to the following files in the `atomic-examples/quickstart/quickstart/` directory:
 
-- [1_basic_chatbot.py](./atomic-examples/quickstart/quickstart/1_basic_chatbot.py): A minimal chatbot example to get you started.
-- [2_basic_custom_chatbot.py](./atomic-examples/quickstart/quickstart/2_basic_custom_chatbot.py): A more advanced example with a custom system prompt.
-- [3_basic_custom_chatbot_with_custom_schema.py](./atomic-examples/quickstart/quickstart/3_basic_custom_chatbot_with_custom_schema.py): A more advanced example with a custom output schema.
-- [4_basic_chatbot_different_providers.py](./atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py): Demonstrates how to use different providers like Ollama or Groq.
+- [Basic Chatbot](./atomic-examples/quickstart/quickstart/1_basic_chatbot.py)
+  A minimal chatbot example to get you started.
+
+- [Custom Chatbot](./atomic-examples/quickstart/quickstart/2_basic_custom_chatbot.py)
+  A more advanced example with a custom system prompt.
+
+- [Custom Chatbot with Schema](./atomic-examples/quickstart/quickstart/3_basic_custom_chatbot_with_custom_schema.py)
+  An advanced example featuring a custom output schema.
+
+- [Multi-Provider Chatbot](./atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py)
+  Demonstrates how to use different providers like Ollama or Groq.
 
 These examples provide a great starting point for understanding and using Atomic Agents.
 
