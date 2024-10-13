@@ -87,7 +87,8 @@ To run the CLI simply run the following command:
 atomic
 ```
 
-After running this command you should be presented with a menu, allowing you to download Tools.
+After running this command you should be presented with a menu, allowing you to download tools.
+
 <img src="./.assets/atomic-cli.png" alt="Atomic CLI menu" width="400"/>
 
 ## Provider & Model Compatibility
