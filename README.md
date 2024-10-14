@@ -101,6 +101,13 @@ uv run atomic
 
 After running this command, you will be presented with a menu allowing you to download tools.
 
+Each tool has its own set of dependencies and potentially some setup instructions, which are listed in the tool's README.
+
+The `atomic-assembler` CLI gives you complete control over your tools, avoiding the clutter of unnecessary dependencies. It makes modifying tools straightforward additionally, each tool comes with its own set of tests for reliability.
+
+**But you’re not limited to the CLI!** If you prefer, you can directly access the tool folders and manage them manually by simply copying and pasting as needed.
+
+
 <img src="./.assets/atomic-cli.png" alt="Atomic CLI menu" width="400"/>
 
 ## Provider & Model Compatibility
