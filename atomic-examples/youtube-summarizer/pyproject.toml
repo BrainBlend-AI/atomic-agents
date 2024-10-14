@@ -1,17 +1,18 @@
 [tool.poetry]
-name = "quickstart"
+name = "youtube-summarizer"
 version = "1.0.0"
-description = "Quickstart example for Atomic Agents"
+description = "Youtube Summarizer example for Atomic Agents"
 authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
 atomic-agents = {path = "../..", develop = true}
-instructor = ">=0.2.1,<1.0.0"
 openai = ">=1.35.12,<2.0.0"
-groq = ">=0.11.0,<1.0.0"
-mistralai = ">=1.1.0,<2.0.0"
+pydantic = ">=2.9.2,<3.0.0"
+google-api-python-client = ">=2.101.0,<3.0.0"
+youtube-transcript-api = ">=0.1.9,<1.0.0"
+instructor = ">=1.5.2,<2.0.0"
 
 
 [build-system]

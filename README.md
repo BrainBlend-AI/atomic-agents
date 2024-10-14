@@ -1,4 +1,3 @@
-========
 # Atomic Agents
 <img src="./.assets/logo.png" alt="Atomic Agents" width="600"/>
 
@@ -86,6 +85,18 @@ To run the CLI, simply run the following command:
 
 ```bash
 atomic
+```
+
+Or if you installed Atomic Agents with Poetry, for example:
+
+```bash
+poetry run atomic
+```
+
+Or if you installed Atomic Agents with uv:
+
+```bash
+uv run atomic
 ```
 
 After running this command, you will be presented with a menu allowing you to download tools.
