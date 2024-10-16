@@ -49,7 +49,7 @@ system_prompt_generator = SystemPromptGenerator(
 agent = BaseAgent(
     config=BaseAgentConfig(
         client=your_openai_client,  # Replace with your actual client
-        model="gpt-4",
+        model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
         memory=AgentMemory(),
         output_schema=CustomOutputSchema
@@ -80,6 +80,111 @@ This snippet showcases how to create a customizable agent that responds to user 
 
 These examples provide a great starting point for understanding and using Atomic Agents.
 
+## Context Providers
+
+Atomic Agents allows you to enhance your agents with dynamic context using **Context Providers**. Context Providers enable you to inject additional information into the agent's system prompt at runtime, making your agents more flexible and context-aware.
+
+### Using Context Providers
+
+To use a Context Provider, create a class that inherits from `SystemPromptContextProviderBase` and implements the `get_info()` method, which returns the context string to be added to the system prompt.
+
+Here's a simple example:
+
+```python
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+
+class SearchResultsProvider(SystemPromptContextProviderBase):
+    def __init__(self, title: str, search_results: List[str]):
+        super().__init__(title=title)
+        self.search_results = search_results
+
+    def get_info(self) -> str:
+        return "\n".join(self.search_results)
+```
+
+You can then register your Context Provider with the agent:
+
+```python
+# Initialize your context provider with dynamic data
+search_results_provider = SearchResultsProvider(
+    title="Search Results",
+    search_results=["Result 1", "Result 2", "Result 3"]
+)
+
+# Register the context provider with the agent
+agent.register_context_provider("search_results", search_results_provider)
+```
+
+This allows your agent to include the search results (or any other context) in its system prompt, enhancing its responses based on the latest information.
+
+## Chaining Schemas and Agents
+
+Atomic Agents makes it easy to chain agents and tools together by aligning their input and output schemas. This design allows you to swap out components effortlessly, promoting modularity and reusability in your AI applications.
+
+### Example: Generating Queries for Different Search Providers
+
+Suppose you have an agent that generates search queries and you want to use these queries with different search tools. By aligning the agent's output schema with the input schema of the search tool, you can easily chain them together or switch between different search providers.
+
+Here's how you can achieve this:
+
+```python
+import instructor
+import openai
+from pydantic import Field
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+
+# Import the search tool you want to use
+from web_search_agent.tools.searxng_search import SearxNGSearchTool
+
+# Define the input schema for the query agent
+class QueryAgentInputSchema(BaseIOSchema):
+    """Input schema for the QueryAgent."""
+    instruction: str = Field(..., description="Instruction to generate search queries for.")
+    num_queries: int = Field(..., description="Number of queries to generate.")
+
+# Initialize the query agent
+query_agent = BaseAgent(
+    BaseAgentConfig(
+        client=instructor.from_openai(openai.OpenAI()),
+        model="gpt-4o-mini",
+        system_prompt_generator=SystemPromptGenerator(
+            background=[
+                "You are an intelligent query generation expert.",
+                "Your task is to generate a specified number of diverse and highly relevant queries based on a given instruction."
+            ],
+            steps=[
+                "Receive the instruction and the number of queries to generate.",
+                "Generate the queries in JSON format."
+            ],
+            output_instructions=[
+                "Ensure each query is unique and relevant.",
+                "Provide the queries in the expected schema."
+            ],
+        ),
+        input_schema=QueryAgentInputSchema,
+        output_schema=SearxNGSearchTool.input_schema,  # Align output schema
+    )
+)
+```
+
+In this example:
+
+- **Modularity**: By setting the `output_schema` of the `query_agent` to match the `input_schema` of `SearxNGSearchTool`, you can directly use the output of the agent as input to the tool.
+- **Swapability**: If you decide to switch to a different search provider, you can import a different search tool and update the `output_schema` accordingly.
+
+For instance, to switch to another search service:
+
+```python
+# Import a different search tool
+from web_search_agent.tools.another_search import AnotherSearchTool
+
+# Update the output schema
+query_agent.config.output_schema = AnotherSearchTool.input_schema
+```
+
+This design pattern simplifies the process of chaining agents and tools, making your AI applications more adaptable and easier to maintain.
+
 ## Running the CLI
 To run the CLI, simply run the following command:
 
@@ -101,12 +206,18 @@ uv run atomic
 
 After running this command, you will be presented with a menu allowing you to download tools.
 
-Each tool has its own set of dependencies and potentially some setup instructions, which are listed in the tool's README.
+Each tool's has its own:
+- Input schema
+- Output schema
+- Usage example
+- Dependencies
+- Installation instructions
+
+<img src="./.assets/atomic-cli-tool-menu.png" alt="Atomic CLI tool example" width="600"/>
 
 The `atomic-assembler` CLI gives you complete control over your tools, avoiding the clutter of unnecessary dependencies. It makes modifying tools straightforward additionally, each tool comes with its own set of tests for reliability.
 
 **But you’re not limited to the CLI!** If you prefer, you can directly access the tool folders and manage them manually by simply copying and pasting as needed.
-
 
 <img src="./.assets/atomic-cli.png" alt="Atomic CLI menu" width="400"/>
 
