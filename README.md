@@ -5,6 +5,26 @@
 
 The Atomic Agents framework is designed to be modular, extensible, and easy to use. Its main goal is to eliminate redundant complexity, unnecessary abstractions, and hidden assumptions while still providing a flexible and powerful platform for building AI applications through atomicity. The framework provides a set of tools and agents that can be combined to create powerful applications. It is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data and schema validation and serialization.
 
+## Why Atomic Agents?
+While existing frameworks for agentic AI focus on building autonomous multi-agent systems, they often lack the control and predictability required for real-world applications. Businesses need AI systems that produce consistent, reliable outputs aligned with their brand and objectives.
+
+Atomic Agents addresses this need by providing:
+
+- **Modularity:** Build AI applications by combining small, reusable components.
+- **Predictability:** Define clear input and output schemas to ensure consistent behavior.
+- **Extensibility:** Easily swap out components or integrate new ones without disrupting the entire system.
+- **Control:** Fine-tune each part of the system individually, from system prompts to tool integrations.
+
+## Anatomy of an Agent
+In Atomic Agents, an agent is composed of several key components:
+
+- **System Prompt:** Defines the agent's behavior and purpose.
+- **Input Schema:** Specifies the structure and validation rules for the agent's input.
+- **Output Schema:** Specifies the structure and validation rules for the agent's output.
+- **Memory:** Stores conversation history or other relevant data.
+- **Context Providers:** Inject dynamic context into the agent's system prompt at runtime.
+
+Here's a high-level architecture diagram:
 <!-- ![alt text](./.assets/architecture_highlevel_overview.png) -->
 <img src="./.assets/architecture_highlevel_overview.png" alt="High-level architecture overview of Atomic Agents" width="600"/>
 <img src="./.assets/what_is_sent_in_prompt.png" alt="Diagram showing what is sent to the LLM in the prompt" width="600"/>
