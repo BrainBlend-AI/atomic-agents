@@ -38,6 +38,23 @@ pip install atomic-agents
 
 This also installs the CLI *Atomic Assembler*, which can be used to download Tools (and soon also Agents and Pipelines).
 
+For local development, you can install from the repository:
+
+```bash
+git clone https://github.com/BrainBlend-AI/atomic-agents.git
+cd atomic-agents
+poetry install
+```
+
+## Project Structure
+
+Atomic Agents uses a monorepo structure with the following main components:
+
+1. `atomic-agents/`: The core Atomic Agents library
+2. `atomic-assembler/`: The CLI tool for managing Atomic Agents components
+3. `atomic-examples/`: Example projects showcasing Atomic Agents usage
+4. `atomic-forge/`: A collection of tools that can be used with Atomic Agents
+
 ## Quickstart & Examples
 A complete list of examples can be found in the [examples](./atomic-examples/) directory.
 
@@ -97,6 +114,13 @@ This snippet showcases how to create a customizable agent that responds to user 
 
 - [Multi-Provider Chatbot](/atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py)
   Demonstrates how to use different providers such as Ollama or Groq.
+
+In addition to the quickstart examples, we have more complex examples demonstrating the power of Atomic Agents:
+
+- [Web Search Agent](/atomic-examples/web-search-agent/README.md): An intelligent agent that performs web searches and answers questions based on the results.
+- [YouTube Summarizer](/atomic-examples/youtube-summarizer/README.md): An agent that extracts and summarizes knowledge from YouTube videos.
+
+For a complete list of examples, see the [examples directory](/atomic-examples/).
 
 These examples provide a great starting point for understanding and using Atomic Agents.
 
@@ -237,7 +261,7 @@ Each tool's has its own:
 
 The `atomic-assembler` CLI gives you complete control over your tools, avoiding the clutter of unnecessary dependencies. It makes modifying tools straightforward additionally, each tool comes with its own set of tests for reliability.
 
-**But you’re not limited to the CLI!** If you prefer, you can directly access the tool folders and manage them manually by simply copying and pasting as needed.
+**But you're not limited to the CLI!** If you prefer, you can directly access the tool folders and manage them manually by simply copying and pasting as needed.
 
 <img src="./.assets/atomic-cli.png" alt="Atomic CLI menu" width="400"/>
 
@@ -247,8 +271,31 @@ Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) pa
 ## API Documentation
 API documentation can be found [here](https://brainblend-ai.github.io/atomic-agents/).
 
+## Atomic Forge
+
+Atomic Forge is a collection of tools that can be used with Atomic Agents to extend its functionality. Current tools include:
+
+- Calculator
+- SearxNG Search
+- YouTube Transcript Scraper
+
+For more information on using and creating tools, see the [Atomic Forge README](/atomic-forge/README.md).
+
 ## Contributing
-We welcome contributions! Please see the [Developer Guide](/guides/DEV_GUIDE.md) for more information on how to contribute to Atomic Agents.
+
+We welcome contributions! Please see the [Developer Guide](/guides/DEV_GUIDE.md) for detailed information on how to contribute to Atomic Agents. Here are some quick steps:
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature-branch`)
+3. Make your changes
+4. Run tests (`pytest --cov atomic_agents`)
+5. Format your code (`black atomic_agents atomic_assembler`)
+6. Lint your code (`flake8 atomic_agents atomic_assembler`)
+7. Commit your changes (`git commit -m 'Add some feature'`)
+8. Push to the branch (`git push origin feature-branch`)
+9. Open a pull request
+
+For full development setup and guidelines, please refer to the [Developer Guide](/guides/DEV_GUIDE.md).
 
 ## License
 This project is licensed under the MIT License—see the [LICENSE](LICENSE) file for details.
