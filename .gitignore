@@ -140,6 +140,7 @@ Thumbs.db
 
 # Project specific
 personal_experiments/
+personal_scripts/
 *.psd
 .output/
 
