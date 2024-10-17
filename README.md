@@ -65,6 +65,9 @@ Here's a quick snippet demonstrating how easy it is to create a powerful agent w
 ```python
 # Define a custom output schema
 class CustomOutputSchema(BaseIOSchema):
+    """
+    docstring for the custom output schema
+    """
     chat_message: str = Field(..., description="The chat message from the agent.")
     suggested_questions: List[str] = Field(..., description="Suggested follow-up questions.")
 
