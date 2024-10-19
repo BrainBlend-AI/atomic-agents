@@ -121,6 +121,7 @@ This snippet showcases how to create a customizable agent that responds to user 
 In addition to the quickstart examples, we have more complex examples demonstrating the power of Atomic Agents:
 
 - [Web Search Agent](/atomic-examples/web-search-agent/README.md): An intelligent agent that performs web searches and answers questions based on the results.
+  
 - [YouTube Summarizer](/atomic-examples/youtube-summarizer/README.md): An agent that extracts and summarizes knowledge from YouTube videos.
 
 For a complete list of examples, see the [examples directory](/atomic-examples/).
