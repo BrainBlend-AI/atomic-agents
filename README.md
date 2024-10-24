@@ -36,6 +36,12 @@ To install Atomic Agents, you can use pip:
 pip install atomic-agents
 ```
 
+Make sure you also install the provider you want to use. For example, to use OpenAI and Groq, you can install the `openai` and `groq` packages:
+
+```bash
+pip install openai groq
+```
+
 This also installs the CLI *Atomic Assembler*, which can be used to download Tools (and soon also Agents and Pipelines).
 
 For local development, you can install from the repository:
@@ -121,7 +127,7 @@ This snippet showcases how to create a customizable agent that responds to user 
 In addition to the quickstart examples, we have more complex examples demonstrating the power of Atomic Agents:
 
 - [Web Search Agent](/atomic-examples/web-search-agent/README.md): An intelligent agent that performs web searches and answers questions based on the results.
-  
+
 - [YouTube Summarizer](/atomic-examples/youtube-summarizer/README.md): An agent that extracts and summarizes knowledge from YouTube videos.
 
 For a complete list of examples, see the [examples directory](/atomic-examples/).
