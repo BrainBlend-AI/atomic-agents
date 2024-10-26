@@ -27,7 +27,7 @@ class AgentMemory:
 
     Attributes:
         history (List[Message]): A list of messages representing the chat history.
-        max_messages (Optional[int]): Maximum number of turns to keep in history.
+        max_messages (Optional[int]): Maximum number of messages to keep in history.
         current_turn_id (Optional[str]): The ID of the current turn.
     """
 
@@ -36,7 +36,8 @@ class AgentMemory:
         Initializes the AgentMemory with an empty history and optional constraints.
 
         Args:
-            max_messages (Optional[int]): Maximum number of turns to keep in history.
+            max_messages (Optional[int]): Maximum number of messages to keep in history.
+                When exceeded, oldest messages are removed first.
         """
         self.history: List[Message] = []
         self.max_messages = max_messages
