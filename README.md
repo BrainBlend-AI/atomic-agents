@@ -1,5 +1,6 @@
 # Atomic Agents
-[![Watch the video](https://img.youtube.com/vi/Sp30YsjGUW0/0.jpg)](https://www.youtube.com/watch?v=Sp30YsjGUW0)
+### [Watch the Overview Video](https://www.youtube.com/watch?v=Sp30YsjGUW0)
+[![Watch the video](./.assets/video-thumbnail.png)](https://www.youtube.com/watch?v=Sp30YsjGUW0)
 
 <img src="./.assets/logo.png" alt="Atomic Agents" width="600"/>
 
