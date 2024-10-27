@@ -1,8 +1,10 @@
 # Atomic Agents
 ### [Watch the Overview Video](https://www.youtube.com/watch?v=Sp30YsjGUW0)
 <a href="https://www.youtube.com/watch?v=Sp30YsjGUW0" target="_blank">
-    <img src="./.assets/video-thumbnail.png" alt="Watch the video" width="300" height="200"/>
+    <img src="./.assets/video-thumbnail.png" alt="Watch the video" height="200"/>
 </a>
+
+---
 
 <img src="./.assets/logo.png" alt="Atomic Agents" width="600"/>
 
