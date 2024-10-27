@@ -1,5 +1,5 @@
 # Atomic Agents
-<img src="./.assets/logo.png" alt="Atomic Agents" width="600"/>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Sp30YsjGUW0?si=q_3XkUUtTDF8SXKC" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
