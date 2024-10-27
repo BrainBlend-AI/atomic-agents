@@ -1,12 +1,15 @@
 # Atomic Agents
-### [Watch the Overview Video](https://www.youtube.com/watch?v=Sp30YsjGUW0)
-<a href="https://www.youtube.com/watch?v=Sp30YsjGUW0" target="_blank">
-    <img src="./.assets/video-thumbnail.png" alt="Watch the video" height="200"/>
-</a>
+
+<img src="./.assets/logo.png" alt="Atomic Agents" width="350"/>
 
 ---
 
-<img src="./.assets/logo.png" alt="Atomic Agents" width="600"/>
+### [Watch the Overview Video](https://www.youtube.com/watch?v=Sp30YsjGUW0)
+<a href="https://www.youtube.com/watch?v=Sp30YsjGUW0" target="_blank">
+    <img src="./.assets/video-thumbnail.png" alt="Watch the video" width="350"/>
+</a>
+
+---
 
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
