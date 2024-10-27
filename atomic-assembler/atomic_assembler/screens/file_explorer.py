@@ -146,7 +146,7 @@ class FileExplorerScreen(Screen):
         if list_view.item:
             # self.current_path = str(list_view.highlighted_item.item_data["path"])
             self.current_path_widget.update(
-                f"Current directory: [bold {PRIMARY_COLOR}]{list_view.item.item_data["path"]}[/bold {PRIMARY_COLOR}]"
+                f"Current directory: [bold {PRIMARY_COLOR}]{list_view.item.item_data['path']}[/bold {PRIMARY_COLOR}]"
             )
 
     def _get_file_items(self):
