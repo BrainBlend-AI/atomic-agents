@@ -10,7 +10,12 @@ The Atomic Agents framework is designed to be modular, extensible, and easy to u
 
 ### [Watch the Overview Video](https://www.youtube.com/watch?v=Sp30YsjGUW0)
 <a href="https://www.youtube.com/watch?v=Sp30YsjGUW0" target="_blank">
-    <img src="./.assets/video-thumbnail.png" alt="Watch the video" width="350"/>
+    <img src="./.assets/video-thumbnail-1.png" alt="Watch the video" width="350"/>
+</a>
+
+### [Watch the Quickstart Video](https://www.youtube.com/watch?v=CyZxRU0ax3Q)
+<a href="https://www.youtube.com/watch?v=CyZxRU0ax3Q" target="_blank">
+    <img src="./.assets/video-thumbnail-2.png" alt="Watch the video" width="350"/>
 </a>
 
 ---
