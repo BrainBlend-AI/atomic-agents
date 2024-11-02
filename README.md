@@ -8,6 +8,8 @@
 
 The Atomic Agents framework is designed to be modular, extensible, and easy to use. Its main goal is to eliminate redundant complexity, unnecessary abstractions, and hidden assumptions while still providing a flexible and powerful platform for building AI applications through atomicity. The framework provides a set of tools and agents that can be combined to create powerful applications. It is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data and schema validation and serialization.
 
+---
+
 If you want to learn more about the motivation and philosophy behind Atomic Agents, I suggest checking out the overview video below:
 
 ### [Watch the Overview Video](https://www.youtube.com/watch?v=Sp30YsjGUW0)
@@ -15,6 +17,7 @@ If you want to learn more about the motivation and philosophy behind Atomic Agen
     <img src="./.assets/video-thumbnail-1.png" alt="Watch the video" width="350"/>
 </a>
 
+---
 If you just want to dive into the code straight away, I suggest checking out the quickstart video below:
 
 ### [Watch the Quickstart Video](https://www.youtube.com/watch?v=CyZxRU0ax3Q)
