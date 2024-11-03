@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "deep-research"
+version = "0.1.0"
+description = ""
+authors = ["KennyVaneetvelde <kenny@inosta.be>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+atomic-agents = {path = "../.."}
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
