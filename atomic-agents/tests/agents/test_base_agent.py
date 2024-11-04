@@ -58,7 +58,7 @@ def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_
     assert agent.system_prompt_generator == mock_system_prompt_generator
     assert agent.input_schema == BaseAgentInputSchema
     assert agent.output_schema == BaseAgentOutputSchema
-
+    assert agent.temperature == 0
 
 def test_reset_memory(agent, mock_memory):
     initial_memory = agent.initial_memory
