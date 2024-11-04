@@ -38,9 +38,7 @@ class BaseAgentConfig(BaseModel):
     input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
     model_config = {"arbitrary_types_allowed": True}
-    temperature: Optional[float] = Field(
-        0, description="Temperature for response generation, typically ranging from 0 to 1."
-    )
+    temperature: Optional[float] = Field(0, description="Temperature for response generation, typically ranging from 0 to 1.")
 
 
 class BaseAgent:
@@ -78,7 +76,7 @@ class BaseAgent:
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
-        self.temperature = 0
+        self.temperature = config.temperature
 
     def reset_memory(self):
         """
