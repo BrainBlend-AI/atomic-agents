@@ -135,7 +135,8 @@ class AgentMemory:
         if not self.history:
             self.current_turn_id = None
         elif turn_id == self.current_turn_id:
-            self.current_turn_id = max(msg.turn_id for msg in self.history)
+            # Always update to the last message's turn_id
+            self.current_turn_id = self.history[-1].turn_id
 
         return f"Successfully deleted message with turn ID {turn_id}."
 
