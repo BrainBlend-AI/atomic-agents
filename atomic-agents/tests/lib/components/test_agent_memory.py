@@ -247,3 +247,43 @@ def test_serialize_non_baseioschema():
     memory = AgentMemory()
     result = memory._serialize_content("Not a BaseIOSchema")
     assert result == "Not a BaseIOSchema"
+
+
+def test_agent_memory_delete_turn_id(memory):
+    mock_input = TestInputSchema(test_field="Test input")
+    mock_output = TestInputSchema(test_field="Test output")
+
+    memory = AgentMemory()
+    initial_turn_id = "123-456"
+    memory.current_turn_id = initial_turn_id
+
+    # Add a message with a specific turn ID
+    memory.add_message(
+        "user",
+        mock_input,
+    )
+    memory.history[-1].turn_id = initial_turn_id
+
+    # Add another message with a different turn ID
+    other_turn_id = "789-012"
+    memory.add_message(
+        "assistant",
+        mock_output,
+    )
+    memory.history[-1].turn_id = other_turn_id
+
+    # Act & Assert: Delete the message with initial_turn_id and verify
+    memory.delete_turn_id(initial_turn_id)
+
+    # The remaining message in memory should have the other_turn_id
+    assert len(memory.history) == 1
+    assert memory.history[0].turn_id == other_turn_id
+
+    # If we delete the last message, current_turn_id should become None
+    memory.delete_turn_id(other_turn_id)
+    assert memory.current_turn_id is None
+    assert len(memory.history) == 0
+
+    # Assert: Trying to delete a non-existing turn ID should raise a ValueError
+    with pytest.raises(ValueError, match="Turn ID non-existent-id not found in memory."):
+        memory.delete_turn_id("non-existent-id")

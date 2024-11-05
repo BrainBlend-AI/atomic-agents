@@ -112,6 +112,32 @@ class AgentMemory:
         """
         return self.current_turn_id
 
+    def delete_turn_id(self, turn_id: int):
+        """
+        Delete messages from the memory by its turn ID.
+
+        Args:
+            turn_id (int): The turn ID of the message to delete.
+
+        Returns:
+            str: A success message with the deleted turn ID.
+
+        Raises:
+            ValueError: If the specified turn ID is not found in the memory.
+        """
+        initial_length = len(self.history)
+        self.history = [msg for msg in self.history if msg.turn_id != turn_id]
+
+        if len(self.history) == initial_length:
+            raise ValueError(f"Turn ID {turn_id} not found in memory.")
+
+        # Update current_turn_id if necessary
+        if not len(self.history):
+            self.current_turn_id = None
+        elif turn_id == self.current_turn_id:
+            # Always update to the last message's turn_id
+            self.current_turn_id = self.history[-1].turn_id
+
     def get_message_count(self) -> int:
         """
         Returns the number of messages in the chat history.

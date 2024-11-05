@@ -37,8 +37,8 @@ class BaseAgentConfig(BaseModel):
     )
     input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
-
     model_config = {"arbitrary_types_allowed": True}
+    temperature: Optional[float] = Field(0, description="Temperature for response generation, typically ranging from 0 to 1.")
 
 
 class BaseAgent:
@@ -76,6 +76,7 @@ class BaseAgent:
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
+        self.temperature = config.temperature
 
     def reset_memory(self):
         """
@@ -103,7 +104,9 @@ class BaseAgent:
                 "content": self.system_prompt_generator.generate_prompt(),
             }
         ] + self.memory.get_history()
-        response = self.client.chat.completions.create(model=self.model, messages=messages, response_model=response_model)
+        response = self.client.chat.completions.create(
+            model=self.model, messages=messages, response_model=response_model, temperature=self.temperature
+        )
         return response
 
     def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
