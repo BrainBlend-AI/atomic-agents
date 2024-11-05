@@ -19,7 +19,11 @@ class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
     answer: str = Field(..., description="The answer to the question.")
     follow_up_questions: list[str] = Field(
         ...,
-        description="Specific questions about the topic that would help the user learn more details about the subject matter. For example, if discussing a Nobel Prize winner, suggest questions about their research, impact, or related scientific concepts.",
+        description=(
+            "Specific questions about the topic that would help the user learn more details about the subject matter. "
+            "For example, if discussing a Nobel Prize winner, suggest questions about their research, impact, or "
+            "related scientific concepts."
+        ),
     )
 
 

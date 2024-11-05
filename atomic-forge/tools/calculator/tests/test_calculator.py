@@ -1,11 +1,9 @@
 import os
 import sys
-import io
-from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tool.calculator import (
+from tool.calculator import (  # noqa: E402
     CalculatorTool,
     CalculatorToolInputSchema,
     CalculatorToolOutputSchema,

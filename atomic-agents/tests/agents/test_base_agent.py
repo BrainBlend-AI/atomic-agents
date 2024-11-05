@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import Mock, call, patch
 from pydantic import BaseModel
 import instructor
-import inspect
 from atomic_agents.agents.base_agent import (
     BaseIOSchema,
     BaseAgent,
@@ -60,6 +59,7 @@ def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_
     assert agent.output_schema == BaseAgentOutputSchema
     assert agent.temperature == 0
 
+
 def test_reset_memory(agent, mock_memory):
     initial_memory = agent.initial_memory
     agent.reset_memory()
@@ -82,21 +82,8 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
         model="gpt-4o-mini",
         messages=[{"role": "system", "content": "System prompt"}, {"role": "user", "content": "Hello"}],
         response_model=BaseAgentOutputSchema,
+        temperature=0,
     )
-
-
-def test_run(agent, mock_memory):
-    mock_input = BaseAgentInputSchema(chat_message="Test input")
-    mock_output = BaseAgentOutputSchema(chat_message="Test output")
-
-    agent.get_response = Mock(return_value=mock_output)
-
-    result = agent.run(mock_input)
-
-    assert result == mock_output
-    assert agent.current_user_input == mock_input
-
-    mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
 
 def test_get_context_provider(agent, mock_system_prompt_generator):
@@ -157,7 +144,6 @@ def test_base_agent_io_str_and_rich():
     assert test_io.__rich__() is not None  # Just check if it returns something, as we can't easily compare Rich objects
 
 
-# Update the existing test_run function to use the actual methods instead of mocks
 def test_run(agent, mock_memory):
     mock_input = BaseAgentInputSchema(chat_message="Test input")
     mock_output = BaseAgentOutputSchema(chat_message="Test output")

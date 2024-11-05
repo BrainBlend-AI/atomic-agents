@@ -1,6 +1,5 @@
 import math
 from typing import List
-from logging import Logger
 
 from pyfiglet import Figlet
 from rich.align import Align

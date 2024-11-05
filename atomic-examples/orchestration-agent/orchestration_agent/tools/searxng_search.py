@@ -1,4 +1,3 @@
-import os
 from typing import List, Literal, Optional
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -205,9 +204,7 @@ if __name__ == "__main__":
     load_dotenv()
     rich_console = Console()
 
-    search_tool_instance = SearxNGSearchTool(
-        config=SearxNGSearchToolConfig(base_url="http://localhost:8080", max_results=5)
-    )
+    search_tool_instance = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url="http://localhost:8080", max_results=5))
 
     search_input = SearxNGSearchTool.input_schema(
         queries=["Python programming", "Machine learning", "Artificial intelligence"],

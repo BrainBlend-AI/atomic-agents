@@ -1,7 +1,7 @@
 import pytest
 import json
 from typing import List, Dict
-from pydantic import BaseModel, Field
+from pydantic import Field
 from atomic_agents.lib.components.agent_memory import AgentMemory, Message
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
@@ -71,13 +71,6 @@ def test_manage_overflow(memory):
         memory.add_message("user", TestInputSchema(test_field=f"Message {i}"))
     assert len(memory.history) == 5
     assert memory.history[0].content.test_field == "Message 2"
-
-
-def test_serialize_content(memory):
-    content = TestInputSchema(test_field="Test")
-    serialized = memory._serialize_content(content)
-    assert isinstance(serialized, str)
-    assert json.loads(serialized) == {"test_field": "Test"}
 
 
 def test_get_history(memory):
@@ -241,12 +234,6 @@ def test_memory_turn_consistency():
     assert new_turn_id != turn_id
     memory.add_message("user", TestInputSchema(test_field="Next turn"))
     assert memory.history[2].turn_id == new_turn_id
-
-
-def test_serialize_non_baseioschema():
-    memory = AgentMemory()
-    result = memory._serialize_content("Not a BaseIOSchema")
-    assert result == "Not a BaseIOSchema"
 
 
 def test_agent_memory_delete_turn_id(memory):

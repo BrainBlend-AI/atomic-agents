@@ -1,14 +1,13 @@
 import logging
 from textual import on
 from textual.app import App
-from textual.screen import Screen
 from pathlib import Path
 import webbrowser
 
 from atomic_assembler.screens.main_menu import MainMenuScreen
 from atomic_assembler.screens.file_explorer import FileExplorerScreen
 from atomic_assembler.screens.atomic_tool_explorer import AtomicToolExplorerScreen
-from atomic_assembler.constants import GITHUB_BRANCH, Mode
+from atomic_assembler.constants import Mode
 
 
 class AtomicAssembler(App):

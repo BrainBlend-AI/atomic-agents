@@ -6,7 +6,7 @@ import tempfile
 import git
 import yaml
 from pathlib import Path
-from atomic_assembler.constants import GITHUB_BASE_URL, GITHUB_BRANCH, TOOLS_SUBFOLDER
+from atomic_assembler.constants import GITHUB_BRANCH, TOOLS_SUBFOLDER
 
 
 class GithubRepoCloner:
@@ -18,7 +18,7 @@ class GithubRepoCloner:
 
     def clone(self):
         try:
-            repo = git.Repo.clone_from(self.repo_url, self.repo_path, branch=GITHUB_BRANCH)
+            _ = git.Repo.clone_from(self.repo_url, self.repo_path, branch=GITHUB_BRANCH)
             logging.info(f"Repository cloned to {self.repo_path} on branch {GITHUB_BRANCH}")
         except git.GitCommandError as e:
             logging.error(f"Failed to clone repository: {e}")

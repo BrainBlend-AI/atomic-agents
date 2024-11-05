@@ -21,7 +21,10 @@ query_agent = BaseAgent(
         model=ChatConfig.model,
         system_prompt_generator=SystemPromptGenerator(
             background=[
-                "You are an expert search engine query generator with a deep understanding of which queries will maximize the number of relevant results.",
+                (
+                    "You are an expert search engine query generator with a deep understanding of which"
+                    "queries will maximize the number of relevant results."
+                )
             ],
             steps=[
                 "Analyze the given instruction to identify key concepts and aspects that need to be researched",

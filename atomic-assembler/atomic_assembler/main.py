@@ -1,7 +1,5 @@
 import logging
-import sys
 import argparse
-from atomic_assembler.constants import GITHUB_BASE_URL
 from atomic_assembler.app import AtomicAssembler
 
 

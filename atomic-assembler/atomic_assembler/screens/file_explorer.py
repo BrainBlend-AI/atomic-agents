@@ -1,10 +1,9 @@
 import logging
 from textual.app import ComposeResult
-from textual.widgets import Static, Footer, Header
+from textual.widgets import Static, Footer
 from textual.binding import Binding
-from textual import events, on
+from textual import on
 from textual.reactive import reactive
-from textual.containers import Container
 from textual.screen import Screen
 from pathlib import Path
 from typing import List, Optional, Dict, Callable

@@ -28,12 +28,7 @@ console = Console()
 memory = AgentMemory()
 
 # Initialize the SearxNGSearchTool
-search_tool = SearxNGSearchTool(
-    config=SearxNGSearchToolConfig(
-        base_url=os.getenv("SEARXNG_BASE_URL"),
-        max_results=5
-    )
-)
+search_tool = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
 
 # Initialize the BaseAgent
 agent = BaseAgent(
@@ -57,10 +52,8 @@ for query in generated_queries.queries:
     console.print(f"- {query}")
 
 # Perform searches using the generated queries
-search_input = SearxNGSearchToolInputSchema(
-    queries=generated_queries.queries,
-    category="general"
-)
+search_input = SearxNGSearchToolInputSchema(queries=generated_queries.queries, category="general")
+
 
 class SearchResultsProvider(SystemPromptContextProviderBase):
     def __init__(self, title: str):

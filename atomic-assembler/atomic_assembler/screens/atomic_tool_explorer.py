@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.widgets import Static, Footer, Header
+from textual.widgets import Static, Footer
 from textual.binding import Binding
 from textual.screen import Screen
 from textual.message import Message

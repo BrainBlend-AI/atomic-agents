@@ -2,8 +2,6 @@ import os
 from dotenv import load_dotenv
 from rich.console import Console
 
-from atomic_agents.lib.components.agent_memory import AgentMemory
-
 from youtube_to_recipe.tools.youtube_transcript_scraper import (
     YouTubeTranscriptTool,
     YouTubeTranscriptToolConfig,

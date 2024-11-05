@@ -8,7 +8,7 @@ from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled
 # Add the parent directory of 'tests' to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tool.youtube_transcript_scraper import (
+from tool.youtube_transcript_scraper import (  # noqa: E402
     YouTubeTranscriptTool,
     YouTubeTranscriptToolInputSchema,
     YouTubeTranscriptToolOutputSchema,
@@ -123,7 +123,6 @@ def test_youtube_transcript_tool_transcripts_disabled():
 
 def test_fetch_video_metadata_no_items():
     mock_api_key = "mock_api_key"
-    mock_video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
     with patch("tool.youtube_transcript_scraper.build") as mock_build:
         mock_youtube = MagicMock()

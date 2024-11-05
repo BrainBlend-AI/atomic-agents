@@ -3,7 +3,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Static
 from textual.containers import Vertical
 from textual.app import ComposeResult
-from atomic_assembler.constants import PRIMARY_COLOR, SECONDARY_COLOR
+from atomic_assembler.constants import PRIMARY_COLOR
 from typing import Callable
 
 

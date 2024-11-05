@@ -4,9 +4,7 @@ from textual.containers import ScrollableContainer
 from textual.widgets import Static
 from textual.app import ComposeResult
 from atomic_assembler.constants import (
-    BORDER_STYLE,
     PRIMARY_COLOR,
-    SECONDARY_COLOR,
 )
 
 

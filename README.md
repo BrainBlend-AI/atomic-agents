@@ -18,6 +18,7 @@ If you want to learn more about the motivation and philosophy behind Atomic Agen
 </a>
 
 ---
+
 If you just want to dive into the code straight away, I suggest checking out the quickstart video below:
 
 ### [Watch the Quickstart Video](https://www.youtube.com/watch?v=CyZxRU0ax3Q)
@@ -320,9 +321,9 @@ We welcome contributions! Please see the [Developer Guide](/guides/DEV_GUIDE.md)
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature-branch`)
 3. Make your changes
-4. Run tests (`pytest --cov atomic_agents`)
-5. Format your code (`black atomic_agents atomic_assembler`)
-6. Lint your code (`flake8 atomic_agents atomic_assembler`)
+4. Run tests (`poetry run pytest --cov=atomic_agents atomic-agents`)
+5. Format your code (`poetry run black atomic-agents atomic-assembler atomic-examples atomic-forge`)
+6. Lint your code (`poetry run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge`)
 7. Commit your changes (`git commit -m 'Add some feature'`)
 8. Push to the branch (`git push origin feature-branch`)
 9. Open a pull request

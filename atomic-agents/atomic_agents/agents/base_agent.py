@@ -240,6 +240,6 @@ if __name__ == "__main__":
     console.print("\n[bold]Agent initialized and ready to use![/bold]")
 
     # Run the agent with a sample input
-    sample_input = agent.input_schema(chat_message="Hello, how are you?")
+    sample_input = agent.input_schema(chat_message="Please give me 3 cute squirrel facts")
     response = agent.run(sample_input)
     console.print(f"[bold]Response:[/bold] {response.chat_message}")

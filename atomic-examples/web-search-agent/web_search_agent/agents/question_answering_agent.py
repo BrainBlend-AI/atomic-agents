@@ -16,8 +16,12 @@ class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
     """This schema defines the output schema for the QuestionAnsweringAgent."""
 
     markdown_output: str = Field(..., description="The answer to the question in markdown format.")
-    references: List[HttpUrl] = Field(..., max_items=3, description="A list of up to 3 HTTP URLs used as references for the answer.")
-    followup_questions: List[str] = Field(..., max_items=3, description="A list of up to 3 follow-up questions related to the answer.")
+    references: List[HttpUrl] = Field(
+        ..., max_items=3, description="A list of up to 3 HTTP URLs used as references for the answer."
+    )
+    followup_questions: List[str] = Field(
+        ..., max_items=3, description="A list of up to 3 follow-up questions related to the answer."
+    )
 
 
 # Create the question answering agent

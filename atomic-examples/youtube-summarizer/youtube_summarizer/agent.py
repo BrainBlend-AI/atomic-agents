@@ -1,6 +1,6 @@
 import instructor
 import openai
-from pydantic import BaseModel, Field
+from pydantic import Field
 from typing import List, Optional
 
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseIOSchema

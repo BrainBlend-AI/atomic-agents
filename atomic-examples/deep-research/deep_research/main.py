@@ -5,14 +5,9 @@ from deep_research.agents.qa_agent import (
     QuestionAnsweringAgentOutputSchema,
 )
 from deep_research.agents.choice_agent import choice_agent, ChoiceAgentInputSchema
-from deep_research.config import ChatConfig
 from deep_research.tools.searxng_search import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolInputSchema
 from deep_research.tools.webpage_scraper import WebpageScraperTool, WebpageScraperToolInputSchema
 from deep_research.context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
-
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from deep_research.agents.choice_agent import ChoiceAgentInputSchema, choice_agent
 
 from rich import print
 
@@ -54,7 +49,11 @@ def initialize_conversation_memory() -> None:
 
     # Create the initial response using the output schema
     initial_answer = QuestionAnsweringAgentOutputSchema(
-        answer="""Quantum computing is a revolutionary technology that uses quantum mechanics to perform computations. Unlike classical computers that use bits (0 or 1), quantum computers use quantum bits or 'qubits' that can exist in multiple states simultaneously due to superposition.""",
+        answer=(
+            "Quantum computing is a revolutionary technology that uses quantum mechanics to perform computations."
+            "Unlike classical computers that use bits (0 or 1), quantum computers use quantum bits or 'qubits' "
+            "that can exist in multiple states simultaneously due to superposition."
+        ),
         follow_up_questions=[
             "What are the main challenges in building a practical quantum computer?",
             "How does quantum entanglement contribute to quantum computing power?",
@@ -114,18 +113,22 @@ def chat_loop() -> None:
         choice_agent_output = choice_agent.run(
             ChoiceAgentInputSchema(
                 user_message=user_message,
-                decision_type="Should we perform a new web search? TRUE if we need new or updated information, FALSE if existing context is sufficient. Consider: 1) Is the context empty? 2) Is the existing information relevant? 3) Is the information recent enough?",
+                decision_type=(
+                    "Should we perform a new web search? TRUE if we need new or updated information, FALSE if existing "
+                    "context is sufficient. Consider: 1) Is the context empty? 2) Is the existing information relevant? "
+                    "3) Is the information recent enough?"
+                ),
             )
         )
 
         if choice_agent_output.decision:
-            print(f"\n[bold yellow]Performing new search[/bold yellow]")
+            print("\n[bold yellow]Performing new search[/bold yellow]")
             print(f"Reason: {choice_agent_output.reasoning}")
 
             # Perform search and update context
             perform_search_and_update_context(user_message, scraped_content_context_provider)
         else:
-            print(f"\n[bold green]Using existing context[/bold green]")
+            print("\n[bold green]Using existing context[/bold green]")
             print(f"Reason: {choice_agent_output.reasoning}")
 
         # Get and display the answer

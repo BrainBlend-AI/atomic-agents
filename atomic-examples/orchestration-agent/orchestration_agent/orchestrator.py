@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union
 import openai
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
@@ -181,4 +181,3 @@ if __name__ == "__main__":
 
         # Reset the memory after each response
         orchestrator_agent.memory = AgentMemory()
-

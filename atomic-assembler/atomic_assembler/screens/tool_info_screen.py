@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
-from textual.widgets import Header, Footer, Markdown
+from textual.widgets import Footer, Markdown
 from textual.binding import Binding
 from textual.screen import Screen
 

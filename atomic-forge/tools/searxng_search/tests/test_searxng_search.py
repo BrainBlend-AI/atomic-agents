@@ -2,14 +2,12 @@ import os
 import sys
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-import aiohttp
 from aiohttp import ClientSession
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tool.searxng_search import (
+from tool.searxng_search import (  # noqa: E402
     SearxNGSearchTool,
-    SearxNGSearchResultItemSchema,
     SearxNGSearchToolInputSchema,
     SearxNGSearchToolOutputSchema,
     SearxNGSearchToolConfig,
