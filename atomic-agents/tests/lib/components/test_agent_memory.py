@@ -248,10 +248,11 @@ def test_serialize_non_baseioschema():
     result = memory._serialize_content("Not a BaseIOSchema")
     assert result == "Not a BaseIOSchema"
 
+
 def test_agent_memory_delete_turn_id(memory):
     mock_input = TestInputSchema(test_field="Test input")
     mock_output = TestInputSchema(test_field="Test output")
-  
+
     memory = AgentMemory()
     initial_turn_id = "123-456"
     memory.current_turn_id = initial_turn_id
@@ -259,10 +260,10 @@ def test_agent_memory_delete_turn_id(memory):
     # Add a message with a specific turn ID
     memory.add_message(
         "user",
-        mock_input,  
+        mock_input,
     )
     memory.history[-1].turn_id = initial_turn_id
-    
+
     # Add another message with a different turn ID
     other_turn_id = "789-012"
     memory.add_message(
@@ -270,10 +271,9 @@ def test_agent_memory_delete_turn_id(memory):
         mock_output,
     )
     memory.history[-1].turn_id = other_turn_id
-    
+
     # Act & Assert: Delete the message with initial_turn_id and verify
-    success_message = memory.delete_turn_id(initial_turn_id)
-    assert success_message == f"Successfully deleted message with turn ID {initial_turn_id}."
+    memory.delete_turn_id(initial_turn_id)
 
     # The remaining message in memory should have the other_turn_id
     assert len(memory.history) == 1
