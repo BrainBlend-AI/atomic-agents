@@ -23,7 +23,7 @@ class BaseIOSchema(BaseModel):
         description = cls.__doc__
 
         if not description or not description.strip():
-            if cls.__module__ != "instructor.function_calls":
+            if cls.__module__ != "instructor.function_calls" and not hasattr(cls, "from_streaming_response"):
                 raise ValueError(f"{cls.__name__} must have a non-empty docstring to serve as its description")
 
     @classmethod

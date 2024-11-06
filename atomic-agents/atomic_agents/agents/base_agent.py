@@ -1,10 +1,39 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type
-
 from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
+from atomic_agents.lib.components.system_prompt_generator import (
+    SystemPromptContextProviderBase,
+    SystemPromptGenerator,
+)
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+
+from instructor.dsl.partial import PartialBase
+from jiter import from_json
+
+
+def model_from_chunks_patched(cls, json_chunks, **kwargs):
+    potential_object = ""
+    partial_model = cls.get_partial_model()
+    for chunk in json_chunks:
+        potential_object += chunk
+        obj = from_json((potential_object or "{}").encode(), partial_mode="trailing-strings")
+        obj = partial_model.model_validate(obj, strict=None, **kwargs)
+        yield obj
+
+
+async def model_from_chunks_async_patched(cls, json_chunks, **kwargs):
+    potential_object = ""
+    partial_model = cls.get_partial_model()
+    async for chunk in json_chunks:
+        potential_object += chunk
+        obj = from_json((potential_object or "{}").encode(), partial_mode="trailing-strings")
+        obj = partial_model.model_validate(obj, strict=None, **kwargs)
+        yield obj
+
+
+PartialBase.model_from_chunks = classmethod(model_from_chunks_patched)
+PartialBase.model_from_chunks_async = classmethod(model_from_chunks_async_patched)
 
 
 class BaseAgentInputSchema(BaseIOSchema):
@@ -38,7 +67,10 @@ class BaseAgentConfig(BaseModel):
     input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
     model_config = {"arbitrary_types_allowed": True}
-    temperature: Optional[float] = Field(0, description="Temperature for response generation, typically ranging from 0 to 1.")
+    temperature: Optional[float] = Field(
+        0,
+        description="Temperature for response generation, typically ranging from 0 to 1.",
+    )
 
 
 class BaseAgent:
@@ -86,7 +118,7 @@ class BaseAgent:
 
     def get_response(self, response_model=None) -> Type[BaseModel]:
         """
-        Obtains a response from the language model.
+        Obtains a response from the language model synchronously.
 
         Args:
             response_model (Type[BaseModel], optional):
@@ -105,13 +137,16 @@ class BaseAgent:
             }
         ] + self.memory.get_history()
         response = self.client.chat.completions.create(
-            model=self.model, messages=messages, response_model=response_model, temperature=self.temperature
+            model=self.model,
+            messages=messages,
+            response_model=response_model,
+            temperature=self.temperature,
         )
         return response
 
     def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
         """
-        Runs the chat agent with the given user input.
+        Runs the chat agent with the given user input synchronously.
 
         Args:
             user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
@@ -128,6 +163,90 @@ class BaseAgent:
         self.memory.add_message("assistant", response)
 
         return response
+
+    async def get_response_async(self, response_model=None) -> Type[BaseModel]:
+        """
+        Obtains a response from the language model asynchronously.
+
+        Args:
+            response_model (Type[BaseModel], optional):
+                The schema for the response data. If not set, self.output_schema is used.
+
+        Returns:
+            Type[BaseModel]: The response from the language model.
+        """
+        if response_model is None:
+            response_model = self.output_schema
+
+        messages = [
+            {
+                "role": "system",
+                "content": self.system_prompt_generator.generate_prompt(),
+            }
+        ] + self.memory.get_history()
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            response_model=response_model,
+            temperature=self.temperature,
+        )
+        return response
+
+    async def run_async(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
+        """
+        Runs the chat agent with the given user input asynchronously.
+
+        Args:
+            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+
+        Returns:
+            Type[BaseIOSchema]: The response from the chat agent.
+        """
+        if user_input:
+            self.memory.initialize_turn()
+            self.current_user_input = user_input
+            self.memory.add_message("user", user_input)
+
+        response = await self.get_response_async(response_model=self.output_schema)
+        self.memory.add_message("assistant", response)
+
+        return response
+
+    async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
+        """
+        Runs the chat agent with the given user input, supporting streaming output asynchronously.
+
+        Args:
+            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+
+        Yields:
+            BaseModel: Partial responses from the chat agent.
+        """
+        if user_input:
+            self.memory.initialize_turn()
+            self.current_user_input = user_input
+            self.memory.add_message("user", user_input)
+
+        messages = [
+            {
+                "role": "system",
+                "content": self.system_prompt_generator.generate_prompt(),
+            }
+        ] + self.memory.get_history()
+
+        response_stream = self.client.chat.completions.create_partial(
+            model=self.model,
+            messages=messages,
+            response_model=self.output_schema,
+            temperature=self.temperature,
+            stream=True,
+        )
+
+        async for partial_response in response_stream:
+            yield partial_response
+
+        full_response_content = self.output_schema(**partial_response.model_dump())
+        self.memory.add_message("assistant", full_response_content)
 
     def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
         """
@@ -175,25 +294,73 @@ if __name__ == "__main__":
     from rich.table import Table
     from rich.syntax import Syntax
     from rich import box
+    from openai import OpenAI, AsyncOpenAI
     import instructor
-    import openai
-    from pydantic import BaseModel, Field
+    import asyncio
+    from rich.live import Live
+    import json
 
-    # Initialize the agent
-    client = instructor.from_openai(openai.OpenAI())
-    config = BaseAgentConfig(
-        client=client,
-        model="gpt-4o-mini",
-    )
+    async def chat_loop(streaming: bool = False):
+        """Interactive chat loop with the AI agent.
+
+        Args:
+            streaming (bool): Whether to use streaming mode for responses
+        """
+        if streaming:
+            client = instructor.from_openai(AsyncOpenAI())
+            config = BaseAgentConfig(client=client, model="gpt-4o-mini")
+            agent = BaseAgent(config)
+        else:
+            client = instructor.from_openai(OpenAI())
+            config = BaseAgentConfig(client=client, model="gpt-4o-mini")
+            agent = BaseAgent(config)
+
+        console = Console()
+        console.print(
+            Panel.fit(
+                "[bold blue]Interactive Chat Mode[/bold blue]\n"
+                f"[cyan]Streaming: {streaming}[/cyan]\n"
+                "Type 'exit' to quit",
+                border_style="blue",
+                padding=(1, 1),
+            )
+        )
+
+        while True:
+            user_message = console.input("\n[bold green]You:[/bold green] ")
+
+            if user_message.lower() == "exit":
+                console.print("[yellow]Goodbye![/yellow]")
+                break
+
+            user_input = agent.input_schema(chat_message=user_message)
+
+            console.print("[bold blue]Assistant:[/bold blue]")
+            if streaming:
+                with Live(console=console, refresh_per_second=4) as live:
+                    async for partial_response in agent.stream_response_async(user_input):
+                        response_json = partial_response.model_dump()
+                        json_str = json.dumps(response_json, indent=2)
+                        live.update(json_str)
+            else:
+                response = agent.run(user_input)
+                response_json = response.model_dump()
+                json_str = json.dumps(response_json, indent=2)
+                console.print(json_str)
+
+    console = Console()
+    client = instructor.from_openai(OpenAI())
+    config = BaseAgentConfig(client=client, model="gpt-4o-mini")
     agent = BaseAgent(config)
 
-    # Create a Rich console
-    console = Console()
+    console.print(
+        Panel.fit(
+            "[bold blue]Agent Information[/bold blue]",
+            border_style="blue",
+            padding=(1, 1),
+        )
+    )
 
-    # Print agent information
-    console.print(Panel.fit("[bold blue]Agent Information[/bold blue]", border_style="blue", padding=(1, 1)))
-
-    # Print input schema
     input_schema_table = Table(title="Input Schema", box=box.ROUNDED)
     input_schema_table.add_column("Field", style="cyan")
     input_schema_table.add_column("Type", style="magenta")
@@ -204,7 +371,6 @@ if __name__ == "__main__":
 
     console.print(input_schema_table)
 
-    # Print output schema
     output_schema_table = Table(title="Output Schema", box=box.ROUNDED)
     output_schema_table.add_column("Field", style="cyan")
     output_schema_table.add_column("Type", style="magenta")
@@ -215,7 +381,6 @@ if __name__ == "__main__":
 
     console.print(output_schema_table)
 
-    # Print other agent information
     info_table = Table(title="Agent Configuration", box=box.ROUNDED)
     info_table.add_column("Property", style="cyan")
     info_table.add_column("Value", style="yellow")
@@ -226,7 +391,6 @@ if __name__ == "__main__":
 
     console.print(info_table)
 
-    # Print a sample of the system prompt
     system_prompt = agent.system_prompt_generator.generate_prompt()
     console.print(
         Panel(
@@ -237,9 +401,6 @@ if __name__ == "__main__":
         )
     )
 
-    console.print("\n[bold]Agent initialized and ready to use![/bold]")
+    console.print("\n[bold]Starting chat loop...[/bold]")
 
-    # Run the agent with a sample input
-    sample_input = agent.input_schema(chat_message="Please give me 3 cute squirrel facts")
-    response = agent.run(sample_input)
-    console.print(f"[bold]Response:[/bold] {response.chat_message}")
+    asyncio.run(chat_loop(streaming=True))
