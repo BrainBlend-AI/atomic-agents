@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, call, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 from pydantic import BaseModel
 import instructor
 from atomic_agents.agents.base_agent import (
@@ -12,12 +12,14 @@ from atomic_agents.agents.base_agent import (
     AgentMemory,
     SystemPromptContextProviderBase,
 )
+from instructor.dsl.partial import PartialBase
 
 
 @pytest.fixture
 def mock_instructor():
     mock = Mock(spec=instructor.Instructor)
     mock.chat.completions.create = Mock()
+    mock.chat.completions.create_partial = Mock()
     return mock
 
 
@@ -27,6 +29,7 @@ def mock_memory():
     mock.get_history.return_value = []
     mock.add_message = Mock()
     mock.copy = Mock(return_value=Mock(spec=AgentMemory))
+    mock.initialize_turn = Mock()
     return mock
 
 
@@ -41,7 +44,10 @@ def mock_system_prompt_generator():
 @pytest.fixture
 def agent_config(mock_instructor, mock_memory, mock_system_prompt_generator):
     return BaseAgentConfig(
-        client=mock_instructor, model="gpt-4o-mini", memory=mock_memory, system_prompt_generator=mock_system_prompt_generator
+        client=mock_instructor,
+        model="gpt-4o-mini",
+        memory=mock_memory,
+        system_prompt_generator=mock_system_prompt_generator,
     )
 
 
@@ -124,7 +130,10 @@ def test_custom_input_output_schemas(mock_instructor):
         result: str
 
     custom_config = BaseAgentConfig(
-        client=mock_instructor, model="gpt-4o-mini", input_schema=CustomInputSchema, output_schema=CustomOutputSchema
+        client=mock_instructor,
+        model="gpt-4o-mini",
+        input_schema=CustomInputSchema,
+        output_schema=CustomOutputSchema,
     )
 
     custom_agent = BaseAgent(custom_config)
@@ -179,3 +188,107 @@ def test_base_io_schema_model_json_schema_no_description():
 
     assert "description" in schema
     assert schema["description"] == "Test schema docstring."
+
+
+@pytest.mark.asyncio
+async def test_get_response_async(agent, mock_instructor, mock_memory, mock_system_prompt_generator):
+    mock_memory.get_history.return_value = [{"role": "user", "content": "Hello"}]
+    mock_system_prompt_generator.generate_prompt.return_value = "System prompt"
+
+    mock_response = Mock(spec=BaseAgentOutputSchema)
+    mock_instructor.chat.completions.create = AsyncMock(return_value=mock_response)
+
+    response = await agent.get_response_async()
+
+    assert response == mock_response
+
+    mock_instructor.chat.completions.create.assert_awaited_once_with(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": "System prompt"}, {"role": "user", "content": "Hello"}],
+        response_model=BaseAgentOutputSchema,
+        temperature=0,
+    )
+
+
+@pytest.mark.asyncio
+async def test_run_async(agent, mock_memory):
+    mock_input = BaseAgentInputSchema(chat_message="Test input")
+    mock_output = BaseAgentOutputSchema(chat_message="Test output")
+
+    agent.get_response_async = AsyncMock(return_value=mock_output)
+
+    result = await agent.run_async(mock_input)
+
+    assert result == mock_output
+    assert agent.current_user_input == mock_input
+
+    mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
+
+
+@pytest.mark.asyncio
+async def test_stream_response_async(agent, mock_memory, mock_instructor, mock_system_prompt_generator):
+    mock_input = BaseAgentInputSchema(chat_message="Test input")
+    mock_memory.get_history.return_value = [{"role": "user", "content": "Hello"}]
+    mock_system_prompt_generator.generate_prompt.return_value = "System prompt"
+
+    partial_responses = [
+        BaseAgentOutputSchema(chat_message="Partial response 1"),
+        BaseAgentOutputSchema(chat_message="Partial response 2"),
+        BaseAgentOutputSchema(chat_message="Final response"),
+    ]
+
+    async def mock_create_partial(*args, **kwargs):
+        for response in partial_responses:
+            yield response
+
+    mock_instructor.chat.completions.create_partial = mock_create_partial
+
+    responses = []
+    async for partial_response in agent.stream_response_async(mock_input):
+        responses.append(partial_response)
+
+    assert responses == partial_responses
+
+    mock_memory.add_message.assert_called_with("assistant", partial_responses[-1])
+
+
+def test_model_from_chunks_patched():
+    class TestPartialModel(PartialBase):
+        @classmethod
+        def get_partial_model(cls):
+            class PartialModel(BaseModel):
+                field: str
+
+            return PartialModel
+
+    chunks = ['{"field": "hel', 'lo"}']
+    expected_values = ["hel", "hello"]
+
+    generator = TestPartialModel.model_from_chunks(chunks)
+    results = [result.field for result in generator]
+
+    assert results == expected_values
+
+
+@pytest.mark.asyncio
+async def test_model_from_chunks_async_patched():
+    class TestPartialModel(PartialBase):
+        @classmethod
+        def get_partial_model(cls):
+            class PartialModel(BaseModel):
+                field: str
+
+            return PartialModel
+
+    async def async_gen():
+        yield '{"field": "hel'
+        yield 'lo"}'
+
+    expected_values = ["hel", "hello"]
+
+    generator = TestPartialModel.model_from_chunks_async(async_gen())
+    results = []
+    async for result in generator:
+        results.append(result.field)
+
+    assert results == expected_values

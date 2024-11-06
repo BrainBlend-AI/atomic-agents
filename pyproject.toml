@@ -25,6 +25,7 @@ textual = ">=0.82.0,<1.0.0"
 pyyaml = ">=6.0.2,<7.0.0"
 python-dotenv = "^1.0.1"
 pdoc3 = "^0.11.1"
+pytest-asyncio = "^0.24.0"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=24.8.0,<25.0.0"
