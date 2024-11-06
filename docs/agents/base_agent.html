@@ -31,6 +31,21 @@ hljs.highlightAll();
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="atomic_agents.agents.base_agent.model_from_chunks_async_patched"><code class="name flex">
+<span>async def <span class="ident">model_from_chunks_async_patched</span></span>(<span>cls, json_chunks, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="atomic_agents.agents.base_agent.model_from_chunks_patched"><code class="name flex">
+<span>def <span class="ident">model_from_chunks_patched</span></span>(<span>cls, json_chunks, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -105,6 +120,7 @@ generating system prompts, and obtaining responses from a language model.</p>
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
+        self.temperature = config.temperature
 
     def reset_memory(self):
         &#34;&#34;&#34;
@@ -114,7 +130,7 @@ generating system prompts, and obtaining responses from a language model.</p>
 
     def get_response(self, response_model=None) -&gt; Type[BaseModel]:
         &#34;&#34;&#34;
-        Obtains a response from the language model.
+        Obtains a response from the language model synchronously.
 
         Args:
             response_model (Type[BaseModel], optional):
@@ -132,12 +148,17 @@ generating system prompts, and obtaining responses from a language model.</p>
                 &#34;content&#34;: self.system_prompt_generator.generate_prompt(),
             }
         ] + self.memory.get_history()
-        response = self.client.chat.completions.create(model=self.model, messages=messages, response_model=response_model)
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            response_model=response_model,
+            temperature=self.temperature,
+        )
         return response
 
     def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -&gt; Type[BaseIOSchema]:
         &#34;&#34;&#34;
-        Runs the chat agent with the given user input.
+        Runs the chat agent with the given user input synchronously.
 
         Args:
             user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
@@ -154,6 +175,90 @@ generating system prompts, and obtaining responses from a language model.</p>
         self.memory.add_message(&#34;assistant&#34;, response)
 
         return response
+
+    async def get_response_async(self, response_model=None) -&gt; Type[BaseModel]:
+        &#34;&#34;&#34;
+        Obtains a response from the language model asynchronously.
+
+        Args:
+            response_model (Type[BaseModel], optional):
+                The schema for the response data. If not set, self.output_schema is used.
+
+        Returns:
+            Type[BaseModel]: The response from the language model.
+        &#34;&#34;&#34;
+        if response_model is None:
+            response_model = self.output_schema
+
+        messages = [
+            {
+                &#34;role&#34;: &#34;system&#34;,
+                &#34;content&#34;: self.system_prompt_generator.generate_prompt(),
+            }
+        ] + self.memory.get_history()
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            response_model=response_model,
+            temperature=self.temperature,
+        )
+        return response
+
+    async def run_async(self, user_input: Optional[Type[BaseIOSchema]] = None) -&gt; Type[BaseIOSchema]:
+        &#34;&#34;&#34;
+        Runs the chat agent with the given user input asynchronously.
+
+        Args:
+            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+
+        Returns:
+            Type[BaseIOSchema]: The response from the chat agent.
+        &#34;&#34;&#34;
+        if user_input:
+            self.memory.initialize_turn()
+            self.current_user_input = user_input
+            self.memory.add_message(&#34;user&#34;, user_input)
+
+        response = await self.get_response_async(response_model=self.output_schema)
+        self.memory.add_message(&#34;assistant&#34;, response)
+
+        return response
+
+    async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
+        &#34;&#34;&#34;
+        Runs the chat agent with the given user input, supporting streaming output asynchronously.
+
+        Args:
+            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+
+        Yields:
+            BaseModel: Partial responses from the chat agent.
+        &#34;&#34;&#34;
+        if user_input:
+            self.memory.initialize_turn()
+            self.current_user_input = user_input
+            self.memory.add_message(&#34;user&#34;, user_input)
+
+        messages = [
+            {
+                &#34;role&#34;: &#34;system&#34;,
+                &#34;content&#34;: self.system_prompt_generator.generate_prompt(),
+            }
+        ] + self.memory.get_history()
+
+        response_stream = self.client.chat.completions.create_partial(
+            model=self.model,
+            messages=messages,
+            response_model=self.output_schema,
+            temperature=self.temperature,
+            stream=True,
+        )
+
+        async for partial_response in response_stream:
+            yield partial_response
+
+        full_response_content = self.output_schema(**partial_response.model_dump())
+        self.memory.add_message(&#34;assistant&#34;, full_response_content)
 
     def get_context_provider(self, provider_name: str) -&gt; Type[SystemPromptContextProviderBase]:
         &#34;&#34;&#34;
@@ -232,7 +337,21 @@ generating system prompts, and obtaining responses from a language model.</p>
 <span>def <span class="ident">get_response</span></span>(<span>self, response_model=None) ‑> Type[pydantic.main.BaseModel]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Obtains a response from the language model.</p>
+<div class="desc"><p>Obtains a response from the language model synchronously.</p>
+<h2 id="args">Args</h2>
+<p>response_model (Type[BaseModel], optional):
+The schema for the response data. If not set, self.output_schema is used.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Type[BaseModel]</code></dt>
+<dd>The response from the language model.</dd>
+</dl></div>
+</dd>
+<dt id="atomic_agents.agents.base_agent.BaseAgent.get_response_async"><code class="name flex">
+<span>async def <span class="ident">get_response_async</span></span>(<span>self, response_model=None) ‑> Type[pydantic.main.BaseModel]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Obtains a response from the language model asynchronously.</p>
 <h2 id="args">Args</h2>
 <p>response_model (Type[BaseModel], optional):
 The schema for the response data. If not set, self.output_schema is used.</p>
@@ -265,7 +384,7 @@ The schema for the response data. If not set, self.output_schema is used.</p>
 <span>def <span class="ident">run</span></span>(<span>self, user_input: Optional[Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]] = None) ‑> Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Runs the chat agent with the given user input.</p>
+<div class="desc"><p>Runs the chat agent with the given user input synchronously.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>user_input</code></strong> :&ensp;<code>Optional[Type[BaseIOSchema]]</code></dt>
@@ -275,6 +394,38 @@ The schema for the response data. If not set, self.output_schema is used.</p>
 <dl>
 <dt><code>Type[BaseIOSchema]</code></dt>
 <dd>The response from the chat agent.</dd>
+</dl></div>
+</dd>
+<dt id="atomic_agents.agents.base_agent.BaseAgent.run_async"><code class="name flex">
+<span>async def <span class="ident">run_async</span></span>(<span>self, user_input: Optional[Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]] = None) ‑> Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Runs the chat agent with the given user input asynchronously.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>user_input</code></strong> :&ensp;<code>Optional[Type[BaseIOSchema]]</code></dt>
+<dd>The input from the user. If not provided, skips adding to memory.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Type[BaseIOSchema]</code></dt>
+<dd>The response from the chat agent.</dd>
+</dl></div>
+</dd>
+<dt id="atomic_agents.agents.base_agent.BaseAgent.stream_response_async"><code class="name flex">
+<span>async def <span class="ident">stream_response_async</span></span>(<span>self, user_input: Optional[Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Runs the chat agent with the given user input, supporting streaming output asynchronously.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>user_input</code></strong> :&ensp;<code>Optional[Type[BaseIOSchema]]</code></dt>
+<dd>The input from the user. If not provided, skips adding to memory.</dd>
+</dl>
+<h2 id="yields">Yields</h2>
+<dl>
+<dt><code>BaseModel</code></dt>
+<dd>Partial responses from the chat agent.</dd>
 </dl></div>
 </dd>
 <dt id="atomic_agents.agents.base_agent.BaseAgent.unregister_context_provider"><code class="name flex">
@@ -352,8 +503,11 @@ validated to form a valid model.</p>
     )
     input_schema: Optional[Type[BaseModel]] = Field(None, description=&#34;The schema for the input data.&#34;)
     output_schema: Optional[Type[BaseModel]] = Field(None, description=&#34;The schema for the output data.&#34;)
-
-    model_config = {&#34;arbitrary_types_allowed&#34;: True}</code></pre>
+    model_config = {&#34;arbitrary_types_allowed&#34;: True}
+    temperature: Optional[float] = Field(
+        0,
+        description=&#34;Temperature for response generation, typically ranging from 0 to 1.&#34;,
+    )</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -394,6 +548,10 @@ validated to form a valid model.</p>
 <div class="desc"><p>The type of the None singleton.</p></div>
 </dd>
 <dt id="atomic_agents.agents.base_agent.BaseAgentConfig.system_prompt_generator"><code class="name">var <span class="ident">system_prompt_generator</span> : Optional[<a title="atomic_agents.lib.components.system_prompt_generator.SystemPromptGenerator" href="../lib/components/system_prompt_generator.html#atomic_agents.lib.components.system_prompt_generator.SystemPromptGenerator">SystemPromptGenerator</a>]</code></dt>
+<dd>
+<div class="desc"><p>The type of the None singleton.</p></div>
+</dd>
+<dt id="atomic_agents.agents.base_agent.BaseAgentConfig.temperature"><code class="name">var <span class="ident">temperature</span> : Optional[float]</code></dt>
 <dd>
 <div class="desc"><p>The type of the None singleton.</p></div>
 </dd>
@@ -507,6 +665,12 @@ validated to form a valid model.</p>
 <li><code><a title="atomic_agents.agents" href="index.html">atomic_agents.agents</a></code></li>
 </ul>
 </li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="atomic_agents.agents.base_agent.model_from_chunks_async_patched" href="#atomic_agents.agents.base_agent.model_from_chunks_async_patched">model_from_chunks_async_patched</a></code></li>
+<li><code><a title="atomic_agents.agents.base_agent.model_from_chunks_patched" href="#atomic_agents.agents.base_agent.model_from_chunks_patched">model_from_chunks_patched</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
@@ -514,11 +678,14 @@ validated to form a valid model.</p>
 <ul class="">
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.get_context_provider" href="#atomic_agents.agents.base_agent.BaseAgent.get_context_provider">get_context_provider</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.get_response" href="#atomic_agents.agents.base_agent.BaseAgent.get_response">get_response</a></code></li>
+<li><code><a title="atomic_agents.agents.base_agent.BaseAgent.get_response_async" href="#atomic_agents.agents.base_agent.BaseAgent.get_response_async">get_response_async</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.input_schema" href="#atomic_agents.agents.base_agent.BaseAgent.input_schema">input_schema</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.output_schema" href="#atomic_agents.agents.base_agent.BaseAgent.output_schema">output_schema</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.register_context_provider" href="#atomic_agents.agents.base_agent.BaseAgent.register_context_provider">register_context_provider</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.reset_memory" href="#atomic_agents.agents.base_agent.BaseAgent.reset_memory">reset_memory</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.run" href="#atomic_agents.agents.base_agent.BaseAgent.run">run</a></code></li>
+<li><code><a title="atomic_agents.agents.base_agent.BaseAgent.run_async" href="#atomic_agents.agents.base_agent.BaseAgent.run_async">run_async</a></code></li>
+<li><code><a title="atomic_agents.agents.base_agent.BaseAgent.stream_response_async" href="#atomic_agents.agents.base_agent.BaseAgent.stream_response_async">stream_response_async</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgent.unregister_context_provider" href="#atomic_agents.agents.base_agent.BaseAgent.unregister_context_provider">unregister_context_provider</a></code></li>
 </ul>
 </li>
@@ -534,6 +701,7 @@ validated to form a valid model.</p>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgentConfig.model_fields" href="#atomic_agents.agents.base_agent.BaseAgentConfig.model_fields">model_fields</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgentConfig.output_schema" href="#atomic_agents.agents.base_agent.BaseAgentConfig.output_schema">output_schema</a></code></li>
 <li><code><a title="atomic_agents.agents.base_agent.BaseAgentConfig.system_prompt_generator" href="#atomic_agents.agents.base_agent.BaseAgentConfig.system_prompt_generator">system_prompt_generator</a></code></li>
+<li><code><a title="atomic_agents.agents.base_agent.BaseAgentConfig.temperature" href="#atomic_agents.agents.base_agent.BaseAgentConfig.temperature">temperature</a></code></li>
 </ul>
 </li>
 <li>

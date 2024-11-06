@@ -69,7 +69,7 @@ validated to form a valid model.</p>
         description = cls.__doc__
 
         if not description or not description.strip():
-            if cls.__module__ != &#34;instructor.function_calls&#34;:
+            if cls.__module__ != &#34;instructor.function_calls&#34; and not hasattr(cls, &#34;from_streaming_response&#34;):
                 raise ValueError(f&#34;{cls.__name__} must have a non-empty docstring to serve as its description&#34;)
 
     @classmethod

@@ -46,7 +46,7 @@ hljs.highlightAll();
 <dt><strong><code>history</code></strong> :&ensp;<code>List[<a title="atomic_agents.lib.components.agent_memory.Message" href="#atomic_agents.lib.components.agent_memory.Message">Message</a>]</code></dt>
 <dd>A list of messages representing the chat history.</dd>
 <dt><strong><code>max_messages</code></strong> :&ensp;<code>Optional[int]</code></dt>
-<dd>Maximum number of turns to keep in history.</dd>
+<dd>Maximum number of messages to keep in history.</dd>
 <dt><strong><code>current_turn_id</code></strong> :&ensp;<code>Optional[str]</code></dt>
 <dd>The ID of the current turn.</dd>
 </dl>
@@ -54,7 +54,8 @@ hljs.highlightAll();
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>max_messages</code></strong> :&ensp;<code>Optional[int]</code></dt>
-<dd>Maximum number of turns to keep in history.</dd>
+<dd>Maximum number of messages to keep in history.
+When exceeded, oldest messages are removed first.</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -66,7 +67,7 @@ hljs.highlightAll();
 
     Attributes:
         history (List[Message]): A list of messages representing the chat history.
-        max_messages (Optional[int]): Maximum number of turns to keep in history.
+        max_messages (Optional[int]): Maximum number of messages to keep in history.
         current_turn_id (Optional[str]): The ID of the current turn.
     &#34;&#34;&#34;
 
@@ -75,7 +76,8 @@ hljs.highlightAll();
         Initializes the AgentMemory with an empty history and optional constraints.
 
         Args:
-            max_messages (Optional[int]): Maximum number of turns to keep in history.
+            max_messages (Optional[int]): Maximum number of messages to keep in history.
+                When exceeded, oldest messages are removed first.
         &#34;&#34;&#34;
         self.history: List[Message] = []
         self.max_messages = max_messages
@@ -149,6 +151,32 @@ hljs.highlightAll();
             Optional[str]: The current turn ID, or None if not set.
         &#34;&#34;&#34;
         return self.current_turn_id
+
+    def delete_turn_id(self, turn_id: int):
+        &#34;&#34;&#34;
+        Delete messages from the memory by its turn ID.
+
+        Args:
+            turn_id (int): The turn ID of the message to delete.
+
+        Returns:
+            str: A success message with the deleted turn ID.
+
+        Raises:
+            ValueError: If the specified turn ID is not found in the memory.
+        &#34;&#34;&#34;
+        initial_length = len(self.history)
+        self.history = [msg for msg in self.history if msg.turn_id != turn_id]
+
+        if len(self.history) == initial_length:
+            raise ValueError(f&#34;Turn ID {turn_id} not found in memory.&#34;)
+
+        # Update current_turn_id if necessary
+        if not len(self.history):
+            self.current_turn_id = None
+        elif turn_id == self.current_turn_id:
+            # Always update to the last message&#39;s turn_id
+            self.current_turn_id = self.history[-1].turn_id
 
     def get_message_count(self) -&gt; int:
         &#34;&#34;&#34;
@@ -254,6 +282,27 @@ hljs.highlightAll();
 <dl>
 <dt><code><a title="atomic_agents.lib.components.agent_memory.AgentMemory" href="#atomic_agents.lib.components.agent_memory.AgentMemory">AgentMemory</a></code></dt>
 <dd>A copy of the chat memory.</dd>
+</dl></div>
+</dd>
+<dt id="atomic_agents.lib.components.agent_memory.AgentMemory.delete_turn_id"><code class="name flex">
+<span>def <span class="ident">delete_turn_id</span></span>(<span>self, turn_id: int)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete messages from the memory by its turn ID.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>turn_id</code></strong> :&ensp;<code>int</code></dt>
+<dd>The turn ID of the message to delete.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>A success message with the deleted turn ID.</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>ValueError</code></dt>
+<dd>If the specified turn ID is not found in the memory.</dd>
 </dl></div>
 </dd>
 <dt id="atomic_agents.lib.components.agent_memory.AgentMemory.dump"><code class="name flex">
@@ -413,6 +462,7 @@ validated to form a valid model.</p>
 <ul class="two-column">
 <li><code><a title="atomic_agents.lib.components.agent_memory.AgentMemory.add_message" href="#atomic_agents.lib.components.agent_memory.AgentMemory.add_message">add_message</a></code></li>
 <li><code><a title="atomic_agents.lib.components.agent_memory.AgentMemory.copy" href="#atomic_agents.lib.components.agent_memory.AgentMemory.copy">copy</a></code></li>
+<li><code><a title="atomic_agents.lib.components.agent_memory.AgentMemory.delete_turn_id" href="#atomic_agents.lib.components.agent_memory.AgentMemory.delete_turn_id">delete_turn_id</a></code></li>
 <li><code><a title="atomic_agents.lib.components.agent_memory.AgentMemory.dump" href="#atomic_agents.lib.components.agent_memory.AgentMemory.dump">dump</a></code></li>
 <li><code><a title="atomic_agents.lib.components.agent_memory.AgentMemory.get_current_turn_id" href="#atomic_agents.lib.components.agent_memory.AgentMemory.get_current_turn_id">get_current_turn_id</a></code></li>
 <li><code><a title="atomic_agents.lib.components.agent_memory.AgentMemory.get_history" href="#atomic_agents.lib.components.agent_memory.AgentMemory.get_history">get_history</a></code></li>
