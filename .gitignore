@@ -146,3 +146,5 @@ personal_scripts/
 
 # Logs
 debug.log
+
+.lock
