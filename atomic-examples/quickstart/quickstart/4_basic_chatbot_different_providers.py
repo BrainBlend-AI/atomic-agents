@@ -22,19 +22,26 @@ memory.add_message("assistant", initial_message)
 
 # Function to set up the client based on the chosen provider
 def setup_client(provider):
-    if provider == "openai":
+    console.log(f'provider: {provider}')
+    if provider == "1" or provider == "openai":
         from openai import OpenAI
 
         api_key = os.getenv("OPENAI_API_KEY")
         client = instructor.from_openai(OpenAI(api_key=api_key))
         model = "gpt-4o-mini"
-    elif provider == "groq":
+    elif provider == "2" or provider == "claude":
+        from anthropic import Anthropic
+
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        client = instructor.from_anthropic(Anthropic(api_key=api_key))
+        model = "claude-3-5-haiku-20241022"
+    elif provider == "3" or provider == "groq":
         from groq import Groq
 
         api_key = os.getenv("GROQ_API_KEY")
         client = instructor.from_groq(Groq(api_key=api_key), mode=instructor.Mode.JSON)
         model = "mixtral-8x7b-32768"
-    elif provider == "ollama":
+    elif provider == "4" or provider == "ollama":
         from openai import OpenAI as OllamaClient
 
         client = instructor.from_openai(OllamaClient(base_url="http://localhost:11434/v1", api_key="ollama"))
@@ -46,7 +53,7 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider
-provider = console.input("[bold yellow]Choose a provider (openai/groq/ollama): [/bold yellow]").lower()
+provider = console.input("[bold yellow]Choose a provider (1. openai / 2. claude / 3. groq / 4. ollama): [/bold yellow]").lower()
 
 # Set up the client and model based on the chosen provider
 client, model = setup_client(provider)
@@ -57,6 +64,7 @@ agent = BaseAgent(
         client=client,
         model=model,
         memory=memory,
+        max_tokens=2048
     )
 )
 

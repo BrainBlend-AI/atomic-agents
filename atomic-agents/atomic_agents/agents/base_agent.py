@@ -10,7 +10,9 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
+from rich.console import Console
 
+console = Console()
 
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
     potential_object = ""
@@ -71,7 +73,10 @@ class BaseAgentConfig(BaseModel):
         0,
         description="Temperature for response generation, typically ranging from 0 to 1.",
     )
-
+    max_tokens: Optional[int] = Field(
+        2048,
+        description="Maximum number of token allowed in the response generation, typically ranging from 1024.",
+    )
 
 class BaseAgent:
     """
@@ -88,6 +93,7 @@ class BaseAgent:
         memory (AgentMemory): Memory component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
         initial_memory (AgentMemory): Initial state of the memory.
+        max_tokens (int): Maximum number of tokens allowed in the response
     """
 
     input_schema = BaseAgentInputSchema
@@ -109,6 +115,7 @@ class BaseAgent:
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
         self.temperature = config.temperature
+        self.max_tokens = config.max_tokens
 
     def reset_memory(self):
         """
@@ -135,13 +142,16 @@ class BaseAgent:
                 "role": "system",
                 "content": self.system_prompt_generator.generate_prompt(),
             }
-        ] + self.memory.get_history()
+        ] + self.memory.get_history()        
+        
         response = self.client.chat.completions.create(
-            model=self.model,
             messages=messages,
+            model=self.model,
             response_model=response_model,
             temperature=self.temperature,
+            max_tokens=self.max_tokens
         )
+        
         return response
 
     def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
@@ -189,6 +199,7 @@ class BaseAgent:
             messages=messages,
             response_model=response_model,
             temperature=self.temperature,
+            max_tokens=self.max_tokens
         )
         return response
 
