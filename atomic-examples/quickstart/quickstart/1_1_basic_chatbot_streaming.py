@@ -49,6 +49,7 @@ console.print(Panel(default_system_prompt, width=console.width, style="bold cyan
 console.print(Text("Agent:", style="bold green"), end=" ")
 console.print(Text(initial_message.chat_message, style="green"))
 
+
 async def main():
     # Start an infinite loop to handle user inputs and agent responses
     while True:
@@ -72,12 +73,11 @@ async def main():
                     if partial_response.chat_message != current_response:
                         current_response = partial_response.chat_message
                         # Combine the label and response in the live display
-                        display_text = Text.assemble(
-                            (f"Agent: ", "bold green"),
-                            (current_response, "green")
-                        )
+                        display_text = Text.assemble(("Agent: ", "bold green"), (current_response, "green"))
                         live.update(display_text)
+
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

@@ -93,6 +93,7 @@ for i, question in enumerate(initial_message.suggested_user_questions, 1):
     console.print(f"[cyan]{i}. {question}[/cyan]")
 console.print()  # Add an empty line for better readability
 
+
 async def main():
     # Start an infinite loop to handle user inputs and agent responses
     while True:
@@ -123,10 +124,7 @@ async def main():
                         current_questions = partial_response.suggested_user_questions
 
                     # Combine all elements for display
-                    display_text = Text.assemble(
-                        (f"Agent: ", "bold green"),
-                        (current_response, "green")
-                    )
+                    display_text = Text.assemble(("Agent: ", "bold green"), (current_response, "green"))
 
                     # Add questions if we have them
                     if current_questions:
@@ -139,6 +137,8 @@ async def main():
 
         console.print()  # Add an empty line for better readability
 
+
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())
