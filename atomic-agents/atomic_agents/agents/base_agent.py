@@ -75,7 +75,7 @@ class BaseAgentConfig(BaseModel):
     )
     max_tokens: Optional[int] = Field(
         None,
-        description="Maximum number of token allowed in the response generation, is any.",
+        description="Maximum number of token allowed in the response generation.",
     )
 
 class BaseAgent:
