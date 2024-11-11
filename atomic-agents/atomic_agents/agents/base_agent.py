@@ -74,8 +74,8 @@ class BaseAgentConfig(BaseModel):
         description="Temperature for response generation, typically ranging from 0 to 1.",
     )
     max_tokens: Optional[int] = Field(
-        2048,
-        description="Maximum number of token allowed in the response generation, typically ranging from 1024.",
+        None,
+        description="Maximum number of token allowed in the response generation, is any.",
     )
 
 class BaseAgent:
