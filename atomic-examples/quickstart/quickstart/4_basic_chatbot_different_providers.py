@@ -29,7 +29,7 @@ def setup_client(provider):
         api_key = os.getenv("OPENAI_API_KEY")
         client = instructor.from_openai(OpenAI(api_key=api_key))
         model = "gpt-4o-mini"
-    elif provider == "2" or provider == "claude":
+    elif provider == "2" or provider == "anthropic":
         from anthropic import Anthropic
 
         api_key = os.getenv("ANTHROPIC_API_KEY")
