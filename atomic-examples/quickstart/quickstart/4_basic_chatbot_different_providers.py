@@ -22,7 +22,7 @@ memory.add_message("assistant", initial_message)
 
 # Function to set up the client based on the chosen provider
 def setup_client(provider):
-    console.log(f'provider: {provider}')
+    console.log(f"provider: {provider}")
     if provider == "1" or provider == "openai":
         from openai import OpenAI
 
@@ -53,9 +53,12 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider from one in the list below.
-providers_list = ['openai', 'anthropic', 'groq', 'ollama']
-
-providers_str = f"[bold yellow]Choose a provider ({' / '.join(f'[[bold green]{i+1}[/bold green]]. [bold blue]{provider}[/bold blue]' for i, provider in enumerate(providers_list))}): [/bold yellow]"
+providers_list = ["openai", "anthropic", "groq", "ollama"]
+y = "bold yellow"
+b = "bold blue"
+g = "bold green"
+provider_inner_str = f"{' / '.join(f'[[{g}]{i+1}[/{g}]]. [{b}]{provider}[/{b}]' for i, provider in enumerate(providers_list))}"
+providers_str = f"[{y}]Choose a provider ({provider_inner_str}): [/{y}]"
 
 provider = console.input(providers_str).lower()
 
@@ -63,14 +66,7 @@ provider = console.input(providers_str).lower()
 client, model = setup_client(provider)
 
 # Agent setup with specified configuration
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model=model,
-        memory=memory,
-        max_tokens=2048
-    )
-)
+agent = BaseAgent(config=BaseAgentConfig(client=client, model=model, memory=memory, max_tokens=2048))
 
 # Generate the default system prompt for the agent
 default_system_prompt = agent.system_prompt_generator.generate_prompt()

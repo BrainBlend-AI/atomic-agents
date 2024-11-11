@@ -14,6 +14,7 @@ from rich.console import Console
 
 console = Console()
 
+
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
     potential_object = ""
     partial_model = cls.get_partial_model()
@@ -77,6 +78,7 @@ class BaseAgentConfig(BaseModel):
         None,
         description="Maximum number of token allowed in the response generation.",
     )
+
 
 class BaseAgent:
     """
@@ -142,16 +144,16 @@ class BaseAgent:
                 "role": "system",
                 "content": self.system_prompt_generator.generate_prompt(),
             }
-        ] + self.memory.get_history()        
-        
+        ] + self.memory.get_history()
+
         response = self.client.chat.completions.create(
             messages=messages,
             model=self.model,
             response_model=response_model,
             temperature=self.temperature,
-            max_tokens=self.max_tokens
+            max_tokens=self.max_tokens,
         )
-        
+
         return response
 
     def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
@@ -199,7 +201,7 @@ class BaseAgent:
             messages=messages,
             response_model=response_model,
             temperature=self.temperature,
-            max_tokens=self.max_tokens
+            max_tokens=self.max_tokens,
         )
         return response
 
