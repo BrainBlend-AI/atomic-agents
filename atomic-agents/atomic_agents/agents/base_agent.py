@@ -252,6 +252,7 @@ class BaseAgent:
             messages=messages,
             response_model=self.output_schema,
             temperature=self.temperature,
+            max_tokens=self.max_tokens,
             stream=True,
         )
 
