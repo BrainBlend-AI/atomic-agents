@@ -64,6 +64,7 @@ def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_
     assert agent.input_schema == BaseAgentInputSchema
     assert agent.output_schema == BaseAgentOutputSchema
     assert agent.temperature == 0
+    assert agent.max_tokens == None
 
 
 def test_reset_memory(agent, mock_memory):
@@ -89,6 +90,7 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
         messages=[{"role": "system", "content": "System prompt"}, {"role": "user", "content": "Hello"}],
         response_model=BaseAgentOutputSchema,
         temperature=0,
+        max_tokens=None
     )
 
 
@@ -207,6 +209,7 @@ async def test_get_response_async(agent, mock_instructor, mock_memory, mock_syst
         messages=[{"role": "system", "content": "System prompt"}, {"role": "user", "content": "Hello"}],
         response_model=BaseAgentOutputSchema,
         temperature=0,
+        max_tokens=None
     )
 
 
