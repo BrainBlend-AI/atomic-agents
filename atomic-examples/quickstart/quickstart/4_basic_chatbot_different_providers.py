@@ -52,8 +52,12 @@ def setup_client(provider):
     return client, model
 
 
-# Prompt the user to choose a provider
-provider = console.input("[bold yellow]Choose a provider (1. openai / 2. claude / 3. groq / 4. ollama): [/bold yellow]").lower()
+# Prompt the user to choose a provider from one in the list below.
+providers_list = ['openai', 'anthropic', 'groq', 'ollama']
+
+providers_str = f"[bold yellow]Choose a provider ({' / '.join(f'[[bold green]{i+1}[/bold green]]. [bold blue]{provider}[/bold blue]' for i, provider in enumerate(providers_list))}): [/bold yellow]"
+
+provider = console.input(providers_str).lower()
 
 # Set up the client and model based on the chosen provider
 client, model = setup_client(provider)
