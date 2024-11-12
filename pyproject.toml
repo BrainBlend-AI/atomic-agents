@@ -32,10 +32,10 @@ requests = "^2.32.3"
 [tool.poetry.group.dev.dependencies]
 black = ">=24.8.0,<25.0.0"
 flake8 = ">=7.1.1,<8.0.0"
-openai = ">=1.35.12,<2.0.0"
 pytest = ">=8.3.3,<9.0.0"
 pytest-cov = ">=5.0.0,<6.0.0"
 pytest-asyncio = "^0.24.0"
+openai = ">=1.35.12,<2.0.0"
 
 [tool.poetry.scripts]
 atomic = "atomic_assembler.main:main"
