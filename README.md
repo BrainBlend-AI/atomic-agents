@@ -6,7 +6,7 @@
 
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
 
-The Atomic Agents framework is designed to be modular, extensible, and easy to use. Its main goal is to eliminate redundant complexity, unnecessary abstractions, and hidden assumptions while still providing a flexible and powerful platform for building AI applications through atomicity. The framework provides a set of tools and agents that can be combined to create powerful applications. It is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data and schema validation and serialization.
+The Atomic Agents framework is designed to be extremely lightweight, modular, extensible, and easy to use. Its main goal is to eliminate redundant complexity, unnecessary abstractions, and hidden assumptions while still providing a flexible and powerful platform for building AI applications through atomicity. The framework provides a set of tools and agents that can be combined to create powerful applications. It is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data and schema validation and serialization.
 
 ---
 
