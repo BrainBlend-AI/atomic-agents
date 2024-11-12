@@ -27,6 +27,7 @@ python-dotenv = "^1.0.1"
 pdoc3 = "^0.11.1"
 pytest-asyncio = "^0.24.0"
 jiter = "^0.5.0"
+requests = "^2.32.3"
 
 [tool.poetry.group.dev.dependencies]
 black = ">=24.8.0,<25.0.0"
