@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, Mock, call, patch
+from unittest.mock import Mock, call, patch
 from pydantic import BaseModel
 import instructor
 from atomic_agents.agents.base_agent import (
@@ -215,10 +215,7 @@ async def test_run_async(agent, mock_memory):
 
     assert responses == [mock_output]
     assert agent.current_user_input == mock_input
-    mock_memory.add_message.assert_has_calls([
-        call("user", mock_input),
-        call("assistant", mock_output)
-    ])
+    mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
 
 @pytest.mark.asyncio

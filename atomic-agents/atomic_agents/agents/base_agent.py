@@ -174,7 +174,6 @@ class BaseAgent:
 
         return response
 
-
     async def run_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
         """
         Runs the chat agent with the given user input, supporting streaming output asynchronously.
