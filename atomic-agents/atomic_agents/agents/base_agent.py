@@ -10,6 +10,7 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
+import warnings
 
 
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
@@ -164,55 +165,7 @@ class BaseAgent:
 
         return response
 
-    async def get_response_async(self, response_model=None) -> Type[BaseModel]:
-        """
-        Obtains a response from the language model asynchronously.
-
-        Args:
-            response_model (Type[BaseModel], optional):
-                The schema for the response data. If not set, self.output_schema is used.
-
-        Returns:
-            Type[BaseModel]: The response from the language model.
-        """
-        if response_model is None:
-            response_model = self.output_schema
-
-        messages = [
-            {
-                "role": "system",
-                "content": self.system_prompt_generator.generate_prompt(),
-            }
-        ] + self.memory.get_history()
-        response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            response_model=response_model,
-            temperature=self.temperature,
-        )
-        return response
-
-    async def run_async(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
-        """
-        Runs the chat agent with the given user input asynchronously.
-
-        Args:
-            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
-
-        Returns:
-            Type[BaseIOSchema]: The response from the chat agent.
-        """
-        if user_input:
-            self.memory.initialize_turn()
-            self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
-
-        response = await self.get_response_async(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
-
-        return response
-
-    async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
+    async def run_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
         """
         Runs the chat agent with the given user input, supporting streaming output asynchronously.
 
@@ -247,6 +200,24 @@ class BaseAgent:
 
         full_response_content = self.output_schema(**partial_response.model_dump())
         self.memory.add_message("assistant", full_response_content)
+
+    async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
+        """
+        Deprecated method for streaming responses asynchronously. Use run_async instead.
+
+        Args:
+            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+
+        Yields:
+            BaseModel: Partial responses from the chat agent.
+        """
+        warnings.warn(
+            "stream_response_async is deprecated and will be removed in version 1.1. Use run_async instead which can be used in the exact same way.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        async for response in self.run_async(user_input):
+            yield response
 
     def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
         """
@@ -338,7 +309,7 @@ if __name__ == "__main__":
             console.print("[bold blue]Assistant:[/bold blue]")
             if streaming:
                 with Live(console=console, refresh_per_second=4) as live:
-                    async for partial_response in agent.stream_response_async(user_input):
+                    async for partial_response in agent.run_async(user_input):
                         response_json = partial_response.model_dump()
                         json_str = json.dumps(response_json, indent=2)
                         live.update(json_str)

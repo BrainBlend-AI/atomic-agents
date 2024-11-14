@@ -65,9 +65,9 @@ async def main():
         console.print()  # Add newline before response
 
         # Use Live display to show streaming response
-        with Live("", refresh_per_second=4, auto_refresh=True) as live:
+        with Live("", refresh_per_second=10, auto_refresh=True) as live:
             current_response = ""
-            async for partial_response in agent.stream_response_async(input_schema):
+            async for partial_response in agent.run_async(input_schema):
                 if hasattr(partial_response, "chat_message") and partial_response.chat_message:
                     # Only update if we have new content
                     if partial_response.chat_message != current_response:
