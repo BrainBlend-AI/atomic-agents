@@ -57,7 +57,9 @@ providers_list = ["openai", "anthropic", "groq", "ollama"]
 y = "bold yellow"
 b = "bold blue"
 g = "bold green"
-provider_inner_str = f"{' / '.join(f'[[{g}]{i+1}[/{g}]]. [{b}]{provider}[/{b}]' for i, provider in enumerate(providers_list))}"
+provider_inner_str = (
+    f"{' / '.join(f'[[{g}]{i + 1}[/{g}]]. [{b}]{provider}[/{b}]' for i, provider in enumerate(providers_list))}"
+)
 providers_str = f"[{y}]Choose a provider ({provider_inner_str}): [/{y}]"
 
 provider = console.input(providers_str).lower()

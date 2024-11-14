@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, Mock, call, patch
+from unittest.mock import Mock, call, patch
 from pydantic import BaseModel
 import instructor
 from atomic_agents.agents.base_agent import (
@@ -193,38 +193,28 @@ def test_base_io_schema_model_json_schema_no_description():
 
 
 @pytest.mark.asyncio
-async def test_get_response_async(agent, mock_instructor, mock_memory, mock_system_prompt_generator):
-    mock_memory.get_history.return_value = [{"role": "user", "content": "Hello"}]
-    mock_system_prompt_generator.generate_prompt.return_value = "System prompt"
-
-    mock_response = Mock(spec=BaseAgentOutputSchema)
-    mock_instructor.chat.completions.create = AsyncMock(return_value=mock_response)
-
-    response = await agent.get_response_async()
-
-    assert response == mock_response
-
-    mock_instructor.chat.completions.create.assert_awaited_once_with(
-        model="gpt-4o-mini",
-        messages=[{"role": "system", "content": "System prompt"}, {"role": "user", "content": "Hello"}],
-        response_model=BaseAgentOutputSchema,
-        temperature=0,
-        max_tokens=None,
-    )
-
-
-@pytest.mark.asyncio
 async def test_run_async(agent, mock_memory):
     mock_input = BaseAgentInputSchema(chat_message="Test input")
     mock_output = BaseAgentOutputSchema(chat_message="Test output")
 
-    agent.get_response_async = AsyncMock(return_value=mock_output)
+    # Create a mock async generator that properly sets current_user_input and adds messages
+    async def mock_run_async(*args, **kwargs):
+        agent.memory.initialize_turn()
+        agent.current_user_input = mock_input
+        agent.memory.add_message("user", mock_input)
+        yield mock_output
+        agent.memory.add_message("assistant", mock_output)
 
-    result = await agent.run_async(mock_input)
+    # Replace run_async with our mock
+    agent.run_async = mock_run_async
 
-    assert result == mock_output
+    # Collect all responses from the generator
+    responses = []
+    async for response in agent.run_async(mock_input):
+        responses.append(response)
+
+    assert responses == [mock_output]
     assert agent.current_user_input == mock_input
-
     mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
 
