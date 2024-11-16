@@ -281,6 +281,57 @@ if __name__ == "__main__":
     from rich.live import Live
     import json
 
+    def display_agent_info(agent: BaseAgent):
+        """Display information about the agent's configuration and schemas."""
+        console = Console()
+        console.print(
+            Panel.fit(
+                "[bold blue]Agent Information[/bold blue]",
+                border_style="blue",
+                padding=(1, 1),
+            )
+        )
+
+        input_schema_table = Table(title="Input Schema", box=box.ROUNDED)
+        input_schema_table.add_column("Field", style="cyan")
+        input_schema_table.add_column("Type", style="magenta")
+        input_schema_table.add_column("Description", style="green")
+
+        for field_name, field in agent.input_schema.model_fields.items():
+            input_schema_table.add_row(field_name, str(field.annotation), field.description or "")
+
+        console.print(input_schema_table)
+
+        output_schema_table = Table(title="Output Schema", box=box.ROUNDED)
+        output_schema_table.add_column("Field", style="cyan")
+        output_schema_table.add_column("Type", style="magenta")
+        output_schema_table.add_column("Description", style="green")
+
+        for field_name, field in agent.output_schema.model_fields.items():
+            output_schema_table.add_row(field_name, str(field.annotation), field.description or "")
+
+        console.print(output_schema_table)
+
+        info_table = Table(title="Agent Configuration", box=box.ROUNDED)
+        info_table.add_column("Property", style="cyan")
+        info_table.add_column("Value", style="yellow")
+
+        info_table.add_row("Model", agent.model)
+        info_table.add_row("Memory", str(type(agent.memory).__name__))
+        info_table.add_row("System Prompt Generator", str(type(agent.system_prompt_generator).__name__))
+
+        console.print(info_table)
+
+        system_prompt = agent.system_prompt_generator.generate_prompt()
+        console.print(
+            Panel(
+                Syntax(system_prompt, "markdown", theme="monokai", line_numbers=True),
+                title="Sample System Prompt",
+                border_style="green",
+                expand=False,
+            )
+        )
+
     async def chat_loop(streaming: bool = False):
         """Interactive chat loop with the AI agent.
 
@@ -295,6 +346,9 @@ if __name__ == "__main__":
             client = instructor.from_openai(OpenAI())
             config = BaseAgentConfig(client=client, model="gpt-4o-mini")
             agent = BaseAgent(config)
+
+        # Display agent information before starting the chat
+        display_agent_info(agent)
 
         console = Console()
         console.print(
@@ -330,58 +384,5 @@ if __name__ == "__main__":
                 console.print(json_str)
 
     console = Console()
-    client = instructor.from_openai(OpenAI())
-    config = BaseAgentConfig(client=client, model="gpt-4o-mini")
-    agent = BaseAgent(config)
-
-    console.print(
-        Panel.fit(
-            "[bold blue]Agent Information[/bold blue]",
-            border_style="blue",
-            padding=(1, 1),
-        )
-    )
-
-    input_schema_table = Table(title="Input Schema", box=box.ROUNDED)
-    input_schema_table.add_column("Field", style="cyan")
-    input_schema_table.add_column("Type", style="magenta")
-    input_schema_table.add_column("Description", style="green")
-
-    for field_name, field in agent.input_schema.model_fields.items():
-        input_schema_table.add_row(field_name, str(field.annotation), field.description or "")
-
-    console.print(input_schema_table)
-
-    output_schema_table = Table(title="Output Schema", box=box.ROUNDED)
-    output_schema_table.add_column("Field", style="cyan")
-    output_schema_table.add_column("Type", style="magenta")
-    output_schema_table.add_column("Description", style="green")
-
-    for field_name, field in agent.output_schema.model_fields.items():
-        output_schema_table.add_row(field_name, str(field.annotation), field.description or "")
-
-    console.print(output_schema_table)
-
-    info_table = Table(title="Agent Configuration", box=box.ROUNDED)
-    info_table.add_column("Property", style="cyan")
-    info_table.add_column("Value", style="yellow")
-
-    info_table.add_row("Model", agent.model)
-    info_table.add_row("Memory", str(type(agent.memory).__name__))
-    info_table.add_row("System Prompt Generator", str(type(agent.system_prompt_generator).__name__))
-
-    console.print(info_table)
-
-    system_prompt = agent.system_prompt_generator.generate_prompt()
-    console.print(
-        Panel(
-            Syntax(system_prompt, "markdown", theme="monokai", line_numbers=True),
-            title="Sample System Prompt",
-            border_style="green",
-            expand=False,
-        )
-    )
-
     console.print("\n[bold]Starting chat loop...[/bold]")
-
     asyncio.run(chat_loop(streaming=True))
