@@ -4,3 +4,8 @@ max-complexity = 10
 count = true
 statistics = true
 ignore = E203
+
+per-file-ignores =
+    */__main__.py:C901
+    */*:C901
+

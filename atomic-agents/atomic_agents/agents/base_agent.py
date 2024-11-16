@@ -281,6 +281,45 @@ if __name__ == "__main__":
     from rich.live import Live
     import json
 
+    def _create_schema_table(title: str, schema: Type[BaseModel]) -> Table:
+        """Create a table displaying schema information.
+
+        Args:
+            title (str): Title of the table
+            schema (Type[BaseModel]): Schema to display
+
+        Returns:
+            Table: Rich table containing schema information
+        """
+        schema_table = Table(title=title, box=box.ROUNDED)
+        schema_table.add_column("Field", style="cyan")
+        schema_table.add_column("Type", style="magenta")
+        schema_table.add_column("Description", style="green")
+
+        for field_name, field in schema.model_fields.items():
+            schema_table.add_row(field_name, str(field.annotation), field.description or "")
+
+        return schema_table
+
+    def _create_config_table(agent: BaseAgent) -> Table:
+        """Create a table displaying agent configuration.
+
+        Args:
+            agent (BaseAgent): Agent instance
+
+        Returns:
+            Table: Rich table containing configuration information
+        """
+        info_table = Table(title="Agent Configuration", box=box.ROUNDED)
+        info_table.add_column("Property", style="cyan")
+        info_table.add_column("Value", style="yellow")
+
+        info_table.add_row("Model", agent.model)
+        info_table.add_row("Memory", str(type(agent.memory).__name__))
+        info_table.add_row("System Prompt Generator", str(type(agent.system_prompt_generator).__name__))
+
+        return info_table
+
     def display_agent_info(agent: BaseAgent):
         """Display information about the agent's configuration and schemas."""
         console = Console()
@@ -292,36 +331,19 @@ if __name__ == "__main__":
             )
         )
 
-        input_schema_table = Table(title="Input Schema", box=box.ROUNDED)
-        input_schema_table.add_column("Field", style="cyan")
-        input_schema_table.add_column("Type", style="magenta")
-        input_schema_table.add_column("Description", style="green")
-
-        for field_name, field in agent.input_schema.model_fields.items():
-            input_schema_table.add_row(field_name, str(field.annotation), field.description or "")
-
+        # Display input schema
+        input_schema_table = _create_schema_table("Input Schema", agent.input_schema)
         console.print(input_schema_table)
 
-        output_schema_table = Table(title="Output Schema", box=box.ROUNDED)
-        output_schema_table.add_column("Field", style="cyan")
-        output_schema_table.add_column("Type", style="magenta")
-        output_schema_table.add_column("Description", style="green")
-
-        for field_name, field in agent.output_schema.model_fields.items():
-            output_schema_table.add_row(field_name, str(field.annotation), field.description or "")
-
+        # Display output schema
+        output_schema_table = _create_schema_table("Output Schema", agent.output_schema)
         console.print(output_schema_table)
 
-        info_table = Table(title="Agent Configuration", box=box.ROUNDED)
-        info_table.add_column("Property", style="cyan")
-        info_table.add_column("Value", style="yellow")
-
-        info_table.add_row("Model", agent.model)
-        info_table.add_row("Memory", str(type(agent.memory).__name__))
-        info_table.add_row("System Prompt Generator", str(type(agent.system_prompt_generator).__name__))
-
+        # Display configuration
+        info_table = _create_config_table(agent)
         console.print(info_table)
 
+        # Display system prompt
         system_prompt = agent.system_prompt_generator.generate_prompt()
         console.print(
             Panel(
