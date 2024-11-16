@@ -154,15 +154,15 @@ class BaseAgent:
 
         return response
 
-    def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -> Type[BaseIOSchema]:
+    def run(self, user_input: Optional[BaseIOSchema] = None) -> BaseIOSchema:
         """
         Runs the chat agent with the given user input synchronously.
 
         Args:
-            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
 
         Returns:
-            Type[BaseIOSchema]: The response from the chat agent.
+            BaseIOSchema: The response from the chat agent.
         """
         if user_input:
             self.memory.initialize_turn()
@@ -174,12 +174,12 @@ class BaseAgent:
 
         return response
 
-    async def run_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
+    async def run_async(self, user_input: Optional[BaseIOSchema] = None):
         """
         Runs the chat agent with the given user input, supporting streaming output asynchronously.
 
         Args:
-            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
 
         Yields:
             BaseModel: Partial responses from the chat agent.
