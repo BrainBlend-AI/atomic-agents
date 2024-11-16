@@ -163,15 +163,15 @@ generating system prompts, and obtaining responses from a language model.</p>
 
         return response
 
-    def run(self, user_input: Optional[Type[BaseIOSchema]] = None) -&gt; Type[BaseIOSchema]:
+    def run(self, user_input: Optional[BaseIOSchema] = None) -&gt; BaseIOSchema:
         &#34;&#34;&#34;
         Runs the chat agent with the given user input synchronously.
 
         Args:
-            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
 
         Returns:
-            Type[BaseIOSchema]: The response from the chat agent.
+            BaseIOSchema: The response from the chat agent.
         &#34;&#34;&#34;
         if user_input:
             self.memory.initialize_turn()
@@ -183,12 +183,12 @@ generating system prompts, and obtaining responses from a language model.</p>
 
         return response
 
-    async def run_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
+    async def run_async(self, user_input: Optional[BaseIOSchema] = None):
         &#34;&#34;&#34;
         Runs the chat agent with the given user input, supporting streaming output asynchronously.
 
         Args:
-            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
 
         Yields:
             BaseModel: Partial responses from the chat agent.
@@ -345,29 +345,29 @@ The schema for the response data. If not set, self.output_schema is used.</p>
 <div class="desc"><p>Resets the memory to its initial state.</p></div>
 </dd>
 <dt id="atomic_agents.agents.base_agent.BaseAgent.run"><code class="name flex">
-<span>def <span class="ident">run</span></span>(<span>self, user_input: Optional[Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]] = None) ‑> Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]</span>
+<span>def <span class="ident">run</span></span>(<span>self, user_input: Optional[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>] = None) ‑> <a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Runs the chat agent with the given user input synchronously.</p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>user_input</code></strong> :&ensp;<code>Optional[Type[BaseIOSchema]]</code></dt>
+<dt><strong><code>user_input</code></strong> :&ensp;<code>Optional[BaseIOSchema]</code></dt>
 <dd>The input from the user. If not provided, skips adding to memory.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>Type[BaseIOSchema]</code></dt>
+<dt><code>BaseIOSchema</code></dt>
 <dd>The response from the chat agent.</dd>
 </dl></div>
 </dd>
 <dt id="atomic_agents.agents.base_agent.BaseAgent.run_async"><code class="name flex">
-<span>async def <span class="ident">run_async</span></span>(<span>self, user_input: Optional[Type[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>]] = None)</span>
+<span>async def <span class="ident">run_async</span></span>(<span>self, user_input: Optional[<a title="atomic_agents.lib.base.base_io_schema.BaseIOSchema" href="../lib/base/base_io_schema.html#atomic_agents.lib.base.base_io_schema.BaseIOSchema">BaseIOSchema</a>] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Runs the chat agent with the given user input, supporting streaming output asynchronously.</p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>user_input</code></strong> :&ensp;<code>Optional[Type[BaseIOSchema]]</code></dt>
+<dt><strong><code>user_input</code></strong> :&ensp;<code>Optional[BaseIOSchema]</code></dt>
 <dd>The input from the user. If not provided, skips adding to memory.</dd>
 </dl>
 <h2 id="yields">Yields</h2>
