@@ -55,20 +55,6 @@ choice_agent = BaseAgent(
 if __name__ == "__main__":
     # Example usage for search decision
     search_example = choice_agent.run(
-        ChoiceAgentInputSchema(
-            user_message="Who won the nobel prize in physics in 2024?",
-            decision_type="needs_search",
-            context_requirements={
-                "current_date": "Current date information",
-                "nobel_prizes": "Recent Nobel prize winners information",
-            },
-            threshold=0.6,
-        )
+        ChoiceAgentInputSchema(user_message="Who won the nobel prize in physics in 2024?", decision_type="needs_search")
     )
     print(search_example)
-
-    # Example usage for calculation decision
-    calc_example = choice_agent.run(
-        ChoiceAgentInputSchema(user_message="What's 234 * 456?", decision_type="needs_calculation", threshold=0.8)
-    )
-    print(calc_example)

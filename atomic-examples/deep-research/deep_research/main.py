@@ -36,11 +36,6 @@ def perform_search_and_update_context(
     scraped_content_context_provider.content_items = results_for_context_provider
 
 
-def get_answer(user_message: str) -> tuple[str, list[str]]:
-    question_answering_agent_output = question_answering_agent.run(QuestionAnsweringAgentInputSchema(question=user_message))
-    return question_answering_agent_output.answer, question_answering_agent_output.follow_up_questions
-
-
 def initialize_conversation_memory() -> None:
     """Initialize the agent's memory with an example conversation showing good follow-up questions."""
 
@@ -131,8 +126,12 @@ def chat_loop() -> None:
             print("\n[bold green]Using existing context[/bold green]")
             print(f"Reason: {choice_agent_output.reasoning}")
 
-        # Get and display the answer
-        answer, follow_up_questions = get_answer(user_message)
+        # Get and display the answer (inlined from get_answer function)
+        question_answering_agent_output = question_answering_agent.run(
+            QuestionAnsweringAgentInputSchema(question=user_message)
+        )
+        answer = question_answering_agent_output.answer
+        follow_up_questions = question_answering_agent_output.follow_up_questions
 
         print("\nAnswer:", answer)
         if follow_up_questions:
