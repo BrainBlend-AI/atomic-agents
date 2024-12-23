@@ -24,7 +24,7 @@ class BaseTool:
     Attributes:
         input_schema (Type[BaseIOSchema]): Schema defining the input data.
         output_schema (Type[BaseIOSchema]): Schema defining the output data.
-        tool_name (str): The name of the tool, derived from the input schema's title.
+        tool_name (str): The name of the tool, derived from the input schema's description or overridden by the user.
         tool_description (str): Description of the tool, derived from the input schema's description or overridden by the user.
     """
 
