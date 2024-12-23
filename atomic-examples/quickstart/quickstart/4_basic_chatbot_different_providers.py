@@ -46,6 +46,15 @@ def setup_client(provider):
 
         client = instructor.from_openai(OllamaClient(base_url="http://localhost:11434/v1", api_key="ollama"))
         model = "llama3"
+    elif provider == "5" or provider == "gemini":
+        from openai import OpenAI
+
+        api_key = os.getenv("GEMINI_API_KEY")
+        client = instructor.from_openai(
+            OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/"),
+            mode=instructor.Mode.JSON,
+        )
+        model = "gemini-2.0-flash-exp"
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -53,7 +62,7 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider from one in the list below.
-providers_list = ["openai", "anthropic", "groq", "ollama"]
+providers_list = ["openai", "anthropic", "groq", "ollama", "gemini"]
 y = "bold yellow"
 b = "bold blue"
 g = "bold green"
