@@ -10,7 +10,25 @@ from deep_research.tools.webpage_scraper import WebpageScraperTool, WebpageScrap
 from deep_research.context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
 
 from rich import print
+from rich.console import Console
+from rich.panel import Panel
+from rich.markdown import Markdown
+from rich.table import Table
+from rich import box
 
+
+console = Console()
+
+WELCOME_MESSAGE = (
+    "Welcome to Deep Research - your AI-powered research assistant! I can help you explore and "
+    "understand any topic through detailed research and interactive discussion."
+)
+
+STARTER_QUESTIONS = [
+    "Can you help me research the latest AI news?",
+    "Who won the Nobel Prize in Physics this year?",
+    "Where can I learn more about quantum computing?"
+]
 
 def perform_search_and_update_context(
     user_message: str, scraped_content_context_provider: ScrapedContentContextProvider
@@ -36,31 +54,85 @@ def perform_search_and_update_context(
     scraped_content_context_provider.content_items = results_for_context_provider
 
 
-def initialize_conversation_memory() -> None:
-    """Initialize the agent's memory with an example conversation showing good follow-up questions."""
-
-    # Create the initial user message using the input schema
-    initial_question = QuestionAnsweringAgentInputSchema(question="Tell me about quantum computing.")
-
-    # Create the initial response using the output schema
+def initialize_conversation() -> None:
     initial_answer = QuestionAnsweringAgentOutputSchema(
-        answer=(
-            "Quantum computing is a revolutionary technology that uses quantum mechanics to perform computations."
-            "Unlike classical computers that use bits (0 or 1), quantum computers use quantum bits or 'qubits' "
-            "that can exist in multiple states simultaneously due to superposition."
-        ),
-        follow_up_questions=[
-            "What are the main challenges in building a practical quantum computer?",
-            "How does quantum entanglement contribute to quantum computing power?",
-            "Which companies are currently leading quantum computing research?",
-            "What types of problems are quantum computers especially good at solving?",
-        ],
+        answer=WELCOME_MESSAGE,
+        follow_up_questions=STARTER_QUESTIONS,
     )
-
-    # Add messages to the agent's memory using proper schema instances
-    question_answering_agent.memory.add_message("user", initial_question)
     question_answering_agent.memory.add_message("assistant", initial_answer)
 
+def display_welcome() -> None:
+    welcome_panel = Panel(
+        WELCOME_MESSAGE,
+        title="[bold blue]Deep Research Chat[/bold blue]",
+        border_style="blue",
+        padding=(1, 2)
+    )
+    console.print("\n")
+    console.print(welcome_panel)
+
+    # Create a table for starter questions
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        box=box.ROUNDED,
+        title="[bold]Example Questions to Get Started[/bold]"
+    )
+    table.add_column("№", style="dim", width=4)
+    table.add_column("Question", style="green")
+
+    for i, question in enumerate(STARTER_QUESTIONS, 1):
+        table.add_row(str(i), question)
+
+    console.print("\n")
+    console.print(table)
+    console.print("\n" + "─" * 80 + "\n")
+
+def display_search_status(is_new_search: bool, reasoning: str) -> None:
+    if is_new_search:
+        panel = Panel(
+            f"[white]{reasoning}[/white]",
+            title="[bold yellow]Performing New Search[/bold yellow]",
+            border_style="yellow",
+            padding=(1, 2)
+        )
+    else:
+        panel = Panel(
+            f"[white]{reasoning}[/white]",
+            title="[bold green]Using Existing Context[/bold green]",
+            border_style="green",
+            padding=(1, 2)
+        )
+    console.print("\n")
+    console.print(panel)
+
+def display_answer(answer: str, follow_up_questions: list[str]) -> None:
+    # Display the main answer in a panel
+    answer_panel = Panel(
+        Markdown(answer),
+        title="[bold blue]Answer[/bold blue]",
+        border_style="blue",
+        padding=(1, 2)
+    )
+    console.print("\n")
+    console.print(answer_panel)
+
+    # Display follow-up questions if available
+    if follow_up_questions:
+        questions_table = Table(
+            show_header=True,
+            header_style="bold cyan",
+            box=box.ROUNDED,
+            title="[bold]Follow-up Questions[/bold]"
+        )
+        questions_table.add_column("№", style="dim", width=4)
+        questions_table.add_column("Question", style="green")
+
+        for i, question in enumerate(follow_up_questions, 1):
+            questions_table.add_row(str(i), question)
+
+        console.print("\n")
+        console.print(questions_table)
 
 def chat_loop() -> None:
     # Initialize context providers
@@ -73,35 +145,19 @@ def chat_loop() -> None:
     query_agent.register_context_provider("current_date", current_date_context_provider)
 
     choice_agent.register_context_provider("scraped_content", scraped_content_context_provider)
-    question_answering_agent.register_context_provider("Scraped Content", scraped_content_context_provider)
+    question_answering_agent.register_context_provider("scraped_content", scraped_content_context_provider)
+    query_agent.register_context_provider("scraped_content", scraped_content_context_provider)
 
-    # Initialize conversation memory with example
-    initialize_conversation_memory()
+    # Initialize conversation memory and display welcome message
+    initialize_conversation()
 
-    print("\n=== Welcome to the Deep Research Chat! ===")
-    print("Type 'exit' to end the conversation.\n")
-    print("I can help you research and learn about any topic. I'll provide detailed answers")
-    print("and suggest specific follow-up questions to deepen your understanding.\n")
-
-    print("Here are some example questions to get started:")
-    starter_questions = [
-        "What are the latest breakthroughs in quantum computing?",
-        "How does artificial intelligence impact climate change research?",
-        "What are the most promising renewable energy technologies?",
-        "What discoveries led to the latest Nobel Prize in Physics?",
-        "How do black holes affect the structure of galaxies?",
-    ]
-
-    print("\n[bold blue]Suggested Topics:[/bold blue]")
-    for i, question in enumerate(starter_questions, 1):
-        print(f"  {i}. {question}")
-    print("\n-------------------------------------------")
+    display_welcome()
 
     while True:
-        user_message = input("\nYour question: ").strip()
+        user_message = console.input("\n[bold blue]Your question:[/bold blue] ").strip()
 
         if user_message.lower() == "exit":
-            print("Goodbye!")
+            console.print("\n[bold]Goodbye! Thanks for using Deep Research.[/bold]")
             break
 
         # Determine if we need a new search
@@ -116,28 +172,21 @@ def chat_loop() -> None:
             )
         )
 
+        # Display search status with new formatting
+        display_search_status(choice_agent_output.decision, choice_agent_output.reasoning)
+
         if choice_agent_output.decision:
-            print("\n[bold yellow]Performing new search[/bold yellow]")
-            print(f"Reason: {choice_agent_output.reasoning}")
-
-            # Perform search and update context
             perform_search_and_update_context(user_message, scraped_content_context_provider)
-        else:
-            print("\n[bold green]Using existing context[/bold green]")
-            print(f"Reason: {choice_agent_output.reasoning}")
 
-        # Get and display the answer (inlined from get_answer function)
+        # Get and display the answer with new formatting
         question_answering_agent_output = question_answering_agent.run(
             QuestionAnsweringAgentInputSchema(question=user_message)
         )
-        answer = question_answering_agent_output.answer
-        follow_up_questions = question_answering_agent_output.follow_up_questions
 
-        print("\nAnswer:", answer)
-        if follow_up_questions:
-            print("\nSome questions you could ask to learn more about this topic:")
-            for i, question in enumerate(follow_up_questions, 1):
-                print(f"{i}. {question}")
+        display_answer(
+            question_answering_agent_output.answer,
+            question_answering_agent_output.follow_up_questions
+        )
 
 
 if __name__ == "__main__":

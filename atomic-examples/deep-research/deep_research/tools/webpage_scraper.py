@@ -69,7 +69,7 @@ class WebpageScraperToolConfig(BaseToolConfig):
         description="Timeout in seconds for HTTP requests.",
     )
     max_content_length: int = Field(
-        default=1_000_000_000,
+        default=100_000_000,
         description="Maximum content length in bytes to process.",
     )
 
@@ -113,7 +113,7 @@ class WebpageScraperTool(BaseTool):
         }
 
         response = requests.get(url, headers=headers, timeout=self.config.timeout)
-        response.raise_for_status()
+        # response.raise_for_status()
 
         if len(response.content) > self.config.max_content_length:
             raise ValueError(f"Content length exceeds maximum of {self.config.max_content_length} bytes")

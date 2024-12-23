@@ -6,7 +6,7 @@ authors = ["KennyVaneetvelde <kenny@inosta.be>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.11"
 atomic-agents = {path = "../.."}
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
