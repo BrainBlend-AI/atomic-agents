@@ -27,8 +27,9 @@ WELCOME_MESSAGE = (
 STARTER_QUESTIONS = [
     "Can you help me research the latest AI news?",
     "Who won the Nobel Prize in Physics this year?",
-    "Where can I learn more about quantum computing?"
+    "Where can I learn more about quantum computing?",
 ]
+
 
 def perform_search_and_update_context(
     user_message: str, scraped_content_context_provider: ScrapedContentContextProvider
@@ -61,22 +62,17 @@ def initialize_conversation() -> None:
     )
     question_answering_agent.memory.add_message("assistant", initial_answer)
 
+
 def display_welcome() -> None:
     welcome_panel = Panel(
-        WELCOME_MESSAGE,
-        title="[bold blue]Deep Research Chat[/bold blue]",
-        border_style="blue",
-        padding=(1, 2)
+        WELCOME_MESSAGE, title="[bold blue]Deep Research Chat[/bold blue]", border_style="blue", padding=(1, 2)
     )
     console.print("\n")
     console.print(welcome_panel)
 
     # Create a table for starter questions
     table = Table(
-        show_header=True,
-        header_style="bold cyan",
-        box=box.ROUNDED,
-        title="[bold]Example Questions to Get Started[/bold]"
+        show_header=True, header_style="bold cyan", box=box.ROUNDED, title="[bold]Example Questions to Get Started[/bold]"
     )
     table.add_column("№", style="dim", width=4)
     table.add_column("Question", style="green")
@@ -88,42 +84,36 @@ def display_welcome() -> None:
     console.print(table)
     console.print("\n" + "─" * 80 + "\n")
 
+
 def display_search_status(is_new_search: bool, reasoning: str) -> None:
     if is_new_search:
         panel = Panel(
             f"[white]{reasoning}[/white]",
             title="[bold yellow]Performing New Search[/bold yellow]",
             border_style="yellow",
-            padding=(1, 2)
+            padding=(1, 2),
         )
     else:
         panel = Panel(
             f"[white]{reasoning}[/white]",
             title="[bold green]Using Existing Context[/bold green]",
             border_style="green",
-            padding=(1, 2)
+            padding=(1, 2),
         )
     console.print("\n")
     console.print(panel)
 
+
 def display_answer(answer: str, follow_up_questions: list[str]) -> None:
     # Display the main answer in a panel
-    answer_panel = Panel(
-        Markdown(answer),
-        title="[bold blue]Answer[/bold blue]",
-        border_style="blue",
-        padding=(1, 2)
-    )
+    answer_panel = Panel(Markdown(answer), title="[bold blue]Answer[/bold blue]", border_style="blue", padding=(1, 2))
     console.print("\n")
     console.print(answer_panel)
 
     # Display follow-up questions if available
     if follow_up_questions:
         questions_table = Table(
-            show_header=True,
-            header_style="bold cyan",
-            box=box.ROUNDED,
-            title="[bold]Follow-up Questions[/bold]"
+            show_header=True, header_style="bold cyan", box=box.ROUNDED, title="[bold]Follow-up Questions[/bold]"
         )
         questions_table.add_column("№", style="dim", width=4)
         questions_table.add_column("Question", style="green")
@@ -133,6 +123,7 @@ def display_answer(answer: str, follow_up_questions: list[str]) -> None:
 
         console.print("\n")
         console.print(questions_table)
+
 
 def chat_loop() -> None:
     # Initialize context providers
@@ -183,10 +174,7 @@ def chat_loop() -> None:
             QuestionAnsweringAgentInputSchema(question=user_message)
         )
 
-        display_answer(
-            question_answering_agent_output.answer,
-            question_answering_agent_output.follow_up_questions
-        )
+        display_answer(question_answering_agent_output.answer, question_answering_agent_output.follow_up_questions)
 
 
 if __name__ == "__main__":
