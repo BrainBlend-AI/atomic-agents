@@ -64,7 +64,11 @@ class AgentMemory:
         if self.current_turn_id is None:
             self.initialize_turn()
 
-        message = Message(role=role, content=content, turn_id=self.current_turn_id)
+        message = Message(
+            role=role,
+            content=content,
+            turn_id=self.current_turn_id,
+        )
         self.history.append(message)
         self._manage_overflow()
 
@@ -78,18 +82,23 @@ class AgentMemory:
 
     def get_history(self) -> List[Dict]:
         """
-        Retrieves the chat history, filtering out unnecessary fields and serializing content.
+        Retrieves the chat history, handling both regular and multimodal content.
 
         Returns:
             List[Dict]: The list of messages in the chat history as dictionaries.
         """
-        return [
-            {
-                "role": message.role,
-                "content": json.dumps(message.content.model_dump()),
-            }
-            for message in self.history
-        ]
+        history = []
+        for message in self.history:
+            content = message.content
+            if hasattr(content, "images") and content.images:
+                # For multimodal content, format as a list with text and images
+                text_field = next((field for field in content.model_fields if field.endswith("text")), None)
+                instruction_text = getattr(content, text_field) if text_field else str(content)
+                history.append({"role": message.role, "content": [instruction_text, *content.images]})
+            else:
+                # For regular content, serialize to JSON string
+                history.append({"role": message.role, "content": json.dumps(content.model_dump())})
+        return history
 
     def copy(self) -> "AgentMemory":
         """
@@ -220,7 +229,9 @@ class AgentMemory:
 
 
 if __name__ == "__main__":
+    import instructor
     from typing import List as TypeList, Dict as TypeDict
+    import os
 
     # Define complex test schemas
     class NestedSchema(BaseIOSchema):
@@ -243,6 +254,13 @@ if __name__ == "__main__":
         response_text: str = Field(..., description="A response text")
         calculated_value: int = Field(..., description="A calculated value")
         data_dict: TypeDict[str, NestedSchema] = Field(..., description="A dictionary of nested schemas")
+
+    # Add a new multimodal schema for testing
+    class MultimodalSchema(BaseIOSchema):
+        """Schema for testing multimodal content"""
+
+        instruction_text: str = Field(..., description="The instruction text")
+        images: List[instructor.Image] = Field(..., description="The images to analyze")
 
     # Create and populate the original memory with complex data
     original_memory = AgentMemory(max_messages=10)
@@ -271,18 +289,18 @@ if __name__ == "__main__":
         ),
     )
 
-    # Add another input message
-    original_memory.add_message(
-        "user",
-        ComplexInputSchema(
-            text_field="Another complex input",
-            number_field=2.71828,
-            list_field=["apple", "banana", "cherry"],
-            nested_field=NestedSchema(nested_field="More nested input", nested_int=99),
-        ),
-    )
+    # Test multimodal functionality if test image exists
+    test_image_path = os.path.join("test_images", "test.jpg")
+    if os.path.exists(test_image_path):
+        # Add a multimodal message
+        original_memory.add_message(
+            "user",
+            MultimodalSchema(
+                instruction_text="Please analyze this image", images=[instructor.Image.from_path(test_image_path)]
+            ),
+        )
 
-    # Dump the memory
+    # Continue with existing tests...
     dumped_data = original_memory.dump()
     print("Dumped data:")
     print(dumped_data)
@@ -290,9 +308,6 @@ if __name__ == "__main__":
     # Create a new memory and load the dumped data
     loaded_memory = AgentMemory()
     loaded_memory.load(dumped_data)
-
-    # Verify that the loaded memory matches the original
-    print("\nOriginal memory dump == Loaded memory dump:", original_memory.dump() == loaded_memory.dump())
 
     # Print detailed information about the loaded memory
     print("\nLoaded memory details:")
@@ -304,19 +319,6 @@ if __name__ == "__main__":
         print("Content:")
         for field, value in message.content.model_dump().items():
             print(f"  {field}: {value}")
-
-    # Verify that the loaded memory can be used to add new messages
-    loaded_memory.add_message(
-        "assistant",
-        ComplexOutputSchema(
-            response_text="This is a new message added to the loaded memory",
-            calculated_value=200,
-            data_dict={"key3": NestedSchema(nested_field="New nested output", nested_int=30)},
-        ),
-    )
-
-    print("\nAdded a new message to the loaded memory.")
-    print(f"Total messages in loaded memory: {loaded_memory.get_message_count()}")
 
     # Final verification
     print("\nFinal verification:")

@@ -4,17 +4,14 @@ from atomic_agents.lib.components.system_prompt_generator import SystemPromptGen
 from atomic_agents.lib.components.agent_memory import AgentMemory
 import instructor
 import openai
-from pydantic import Field, BaseModel
-from typing import List, Union, Any, Optional
+from pydantic import Field
+from typing import List
 import os
-import json
 
 
-class NutritionFacts(BaseIOSchema):
-    """Represents nutrition facts from a food label"""
+class NutritionLabel(BaseIOSchema):
+    """Represents the complete nutritional information from a food label"""
 
-    serving_size: str = Field(..., description="Serving size information")
-    servings_per_container: float = Field(..., description="Number of servings per container")
     calories: int = Field(..., description="Calories per serving")
     total_fat: float = Field(..., description="Total fat in grams")
     saturated_fat: float = Field(..., description="Saturated fat in grams")
@@ -30,144 +27,107 @@ class NutritionFacts(BaseIOSchema):
     calcium: int = Field(..., description="Calcium in milligrams")
     iron: float = Field(..., description="Iron in milligrams")
     potassium: int = Field(..., description="Potassium in milligrams")
+    serving_size: str = Field(..., description="The size of a single serving of this product")
+    servings_per_container: float = Field(..., description="Number of servings contained in the package")
+    product_name: str = Field(
+        ...,
+        description="The full name or description of the type of the food/drink. e.g: 'Coca Cola Light', 'Pepsi Max', 'Smoked Bacon', 'Chianti Wine'",
+    )
 
 
-class ImageMessage(BaseModel):
-    """A message that can contain multiple images"""
+class NutritionAnalysisInput(BaseIOSchema):
+    """Input schema for nutrition label analysis"""
 
-    text: str
-    image_paths: List[str]
-
-    def to_content(self):
-        """Convert to the format expected by the API"""
-        return [self.text, *[instructor.Image.from_path(path) for path in self.image_paths]]
-
-    def model_dump(self, *args, **kwargs):
-        """Custom serialization that only includes the text and paths"""
-        return {"text": self.text, "image_paths": [str(path) for path in self.image_paths]}
+    instruction_text: str = Field(..., description="The instruction for analyzing the nutrition label")
+    images: List[instructor.Image] = Field(..., description="The nutrition label images to analyze")
 
 
-class NutritionInputSchema(BaseIOSchema):
-    """Schema for nutrition facts input"""
+class NutritionAnalysisOutput(BaseIOSchema):
+    """Output schema containing extracted nutrition information"""
 
-    message: ImageMessage
-
-    def get_api_messages(self):
-        """Get the messages in the format expected by the API"""
-        return self.message.to_content()
+    analyzed_labels: List[NutritionLabel] = Field(
+        ..., description="List of nutrition labels extracted from the provided images"
+    )
 
 
-class NutritionOutputSchema(BaseIOSchema):
-    """Schema for nutrition facts extraction from multiple images"""
-
-    nutrition_facts: List[NutritionFacts] = Field(..., description="Nutrition facts extracted from each image")
-
-
-# Monkey patch the get_history method to handle our custom message format
-original_get_history = AgentMemory.get_history
-
-
-def patched_get_history(self):
-    history = []
-    for message in self.history:
-        if isinstance(message.content, NutritionInputSchema) and message.role == "user":
-            # For our custom input schema, use the API format
-            history.append({"role": message.role, "content": message.content.get_api_messages()})
-        else:
-            # For other messages, use the normal serialization
-            history.append({"role": message.role, "content": json.dumps(message.content.model_dump())})
-    return history
-
-
-AgentMemory.get_history = patched_get_history
-
-# Set up the system prompt
-system_prompt_generator = SystemPromptGenerator(
-    background=[
-        "You are an expert at extracting nutrition information from food labels.",
-        "You can accurately read and parse nutrition facts panels from images.",
-        "You understand serving sizes, measurements, and nutritional content.",
-        "You can process multiple nutrition labels from multiple images.",
-    ],
-    steps=[
-        "For each image:",
-        "1. Identify the nutrition facts panel",
-        "2. Extract all nutritional values and serving information",
-        "3. Convert all values to their appropriate units",
-        "4. Add the nutrition facts to the output list",
-    ],
-    output_instructions=[
-        "For each nutrition label image:",
-        "1. Extract serving size and servings per container",
-        "2. Record all nutritional values in their specified units",
-        "3. Ensure accuracy of measurements and conversions",
-        "Return all nutrition facts in the list",
-    ],
-)
-
-# Initialize the agent
-agent = BaseAgent(
+# Configure the nutrition analysis system
+nutrition_analyzer = BaseAgent(
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
-        system_prompt_generator=system_prompt_generator,
+        system_prompt_generator=SystemPromptGenerator(
+            background=[
+                "You are a specialized nutrition label analyzer.",
+                "You excel at extracting precise nutritional information from food label images.",
+                "You understand various serving size formats and measurement units.",
+                "You can process multiple nutrition labels simultaneously.",
+            ],
+            steps=[
+                "For each nutrition label image:",
+                "1. Locate and identify the nutrition facts panel",
+                "2. Extract all serving information and nutritional values",
+                "3. Validate measurements and units for accuracy",
+                "4. Compile the nutrition facts into structured data",
+            ],
+            output_instructions=[
+                "For each analyzed nutrition label:",
+                "1. Record complete serving size information",
+                "2. Extract all nutrient values with correct units",
+                "3. Ensure all measurements are properly converted",
+                "4. Include all extracted labels in the final result",
+            ],
+        ),
         memory=AgentMemory(),
-        output_schema=NutritionOutputSchema,
+        input_schema=NutritionAnalysisInput,
+        output_schema=NutritionAnalysisOutput,
     )
 )
 
 
 def main():
-    print("Starting nutrition facts extraction...")
-    # Get the directory where the script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Go up one level to the basic-multimodal directory and then to test_images
-    image_dir = os.path.join(os.path.dirname(script_dir), "test_images")
-    image_paths = [os.path.join(image_dir, "nutrition_label_2.jpg")]
-    print(f"Image paths: {image_paths}")
+    print("Starting nutrition label analysis...")
 
-    # Create the message with the image
-    message = ImageMessage(
-        text="Extract all nutrition information from these food labels. Include serving size, calories, and all nutrient values.",
-        image_paths=[str(path) for path in image_paths],
+    # Construct the path to the test images
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+    test_images_directory = os.path.join(os.path.dirname(script_directory), "test_images")
+    image_path_1 = os.path.join(test_images_directory, "nutrition_label_1.png")
+    image_path_2 = os.path.join(test_images_directory, "nutrition_label_2.jpg")
+    # Create and submit the analysis request
+    analysis_request = NutritionAnalysisInput(
+        instruction_text="Please analyze these nutrition labels and extract all nutritional information.",
+        images=[instructor.Image.from_path(image_path_1), instructor.Image.from_path(image_path_2)],
     )
 
-    # Create input schema with the message
-    input_schema = NutritionInputSchema(message=message)
-    print("Created input schema with images")
-
-    # Add the message to memory
-    agent.memory.add_message("user", input_schema)
-    print("Added message to memory")
-
     try:
-        # Get response
-        print("Getting response...")
-        response = agent.get_response()
-        print("Got response successfully")
+        # Process the nutrition labels
+        print("Analyzing nutrition labels...")
+        analysis_result = nutrition_analyzer.run(analysis_request)
+        print("Analysis completed successfully")
 
-        for i, facts in enumerate(response.nutrition_facts, 1):
-            print(f"\nNutrition Facts {i}:")
-            print(f"Serving Size: {facts.serving_size}")
-            print(f"Servings Per Container: {facts.servings_per_container}")
-            print(f"Calories: {facts.calories}")
-            print(f"Total Fat: {facts.total_fat}g")
-            print(f"Saturated Fat: {facts.saturated_fat}g")
-            print(f"Trans Fat: {facts.trans_fat}g")
-            print(f"Cholesterol: {facts.cholesterol}mg")
-            print(f"Sodium: {facts.sodium}mg")
-            print(f"Total Carbohydrates: {facts.total_carbohydrates}g")
-            print(f"Dietary Fiber: {facts.dietary_fiber}g")
-            print(f"Total Sugars: {facts.total_sugars}g")
-            print(f"Added Sugars: {facts.added_sugars}g")
-            print(f"Protein: {facts.protein}g")
-            print(f"Vitamin D: {facts.vitamin_d}mcg")
-            print(f"Calcium: {facts.calcium}mg")
-            print(f"Iron: {facts.iron}mg")
-            print(f"Potassium: {facts.potassium}mg")
+        # Display the results
+        for i, label in enumerate(analysis_result.analyzed_labels, 1):
+            print(f"\nNutrition Label {i}:")
+            print(f"Product Name: {label.product_name}")
+            print(f"Serving Size: {label.serving_size}")
+            print(f"Servings Per Container: {label.servings_per_container}")
+            print(f"Calories: {label.calories}")
+            print(f"Total Fat: {label.total_fat}g")
+            print(f"Saturated Fat: {label.saturated_fat}g")
+            print(f"Trans Fat: {label.trans_fat}g")
+            print(f"Cholesterol: {label.cholesterol}mg")
+            print(f"Sodium: {label.sodium}mg")
+            print(f"Total Carbohydrates: {label.total_carbohydrates}g")
+            print(f"Dietary Fiber: {label.dietary_fiber}g")
+            print(f"Total Sugars: {label.total_sugars}g")
+            print(f"Added Sugars: {label.added_sugars}g")
+            print(f"Protein: {label.protein}g")
+            print(f"Vitamin D: {label.vitamin_d}mcg")
+            print(f"Calcium: {label.calcium}mg")
+            print(f"Iron: {label.iron}mg")
+            print(f"Potassium: {label.potassium}mg")
 
     except Exception as e:
-        print(f"Error occurred: {str(e)}")
+        print(f"Analysis failed: {str(e)}")
         raise
 
 

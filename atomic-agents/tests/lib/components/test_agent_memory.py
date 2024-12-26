@@ -4,6 +4,7 @@ from typing import List, Dict
 from pydantic import Field
 from atomic_agents.lib.components.agent_memory import AgentMemory, Message
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+import instructor
 
 
 class TestInputSchema(BaseIOSchema):
@@ -40,6 +41,13 @@ class TestComplexOutputSchema(BaseIOSchema):
     response_text: str = Field(..., description="A response text")
     calculated_value: int = Field(..., description="A calculated value")
     data_dict: Dict[str, TestNestedSchema] = Field(..., description="A dictionary of nested schemas")
+
+
+class TestMultimodalSchema(BaseIOSchema):
+    """Test schema for multimodal content"""
+
+    instruction_text: str = Field(..., description="The instruction text")
+    images: List[instructor.Image] = Field(..., description="The images to analyze")
 
 
 @pytest.fixture
@@ -274,3 +282,20 @@ def test_agent_memory_delete_turn_id(memory):
     # Assert: Trying to delete a non-existing turn ID should raise a ValueError
     with pytest.raises(ValueError, match="Turn ID non-existent-id not found in memory."):
         memory.delete_turn_id("non-existent-id")
+
+
+def test_get_history_with_multimodal_content(memory):
+    """Test that get_history correctly handles multimodal content"""
+    # Create a mock image
+    mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
+
+    # Add a multimodal message
+    memory.add_message("user", TestMultimodalSchema(instruction_text="Analyze this image", images=[mock_image]))
+
+    # Get history and verify format
+    history = memory.get_history()
+    assert len(history) == 1
+    assert history[0]["role"] == "user"
+    assert isinstance(history[0]["content"], list)
+    assert history[0]["content"][0] == "Analyze this image"
+    assert history[0]["content"][1] == mock_image
