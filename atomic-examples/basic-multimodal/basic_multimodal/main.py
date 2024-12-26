@@ -8,6 +8,16 @@ from pydantic import Field
 from typing import List
 import os
 
+# API Key setup
+API_KEY = ""
+if not API_KEY:
+    API_KEY = os.getenv("OPENAI_API_KEY")
+
+if not API_KEY:
+    raise ValueError(
+        "API key is not set. Please set the API key as a static variable or in the environment variable OPENAI_API_KEY."
+    )
+
 
 class NutritionLabel(BaseIOSchema):
     """Represents the complete nutritional information from a food label"""
@@ -53,7 +63,7 @@ class NutritionAnalysisOutput(BaseIOSchema):
 # Configure the nutrition analysis system
 nutrition_analyzer = BaseAgent(
     config=BaseAgentConfig(
-        client=instructor.from_openai(openai.OpenAI()),
+        client=instructor.from_openai(openai.OpenAI(api_key=API_KEY)),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(
             background=[
