@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "basic-multimodal"
+version = "1.0.0"
+description = "Basic Multimodal Quickstart example for Atomic Agents"
+authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+atomic-agents = {path = "../..", develop = true}
+instructor = ">=1.3.4,<2.0.0"
+openai = ">=1.35.12,<2.0.0"
+groq = ">=0.11.0,<1.0.0"
+mistralai = ">=1.1.0,<2.0.0"
+anthropic = ">=0.39.0,<1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
