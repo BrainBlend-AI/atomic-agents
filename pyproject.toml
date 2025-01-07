@@ -39,8 +39,8 @@ openai = ">=1.35.12,<2.0.0"
 atomic = "atomic_assembler.main:main"
 
 [tool.poetry.urls]
-homepage = "https://github.com/KennyVaneetvelde/atomic_agents"
-repository = "https://github.com/KennyVaneetvelde/atomic_agents"
+Homepage = "https://github.com/BrainBlend-AI/atomic-agents"
+Repository = "https://github.com/BrainBlend-AI/atomic-agents"
 
 [tool.black]
 line-length = 127
