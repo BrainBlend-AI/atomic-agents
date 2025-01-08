@@ -13,6 +13,7 @@ pydantic = ">=2.9.2,<3.0.0"
 google-api-python-client = ">=2.101.0,<3.0.0"
 youtube-transcript-api = ">=0.1.9,<1.0.0"
 instructor = ">=1.5.2,<2.0.0"
+python-dotenv = ">=1.0.1,<2.0.0"
 
 
 [build-system]
