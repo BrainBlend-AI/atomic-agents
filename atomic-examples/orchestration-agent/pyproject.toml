@@ -6,11 +6,13 @@ authors = ["KennyVaneetvelde <kenny@inosta.be>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.13"
-atomic-agents = "^1.0.7"
+python = "^3.11"
+atomic-agents = {path = "../..", develop = true}
 instructor = "^1.6.1"
 pydantic = "^2.9.2"
 sympy = "^1.13.3"
+python-dotenv = ">=1.0.1,<2.0.0"
+openai = ">=1.35.12,<2.0.0"
 
 
 [build-system]
