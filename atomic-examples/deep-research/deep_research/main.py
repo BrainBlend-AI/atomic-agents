@@ -15,6 +15,7 @@ from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.table import Table
 from rich import box
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 
 console = Console()
@@ -34,25 +35,46 @@ STARTER_QUESTIONS = [
 def perform_search_and_update_context(
     user_message: str, scraped_content_context_provider: ScrapedContentContextProvider
 ) -> None:
-    # Generate search queries
-    query_agent_output = query_agent.run(QueryAgentInputSchema(instruction=user_message, num_queries=3))
-    queries = query_agent_output.queries
-    print("Generated queries:", queries)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        # Generate search queries
+        task = progress.add_task("[cyan]Generating search queries...", total=None)
+        console.print("\n[bold yellow]🤔 Analyzing your question to generate relevant search queries...[/bold yellow]")
+        query_agent_output = query_agent.run(QueryAgentInputSchema(instruction=user_message, num_queries=3))
+        progress.remove_task(task)
 
-    # Perform the search
-    searxng_search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url="http://localhost:8080/"))
-    search_results = searxng_search_tool.run(SearxNGSearchToolInputSchema(queries=queries))
+        console.print("\n[bold green]🔍 Generated search queries:[/bold green]")
+        for i, query in enumerate(query_agent_output.queries, 1):
+            console.print(f"  {i}. [italic]{query}[/italic]")
 
-    # Scrape content from search results
-    webpage_scraper_tool = WebpageScraperTool()
-    results_for_context_provider = []
+        # Perform the search
+        task = progress.add_task("[cyan]Searching the web...", total=None)
+        console.print("\n[bold yellow]🌐 Searching across the web using SearxNG...[/bold yellow]")
+        searxng_search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url="http://localhost:8080/"))
+        search_results = searxng_search_tool.run(SearxNGSearchToolInputSchema(queries=query_agent_output.queries))
+        progress.remove_task(task)
 
-    for result in search_results.results[:3]:
-        scraped_content = webpage_scraper_tool.run(WebpageScraperToolInputSchema(url=result.url, include_links=True))
-        results_for_context_provider.append(ContentItem(content=scraped_content.content, url=result.url))
+        # Scrape content from search results
+        console.print("\n[bold green]📑 Found relevant web pages:[/bold green]")
+        for i, result in enumerate(search_results.results[:3], 1):
+            console.print(f"  {i}. [link={result.url}]{result.title}[/link]")
 
-    # Update the context provider with new content
-    scraped_content_context_provider.content_items = results_for_context_provider
+        task = progress.add_task("[cyan]Scraping webpage content...", total=None)
+        console.print("\n[bold yellow]📥 Extracting content from web pages...[/bold yellow]")
+        webpage_scraper_tool = WebpageScraperTool()
+        results_for_context_provider = []
+
+        for result in search_results.results[:3]:
+            scraped_content = webpage_scraper_tool.run(WebpageScraperToolInputSchema(url=result.url, include_links=True))
+            results_for_context_provider.append(ContentItem(content=scraped_content.content, url=result.url))
+        progress.remove_task(task)
+
+        # Update the context provider with new content
+        console.print("\n[bold green]🔄 Updating research context with new information...[/bold green]")
+        scraped_content_context_provider.content_items = results_for_context_provider
 
 
 def initialize_conversation() -> None:
@@ -126,11 +148,15 @@ def display_answer(answer: str, follow_up_questions: list[str]) -> None:
 
 
 def chat_loop() -> None:
+    console.print("\n[bold magenta]🚀 Initializing Deep Research System...[/bold magenta]")
+
     # Initialize context providers
+    console.print("[dim]• Creating context providers...[/dim]")
     scraped_content_context_provider = ScrapedContentContextProvider("Scraped Content")
     current_date_context_provider = CurrentDateContextProvider("Current Date")
 
     # Register context providers
+    console.print("[dim]• Registering context providers with agents...[/dim]")
     choice_agent.register_context_provider("current_date", current_date_context_provider)
     question_answering_agent.register_context_provider("current_date", current_date_context_provider)
     query_agent.register_context_provider("current_date", current_date_context_provider)
@@ -139,19 +165,23 @@ def chat_loop() -> None:
     question_answering_agent.register_context_provider("scraped_content", scraped_content_context_provider)
     query_agent.register_context_provider("scraped_content", scraped_content_context_provider)
 
-    # Initialize conversation memory and display welcome message
+    console.print("[dim]• Initializing conversation memory...[/dim]")
     initialize_conversation()
 
+    console.print("[bold green]✨ System initialized successfully![/bold green]\n")
     display_welcome()
 
     while True:
         user_message = console.input("\n[bold blue]Your question:[/bold blue] ").strip()
 
         if user_message.lower() == "exit":
-            console.print("\n[bold]Goodbye! Thanks for using Deep Research.[/bold]")
+            console.print("\n[bold]👋 Goodbye! Thanks for using Deep Research.[/bold]")
             break
 
+        console.print("\n[bold yellow]🤖 Processing your question...[/bold yellow]")
+
         # Determine if we need a new search
+        console.print("[dim]• Evaluating if new research is needed...[/dim]")
         choice_agent_output = choice_agent.run(
             ChoiceAgentInputSchema(
                 user_message=user_message,
@@ -170,6 +200,7 @@ def chat_loop() -> None:
             perform_search_and_update_context(user_message, scraped_content_context_provider)
 
         # Get and display the answer with new formatting
+        console.print("\n[bold yellow]🎯 Generating comprehensive answer...[/bold yellow]")
         question_answering_agent_output = question_answering_agent.run(
             QuestionAnsweringAgentInputSchema(question=user_message)
         )
