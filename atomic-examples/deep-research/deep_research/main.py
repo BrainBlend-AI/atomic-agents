@@ -9,7 +9,6 @@ from deep_research.tools.searxng_search import SearxNGSearchTool, SearxNGSearchT
 from deep_research.tools.webpage_scraper import WebpageScraperTool, WebpageScraperToolInputSchema
 from deep_research.context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
 
-from rich import print
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
