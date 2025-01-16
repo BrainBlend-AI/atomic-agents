@@ -55,8 +55,6 @@ class TavilySearchToolConfig(BaseToolConfig):
     exclude_domains: Optional[List[str]] = []
     include_answer: Optional[bool] = False
     include_raw_content: Optional[bool] = False
-    include_images: Optional[bool] = False
-    include_image_descriptions: Optional[bool] = False
 
 
 class TavilySearchTool(BaseTool):
@@ -68,12 +66,10 @@ class TavilySearchTool(BaseTool):
         output_schema (TavilySearchToolOutputSchema): The schema for the output data.
         max_results (int): The maximum number of search results to return.
         topic (string): The category that the result is classified under.
-        search_depth (string):
+        search_depth (string): The depth of the search to perform. (advanced or basic)
         include_domains (List[str]): A list of domains to pull results from.
         include_answer (bool): Include the answer in the respones from Tavily.
         include_raw_content (bool): Include the raw content of the search results.
-        include_images (bool): Include a list of images in the search results.
-        include_image_descriptions (bool): Include image descriptions for the images in the images list.
     """
 
     input_schema = TavilySearchToolInputSchema
@@ -95,8 +91,6 @@ class TavilySearchTool(BaseTool):
         self.include_domains = config.include_domains
         self.include_answer = config.include_answer
         self.include_raw_content = config.include_raw_content
-        self.include_images = config.include_images
-        self.include_image_descriptions = config.include_image_descriptions
 
     async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str) -> List[dict]:
         headers = {
@@ -114,8 +108,6 @@ class TavilySearchTool(BaseTool):
             "topic": self.topic,
             "include_answer": self.include_answer,
             "include_raw_content": self.include_raw_content,
-            "include_images": self.include_images,
-            "include_image_descriptions": self.include_image_descriptions,
             "include_domains": self.include_domains,
             "max_results": self.max_results,
         }
@@ -202,27 +194,19 @@ class TavilySearchTool(BaseTool):
 #################
 # EXAMPLE USAGE #
 #################
-async def main():
+if __name__ == "__main__":
     from rich.console import Console
 
     rich_console = Console()
 
     search_tool_instance = TavilySearchTool(
-        config=TavilySearchToolConfig(
-            api_key=os.getenv("TAVILY_API_KEY"),
-            search_depth="basic",
-            topic="general",
-            include_answer=False,
-            include_raw_content=False,
-            include_domains=["https://www.rust-lang.org"],
-            max_results=5,
-        )
+        config=TavilySearchToolConfig(api_key=os.getenv("TAVILY_API_KEY"), max_results=5)
     )
 
-    search_input = TavilySearchTool.input_schema(queries=["Rust Programming"])
+    search_input = TavilySearchTool.input_schema(
+        queries=["Python programming", "Machine learning", "Artificial intelligence"]
+    )
 
-    output = await search_tool_instance.run_async(search_input)
+    output = search_tool_instance.run(search_input)
+
     rich_console.print(output)
-
-
-asyncio.run(main())
