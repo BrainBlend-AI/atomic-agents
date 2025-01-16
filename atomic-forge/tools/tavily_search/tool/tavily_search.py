@@ -201,13 +201,9 @@ if __name__ == "__main__":
 
     rich_console = Console()
 
-    search_tool_instance = TavilySearchTool(
-        config=TavilySearchToolConfig(api_key=os.getenv("TAVILY_API_KEY"), max_results=2)
-    )
+    search_tool_instance = TavilySearchTool(config=TavilySearchToolConfig(api_key=os.getenv("TAVILY_API_KEY"), max_results=2))
 
-    search_input = TavilySearchTool.input_schema(
-        queries=["Python programming", "Machine learning", "Artificial intelligence"]
-    )
+    search_input = TavilySearchTool.input_schema(queries=["Python programming", "Machine learning", "Artificial intelligence"])
 
     output = search_tool_instance.run(search_input)
 
