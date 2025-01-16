@@ -33,7 +33,7 @@ class TavilySearchResultItemSchema(BaseIOSchema):
     content: str = Field(None, description="The content snippet of the search result")
     score: float = Field(..., description="The score of the search result")
     raw_content: Optional[str] = Field(None, description="The raw content of the search result")
-    query: str = Field(..., description="The query used to obtain this search result")
+    query: Optional[str] = Field(..., description="The query used to obtain this search result")
     answer: Optional[str] = Field(..., description="The answer to the query provided by Tavily")
 
 
@@ -51,6 +51,7 @@ class TavilySearchToolConfig(BaseToolConfig):
     max_results: Optional[int] = 10
     search_depth: Optional[str] = "basic"
     topic: Optional[str] = "general"
+    include_query: Optional[bool] = False
     include_domains: Optional[List[str]] = []
     include_answer: Optional[bool] = False
     include_raw_content: Optional[bool] = False
@@ -87,6 +88,7 @@ class TavilySearchTool(BaseTool):
         self.max_results = config.max_results
         self.search_depth = config.search_depth
         self.topic = config.topic
+        self.include_query = config.include_query
         self.include_domains = config.include_domains
         self.include_answer = config.include_answer
         self.include_raw_content = config.include_raw_content
@@ -105,6 +107,7 @@ class TavilySearchTool(BaseTool):
             "api_key": self.api_key,
             "search_depth": self.search_depth,
             "topic": self.topic,
+            "include_query": self.include_query,
             "include_answer": self.include_answer,
             "include_raw_content": self.include_raw_content,
             "include_domains": self.include_domains,
@@ -150,7 +153,7 @@ class TavilySearchTool(BaseTool):
                             content=result.get("content", ""),
                             score=result.get("score", 0),
                             raw_content=result.get("raw_content"),
-                            query=result.get("query"),
+                            query=result.get("query") if self.include_query else None,
                             answer=result.get("answer") if self.include_answer else None,
                         )
                     )
@@ -199,7 +202,7 @@ if __name__ == "__main__":
     rich_console = Console()
 
     search_tool_instance = TavilySearchTool(
-        config=TavilySearchToolConfig(api_key=os.getenv("TAVILY_API_KEY"), max_results=5)
+        config=TavilySearchToolConfig(api_key=os.getenv("TAVILY_API_KEY"), max_results=2)
     )
 
     search_input = TavilySearchTool.input_schema(
