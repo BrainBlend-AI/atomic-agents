@@ -52,7 +52,6 @@ class TavilySearchToolConfig(BaseToolConfig):
     search_depth: Optional[str] = "basic"
     topic: Optional[str] = "general"
     include_domains: Optional[List[str]] = []
-    exclude_domains: Optional[List[str]] = []
     include_answer: Optional[bool] = False
     include_raw_content: Optional[bool] = False
 
@@ -65,8 +64,8 @@ class TavilySearchTool(BaseTool):
         input_schema (TavilySearchToolInputSchema): The schema for the input data.
         output_schema (TavilySearchToolOutputSchema): The schema for the output data.
         max_results (int): The maximum number of search results to return.
-        topic (string): The category that the result is classified under.
         search_depth (string): The depth of the search to perform. (advanced or basic)
+        topic (string): The category that the result is classified under. (general or news)
         include_domains (List[str]): A list of domains to pull results from.
         include_answer (bool): Include the answer in the respones from Tavily.
         include_raw_content (bool): Include the raw content of the search results.
@@ -86,8 +85,8 @@ class TavilySearchTool(BaseTool):
         super().__init__(config)
         self.api_key = config.api_key
         self.max_results = config.max_results
-        self.topic = config.topic
         self.search_depth = config.search_depth
+        self.topic = config.topic
         self.include_domains = config.include_domains
         self.include_answer = config.include_answer
         self.include_raw_content = config.include_raw_content
