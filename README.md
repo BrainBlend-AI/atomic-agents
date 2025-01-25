@@ -13,7 +13,7 @@ All logic and control flows are written in Python, enabling developers to apply 
 
 ---
 
-If you want to learn more about the motivation and philosophy behind Atomic Agents, I suggest checking out the overview video below:
+If you want to learn more about the motivation and philosophy behind Atomic Agents, [I suggest reading this Medium article (no account needed)](https://ai.gopubby.com/want-to-build-ai-agents-c83ab4535411?sk=b9429f7c57dbd3bda59f41154b65af35) or check out the overview video below:
 
 ### [Watch the Overview Video](https://www.youtube.com/watch?v=Sp30YsjGUW0)
 <a href="https://www.youtube.com/watch?v=Sp30YsjGUW0" target="_blank">
