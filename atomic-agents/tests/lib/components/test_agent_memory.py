@@ -317,9 +317,14 @@ def test_get_history_with_multiple_images_multimodal_content(memory):
     mock_image_3 = instructor.Image(source="test_url_3", media_type="image/jpeg", detail="low")
 
     # Add a multimodal message
-    memory.add_message("user", TestMultimodalSchemaArbitraryKeys(instruction_text="Analyze this image",
-                                                                 some_other_key_with_image=mock_image,
-                                                                 some_key_for_images=[mock_image_2, mock_image_3]))
+    memory.add_message(
+        "user",
+        TestMultimodalSchemaArbitraryKeys(
+            instruction_text="Analyze this image",
+            some_other_key_with_image=mock_image,
+            some_key_for_images=[mock_image_2, mock_image_3],
+        ),
+    )
 
     # Get history and verify format
     history = memory.get_history()
