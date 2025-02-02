@@ -2,7 +2,6 @@ import uuid
 import json
 from typing import Dict, List, Optional, Type
 from pydantic import BaseModel, Field
-
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 
@@ -50,9 +49,9 @@ class AgentMemory:
         self.current_turn_id = str(uuid.uuid4())
 
     def add_message(
-        self,
-        role: str,
-        content: BaseIOSchema,
+            self,
+            role: str,
+            content: BaseIOSchema,
     ) -> None:
         """
         Adds a message to the chat history and manages overflow.
@@ -90,11 +89,36 @@ class AgentMemory:
         history = []
         for message in self.history:
             content = message.content
-            if hasattr(content, "images") and content.images:
+            message_content = content.model_dump()
+
+            images = []
+            image_keys = []
+
+            for key, value in message_content.items():
+                if isinstance(value, list):
+                    for list_item in value:
+                        if isinstance(list_item, dict) and list_item.get("media_type", "").startswith("image"):
+                            images.extend(value)
+                            image_keys.append(key)
+                            break
+
+                if isinstance(value, dict) and value.get("media_type", "").startswith("image"):
+                    images.append(value)
+                    image_keys.append(key)
+
+            if len(images) > 0:
                 # For multimodal content, format as a list with text and images
-                text_field = next((field for field in content.model_fields if field.endswith("text")), None)
-                instruction_text = getattr(content, text_field) if text_field else str(content)
-                history.append({"role": message.role, "content": [instruction_text, *content.images]})
+                # delete image keys from model
+                images = []
+                for key in image_keys:
+                    message_content.pop(key)
+                    image_content = getattr(content, key)
+                    if isinstance(image_content, list):
+                        images.extend(image_content)
+                    else:
+                        images.append(image_content)
+
+                history.append({"role": message.role, "content": [json.dumps(message_content), *images]})
             else:
                 # For regular content, serialize to JSON string
                 history.append({"role": message.role, "content": json.dumps(content.model_dump())})
@@ -233,12 +257,14 @@ if __name__ == "__main__":
     from typing import List as TypeList, Dict as TypeDict
     import os
 
+
     # Define complex test schemas
     class NestedSchema(BaseIOSchema):
         """A nested schema for testing"""
 
         nested_field: str = Field(..., description="A nested field")
         nested_int: int = Field(..., description="A nested integer")
+
 
     class ComplexInputSchema(BaseIOSchema):
         """Complex Input Schema"""
@@ -248,6 +274,7 @@ if __name__ == "__main__":
         list_field: TypeList[str] = Field(..., description="A list of strings")
         nested_field: NestedSchema = Field(..., description="A nested schema")
 
+
     class ComplexOutputSchema(BaseIOSchema):
         """Complex Output Schema"""
 
@@ -255,12 +282,14 @@ if __name__ == "__main__":
         calculated_value: int = Field(..., description="A calculated value")
         data_dict: TypeDict[str, NestedSchema] = Field(..., description="A dictionary of nested schemas")
 
+
     # Add a new multimodal schema for testing
     class MultimodalSchema(BaseIOSchema):
         """Schema for testing multimodal content"""
 
         instruction_text: str = Field(..., description="The instruction text")
         images: List[instructor.Image] = Field(..., description="The images to analyze")
+
 
     # Create and populate the original memory with complex data
     original_memory = AgentMemory(max_messages=10)
