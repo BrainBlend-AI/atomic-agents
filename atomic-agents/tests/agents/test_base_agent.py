@@ -230,7 +230,7 @@ async def test_stream_response_async(agent, mock_memory, mock_instructor, mock_s
         BaseAgentOutputSchema(chat_message="Final response"),
     ]
 
-    async def mock_create_partial(*args, **kwargs):
+    def mock_create_partial(*args, **kwargs):
         for response in partial_responses:
             yield response
 
