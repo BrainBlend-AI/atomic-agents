@@ -297,5 +297,41 @@ def test_get_history_with_multimodal_content(memory):
     assert len(history) == 1
     assert history[0]["role"] == "user"
     assert isinstance(history[0]["content"], list)
-    assert history[0]["content"][0] == "Analyze this image"
+    assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
     assert history[0]["content"][1] == mock_image
+
+
+def test_get_history_with_multiple_images_multimodal_content(memory):
+    """Test that get_history correctly handles multimodal content"""
+
+    class TestMultimodalSchemaArbitraryKeys(BaseIOSchema):
+        """Test schema for multimodal content"""
+
+        instruction_text: str = Field(..., description="The instruction text")
+        some_key_for_images: List[instructor.Image] = Field(..., description="The images to analyze")
+        some_other_key_with_image: instructor.Image = Field(..., description="The images to analyze")
+
+    # Create a mock image
+    mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
+    mock_image_2 = instructor.Image(source="test_url_2", media_type="image/jpeg", detail="low")
+    mock_image_3 = instructor.Image(source="test_url_3", media_type="image/jpeg", detail="low")
+
+    # Add a multimodal message
+    memory.add_message(
+        "user",
+        TestMultimodalSchemaArbitraryKeys(
+            instruction_text="Analyze this image",
+            some_other_key_with_image=mock_image,
+            some_key_for_images=[mock_image_2, mock_image_3],
+        ),
+    )
+
+    # Get history and verify format
+    history = memory.get_history()
+    assert len(history) == 1
+    assert history[0]["role"] == "user"
+    assert isinstance(history[0]["content"], list)
+    assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
+    assert mock_image in history[0]["content"]
+    assert mock_image_2 in history[0]["content"]
+    assert mock_image_3 in history[0]["content"]

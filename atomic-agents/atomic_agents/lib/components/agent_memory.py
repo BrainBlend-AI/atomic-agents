@@ -2,7 +2,6 @@ import uuid
 import json
 from typing import Dict, List, Optional, Type
 from pydantic import BaseModel, Field
-
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 
@@ -90,11 +89,36 @@ class AgentMemory:
         history = []
         for message in self.history:
             content = message.content
-            if hasattr(content, "images") and content.images:
+            message_content = content.model_dump()
+
+            images = []
+            image_keys = []
+
+            for key, value in message_content.items():
+                if isinstance(value, list):
+                    for list_item in value:
+                        if isinstance(list_item, dict) and list_item.get("media_type", "").startswith("image"):
+                            images.extend(value)
+                            image_keys.append(key)
+                            break
+
+                if isinstance(value, dict) and value.get("media_type", "").startswith("image"):
+                    images.append(value)
+                    image_keys.append(key)
+
+            if len(images) > 0:
                 # For multimodal content, format as a list with text and images
-                text_field = next((field for field in content.model_fields if field.endswith("text")), None)
-                instruction_text = getattr(content, text_field) if text_field else str(content)
-                history.append({"role": message.role, "content": [instruction_text, *content.images]})
+                # delete image keys from model
+                images = []
+                for key in image_keys:
+                    message_content.pop(key)
+                    image_content = getattr(content, key)
+                    if isinstance(image_content, list):
+                        images.extend(image_content)
+                    else:
+                        images.append(image_content)
+
+                history.append({"role": message.role, "content": [json.dumps(message_content), *images]})
             else:
                 # For regular content, serialize to JSON string
                 history.append({"role": message.role, "content": json.dumps(content.model_dump())})
