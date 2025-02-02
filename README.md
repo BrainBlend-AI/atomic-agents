@@ -152,9 +152,19 @@ This snippet showcases how to create a customizable agent that responds to user 
 
 In addition to the quickstart examples, we have more complex examples demonstrating the power of Atomic Agents:
 
+- [Basic Multimodal](/atomic-examples/basic-multimodal/README.md): Demonstrates how to analyze images with text, focusing on extracting structured information from nutrition labels using GPT-4 Vision capabilities.
+
+- [Deep Research](/atomic-examples/deep-research/README.md): An advanced example showing how to perform deep research tasks.
+
+- [Orchestration Agent](/atomic-examples/orchestration-agent/README.md): Shows how to create an Orchestrator Agent that intelligently decides between using different tools (search or calculator) based on user input.
+
+- [RAG Chatbot](/atomic-examples/rag-chatbot/README.md): A chatbot implementation using Retrieval-Augmented Generation (RAG) to provide context-aware responses.
+
 - [Web Search Agent](/atomic-examples/web-search-agent/README.md): An intelligent agent that performs web searches and answers questions based on the results.
 
 - [YouTube Summarizer](/atomic-examples/youtube-summarizer/README.md): An agent that extracts and summarizes knowledge from YouTube videos.
+
+- [YouTube to Recipe](/atomic-examples/youtube-to-recipe/README.md): An example that extracts structured recipe information from cooking videos, demonstrating complex information extraction and structuring.
 
 For a complete list of examples, see the [examples directory](/atomic-examples/).
 
@@ -262,7 +272,6 @@ from web_search_agent.tools.another_search import AnotherSearchTool
 # Update the output schema
 query_agent.config.output_schema = AnotherSearchTool.input_schema
 ```
-
 This design pattern simplifies the process of chaining agents and tools, making your AI applications more adaptable and easier to maintain.
 
 ## Running the CLI
@@ -339,3 +348,4 @@ This project is licensed under the MIT License—see the [LICENSE](LICENSE) file
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=BrainBlend-AI/atomic-agents&type=Date)](https://star-history.com/#BrainBlend-AI/atomic-agents&Date)
+

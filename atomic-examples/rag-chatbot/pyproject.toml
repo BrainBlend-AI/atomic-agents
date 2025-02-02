@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "rag-chatbot"
+version = "0.1.0"
+description = "A RAG chatbot example using Atomic Agents and ChromaDB"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+atomic-agents = {path = "../..", develop = true}
+chromadb = "^0.4.24"
+python-dotenv = ">=1.0.1,<2.0.0"
+openai = ">=1.35.12,<2.0.0"
+rich = ">=13.7.0,<14.0.0"
+wget = ">=3.2,<4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
