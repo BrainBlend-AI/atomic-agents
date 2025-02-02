@@ -49,9 +49,9 @@ class AgentMemory:
         self.current_turn_id = str(uuid.uuid4())
 
     def add_message(
-            self,
-            role: str,
-            content: BaseIOSchema,
+        self,
+        role: str,
+        content: BaseIOSchema,
     ) -> None:
         """
         Adds a message to the chat history and manages overflow.
@@ -257,14 +257,12 @@ if __name__ == "__main__":
     from typing import List as TypeList, Dict as TypeDict
     import os
 
-
     # Define complex test schemas
     class NestedSchema(BaseIOSchema):
         """A nested schema for testing"""
 
         nested_field: str = Field(..., description="A nested field")
         nested_int: int = Field(..., description="A nested integer")
-
 
     class ComplexInputSchema(BaseIOSchema):
         """Complex Input Schema"""
@@ -274,7 +272,6 @@ if __name__ == "__main__":
         list_field: TypeList[str] = Field(..., description="A list of strings")
         nested_field: NestedSchema = Field(..., description="A nested schema")
 
-
     class ComplexOutputSchema(BaseIOSchema):
         """Complex Output Schema"""
 
@@ -282,14 +279,12 @@ if __name__ == "__main__":
         calculated_value: int = Field(..., description="A calculated value")
         data_dict: TypeDict[str, NestedSchema] = Field(..., description="A dictionary of nested schemas")
 
-
     # Add a new multimodal schema for testing
     class MultimodalSchema(BaseIOSchema):
         """Schema for testing multimodal content"""
 
         instruction_text: str = Field(..., description="The instruction text")
         images: List[instructor.Image] = Field(..., description="The images to analyze")
-
 
     # Create and populate the original memory with complex data
     original_memory = AgentMemory(max_messages=10)
