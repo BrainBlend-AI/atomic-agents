@@ -2,7 +2,7 @@ import os
 import shutil
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
-from typing import Dict, List, Optional, TypedDict, Union
+from typing import Dict, List, Optional, TypedDict
 import uuid
 
 
