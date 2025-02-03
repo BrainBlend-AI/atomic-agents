@@ -205,7 +205,7 @@ class BaseAgent:
             stream=True,
         )
 
-        for partial_response in response_stream:
+        async for partial_response in response_stream:
             yield partial_response
 
         full_response_content = self.output_schema(**partial_response.model_dump())
