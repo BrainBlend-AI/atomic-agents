@@ -6,3 +6,4 @@ pyfiglet>=1.0.2,<2.0.0
 textual>=0.82.0,<1.0.0
 pyyaml>=6.0.2,<7.0.0
 requests>=2.32.3,<3.0.0
+atomic-agents>=1.0.0,<2.0.0
