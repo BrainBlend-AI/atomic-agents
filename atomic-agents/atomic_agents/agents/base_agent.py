@@ -142,7 +142,7 @@ class BaseAgent:
         """
         self.memory = self.initial_memory.copy()
 
-    def get_response(self, response_model=None) -> Type[BaseModel]:
+    async def get_response(self, response_model=None) -> Type[BaseModel]:
         """
         Obtains a response from the language model synchronously.
 
@@ -163,7 +163,7 @@ class BaseAgent:
             }
         ] + self.memory.get_history()
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             messages=messages,
             model=self.model,
             response_model=response_model,
@@ -173,7 +173,7 @@ class BaseAgent:
 
         return response
 
-    def run(self, user_input: Optional[BaseIOSchema] = None) -> BaseIOSchema:
+    async def run(self, user_input: Optional[BaseIOSchema] = None) -> BaseIOSchema:
         """
         Runs the chat agent with the given user input synchronously.
 
@@ -188,7 +188,7 @@ class BaseAgent:
             self.current_user_input = user_input
             self.memory.add_message("user", user_input)
 
-        response = self.get_response(response_model=self.output_schema)
+        response  = await self.get_response(response_model=self.output_schema)
         self.memory.add_message("assistant", response)
 
         return response
