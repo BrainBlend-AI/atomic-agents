@@ -2,11 +2,11 @@
 name = "deep-research"
 version = "0.1.0"
 description = ""
-authors = ["KennyVaneetvelde <kenny@inosta.be>"]
+authors = ["Kenny Vaneetvelde <kenny@brainblendai.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<4.0"
 atomic-agents = {path = "../..", develop = true}
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
