@@ -77,6 +77,25 @@ class BaseAgentConfig(BaseModel):
         description="Maximum number of token allowed in the response generation.",
     )
 
+class BaseAgentConfigAsync(BaseModel):
+    client: instructor.client.AsyncInstructor = Field(..., description="Async client for interacting with the language model.")
+    model: str = Field("gpt-4o-mini", description="The model to use for generating responses.")
+    memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
+    system_prompt_generator: Optional[SystemPromptGenerator] = Field(
+        None, description="Component for generating system prompts."
+    )
+    input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
+    output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
+    model_config = {"arbitrary_types_allowed": True}
+    temperature: Optional[float] = Field(
+        0,
+        description="Temperature for response generation, typically ranging from 0 to 1.",
+    )
+    max_tokens: Optional[int] = Field(
+        None,
+        description="Maximum number of token allowed in the response generation.",
+    )
+
 
 class BaseAgent:
     """
