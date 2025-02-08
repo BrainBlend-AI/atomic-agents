@@ -136,6 +136,8 @@ class BaseAgent:
         self.temperature = config.temperature
         self.max_tokens = config.max_tokens
 
+        self.lock = asyncio.Lock()
+
     def reset_memory(self):
         """
         Resets the memory to its initial state.
@@ -183,14 +185,15 @@ class BaseAgent:
         Returns:
             BaseIOSchema: The response from the chat agent.
         """
-        if user_input:
-            self.memory.initialize_turn()
-            self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+        async with self.lock:        
+            if user_input:
+                self.memory.initialize_turn()
+                self.current_user_input = user_input
+                self.memory.add_message("user", user_input)
 
-        response  = await self.get_response(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
-
+            response  = await self.get_response(response_model=self.output_schema)
+            self.memory.add_message("assistant", response)
+        
         return response
 
     async def run_async(self, user_input: Optional[BaseIOSchema] = None):
