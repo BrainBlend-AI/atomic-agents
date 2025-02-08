@@ -326,7 +326,7 @@ class BaseAgentAsync:
         self.memory = config.memory or AgentMemory()
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.initial_memory = self.memory.copy()
-        self.current_user_input = None
+        self.current_user_input = None 
         self.temperature = config.temperature
         self.max_tokens = config.max_tokens
 
@@ -379,7 +379,7 @@ class BaseAgentAsync:
         Returns:
             BaseIOSchema: The response from the chat agent.
         """
-        with await self.lock:        
+        async with self.lock:
             if user_input:
                 self.memory.initialize_turn()
                 self.current_user_input = user_input
