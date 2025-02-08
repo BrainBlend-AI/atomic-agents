@@ -292,6 +292,7 @@ class BaseAgent:
 
 
 class BaseAgentAsync:
+    #TODO: Add a test for this
     """
     Base class for chat agents.
 
@@ -400,33 +401,34 @@ class BaseAgentAsync:
         Yields:
             BaseModel: Partial responses from the chat agent.
         """
-        if user_input:
-            self.memory.initialize_turn()
-            self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+        async with self.lock:
+            if user_input:
+                self.memory.initialize_turn()
+                self.current_user_input = user_input
+                self.memory.add_message("user", user_input)
 
-        messages = [
-            {
-                "role": "system",
-                "content": self.system_prompt_generator.generate_prompt(),
-            }
-        ] + self.memory.get_history()
+            messages = [
+                {
+                    "role": "system",
+                    "content": self.system_prompt_generator.generate_prompt(),
+                }
+            ] + self.memory.get_history()
 
-        response_stream = await self.client.chat.completions.create_partial(
-            model=self.model,
-            messages=messages,
-            response_model=self.output_schema,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-            stream=True,
-        )
+            response_stream = await self.client.chat.completions.create_partial(
+                model=self.model,
+                messages=messages,
+                response_model=self.output_schema,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                stream=True,
+            )
 
-        async for partial_response in response_stream:
-            yield partial_response
+            async for partial_response in response_stream:
+                yield partial_response
 
-        full_response_content = self.output_schema(**partial_response.model_dump())
-        self.memory.add_message("assistant", full_response_content)
-
+            full_response_content = self.output_schema(**partial_response.model_dump())
+            self.memory.add_message("assistant", full_response_content)
+        
     async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
         """
         Deprecated method for streaming responses asynchronously. Use run_async instead.
