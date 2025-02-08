@@ -1,4 +1,5 @@
 import instructor
+import asyncio
 from pydantic import BaseModel, Field
 from typing import Optional, Type
 from atomic_agents.lib.components.agent_memory import AgentMemory
