@@ -90,39 +90,11 @@ jobs:
         id: upload
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/_build/html  # Simplified path since we're using working-directory
-
-      - name: Verify artifact
-        run: |
-          echo "Artifact name: ${{ steps.upload.outputs.artifact-name }}"
-          echo "Artifact size: ${{ steps.upload.outputs.artifact-size }}"
-
-          # Wait a moment for artifact processing
-          sleep 10
-
-          # Verify the artifact is available
-          gh api -H "Accept: application/vnd.github+json" \
-            /repos/${{ github.repository }}/actions/artifacts \
-            --jq '.artifacts[] | select(.name=="github-pages") | .id'
-
-      - name: Debug Post-Upload
-        if: always()
-        run: |
-          echo "============= POST UPLOAD STATE ============="
-          echo "Checking if artifact directory still exists:"
-          test -d "${{ github.workspace }}/docs/_build/html" && echo "HTML dir still exists" || echo "HTML dir is gone"
-          echo "Listing runner artifacts directory:"
-          ls -la ${{ runner.temp }}/_github_home/
-          echo "Checking upload logs:"
-          if [ -f "${{ runner.temp }}/upload-artifact.log" ]; then
-            cat "${{ runner.temp }}/upload-artifact.log"
-          else
-            echo "No upload log found"
-          fi
+          path: docs/_build/html
+          retention-days: 1
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
-        with:
-          artifact_name: github-pages
-          timeout: 600000  # 10 minutes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
