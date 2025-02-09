@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+    types: [opened, synchronize, reopened]
     branches: [ main ]
   workflow_dispatch:
 
@@ -23,13 +24,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+          cache: 'pip'  # Enable pip caching
 
       - name: Install dependencies
         run: |
@@ -40,16 +46,28 @@ jobs:
       - name: Build documentation
         working-directory: docs
         run: make html
+        env:
+          SPHINXOPTS: "-W --keep-going -n"  # Treat warnings as errors, but keep going
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "docs/_build/html" ]; then
+            echo "Documentation build output not found!"
+            exit 1
+          fi
+          echo "Documentation build size: $(du -sh docs/_build/html | cut -f1)"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/_build/html
+          retention-days: 7  # Keep artifacts for 7 days
 
   deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -62,6 +80,21 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v4
 
+      - name: Verify deployment environment
+        run: |
+          echo "Deploying to GitHub Pages environment"
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Repository: ${{ github.repository }}"
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
+        with:
+          timeout: 600000  # 10 minute timeout
+
+      - name: Verify deployment
+        if: success()
+        run: |
+          echo "Deployed to ${{ steps.deployment.outputs.page_url }}"
+          echo "Deployment completed successfully"
