@@ -12,6 +12,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read    # Add this to allow reading artifacts
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
@@ -20,10 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,24 +41,23 @@ jobs:
         working-directory: docs
         run: make html
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Prepare artifact
-        run: |
-          # Ensure we're in the root directory
-          cd ${{ github.workspace }}
-          # Debug the path
-          echo "Current directory: $(pwd)"
-          echo "HTML directory contents:"
-          ls -la docs/_build/html/
-
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs/_build/html
+          path: docs/_build/html
+          name: github-pages
 
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+      actions: read    # Add this to allow reading artifacts
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v3
-        with:
-          token: ${{ github.token }}
