@@ -43,6 +43,45 @@ jobs:
         working-directory: docs
         run: make html
 
+      - name: Debug Pre-Upload
+        run: |
+          echo "============= ENVIRONMENT ============="
+          echo "PWD: $PWD"
+          echo "GITHUB_WORKSPACE: ${{ github.workspace }}"
+          echo "PATH: $PATH"
+          echo "RUNNER_WORKSPACE: ${{ runner.workspace }}"
+
+          echo "============= DIRECTORY STRUCTURE ============="
+          echo "Root directory:"
+          ls -la
+          echo "Docs directory:"
+          ls -la docs/
+          echo "Build directory:"
+          ls -la docs/_build/
+          echo "HTML directory:"
+          ls -la docs/_build/html/
+
+          echo "============= FILE PERMISSIONS ============="
+          echo "Docs directory permissions:"
+          stat docs/
+          echo "Build directory permissions:"
+          stat docs/_build/
+          echo "HTML directory permissions:"
+          stat docs/_build/html/
+
+          echo "============= FILE COUNTS & SIZES ============="
+          echo "Total files in html directory:"
+          find docs/_build/html -type f | wc -l
+          echo "Directory sizes:"
+          du -h docs/_build/html
+
+          echo "============= FULL PATH VERIFICATION ============="
+          echo "Absolute path to html directory:"
+          realpath docs/_build/html
+          echo "Testing path existence:"
+          test -d "${{ github.workspace }}/docs/_build/html" && echo "HTML dir exists at workspace path" || echo "HTML dir NOT FOUND at workspace path"
+          test -d "docs/_build/html" && echo "HTML dir exists at relative path" || echo "HTML dir NOT FOUND at relative path"
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
@@ -50,6 +89,21 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ github.workspace }}/docs/_build/html
+
+      - name: Debug Post-Upload
+        if: always()
+        run: |
+          echo "============= POST UPLOAD STATE ============="
+          echo "Checking if artifact directory still exists:"
+          test -d "${{ github.workspace }}/docs/_build/html" && echo "HTML dir still exists" || echo "HTML dir is gone"
+          echo "Listing runner artifacts directory:"
+          ls -la ${{ runner.temp }}/_github_home/
+          echo "Checking upload logs:"
+          if [ -f "${{ runner.temp }}/upload-artifact.log" ]; then
+            cat "${{ runner.temp }}/upload-artifact.log"
+          else
+            echo "No upload log found"
+          fi
 
       - name: Deploy to GitHub Pages
         id: deployment
