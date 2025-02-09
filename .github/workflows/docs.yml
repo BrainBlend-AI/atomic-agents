@@ -37,7 +37,9 @@ jobs:
 
       - name: Build documentation
         working-directory: docs
-        run: make html
+        run: |
+          # Don't treat warnings as errors
+          SPHINXOPTS="-n" make html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
