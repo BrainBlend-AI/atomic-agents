@@ -1,26 +1,22 @@
-User Guide
-==========
+# User Guide
 
 This section contains detailed guides for working with Atomic Agents.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Guide Sections
+```{toctree}
+:maxdepth: 2
+:caption: Guides
 
-   basic_concepts
-   advanced_usage
+quickstart
+basic_concepts
+tools
+advanced_usage
+```
 
-.. note::
-   Use the sidebar to navigate between different sections of the guides.
-   You can return to the main documentation using the navigation menu on the left.
-
-Implementation Patterns
----------------------
+## Implementation Patterns
 
 The framework supports various implementation patterns and use cases:
 
-Chatbots and Assistants
-^^^^^^^^^^^^^^^^^^^^^^
+### Chatbots and Assistants
 
 - Basic chat interfaces with any LLM provider
 - Streaming responses
@@ -29,8 +25,7 @@ Chatbots and Assistants
 - Memory management and context retention
 - Multi-turn conversations
 
-RAG Systems
-^^^^^^^^^^
+### RAG Systems
 
 - Query generation and optimization
 - Context-aware responses
@@ -39,8 +34,7 @@ RAG Systems
 - Custom embedding and retrieval strategies
 - Hybrid search approaches
 
-Specialized Agents
-^^^^^^^^^^^^^^^^
+### Specialized Agents
 
 - YouTube video summarization and analysis
 - Web search and deep research
@@ -49,80 +43,70 @@ Specialized Agents
 - Custom tool integration
 - Task orchestration
 
-Provider Integration Guide
-------------------------
+## Provider Integration Guide
 
 Atomic Agents is designed to be provider-agnostic. Here's how to work with different providers:
 
-Provider Selection
-^^^^^^^^^^^^^^^
+### Provider Selection
 
 - Choose any provider supported by Instructor
 - Configure provider-specific settings
 - Handle rate limits and quotas
 - Implement fallback strategies
 
-Local Development
-^^^^^^^^^^^^^^^
+### Local Development
 
 - Use Ollama for local testing
 - Mock responses for development
 - Debug provider interactions
 - Test provider switching
 
-Production Deployment
-^^^^^^^^^^^^^^^^^^
+### Production Deployment
 
 - Load balancing between providers
 - Failover configurations
 - Cost optimization strategies
 - Performance monitoring
 
-Custom Provider Integration
-^^^^^^^^^^^^^^^^^^^^^^^^
+### Custom Provider Integration
 
 - Extend Instructor for new providers
 - Implement custom client wrappers
 - Add provider-specific features
 - Handle unique response formats
 
-Best Practices
-------------
+## Best Practices
 
-Error Handling
-^^^^^^^^^^^^
+### Error Handling
 
 - Implement proper exception handling
 - Add retry mechanisms
 - Log provider errors
 - Handle rate limits gracefully
 
-Performance Optimization
-^^^^^^^^^^^^^^^^^^^^^
+### Performance Optimization
 
 - Use streaming for long responses
 - Implement caching strategies
 - Optimize prompt lengths
 - Batch operations when possible
 
-Security
-^^^^^^^
+### Security
 
 - Secure API key management
 - Input validation and sanitization
 - Output filtering
 - Rate limiting and quotas
 
-Getting Help
------------
+## Getting Help
 
 If you need help, you can:
 
-1. Check our `GitHub Issues <https://github.com/BrainBlend-AI/atomic-agents/issues>`_
-2. Join our `Reddit community <https://www.reddit.com/r/AtomicAgents/>`_
+1. Check our [GitHub Issues](https://github.com/BrainBlend-AI/atomic-agents/issues)
+2. Join our [Reddit community](https://www.reddit.com/r/AtomicAgents/)
 3. Read through our examples in the repository
-4. Review the example projects in ``atomic-examples/``
+4. Review the example projects in `atomic-examples/`
 
-.. seealso::
-   - :doc:`/api/index` - Browse the API reference
-   - :doc:`/index` - Return to main documentation
+**See also**:
+- [API Reference](/api/index) - Browse the API reference
+- [Main Documentation](/index) - Return to main documentation
