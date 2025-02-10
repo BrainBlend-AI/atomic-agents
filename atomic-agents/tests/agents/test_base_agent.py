@@ -63,8 +63,8 @@ def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_
     assert agent.system_prompt_generator == mock_system_prompt_generator
     assert agent.input_schema == BaseAgentInputSchema
     assert agent.output_schema == BaseAgentOutputSchema
-    assert agent.temperature == 0
-    assert agent.max_tokens is None
+    assert agent.model_api_parameters["temperature"] == 0
+    assert "max_tokens" not in agent.model_api_parameters
 
 
 def test_reset_memory(agent, mock_memory):
@@ -90,7 +90,6 @@ def test_get_response(agent, mock_instructor, mock_memory, mock_system_prompt_ge
         messages=[{"role": "system", "content": "System prompt"}, {"role": "user", "content": "Hello"}],
         response_model=BaseAgentOutputSchema,
         temperature=0,
-        max_tokens=None,
     )
 
 
