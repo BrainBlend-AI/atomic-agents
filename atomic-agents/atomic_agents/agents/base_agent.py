@@ -121,9 +121,12 @@ class BaseAgent:
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
-        if config.temperature is not None and "temperature" not in self.model_api_parameters:
-            self.model_api_parameters["temperature"] = config.temperature
+        if config.temperature is not None:
+            warnings.warn("The 'temperature' parameter is deprecated. Use 'model_api_parameters' instead.", DeprecationWarning)
+            if "temperature" not in self.model_api_parameters:
+                self.model_api_parameters["temperature"] = config.temperature
         if config.max_tokens is not None:
+            warnings.warn("The 'max_tokens' parameter is deprecated. Use 'model_api_parameters' instead.", DeprecationWarning)
             self.model_api_parameters["max_tokens"] = config.max_tokens
 
     def reset_memory(self):
