@@ -11,22 +11,26 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 # Initialize memory with optional max messages
 memory = AgentMemory(max_messages=10)
 
-# Add messages with proper schemas
+# Add messages
 memory.add_message(
-    role="assistant",
+    role="user",
     content=BaseIOSchema(...)
 )
+
+# Initialize a new turn
+memory.initialize_turn()
+turn_id = memory.get_current_turn_id()
 
 # Access history
 history = memory.get_history()
 
-# Manage turns
-memory.initialize_turn()  # Start new turn
-turn_id = memory.get_current_turn_id()
+# Manage memory
+memory.get_message_count()  # Get number of messages
+memory.delete_turn_id(turn_id)  # Delete messages by turn
 
 # Persistence
 serialized = memory.dump()  # Save to string
-memory.load(serialized)    # Load from string
+memory.load(serialized)  # Load from string
 
 # Create copy
 new_memory = memory.copy()
@@ -35,18 +39,33 @@ new_memory = memory.copy()
 Key features:
 - Message history management with role-based messages
 - Turn-based conversation tracking
-- Support for multimodal content
-- Serialization and deserialization
+- Support for multimodal content (images, etc.)
+- Serialization and persistence
 - Memory size management
 - Deep copy functionality
 
-For full API details:
-```{eval-rst}
-.. automodule:: atomic_agents.lib.components.agent_memory
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :no-index: Message.role Message.content Message.turn_id
+### Message Structure
+
+Messages in memory are structured as:
+
+```python
+class Message(BaseModel):
+    role: str  # e.g., 'user', 'assistant', 'system'
+    content: BaseIOSchema  # Message content following schema
+    turn_id: Optional[str]  # Unique ID for grouping messages
+```
+
+### Multimodal Support
+
+The memory system automatically handles multimodal content:
+
+```python
+# For content with images
+history = memory.get_history()
+for message in history:
+    if isinstance(message.content, list):
+        text_content = message.content[0]  # JSON string
+        images = message.content[1:]  # List of images
 ```
 
 ## System Prompt Generator
@@ -59,7 +78,7 @@ from atomic_agents.lib.components.system_prompt_generator import (
     SystemPromptContextProviderBase
 )
 
-# Create basic generator
+# Create generator with static content
 generator = SystemPromptGenerator(
     background=[
         "You are a helpful AI assistant.",
@@ -81,48 +100,123 @@ generator = SystemPromptGenerator(
 prompt = generator.generate_prompt()
 ```
 
-### Context Providers
+### Dynamic Context Providers
 
-Create custom context providers by extending `SystemPromptContextProviderBase`:
+Context providers inject dynamic information into prompts:
 
 ```python
-class CustomContextProvider(SystemPromptContextProviderBase):
+from dataclasses import dataclass
+from typing import List
+
+@dataclass
+class SearchResult:
+    content: str
+    metadata: dict
+
+class SearchResultsProvider(SystemPromptContextProviderBase):
     def __init__(self, title: str):
         super().__init__(title=title)
-        self.data = {}
+        self.results: List[SearchResult] = []
 
     def get_info(self) -> str:
-        return f"Custom context: {self.data}"
+        """Format search results for the prompt"""
+        if not self.results:
+            return "No search results available."
+
+        return "\n\n".join([
+            f"Result {idx}:\nMetadata: {result.metadata}\nContent:\n{result.content}\n{'-' * 80}"
+            for idx, result in enumerate(self.results, 1)
+        ])
 
 # Use with generator
 generator = SystemPromptGenerator(
-    background=["You are a helpful AI assistant."],
+    background=["You answer based on search results."],
     context_providers={
-        "custom": CustomContextProvider("Custom Info")
+        "search_results": SearchResultsProvider("Search Results")
     }
 )
 ```
 
+The generated prompt will include:
+1. Background information
+2. Processing steps (if provided)
+3. Dynamic context from providers
+4. Output instructions
+
+## Base Components
+
+### BaseIOSchema
+
+Base class for all input/output schemas:
+
+```python
+from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from pydantic import Field
+
+class CustomSchema(BaseIOSchema):
+    """Schema description (required)"""
+    field: str = Field(..., description="Field description")
+```
+
+Key features:
+- Requires docstring description
+- Rich representation support
+- Automatic schema validation
+- JSON serialization
+
+### BaseTool
+
+Base class for creating tools:
+
+```python
+from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
+from pydantic import Field
+
+class MyToolConfig(BaseToolConfig):
+    """Tool configuration"""
+    api_key: str = Field(
+        default=os.getenv("API_KEY"),
+        description="API key for the service"
+    )
+
+class MyTool(BaseTool):
+    """Tool implementation"""
+    input_schema = MyToolInputSchema
+    output_schema = MyToolOutputSchema
+
+    def __init__(self, config: MyToolConfig = MyToolConfig()):
+        super().__init__(config)
+        self.api_key = config.api_key
+
+    def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
+        # Implement tool logic
+        pass
+```
+
+Key features:
+- Structured input/output schemas
+- Configuration management
+- Title and description overrides
+- Error handling
+
 For full API details:
 ```{eval-rst}
+.. automodule:: atomic_agents.lib.components.agent_memory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: atomic_agents.lib.components.system_prompt_generator
    :members:
    :undoc-members:
    :show-inheritance:
-```
 
-## Base Components
-
-```{eval-rst}
-.. automodule:: atomic_agents.lib.base.base_tool
+.. automodule:: atomic_agents.lib.base.base_io_schema
    :members:
    :undoc-members:
    :show-inheritance:
-   :no-index: BaseToolConfig.title BaseToolConfig.description BaseTool.input_schema BaseTool.output_schema
-```
 
-```{eval-rst}
-.. automodule:: atomic_agents.lib.base.base_io_schema
+.. automodule:: atomic_agents.lib.base.base_tool
    :members:
    :undoc-members:
    :show-inheritance:
