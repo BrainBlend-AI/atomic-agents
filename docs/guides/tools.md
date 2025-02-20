@@ -1,225 +1,165 @@
 # Tools Guide
 
-Atomic Agents provides a collection of tools through the Atomic Forge that extend agent capabilities.
+Atomic Agents uses a unique approach to tools through the **Atomic Forge** system. Rather than bundling all tools into a single package, tools are designed to be standalone, modular components that you can download and integrate into your project as needed.
 
-## Installing Tools
+## Philosophy
 
-Tools are managed using the Atomic Assembler CLI:
+The Atomic Forge approach provides several key benefits:
 
-```bash
-# Install a specific tool
-atomic-assembler install calculator
-
-# List available tools
-atomic-assembler list
-
-# Update installed tools
-atomic-assembler update
-```
+1. **Full Control**: You have complete ownership and control over each tool you download. Want to modify a tool's behavior? You can change it without impacting other users.
+2. **Dependency Management**: Since tools live in your codebase, you have better control over dependencies.
+3. **Lightweight**: Download only the tools you need, avoiding unnecessary dependencies. For example, you don't need Sympy if you're not using the Calculator tool.
 
 ## Available Tools
 
-### Calculator
+The Atomic Forge includes several pre-built tools:
 
-A tool for performing mathematical calculations:
+- **Calculator**: Perform mathematical calculations
+- **SearxNG Search**: Search the web using SearxNG
+- **Tavily Search**: AI-powered web search
+- **YouTube Transcript Scraper**: Extract transcripts from YouTube videos
+- **Webpage Scraper**: Extract content from web pages
 
-```python
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
+## Using Tools
 
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model="gpt-4o-mini",
-        tools=["calculator"]
-    )
-)
+### 1. Download Tools
 
-# The agent can now perform calculations
-response = agent.run({
-    "chat_message": "What is the square root of 144 plus 50?"
-})
+Use the Atomic Assembler CLI to download tools:
+
+```bash
+atomic
 ```
 
-### SearxNG Search
+This will present a menu where you can select and download tools. Each tool includes:
+- Input/Output schemas
+- Usage examples
+- Dependencies
+- Installation instructions
 
-A privacy-focused web search tool:
+### 2. Tool Structure
 
-```python
-# Configure with your SearxNG instance
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model="gpt-4o-mini",
-        tools=["searxng_search"],
-        tool_configs={
-            "searxng_search": {
-                "instance_url": "https://your-searxng-instance.com"
-            }
-        }
-    )
-)
+Each tool follows a standard structure:
+
+```
+tool_name/
+│   .coveragerc
+│   pyproject.toml
+│   README.md
+│   requirements.txt
+│   poetry.lock
+│
+├── tool/
+│   │   tool_name.py
+│   │   some_util_file.py
+│
+└── tests/
+    │   test_tool_name.py
+    │   test_some_util_file.py
 ```
 
-### Tavily Search
+### 3. Using a Tool
 
-An AI-optimized search engine:
-
-```python
-import os
-
-# Set your Tavily API key
-os.environ["TAVILY_API_KEY"] = "your-api-key"
-
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model="gpt-4o-mini",
-        tools=["tavily_search"]
-    )
-)
-```
-
-### YouTube Transcript Scraper
-
-Extract transcripts from YouTube videos:
+Here's an example of using a downloaded tool:
 
 ```python
-import os
-
-# Set your YouTube API key
-os.environ["YOUTUBE_API_KEY"] = "your-api-key"
-
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model="gpt-4o-mini",
-        tools=["youtube_transcript"]
-    )
+from calculator.tool.calculator import (
+    CalculatorTool,
+    CalculatorInputSchema,
+    CalculatorToolConfig
 )
 
-# The agent can now analyze YouTube videos
-response = agent.run({
-    "chat_message": "Summarize this video: https://youtube.com/watch?v=..."
-})
-```
-
-### Webpage Scraper
-
-Extract content from web pages:
-
-```python
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model="gpt-4o-mini",
-        tools=["webpage_scraper"]
-    )
+# Initialize the tool
+calculator = CalculatorTool(
+    config=CalculatorToolConfig()
 )
 
-# The agent can now analyze web pages
-response = agent.run({
-    "chat_message": "What are the main points from this article: https://..."
-})
+# Use the tool
+result = calculator.run(
+    CalculatorInputSchema(
+        expression="2 + 2"
+    )
+)
+print(f"Result: {result.value}")  # Result: 4
 ```
 
 ## Creating Custom Tools
 
-You can create your own tools by following these steps:
+You can create your own tools by following these guidelines:
 
-### 1. Create Tool Structure
-
-Create a new directory with the required files:
-
-```
-my_tool/
-├── __init__.py
-├── README.md
-├── pyproject.toml
-└── my_tool/
-    ├── __init__.py
-    └── tool.py
-```
-
-### 2. Implement Tool Logic
-
-Create your tool implementation:
+### 1. Basic Structure
 
 ```python
-from pydantic import BaseModel
-from atomic_agents.lib.tools import BaseTool
+from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
+from atomic_agents.agents.base_agent import BaseIOSchema
 
-class MyToolInputs(BaseModel):
-    param1: str
-    param2: int
+################
+# Input Schema #
+################
 
-class MyToolOutputs(BaseModel):
-    result: str
+class MyToolInputSchema(BaseIOSchema):
+    """Define what your tool accepts as input"""
+    value: str = Field(..., description="Input value to process")
+
+#####################
+# Output Schema(s)  #
+#####################
+
+class MyToolOutputSchema(BaseIOSchema):
+    """Define what your tool returns"""
+    result: str = Field(..., description="Processed result")
+
+#################
+# Configuration #
+#################
+
+class MyToolConfig(BaseToolConfig):
+    """Tool configuration options"""
+    api_key: str = Field(
+        default=os.getenv("MY_TOOL_API_KEY"),
+        description="API key for the service"
+    )
+
+#####################
+# Main Tool & Logic #
+#####################
 
 class MyTool(BaseTool):
-    name = "my_tool"
-    description = "Description of what my tool does"
-    inputs_schema = MyToolInputs
-    outputs_schema = MyToolOutputs
+    """Main tool implementation"""
+    input_schema = MyToolInputSchema
+    output_schema = MyToolOutputSchema
 
-    def run(self, inputs: MyToolInputs) -> MyToolOutputs:
-        # Implement your tool logic here
-        result = f"Processed {inputs.param1} {inputs.param2} times"
-        return MyToolOutputs(result=result)
+    def __init__(self, config: MyToolConfig = MyToolConfig()):
+        super().__init__(config)
+        self.api_key = config.api_key
+
+    def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
+        # Implement your tool's logic here
+        result = self.process_input(params.value)
+        return MyToolOutputSchema(result=result)
 ```
 
-### 3. Configure Package
+### 2. Best Practices
 
-Create a pyproject.toml:
+- **Single Responsibility**: Each tool should do one thing well
+- **Clear Interfaces**: Use explicit input/output schemas
+- **Error Handling**: Validate inputs and handle errors gracefully
+- **Documentation**: Include clear usage examples and requirements
+- **Tests**: Write comprehensive tests for your tool
+- **Dependencies**: Manually create `requirements.txt` with only runtime dependencies
 
-```toml
-[tool.poetry]
-name = "my-tool"
-version = "0.1.0"
-description = "My custom tool for Atomic Agents"
-authors = ["Your Name <your.email@example.com>"]
+### 3. Tool Requirements
 
-[tool.poetry.dependencies]
-python = "^3.11"
-atomic-agents = "^0.1.0"
-```
-
-### 4. Document Usage
-
-Create a README.md with:
-
-* Installation instructions
-* Configuration requirements
-* Usage examples
-* Any environment variables needed
-
-## Best Practices
-
-### 1. Error Handling
-
-* Implement proper error handling in tools
-* Return meaningful error messages
-* Handle rate limits and retries
-
-### 2. Configuration
-
-* Use environment variables for sensitive data
-* Make configuration flexible but with sensible defaults
-* Document all configuration options
-
-### 3. Testing
-
-* Write unit tests for your tools
-* Include integration tests if applicable
-* Test error cases and edge conditions
-
-### 4. Documentation
-
-* Keep README up to date
-* Include example code
-* Document any breaking changes
+- Must inherit from appropriate base classes:
+  - Input/Output schemas from `BaseIOSchema`
+  - Configuration from `BaseToolConfig`
+  - Tool class from `BaseTool`
+- Must include proper documentation
+- Must include tests
+- Must follow the standard directory structure
 
 ## Next Steps
 
-* Check out the [example projects](../examples/index.md)
-* Learn about [advanced usage patterns](advanced_usage.md)
-* Contribute your own tools to the [Atomic Forge](../contributing.md)
+1. Browse available tools in the [Atomic Forge repository](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-forge)
+2. Try downloading and using different tools via the CLI
+3. Consider creating your own tools following the guidelines
+4. Share your tools with the community through pull requests
