@@ -16,6 +16,7 @@ class RAGQuestionAnsweringAgentInputSchema(BaseIOSchema):
 class RAGQuestionAnsweringAgentOutputSchema(BaseIOSchema):
     """Output schema for the RAG QA agent."""
 
+    reasoning: str = Field(..., description="The reasoning process leading up to the final answer")
     answer: str = Field(..., description="The answer to the user's question based on the retrieved context")
 
 

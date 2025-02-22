@@ -16,6 +16,7 @@ class RAGQueryAgentInputSchema(BaseIOSchema):
 class RAGQueryAgentOutputSchema(BaseIOSchema):
     """Output schema for the RAG query agent."""
 
+    reasoning: str = Field(..., description="The reasoning process leading up to the final query")
     query: str = Field(..., description="The semantic search query to use for retrieving relevant chunks")
 
 
