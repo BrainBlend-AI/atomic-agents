@@ -121,7 +121,7 @@ class AgentMemory:
                 history.append({"role": message.role, "content": [json.dumps(message_content), *images]})
             else:
                 # For regular content, serialize to JSON string
-                history.append({"role": message.role, "content": json.dumps(content.model_dump())})
+                history.append({"role": message.role, "content": json.dumps(content.model_dump(mode="json"))})
         return history
 
     def copy(self) -> "AgentMemory":
