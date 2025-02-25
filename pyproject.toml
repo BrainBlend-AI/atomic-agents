@@ -4,11 +4,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "atomic-agents"
-version = "1.0.22"
+version = "1.0.23"
 description = "A versatile framework for creating and managing intelligent agents."
 authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
-license = "LICENSE"
+license = "MIT"
 packages = [
     { include = "atomic_agents", from = "atomic-agents" },
     { include = "atomic_assembler", from = "atomic-assembler" }
