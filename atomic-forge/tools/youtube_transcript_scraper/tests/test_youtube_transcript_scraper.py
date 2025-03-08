@@ -2,6 +2,7 @@ import os
 import sys
 import pytest
 from unittest.mock import patch, MagicMock
+from datetime import datetime
 
 from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled
 
@@ -46,11 +47,11 @@ def test_youtube_transcript_tool():
         assert result.transcript == "Never gonna give you up Never gonna let you down"
         assert result.duration == 10.0
         assert result.comments == []
-        assert result.metadata == {
+        assert result.metadata.model_dump() == {
             "id": mock_video_id,
             "title": mock_metadata["title"],
             "channel": mock_metadata["channelTitle"],
-            "published_at": mock_metadata["publishedAt"],
+            "published_at": datetime.fromisoformat(mock_metadata["publishedAt"].replace("Z", "")),
         }
 
 

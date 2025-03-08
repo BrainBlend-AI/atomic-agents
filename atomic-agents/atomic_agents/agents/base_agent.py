@@ -69,7 +69,7 @@ class BaseAgentConfig(BaseModel):
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
     model_config = {"arbitrary_types_allowed": True}
     temperature: Optional[float] = Field(
-        0,
+        None,
         description="Temperature for response generation, typically ranging from 0 to 1.",
     )
     max_tokens: Optional[int] = Field(
