@@ -63,7 +63,6 @@ def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_
     assert agent.system_prompt_generator == mock_system_prompt_generator
     assert agent.input_schema == BaseAgentInputSchema
     assert agent.output_schema == BaseAgentOutputSchema
-    # assert agent.model_api_parameters["temperature"] == 0
     assert "max_tokens" not in agent.model_api_parameters
 
 
