@@ -65,7 +65,9 @@ class BaseAgentConfig(BaseModel):
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         None, description="Component for generating system prompts."
     )
-    system_role: Optional[str] = Field("system", description="The role of the system in the conversation. None means no system prompt.")
+    system_role: Optional[str] = Field(
+        "system", description="The role of the system in the conversation. None means no system prompt."
+    )
     input_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the input data.")
     output_schema: Optional[Type[BaseModel]] = Field(None, description="The schema for the output data.")
     model_config = {"arbitrary_types_allowed": True}
@@ -166,7 +168,7 @@ class BaseAgent:
                     "content": self.system_prompt_generator.generate_prompt(),
                 }
             ]
-        
+
         messages += self.memory.get_history()
 
         response = self.client.chat.completions.create(
