@@ -160,19 +160,19 @@ class BaseAgent:
             response_model = self.output_schema
 
         if self.system_role is None:
-            messages = []
+            self.messages = []
         else:
-            messages = [
+            self.messages = [
                 {
                     "role": self.system_role,
                     "content": self.system_prompt_generator.generate_prompt(),
                 }
             ]
 
-        messages += self.memory.get_history()
+        self.messages += self.memory.get_history()
 
         response = self.client.chat.completions.create(
-            messages=messages,
+            messages=self.messages,
             model=self.model,
             response_model=response_model,
             **self.model_api_parameters,

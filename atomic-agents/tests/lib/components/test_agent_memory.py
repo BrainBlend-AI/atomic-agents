@@ -7,7 +7,7 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 import instructor
 
 
-class TestInputSchema(BaseIOSchema):
+class InputSchema(BaseIOSchema):
     """Test Input Schema"""
 
     test_field: str = Field(..., description="A test field")
@@ -67,22 +67,22 @@ def test_initialize_turn(memory):
 
 
 def test_add_message(memory):
-    memory.add_message("user", TestInputSchema(test_field="Hello"))
+    memory.add_message("user", InputSchema(test_field="Hello"))
     assert len(memory.history) == 1
     assert memory.history[0].role == "user"
-    assert isinstance(memory.history[0].content, TestInputSchema)
+    assert isinstance(memory.history[0].content, InputSchema)
     assert memory.history[0].turn_id is not None
 
 
 def test_manage_overflow(memory):
     for i in range(7):
-        memory.add_message("user", TestInputSchema(test_field=f"Message {i}"))
+        memory.add_message("user", InputSchema(test_field=f"Message {i}"))
     assert len(memory.history) == 5
     assert memory.history[0].content.test_field == "Message 2"
 
 
 def test_get_history(memory):
-    memory.add_message("user", TestInputSchema(test_field="Hello"))
+    memory.add_message("user", InputSchema(test_field="Hello"))
     memory.add_message("assistant", TestOutputSchema(test_field="Hi there"))
     history = memory.get_history()
     assert len(history) == 2
@@ -91,7 +91,7 @@ def test_get_history(memory):
 
 
 def test_copy(memory):
-    memory.add_message("user", TestInputSchema(test_field="Hello"))
+    memory.add_message("user", InputSchema(test_field="Hello"))
     copied_memory = memory.copy()
     assert copied_memory.max_messages == memory.max_messages
     assert copied_memory.current_turn_id == memory.current_turn_id
@@ -108,7 +108,7 @@ def test_get_current_turn_id(memory):
 
 def test_get_message_count(memory):
     assert memory.get_message_count() == 0
-    memory.add_message("user", TestInputSchema(test_field="Hello"))
+    memory.add_message("user", InputSchema(test_field="Hello"))
     assert memory.get_message_count() == 1
 
 
@@ -150,9 +150,9 @@ def test_load_invalid_data(memory):
 
 
 def test_get_class_from_string():
-    class_string = "tests.lib.components.test_agent_memory.TestInputSchema"
+    class_string = "tests.lib.components.test_agent_memory.InputSchema"
     cls = AgentMemory._get_class_from_string(class_string)
-    assert cls.__name__ == TestInputSchema.__name__
+    assert cls.__name__ == InputSchema.__name__
     assert cls.__module__.endswith("test_agent_memory")
     assert issubclass(cls, BaseIOSchema)
 
@@ -163,9 +163,9 @@ def test_get_class_from_string_invalid():
 
 
 def test_message_model():
-    message = Message(role="user", content=TestInputSchema(test_field="Test"), turn_id="123")
+    message = Message(role="user", content=InputSchema(test_field="Test"), turn_id="123")
     assert message.role == "user"
-    assert isinstance(message.content, TestInputSchema)
+    assert isinstance(message.content, InputSchema)
     assert message.turn_id == "123"
 
 
@@ -209,7 +209,7 @@ def test_complex_scenario(memory):
     assert new_memory.history[1].content.data_dict["key1"].nested_field == "Nested output 1"
 
     # Add a new message to the loaded memory
-    new_memory.add_message("user", TestInputSchema(test_field="New message"))
+    new_memory.add_message("user", InputSchema(test_field="New message"))
     assert len(new_memory.history) == 3
     assert new_memory.history[2].content.test_field == "New message"
 
@@ -217,14 +217,14 @@ def test_complex_scenario(memory):
 def test_memory_with_no_max_messages():
     unlimited_memory = AgentMemory()
     for i in range(100):
-        unlimited_memory.add_message("user", TestInputSchema(test_field=f"Message {i}"))
+        unlimited_memory.add_message("user", InputSchema(test_field=f"Message {i}"))
     assert len(unlimited_memory.history) == 100
 
 
 def test_memory_with_zero_max_messages():
     zero_max_memory = AgentMemory(max_messages=0)
     for i in range(10):
-        zero_max_memory.add_message("user", TestInputSchema(test_field=f"Message {i}"))
+        zero_max_memory.add_message("user", InputSchema(test_field=f"Message {i}"))
     assert len(zero_max_memory.history) == 0
 
 
@@ -232,7 +232,7 @@ def test_memory_turn_consistency():
     memory = AgentMemory()
     memory.initialize_turn()
     turn_id = memory.get_current_turn_id()
-    memory.add_message("user", TestInputSchema(test_field="Hello"))
+    memory.add_message("user", InputSchema(test_field="Hello"))
     memory.add_message("assistant", TestOutputSchema(test_field="Hi"))
     assert memory.history[0].turn_id == turn_id
     assert memory.history[1].turn_id == turn_id
@@ -240,13 +240,13 @@ def test_memory_turn_consistency():
     memory.initialize_turn()
     new_turn_id = memory.get_current_turn_id()
     assert new_turn_id != turn_id
-    memory.add_message("user", TestInputSchema(test_field="Next turn"))
+    memory.add_message("user", InputSchema(test_field="Next turn"))
     assert memory.history[2].turn_id == new_turn_id
 
 
 def test_agent_memory_delete_turn_id(memory):
-    mock_input = TestInputSchema(test_field="Test input")
-    mock_output = TestInputSchema(test_field="Test output")
+    mock_input = InputSchema(test_field="Test input")
+    mock_output = InputSchema(test_field="Test output")
 
     memory = AgentMemory()
     initial_turn_id = "123-456"
