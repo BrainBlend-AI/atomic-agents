@@ -92,6 +92,7 @@ def test_initialization_without_temperature(mock_instructor, mock_memory, mock_s
     agent = BaseAgent(config)
     assert agent.model_api_parameters["temperature"] == 0.5
 
+
 def test_initialization_without_max_tokens(mock_instructor, mock_memory, mock_system_prompt_generator):
     config = BaseAgentConfig(
         client=mock_instructor,
@@ -103,6 +104,7 @@ def test_initialization_without_max_tokens(mock_instructor, mock_memory, mock_sy
     )
     agent = BaseAgent(config)
     assert agent.model_api_parameters["max_tokens"] == 1024
+
 
 def test_initialization_system_role_equals_developer(mock_instructor, mock_memory, mock_system_prompt_generator):
     config = BaseAgentConfig(
@@ -117,6 +119,7 @@ def test_initialization_system_role_equals_developer(mock_instructor, mock_memor
     _ = agent.get_response()
     assert isinstance(agent.messages, list) and agent.messages[0]["role"] == "developer"
 
+
 def test_initialization_system_role_equals_None(mock_instructor, mock_memory, mock_system_prompt_generator):
     config = BaseAgentConfig(
         client=mock_instructor,
@@ -129,6 +132,7 @@ def test_initialization_system_role_equals_None(mock_instructor, mock_memory, mo
     agent = BaseAgent(config)
     _ = agent.get_response()
     assert isinstance(agent.messages, list) and len(agent.messages) == 0
+
 
 def test_reset_memory(agent, mock_memory):
     initial_memory = agent.initial_memory
