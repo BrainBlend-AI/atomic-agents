@@ -80,6 +80,60 @@ def test_initialization_temperature_priority(mock_instructor, mock_memory, mock_
     assert agent.model_api_parameters["temperature"] == 1.0
 
 
+def test_initialization_without_temperature(mock_instructor, mock_memory, mock_system_prompt_generator):
+    config = BaseAgentConfig(
+        client=mock_instructor,
+        model="gpt-4o-mini",
+        memory=mock_memory,
+        system_prompt_generator=mock_system_prompt_generator,
+        temperature=0.5,
+        model_api_parameters={},  # No temperature specified
+    )
+    agent = BaseAgent(config)
+    assert agent.model_api_parameters["temperature"] == 0.5
+
+
+def test_initialization_without_max_tokens(mock_instructor, mock_memory, mock_system_prompt_generator):
+    config = BaseAgentConfig(
+        client=mock_instructor,
+        model="gpt-4o-mini",
+        memory=mock_memory,
+        system_prompt_generator=mock_system_prompt_generator,
+        max_tokens=1024,
+        model_api_parameters={},  # No temperature specified
+    )
+    agent = BaseAgent(config)
+    assert agent.model_api_parameters["max_tokens"] == 1024
+
+
+def test_initialization_system_role_equals_developer(mock_instructor, mock_memory, mock_system_prompt_generator):
+    config = BaseAgentConfig(
+        client=mock_instructor,
+        model="gpt-4o-mini",
+        memory=mock_memory,
+        system_prompt_generator=mock_system_prompt_generator,
+        system_role="developer",
+        model_api_parameters={},  # No temperature specified
+    )
+    agent = BaseAgent(config)
+    _ = agent.get_response()
+    assert isinstance(agent.messages, list) and agent.messages[0]["role"] == "developer"
+
+
+def test_initialization_system_role_equals_None(mock_instructor, mock_memory, mock_system_prompt_generator):
+    config = BaseAgentConfig(
+        client=mock_instructor,
+        model="gpt-4o-mini",
+        memory=mock_memory,
+        system_prompt_generator=mock_system_prompt_generator,
+        system_role=None,
+        model_api_parameters={},  # No temperature specified
+    )
+    agent = BaseAgent(config)
+    _ = agent.get_response()
+    assert isinstance(agent.messages, list) and len(agent.messages) == 0
+
+
 def test_reset_memory(agent, mock_memory):
     initial_memory = agent.initial_memory
     agent.reset_memory()
