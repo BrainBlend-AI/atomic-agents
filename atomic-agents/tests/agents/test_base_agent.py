@@ -22,6 +22,7 @@ def mock_instructor():
     mock.chat.completions.create_partial = Mock()
     return mock
 
+
 @pytest.fixture
 def mock_instructor_async():
     mock = Mock(spec=instructor.Instructor)
@@ -33,6 +34,7 @@ def mock_instructor_async():
 
     mock.chat.completions.create_partial = mock_create_partial
     return mock
+
 
 @pytest.fixture
 def mock_memory():
@@ -293,6 +295,7 @@ async def test_run_async(agent, mock_memory):
     assert agent.current_user_input == mock_input
     mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
+
 @pytest.mark.asyncio
 async def test_run_async_with_no_system_role(mock_instructor_async, mock_memory):
     # Create a BaseAgentConfig with system_role set to None
@@ -315,6 +318,7 @@ async def test_run_async_with_no_system_role(mock_instructor_async, mock_memory)
 
     # Assertions
     assert agent.messages == []  # Ensure self.messages was set to an empty list
+
 
 @pytest.mark.asyncio
 async def test_stream_response_async(agent, mock_memory, mock_instructor, mock_system_prompt_generator):
