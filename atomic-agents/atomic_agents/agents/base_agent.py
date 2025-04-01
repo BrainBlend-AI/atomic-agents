@@ -241,6 +241,42 @@ class BaseAgent:
         full_response_content = self.output_schema(**partial_response.model_dump())
         self.memory.add_message("assistant", full_response_content)
 
+    async def run_async_batch(self, user_input: Optional[BaseIOSchema] = None) -> BaseIOSchema:
+        """
+        Runs the chat agent with the given user input, supporting streaming output asynchronously.
+
+        Args:
+            user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
+
+        Returns:
+            BaseIOSchema: Partial responses from the chat agent.
+        """
+        if user_input:
+            self.memory.initialize_turn()
+            self.current_user_input = user_input
+            self.memory.add_message("user", user_input)
+
+        if self.system_role is None:
+            self.messages = []
+        else:
+            self.messages = [
+                {
+                    "role": self.system_role,
+                    "content": self.system_prompt_generator.generate_prompt(),
+                }
+            ]
+
+        self.messages += self.memory.get_history()
+
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=self.messages,
+            response_model=self.output_schema,
+            **self.model_api_parameters
+        )
+
+        self.memory.add_message("assistant", response)
+        return response
     async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
         """
         Deprecated method for streaming responses asynchronously. Use run_async instead.
