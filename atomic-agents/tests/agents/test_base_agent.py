@@ -22,6 +22,17 @@ def mock_instructor():
     mock.chat.completions.create_partial = Mock()
     return mock
 
+@pytest.fixture
+def mock_instructor_async():
+    mock = Mock(spec=instructor.Instructor)
+    mock.chat.completions.create = Mock()
+
+    # Mock the create_partial method to return an async generator
+    async def mock_create_partial(*args, **kwargs):
+        yield BaseAgentOutputSchema(chat_message="Mocked response")
+
+    mock.chat.completions.create_partial = mock_create_partial
+    return mock
 
 @pytest.fixture
 def mock_memory():
@@ -282,6 +293,28 @@ async def test_run_async(agent, mock_memory):
     assert agent.current_user_input == mock_input
     mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
+@pytest.mark.asyncio
+async def test_run_async_with_no_system_role(mock_instructor_async, mock_memory):
+    # Create a BaseAgentConfig with system_role set to None
+    config = BaseAgentConfig(
+        client=mock_instructor_async,
+        model="gpt-4o-mini",
+        memory=mock_memory,
+        system_prompt_generator=None,  # No system prompt generator
+        system_role=None,  # Ensure system_role is None
+    )
+    agent = BaseAgent(config)
+
+    # Create a mock input
+    mock_input = BaseAgentInputSchema(chat_message="Test input")
+
+    # Collect all responses from the actual run_async method
+    responses = []
+    async for response in agent.run_async(mock_input):
+        responses.append(response)
+
+    # Assertions
+    assert agent.messages == []  # Ensure self.messages was set to an empty list
 
 @pytest.mark.asyncio
 async def test_stream_response_async(agent, mock_memory, mock_instructor, mock_system_prompt_generator):
