@@ -44,7 +44,9 @@ def setup_client(provider):
     elif provider == "4" or provider == "ollama":
         from openai import OpenAI as OllamaClient
 
-        client = instructor.from_openai(OllamaClient(base_url="http://localhost:11434/v1", api_key="ollama"))
+        client = instructor.from_openai(
+            OllamaClient(base_url="http://localhost:11434/v1", api_key="ollama"), mode=instructor.Mode.JSON
+        )
         model = "llama3"
     elif provider == "5" or provider == "gemini":
         from openai import OpenAI
