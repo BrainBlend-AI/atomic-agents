@@ -215,16 +215,21 @@ class BaseAgent:
             self.current_user_input = user_input
             self.memory.add_message("user", user_input)
 
-        messages = [
-            {
-                "role": "system",
-                "content": self.system_prompt_generator.generate_prompt(),
-            }
-        ] + self.memory.get_history()
+        if self.system_role is None:
+            self.messages = []
+        else:
+            self.messages = [
+                {
+                    "role": self.system_role,
+                    "content": self.system_prompt_generator.generate_prompt(),
+                }
+            ]
+
+        self.messages += self.memory.get_history()
 
         response_stream = self.client.chat.completions.create_partial(
             model=self.model,
-            messages=messages,
+            messages=self.messages,
             response_model=self.output_schema,
             **self.model_api_parameters,
             stream=True,
