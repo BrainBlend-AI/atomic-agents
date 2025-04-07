@@ -145,6 +145,19 @@ class BaseAgent:
         """
         self.memory = self.initial_memory.copy()
 
+    def prepare_messages(self):
+        if self.system_role is None:
+            self.messages = []
+        else:
+            self.messages = [
+                {
+                    "role": self.system_role,
+                    "content": self.system_prompt_generator.generate_prompt(),
+                }
+            ]
+
+        self.messages += self.memory.get_history()
+
     def get_response(self, response_model=None) -> Type[BaseModel]:
         """
         Obtains a response from the language model synchronously.
@@ -159,18 +172,7 @@ class BaseAgent:
         if response_model is None:
             response_model = self.output_schema
 
-        if self.system_role is None:
-            self.messages = []
-        else:
-            self.messages = [
-                {
-                    "role": self.system_role,
-                    "content": self.system_prompt_generator.generate_prompt(),
-                }
-            ]
-
-        self.messages += self.memory.get_history()
-
+        self.prepare_messages()
         response = self.client.chat.completions.create(
             messages=self.messages,
             model=self.model,
@@ -215,17 +217,7 @@ class BaseAgent:
             self.current_user_input = user_input
             self.memory.add_message("user", user_input)
 
-        if self.system_role is None:
-            self.messages = []
-        else:
-            self.messages = [
-                {
-                    "role": self.system_role,
-                    "content": self.system_prompt_generator.generate_prompt(),
-                }
-            ]
-
-        self.messages += self.memory.get_history()
+        self.prepare_messages()
 
         response_stream = self.client.chat.completions.create_partial(
             model=self.model,
@@ -256,27 +248,15 @@ class BaseAgent:
             self.current_user_input = user_input
             self.memory.add_message("user", user_input)
 
-        if self.system_role is None:
-            self.messages = []
-        else:
-            self.messages = [
-                {
-                    "role": self.system_role,
-                    "content": self.system_prompt_generator.generate_prompt(),
-                }
-            ]
-
-        self.messages += self.memory.get_history()
+        self.prepare_messages()
 
         response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages,
-            response_model=self.output_schema,
-            **self.model_api_parameters
+            model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
         )
 
         self.memory.add_message("assistant", response)
         return response
+
     async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
         """
         Deprecated method for streaming responses asynchronously. Use run_async instead.

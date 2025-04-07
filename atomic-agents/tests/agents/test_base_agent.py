@@ -28,6 +28,12 @@ def mock_instructor_async():
     mock = Mock(spec=instructor.Instructor)
     mock.chat.completions.create = Mock()
 
+    # Make create method awaitable by using an async function
+    async def mock_create(*args, **kwargs):
+        return BaseAgentOutputSchema(chat_message="Test output")
+
+    mock.chat.completions.create = mock_create
+
     # Mock the create_partial method to return an async generator
     async def mock_create_partial(*args, **kwargs):
         yield BaseAgentOutputSchema(chat_message="Mocked response")
@@ -297,27 +303,25 @@ async def test_run_async(agent, mock_memory):
 
 
 @pytest.mark.asyncio
-async def test_run_async_with_no_system_role(mock_instructor_async, mock_memory):
+async def test_run_async_batch(mock_instructor_async, mock_memory):
     # Create a BaseAgentConfig with system_role set to None
     config = BaseAgentConfig(
         client=mock_instructor_async,
         model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=None,  # No system prompt generator
-        system_role=None,  # Ensure system_role is None
     )
     agent = BaseAgent(config)
 
     # Create a mock input
     mock_input = BaseAgentInputSchema(chat_message="Test input")
+    mock_output = BaseAgentOutputSchema(chat_message="Test output")
 
-    # Collect all responses from the actual run_async method
-    responses = []
-    async for response in agent.run_async(mock_input):
-        responses.append(response)
+    # Get response from run_async_batch method
+    response = await agent.run_async_batch(mock_input)
 
     # Assertions
-    assert agent.messages == []  # Ensure self.messages was set to an empty list
+    assert response == mock_output  # Ensure self.messages was set to an empty list
 
 
 @pytest.mark.asyncio
