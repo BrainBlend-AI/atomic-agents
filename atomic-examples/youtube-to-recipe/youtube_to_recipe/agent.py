@@ -46,29 +46,17 @@ class YouTubeRecipeExtractionOutputSchema(BaseIOSchema):
     """This schema defines the structured recipe information extracted from the video."""
 
     recipe_name: str = Field(..., description="The name of the recipe being prepared")
-
     chef: Optional[str] = Field(None, description="The name of the chef/cook presenting the recipe")
-
     description: str = Field(..., description="A brief description of the dish and its characteristics")
-
     prep_time: Optional[str] = Field(None, description="Total preparation time mentioned in the video")
-
     cook_time: Optional[str] = Field(None, description="Total cooking time mentioned in the video")
-
     servings: Optional[int] = Field(None, description="Number of servings this recipe makes")
-
     ingredients: List[Ingredient] = Field(..., description="List of ingredients with their quantities and units")
-
     steps: List[Step] = Field(..., description="Detailed step-by-step cooking instructions")
-
     equipment: List[str] = Field(..., description="List of kitchen equipment and tools needed")
-
     tips: List[str] = Field(..., description="General cooking tips and tricks mentioned in the video")
-
     difficulty_level: Optional[str] = Field(None, description="Difficulty level of the recipe (e.g., Easy, Medium, Hard)")
-
     cuisine_type: Optional[str] = Field(None, description="Type of cuisine (e.g., Italian, Mexican, Japanese)")
-
     dietary_info: List[str] = Field(
         default_factory=list, description="Dietary information (e.g., Vegetarian, Vegan, Gluten-free)"
     )
