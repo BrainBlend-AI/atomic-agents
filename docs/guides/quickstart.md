@@ -218,6 +218,56 @@ print(f"Confidence: {result.confidence}")
 print(f"Sources: {result.sources}")
 ```
 
+## Linux Shell Agent
+
+For safe execution of Linux commands through natural language, use the LinuxShellAgent:
+
+```python
+from atomic_agents.agents.linux_shell_agent import LinuxShellAgent, LinuxShellInputSchema
+from atomic_agents.agents.base_agent import BaseAgentConfig
+
+# Create Linux shell agent
+agent = LinuxShellAgent(
+    config=BaseAgentConfig(
+        client=client,
+        model=model
+    )
+)
+
+# Execute commands through natural language
+response = agent.run(
+    LinuxShellInputSchema(
+        instruction="List all Python files in the current directory",
+        working_directory="/path/to/dir"  # optional
+    )
+)
+
+# Access results
+print(response.chat_message)  # Explanation of what was done
+for output in response.command_outputs:
+    print(f"Command: {output.command}")
+    print(f"Output: {output.stdout}")
+    if output.stderr:
+        print(f"Errors: {output.stderr}")
+
+# View command history
+history = agent.get_command_history()
+for entry in history:
+    print(f"{'✓' if entry.success else '✗'} {entry.command}")
+```
+
+The LinuxShellAgent provides:
+- Safe execution of whitelisted Linux commands
+- Natural language interface to the command line
+- Path validation and security checks
+- Command pipeline support (e.g., `ls | grep pattern`)
+- Command history tracking
+- Man page integration for command help
+
+Supported commands include: ls, cp, mv, rm, cat, grep, find, sort, wc, and more.
+
+All commands are executed in a controlled environment with safety checks to prevent dangerous operations.
+
 ## Multiple Providers
 
 The framework supports multiple AI providers:

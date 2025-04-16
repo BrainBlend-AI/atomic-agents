@@ -150,6 +150,9 @@ This snippet showcases how to create a customizable agent that responds to user 
 - [Multi-Provider Chatbot](/atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py)
   Demonstrates how to use different providers such as Ollama or Groq.
 
+- [Linux Shell Agent](/atomic-examples/quickstart/quickstart/6_linux_command_chatbot.py)
+  A secure way to interact with Linux commands through natural language, featuring command pipeline support, path validation, and command history tracking.
+
 In addition to the quickstart examples, we have more complex examples demonstrating the power of Atomic Agents:
 
 - [Basic Multimodal](/atomic-examples/basic-multimodal/README.md): Demonstrates how to analyze images with text, focusing on extracting structured information from nutrition labels using GPT-4 Vision capabilities.
@@ -273,6 +276,47 @@ from web_search_agent.tools.another_search import AnotherSearchTool
 query_agent.config.output_schema = AnotherSearchTool.input_schema
 ```
 This design pattern simplifies the process of chaining agents and tools, making your AI applications more adaptable and easier to maintain.
+
+## Example Use Cases
+
+Here are some examples of what you can build with Atomic Agents:
+
+### Linux Command Line Assistant
+
+```python
+from atomic_agents.agents.linux_shell_agent import LinuxShellAgent, LinuxShellInputSchema
+
+agent = LinuxShellAgent(
+    config=BaseAgentConfig(
+        client=your_client,
+        model="gpt-4o-mini"
+    )
+)
+
+# Natural language interface to Linux commands
+response = agent.run(
+    LinuxShellInputSchema(
+        instruction="Find all Python files modified in the last 24 hours"
+    )
+)
+
+# The agent will safely execute commands like:
+# `find . -name "*.py" -mtime -1`
+print(response.chat_message)  # Explanation of what was done
+for output in response.command_outputs:
+    print(output.stdout)      # Command output
+
+# View command history
+for entry in agent.get_command_history():
+    print(f"{'✓' if entry.success else '✗'} {entry.command}")
+```
+
+Key features:
+- Safe execution of whitelisted Linux commands
+- Command pipeline support (e.g., `ls | grep pattern`)
+- Path validation and security checks
+- Command history tracking
+- Man page integration
 
 ## Running the CLI
 To run the CLI, simply run the following command:
