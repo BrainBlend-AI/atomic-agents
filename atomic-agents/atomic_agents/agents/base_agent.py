@@ -172,6 +172,9 @@ class BaseAgent:
         Returns:
             TO: The response from the chat agent.
         """
+        assert not isinstance(
+            self.client, instructor.client.AsyncInstructor
+        ), "The run method is not supported for async clients. Use run_async instead."
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input
@@ -201,6 +204,9 @@ class BaseAgent:
         Returns:
             TO: The final response from the chat agent.
         """
+        assert not isinstance(
+            self.client, instructor.client.AsyncInstructor
+        ), "The run_stream method is not supported for async clients. Use run_async instead."
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input
@@ -238,6 +244,7 @@ class BaseAgent:
             NotAsyncIterableError: If used as an async generator (in an async for loop).
                                    Use run_async_stream() method instead for streaming responses.
         """
+        assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input
@@ -262,6 +269,7 @@ class BaseAgent:
         Yields:
             TO: Partial responses from the chat agent.
         """
+        assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
             self.memory.initialize_turn()
             self.current_user_input = user_input

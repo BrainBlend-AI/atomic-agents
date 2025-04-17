@@ -34,7 +34,8 @@ def mock_instructor():
 
 @pytest.fixture
 def mock_instructor_async():
-    mock = Mock(spec=instructor.Instructor)
+    # Changed spec from instructor.Instructor to instructor.client.AsyncInstructor
+    mock = Mock(spec=instructor.client.AsyncInstructor)
 
     # Configure chat.completions structure
     mock.chat = Mock()
