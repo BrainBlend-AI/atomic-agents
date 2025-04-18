@@ -294,6 +294,52 @@ class BaseAgent:
             full_response_content = self.output_schema(**last_response.model_dump())
             self.memory.add_message("assistant", full_response_content)
 
+    async def run_async_amphibious(
+        self, user_input: Optional[TI] = None, stream: bool = False
+    ) -> TO | AsyncGenerator[TO, None]:
+        """
+        Runs the chat agent asynchronously with the given user input, supporting streaming output.
+
+        Args:
+            user_input (Optional[TI]): The input from the user. If not provided, skips adding to memory.
+            stream (bool): Streams if True. Defaults to False.
+
+        Yields:
+            TO: Partial responses from the chat agent.
+        """
+        assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
+        if user_input:
+            self.memory.initialize_turn()
+            self.current_user_input = user_input
+            self.memory.add_message("user", user_input)
+
+        self._prepare_messages()
+
+        if stream:
+            response_stream = self.client.chat.completions.create_partial(
+                model=self.model,
+                messages=self.messages,
+                response_model=self.output_schema,
+                **self.model_api_parameters,
+                stream=True,
+            )
+
+            last_response = None
+            async for partial_response in response_stream:
+                last_response = partial_response
+                yield partial_response
+
+            if last_response:
+                full_response_content = self.output_schema(**last_response.model_dump())
+                self.memory.add_message("assistant", full_response_content)
+        else:
+            response = await self.client.chat.completions.create(
+                model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
+            )
+
+            self.memory.add_message("assistant", response)
+            return response
+
     async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
         """
         Deprecated method for streaming responses asynchronously. Use run_async_stream instead.

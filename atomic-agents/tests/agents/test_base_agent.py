@@ -348,6 +348,45 @@ async def test_run_async_stream(agent_async, mock_memory):
 
 
 @pytest.mark.asyncio
+async def test_run_async_amphibious_batch(agent_async, mock_memory):
+    # Create a mock input
+    mock_input = BaseAgentInputSchema(chat_message="Test input")
+    mock_output = BaseAgentOutputSchema(chat_message="Test output")
+
+    # Get response from run_async method
+    response = await agent_async.run_async_amphibious(mock_input, stream=False)
+
+    # Assertions
+    assert response == mock_output
+    assert agent_async.current_user_input == mock_input
+    mock_memory.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
+
+
+@pytest.mark.asyncio
+async def test_run_async_amphibious_streaming(agent_async, mock_memory):
+    # Create a mock input
+    mock_input = BaseAgentInputSchema(chat_message="Test input")
+    mock_output = BaseAgentOutputSchema(chat_message="Test output")
+
+    responses = []
+    # Get response from run_async_stream method
+    async for response in agent_async.run_async_amphibious(mock_input, stream=True):
+        responses.append(response)
+
+    # Assertions
+    assert len(responses) == 1
+    assert responses[0] == mock_output
+    assert agent_async.current_user_input == mock_input
+
+    # Verify that both user input and assistant response were added to memory
+    mock_memory.add_message.assert_any_call("user", mock_input)
+
+    # Create the expected full response content to check
+    full_response_content = agent_async.output_schema(**responses[0].model_dump())
+    mock_memory.add_message.assert_any_call("assistant", full_response_content)
+
+
+@pytest.mark.asyncio
 async def test_stream_response_async(agent, mock_memory, mock_instructor_async, mock_system_prompt_generator):
     # Replace the agent's client with the async version
     agent.client = mock_instructor_async
