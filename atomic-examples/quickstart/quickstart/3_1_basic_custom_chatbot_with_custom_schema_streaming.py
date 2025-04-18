@@ -113,7 +113,7 @@ async def main():
             current_response = ""
             current_questions: List[str] = []
 
-            async for partial_response in agent.run_async(input_schema):
+            async for partial_response in agent.run_async_stream(input_schema):
                 if hasattr(partial_response, "chat_message") and partial_response.chat_message:
                     # Update the message part
                     if partial_response.chat_message != current_response:
