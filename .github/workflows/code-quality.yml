@@ -34,16 +34,28 @@ jobs:
         with:
           path: ./.venv
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-
 
       - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install
+        run: |
+          poetry install --with dev
+          poetry run pip list  # Verify installation
+
+      - name: Verify Black Installation
+        run: |
+          poetry run which black || echo "Black not found"
+          poetry run black --version
 
       - name: Run Black Check
-        run: poetry run black --check atomic-agents atomic-assembler atomic-examples atomic-forge
+        run: |
+          poetry run black --check atomic-agents atomic-assembler atomic-examples atomic-forge
+        if: success()
 
       - name: Run Flake8
         run: poetry run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
+        if: success()
 
       - name: Run Tests
         run: poetry run pytest --cov=atomic_agents atomic-agents
+        if: success()
