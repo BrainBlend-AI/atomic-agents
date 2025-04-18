@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "example-client"
+version = "0.1.0"
+description = "Example: Choosing the right MCP tool for a user query using the MCP Tool Factory."
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+atomic-agents = { path = "../../../", develop = true }
+python = ">=3.10,<3.13"
+pydantic = ">=2.0.0"
+rich = ">=13.0.0"
+openai = ">=1.0.0"
+mcp = {extras = ["cli"], version = "^1.6.0"}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
