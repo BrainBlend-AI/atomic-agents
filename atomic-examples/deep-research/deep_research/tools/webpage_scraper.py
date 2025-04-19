@@ -1,15 +1,11 @@
-from time import sleep
-from typing import Optional, Dict, List, Any
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import logging
-
+from typing import Optional, Dict
+import re
 import requests
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from markdownify import markdownify
 from pydantic import Field, HttpUrl
-import trafilatura
-
+from readability import Document
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 

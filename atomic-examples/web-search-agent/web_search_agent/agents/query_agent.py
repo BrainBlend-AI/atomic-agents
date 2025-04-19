@@ -33,13 +33,13 @@ query_agent = BaseAgent[QueryAgentInputSchema, QueryAgentOutputSchema](
             steps=[
                 "Analyze the user's question to understand the core information need.",
                 "Generate multiple search queries that capture the question's essence from different angles.",
-                "Ensure each query is optimized for search engines (compact, focused, and unambiguous)."
+                "Ensure each query is optimized for search engines (compact, focused, and unambiguous).",
             ],
             output_instructions=[
                 "Generate 3-5 different search queries.",
                 "Do not include special search operators or syntax.",
-                "Each query should be concise and focused on retrieving relevant information."
-            ]
+                "Each query should be concise and focused on retrieving relevant information.",
+            ],
         ),
     )
 )

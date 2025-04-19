@@ -2,10 +2,8 @@ import os
 from typing import List, Literal, Optional
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-import datetime
 
 import aiohttp
-from tavily import TavilyClient
 from pydantic import Field
 
 from atomic_agents.agents.base_agent import BaseIOSchema
@@ -108,7 +106,6 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
                 )
             data = await response.json()
             results = data.get("results", [])
-            answer = data.get("answer", "")
 
             # Add query information to each result
             for result in results:

@@ -30,14 +30,19 @@ memory = AgentMemory()
 # Initialize the SearxNGSearchTool
 search_tool = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
 
+
 # Define input/output schemas for the main agent
 class MainAgentInputSchema(BaseIOSchema):
     """Input schema for the main agent."""
+
     chat_message: str = Field(..., description="Chat message from the user.")
+
 
 class MainAgentOutputSchema(BaseIOSchema):
     """Output schema for the main agent."""
+
     chat_message: str = Field(..., description="Response to the user's message.")
+
 
 # Initialize the BaseAgent
 agent = BaseAgent[MainAgentInputSchema, MainAgentOutputSchema](

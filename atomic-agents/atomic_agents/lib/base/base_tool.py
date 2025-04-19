@@ -59,9 +59,9 @@ class BaseTool[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
             TI, _ = get_args(self.__orig_class__)
         else:
             TI = BaseIOSchema
-        
+
         return TI
-    
+
     @property
     def output_schema(self) -> Type[OutputSchema]:
         """
@@ -74,9 +74,9 @@ class BaseTool[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
             _, TO = get_args(self.__orig_class__)
         else:
             TO = BaseIOSchema
-        
+
         return TO
-    
+
     @property
     def tool_name(self) -> str:
         """
@@ -86,7 +86,7 @@ class BaseTool[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
             str: The name of the tool.
         """
         return self.config.title or self.input_schema.model_json_schema()["title"]
-    
+
     @property
     def tool_description(self) -> str:
         """

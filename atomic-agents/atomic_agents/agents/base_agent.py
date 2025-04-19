@@ -1,7 +1,6 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type, Generator, AsyncGenerator, get_args
-import warnings
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import (
     SystemPromptContextProviderBase,
@@ -123,18 +122,18 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             TI, _ = get_args(self.__orig_class__)
         else:
             TI = BaseAgentInputSchema
-        
+
         return TI
-    
+
     @property
     def output_schema(self) -> Type[BaseIOSchema]:
         if hasattr(self, "__orig_class__"):
             _, TO = get_args(self.__orig_class__)
         else:
             TO = BaseAgentOutputSchema
-        
-        return TO    
-    
+
+        return TO
+
     def _prepare_messages(self):
         if self.system_role is None:
             self.messages = []
@@ -239,10 +238,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self._prepare_messages()
 
         response = await self.client.chat.completions.create(
-            model=self.model,
-            messages=self.messages,
-            response_model=self.output_schema,
-            **self.model_api_parameters
+            model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
         )
 
         self.memory.add_message("assistant", response)

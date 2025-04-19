@@ -53,11 +53,7 @@ sem = asyncio.Semaphore(2)
 
 # Agent setup with specified configuration
 agent = BaseAgent[BaseAgentInputSchema, PersonSchema](
-    config=BaseAgentConfig(
-        client=client, 
-        model="gpt-4o-mini", 
-        sysyem_prompt_generator=sysyem_prompt_generator
-    )
+    config=BaseAgentConfig(client=client, model="gpt-4o-mini", sysyem_prompt_generator=sysyem_prompt_generator)
 )
 
 
