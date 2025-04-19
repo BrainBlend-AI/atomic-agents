@@ -23,6 +23,7 @@ This directory contains the Deep Research Agent example for the Atomic Agents pr
    Create a `.env` file in the `deep-research` directory with:
    ```env
    OPENAI_API_KEY=your_openai_api_key
+   SEARXNG_BASE_URL=http://localhost:8080
    ```
 
 5. **Set up SearxNG:**

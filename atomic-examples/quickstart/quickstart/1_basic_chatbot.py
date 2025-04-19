@@ -31,7 +31,7 @@ memory.add_message("assistant", initial_message)
 client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
 
 # Agent setup with specified configuration
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model="gpt-4o-mini",

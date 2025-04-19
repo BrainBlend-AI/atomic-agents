@@ -25,7 +25,7 @@ class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
 
 
 # Create the question answering agent
-question_answering_agent = BaseAgent(
+question_answering_agent = BaseAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
@@ -47,7 +47,5 @@ question_answering_agent = BaseAgent(
                 "Provide up to 3 follow-up questions to encourage further exploration of the topic.",
             ],
         ),
-        input_schema=QuestionAnsweringAgentInputSchema,
-        output_schema=QuestionAnsweringAgentOutputSchema,
     )
 )

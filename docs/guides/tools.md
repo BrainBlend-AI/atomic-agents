@@ -123,7 +123,7 @@ class MyToolConfig(BaseToolConfig):
 # Main Tool & Logic #
 #####################
 
-class MyTool(BaseTool):
+class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
     """Main tool implementation"""
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema

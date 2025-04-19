@@ -69,7 +69,7 @@ When creating new tools:
        # Define output schema
        pass
 
-   class MyTool(BaseTool):
+   class MyTool(BaseTool[MyToolInputs, MyToolOutputs]):
        name = "my_tool"
        description = "Tool description"
        inputs_schema = MyToolInputs

@@ -6,7 +6,7 @@ authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<4.0"
+python = ">=3.12,<4.0"
 atomic-agents = {path = "../..", develop = true}
 chromadb = "^0.4.24"
 python-dotenv = ">=1.0.1,<2.0.0"

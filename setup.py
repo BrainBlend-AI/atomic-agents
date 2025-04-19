@@ -13,4 +13,5 @@ setup(
     packages=find_packages(where="atomic-agents") + find_packages(where="atomic-assembler"),
     package_dir={"atomic_agents": "atomic-agents/atomic_agents", "atomic_assembler": "atomic-assembler/atomic_assembler"},
     include_package_data=True,
+    python_requires=">=3.12",
 )

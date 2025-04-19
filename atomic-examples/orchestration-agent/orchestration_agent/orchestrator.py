@@ -72,7 +72,7 @@ class CurrentDateProvider(SystemPromptContextProviderBase):
 ######################
 # ORCHESTRATOR AGENT #
 ######################
-orchestrator_agent = BaseAgent(
+orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
@@ -90,8 +90,6 @@ orchestrator_agent = BaseAgent(
                 "Format the output using the appropriate schema.",
             ],
         ),
-        input_schema=OrchestratorInputSchema,
-        output_schema=OrchestratorOutputSchema,
     )
 )
 

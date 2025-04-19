@@ -68,7 +68,7 @@ class YouTubeKnowledgeExtractionOutputSchema(BaseIOSchema):
 
 transcript_provider = YtTranscriptProvider(title="YouTube Transcript")
 
-youtube_knowledge_extraction_agent = BaseAgent(
+youtube_knowledge_extraction_agent = BaseAgent[YouTubeKnowledgeExtractionInputSchema, YouTubeKnowledgeExtractionOutputSchema](
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
@@ -87,7 +87,5 @@ youtube_knowledge_extraction_agent = BaseAgent(
             ],
             context_providers={"yt_transcript": transcript_provider},
         ),
-        input_schema=YouTubeKnowledgeExtractionInputSchema,
-        output_schema=YouTubeKnowledgeExtractionOutputSchema,
     )
 )

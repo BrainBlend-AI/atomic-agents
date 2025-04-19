@@ -64,7 +64,7 @@ class YouTubeRecipeExtractionOutputSchema(BaseIOSchema):
 
 transcript_provider = YtTranscriptProvider(title="YouTube Recipe Transcript")
 
-youtube_recipe_extraction_agent = BaseAgent(
+youtube_recipe_extraction_agent = BaseAgent[YouTubeRecipeExtractionInputSchema, YouTubeRecipeExtractionOutputSchema](
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
@@ -86,7 +86,5 @@ youtube_recipe_extraction_agent = BaseAgent(
             ],
             context_providers={"yt_transcript": transcript_provider},
         ),
-        input_schema=YouTubeRecipeExtractionInputSchema,
-        output_schema=YouTubeRecipeExtractionOutputSchema,
     )
 )

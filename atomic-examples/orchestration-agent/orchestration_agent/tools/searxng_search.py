@@ -51,7 +51,7 @@ class SearxNGSearchToolConfig(BaseToolConfig):
     max_results: int = 10
 
 
-class SearxNGSearchTool(BaseTool):
+class SearxNGSearchTool(BaseTool[SearxNGSearchToolInputSchema, SearxNGSearchToolOutputSchema]):
     """
     Tool for performing searches on SearxNG based on the provided queries and category.
 

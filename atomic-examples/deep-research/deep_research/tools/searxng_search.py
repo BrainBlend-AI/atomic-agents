@@ -51,7 +51,7 @@ class SearxNGSearchToolConfig(BaseToolConfig):
     max_results: int = 10
 
 
-class SearxNGSearchTool(BaseTool):
+class SearxNGSearchTool(BaseTool[SearxNGSearchToolInputSchema, SearxNGSearchToolOutputSchema]):
     """
     Tool for performing searches on SearxNG based on the provided queries and category.
 
@@ -61,9 +61,6 @@ class SearxNGSearchTool(BaseTool):
         max_results (int): The maximum number of search results to return.
         base_url (str): The base URL for the SearxNG instance to use.
     """
-
-    input_schema = SearxNGSearchToolInputSchema
-    output_schema = SearxNGSearchToolOutputSchema
 
     def __init__(self, config: SearxNGSearchToolConfig = SearxNGSearchToolConfig()):
         """

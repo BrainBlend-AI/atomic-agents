@@ -107,7 +107,7 @@ from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # Create agent with basic configuration
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=instructor.from_openai(OpenAI()),
         model="gpt-4-turbo-preview",
@@ -244,8 +244,6 @@ agent = BaseAgent[CustomInput, CustomOutput](
     config=BaseAgentConfig(
         client=client,
         model=model,
-        input_schema=CustomInput,
-        output_schema=CustomOutput
     )
 )
 ```

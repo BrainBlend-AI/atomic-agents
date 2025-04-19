@@ -77,13 +77,10 @@ class WebpageScraperToolConfig(BaseToolConfig):
 #####################
 # MAIN TOOL & LOGIC #
 #####################
-class WebpageScraperTool(BaseTool):
+class WebpageScraperTool(BaseTool[WebpageScraperToolInputSchema, WebpageScraperToolOutputSchema]):
     """
     Tool for scraping webpage content and converting it to markdown format.
     """
-
-    input_schema = WebpageScraperToolInputSchema
-    output_schema = WebpageScraperToolOutputSchema
 
     def __init__(self, config: WebpageScraperToolConfig = WebpageScraperToolConfig()):
         """

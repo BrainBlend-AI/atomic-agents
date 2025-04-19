@@ -73,13 +73,12 @@ system_prompt_generator = SystemPromptGenerator(
 console.print(Panel(system_prompt_generator.generate_prompt(), width=console.width, style="bold cyan"), style="bold cyan")
 
 # Agent setup with specified configuration and custom output schema
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
         memory=memory,
-        output_schema=CustomOutputSchema,
     )
 )
 
@@ -113,7 +112,7 @@ async def main():
             current_response = ""
             current_questions: List[str] = []
 
-            async for partial_response in agent.run_async(input_schema):
+            async for partial_response in agent.run_async_stream(input_schema):
                 if hasattr(partial_response, "chat_message") and partial_response.chat_message:
                     # Update the message part
                     if partial_response.chat_message != current_response:

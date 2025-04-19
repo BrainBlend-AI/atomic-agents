@@ -326,16 +326,10 @@ This is the core of your tool, where you implement the main functionality. Your 
 # Main Tool & Logic #
 #####################
 
-class PizzaOrderingTool(BaseTool):
+class PizzaOrderingTool(BaseTool[PizzaOrderInputSchema, OrderConfirmationSchema]):
     """
     Tool for placing pizza orders through the Pizza Orders API.
     """
-
-    input_schema = PizzaOrderInputSchema
-    output_schemas = {
-        "confirmation": OrderConfirmationSchema,
-        "payment": PaymentDetailsSchema
-    }
 
     def __init__(self, config: PizzaOrderingToolConfig = PizzaOrderingToolConfig()):
         """
@@ -429,7 +423,7 @@ class PizzaOrderingTool(BaseTool):
 
 **Explanation:**
 
-- **Inheritance:** The tool class inherits from `BaseTool`.
+- **Inheritance:** The tool class inherits from `BaseTool` with generic type parameters.
 - **Run Method:** The `run` method is mandatory and serves as the entry point for your tool.
 - **Title and Description Overrides:** Uses the configuration's `title` and `description`.
 - **Helper Methods:** Break down complex logic into smaller methods for clarity and maintainability.

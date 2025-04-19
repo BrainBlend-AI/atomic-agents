@@ -20,7 +20,7 @@ class RAGQuestionAnsweringAgentOutputSchema(BaseIOSchema):
     answer: str = Field(..., description="The answer to the user's question based on the retrieved context")
 
 
-qa_agent = BaseAgent(
+qa_agent = BaseAgent[RAGQuestionAnsweringAgentInputSchema, RAGQuestionAnsweringAgentOutputSchema](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
@@ -44,7 +44,5 @@ qa_agent = BaseAgent(
                 "Focus on being accurate and concise",
             ],
         ),
-        input_schema=RAGQuestionAnsweringAgentInputSchema,
-        output_schema=RAGQuestionAnsweringAgentOutputSchema,
     )
 )

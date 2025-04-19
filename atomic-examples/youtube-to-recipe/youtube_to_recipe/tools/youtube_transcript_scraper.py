@@ -1,5 +1,9 @@
 import os
+import re
 from typing import List, Optional
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from pydantic import Field, BaseModel
 from datetime import datetime
 
@@ -9,6 +13,8 @@ from youtube_transcript_api import (
     TranscriptsDisabled,
     YouTubeTranscriptApi,
 )
+import requests
+from bs4 import BeautifulSoup
 
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
@@ -54,28 +60,30 @@ class YouTubeTranscriptToolOutputSchema(BaseIOSchema):
 # CONFIGURATION #
 #################
 class YouTubeTranscriptToolConfig(BaseToolConfig):
-    api_key: str = Field(
-        description="YouTube API key for fetching video metadata.",
-        default=os.getenv("YOUTUBE_API_KEY"),
-    )
+    """
+    Configuration for the YouTubeTranscriptTool.
+
+    Attributes:
+        languages (List[str]): List of language codes to try when fetching transcripts.
+    """
+
+    languages: List[str] = ["en", "en-US", "en-GB"]
 
 
 #####################
 # MAIN TOOL & LOGIC #
 #####################
-class YouTubeTranscriptTool(BaseTool):
+class YouTubeTranscriptTool(BaseTool[YouTubeTranscriptToolInputSchema, YouTubeTranscriptToolOutputSchema]):
     """
-    Tool for fetching the transcript of a YouTube video using the YouTube Transcript API.
+    Tool for extracting transcripts from YouTube videos.
 
     Attributes:
         input_schema (YouTubeTranscriptToolInputSchema): The schema for the input data.
         output_schema (YouTubeTranscriptToolOutputSchema): The schema for the output data.
+        languages (List[str]): List of language codes to try when fetching transcripts.
     """
 
-    input_schema = YouTubeTranscriptToolInputSchema
-    output_schema = YouTubeTranscriptToolOutputSchema
-
-    def __init__(self, config: YouTubeTranscriptToolConfig):
+    def __init__(self, config: YouTubeTranscriptToolConfig = YouTubeTranscriptToolConfig()):
         """
         Initializes the YouTubeTranscriptTool.
 
@@ -83,7 +91,7 @@ class YouTubeTranscriptTool(BaseTool):
             config (YouTubeTranscriptToolConfig): Configuration for the tool.
         """
         super().__init__(config)
-        self.api_key = config.api_key
+        self.languages = config.languages
 
     def run(self, params: YouTubeTranscriptToolInputSchema) -> YouTubeTranscriptToolOutputSchema:
         """
