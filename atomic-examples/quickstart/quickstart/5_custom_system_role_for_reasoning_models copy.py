@@ -3,7 +3,7 @@ import instructor
 import openai
 from rich.console import Console
 from rich.text import Text
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # API Key setup
@@ -29,7 +29,7 @@ sysyem_prompt_generator = SystemPromptGenerator(
     output_instructions=["Answer in plain English plus formulas."],
 )
 # Agent setup with specified configuration
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model="o3-mini",

@@ -1,9 +1,11 @@
 import os
-from typing import List, Optional
+from typing import List, Literal, Optional
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+import datetime
 
 import aiohttp
+from tavily import TavilyClient
 from pydantic import Field
 
 from atomic_agents.agents.base_agent import BaseIOSchema
@@ -48,50 +50,37 @@ class TavilySearchToolOutputSchema(BaseIOSchema):
 ##############
 class TavilySearchToolConfig(BaseToolConfig):
     api_key: str = ""
-    max_results: Optional[int] = 10
-    search_depth: Optional[str] = "basic"
-    topic: Optional[str] = "general"
-    include_query: Optional[bool] = False
-    include_domains: Optional[List[str]] = []
-    include_answer: Optional[bool] = False
-    include_raw_content: Optional[bool] = False
+    max_results: int = 5
+    search_depth: Literal["basic", "advanced"] = "basic"
+    include_domains: Optional[List[str]] = None
+    exclude_domains: Optional[List[str]] = None
 
 
-class TavilySearchTool(BaseTool):
+class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOutputSchema]):
     """
-    Tool for performing searches on Tavily based on the provided queries and topic.
+    Tool for performing searches using the Tavily search API.
 
     Attributes:
         input_schema (TavilySearchToolInputSchema): The schema for the input data.
         output_schema (TavilySearchToolOutputSchema): The schema for the output data.
         max_results (int): The maximum number of search results to return.
-        search_depth (string): The depth of the search to perform. (advanced or basic)
-        topic (string): The category that the result is classified under. (general or news)
-        include_domains (List[str]): A list of domains to pull results from.
-        include_answer (bool): Include the answer in the respones from Tavily.
-        include_raw_content (bool): Include the raw content of the search results.
+        api_key (str): The API key for the Tavily API.
     """
-
-    input_schema = TavilySearchToolInputSchema
-    output_schema = TavilySearchToolOutputSchema
 
     def __init__(self, config: TavilySearchToolConfig = TavilySearchToolConfig()):
         """
-        Initializes the TavilyTool.
+        Initializes the TavilySearchTool.
 
         Args:
             config (TavilySearchToolConfig):
-                Configuration for the tool, including base URL, max results, and optional title and description overrides.
+                Configuration for the tool, including API key, max results, and optional title and description overrides.
         """
         super().__init__(config)
-        self.api_key = config.api_key
+        self.api_key = config.api_key or os.getenv("TAVILY_API_KEY", "")
         self.max_results = config.max_results
         self.search_depth = config.search_depth
-        self.topic = config.topic
-        self.include_query = config.include_query
         self.include_domains = config.include_domains
-        self.include_answer = config.include_answer
-        self.include_raw_content = config.include_raw_content
+        self.exclude_domains = config.exclude_domains
 
     async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str) -> List[dict]:
         headers = {
@@ -106,11 +95,8 @@ class TavilySearchTool(BaseTool):
             "query": query,
             "api_key": self.api_key,
             "search_depth": self.search_depth,
-            "topic": self.topic,
-            "include_query": self.include_query,
-            "include_answer": self.include_answer,
-            "include_raw_content": self.include_raw_content,
             "include_domains": self.include_domains,
+            "exclude_domains": self.exclude_domains,
             "max_results": self.max_results,
         }
 
@@ -127,8 +113,6 @@ class TavilySearchTool(BaseTool):
             # Add query information to each result
             for result in results:
                 result["query"] = query
-                if self.include_answer:
-                    result["answer"] = answer
 
             return results
 
@@ -153,8 +137,7 @@ class TavilySearchTool(BaseTool):
                             content=result.get("content", ""),
                             score=result.get("score", 0),
                             raw_content=result.get("raw_content"),
-                            query=result.get("query") if self.include_query else None,
-                            answer=result.get("answer") if self.include_answer else None,
+                            query=result.get("query"),
                         )
                     )
                 else:

@@ -44,7 +44,7 @@ class CalculatorToolConfig(BaseToolConfig):
 #####################
 # MAIN TOOL & LOGIC #
 #####################
-class CalculatorTool(BaseTool):
+class CalculatorTool(BaseTool[CalculatorToolInputSchema, CalculatorToolOutputSchema]):
     """
     Tool for performing calculations based on the provided mathematical expression.
 

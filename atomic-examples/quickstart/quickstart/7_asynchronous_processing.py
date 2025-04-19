@@ -52,9 +52,11 @@ dataset = [
 sem = asyncio.Semaphore(2)
 
 # Agent setup with specified configuration
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, PersonSchema](
     config=BaseAgentConfig(
-        client=client, model="gpt-4o-mini", sysyem_prompt_generator=sysyem_prompt_generator, output_schema=PersonSchema  # type: ignore
+        client=client, 
+        model="gpt-4o-mini", 
+        sysyem_prompt_generator=sysyem_prompt_generator
     )
 )
 

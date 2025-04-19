@@ -63,7 +63,7 @@ class YouTubeTranscriptToolConfig(BaseToolConfig):
 #####################
 # MAIN TOOL & LOGIC #
 #####################
-class YouTubeTranscriptTool(BaseTool):
+class YouTubeTranscriptTool(BaseTool[YouTubeTranscriptToolInputSchema, YouTubeTranscriptToolOutputSchema]):
     """
     Tool for fetching the transcript of a YouTube video using the YouTube Transcript API.
 

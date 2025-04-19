@@ -118,13 +118,12 @@ system_prompt_generator = SystemPromptGenerator(
 )
 
 # Initialize the agent
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
     config=BaseAgentConfig(
         client=your_openai_client,  # Replace with your actual client
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
         memory=AgentMemory(),
-        output_schema=CustomOutputSchema
     )
 )
 
@@ -234,8 +233,8 @@ class QueryAgentInputSchema(BaseIOSchema):
     num_queries: int = Field(..., description="Number of queries to generate.")
 
 # Initialize the query agent
-query_agent = BaseAgent(
-    BaseAgentConfig(
+query_agent = BaseAgent[QueryAgentInputSchema, SearxNGSearchTool.input_schema](
+    config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(
@@ -252,8 +251,6 @@ query_agent = BaseAgent(
                 "Provide the queries in the expected schema."
             ],
         ),
-        input_schema=QueryAgentInputSchema,
-        output_schema=SearxNGSearchTool.input_schema,  # Align output schema
     )
 )
 ```

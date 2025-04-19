@@ -15,7 +15,7 @@ class QueryAgentInputSchema(BaseIOSchema):
     num_queries: int = Field(..., description="The number of search queries to generate.")
 
 
-query_agent = BaseAgent(
+query_agent = BaseAgent[QueryAgentInputSchema, SearxNGSearchTool.input_schema.__class__](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
@@ -37,7 +37,5 @@ query_agent = BaseAgent(
                 "Each query should be a concise string of keywords and operators",
             ],
         ),
-        input_schema=QueryAgentInputSchema,
-        output_schema=SearxNGSearchTool.input_schema,
     )
 )

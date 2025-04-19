@@ -54,9 +54,11 @@ dataset = [
 sem = asyncio.Semaphore(2)
 
 # Agent setup with specified configuration
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, PersonSchema](
     config=BaseAgentConfig(
-        client=client, model="gpt-4o-mini", sysyem_prompt_generator=sysyem_prompt_generator, output_schema=PersonSchema  # type: ignore
+        client=client, 
+        model="gpt-4o-mini", 
+        sysyem_prompt_generator=sysyem_prompt_generator
     )
 )
 
@@ -85,22 +87,7 @@ async def process(dataset: list[str]):
     # Prompt the user for input with a styled prompt
     return responses
 
-
-async def main():
-    # Get input from the user
-    user_input_text = console.input("[bold blue]You:[/bold blue] ")
-    user_input = BaseAgentInputSchema(chat_message=user_input_text)
-
-    console.print("\n[bold green]Agent (streaming):[/bold green]")
-
-    # Use Live display to show the streaming response
-    with Live(auto_refresh=True, refresh_per_second=10) as live:
-        # Use run_async_stream instead of run_async for streaming functionality
-        async for partial_response in agent.run_async_stream(user_input):
-            # Display the partial response
-            if partial_response.chat_message:
-                live.update(Text(partial_response.chat_message))
-
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    responses = asyncio.run(process(dataset))
+    console.print(f"\n[bold green]Responses: {responses}[/bold green]")
+

@@ -60,7 +60,7 @@ class NutritionAnalysisOutput(BaseIOSchema):
 
 
 # Configure the nutrition analysis system
-nutrition_analyzer = BaseAgent(
+nutrition_analyzer = BaseAgent[NutritionAnalysisInput, NutritionAnalysisOutput](
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=API_KEY)),
         model="gpt-4o-mini",
@@ -86,8 +86,6 @@ nutrition_analyzer = BaseAgent(
                 "4. Include all extracted labels in the final result",
             ],
         ),
-        input_schema=NutritionAnalysisInput,
-        output_schema=NutritionAnalysisOutput,
     )
 )
 

@@ -179,7 +179,7 @@ class MyToolConfig(BaseToolConfig):
         description="API key for the service"
     )
 
-class MyTool(BaseTool):
+class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
     """Tool implementation"""
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema
