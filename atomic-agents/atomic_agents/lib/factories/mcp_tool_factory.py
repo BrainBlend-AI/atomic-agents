@@ -326,8 +326,9 @@ def create_mcp_orchestrator_schema(tools: List[Type[BaseTool]]) -> Optional[Type
     Returns:
         A Pydantic model class to be used as the output schema for an orchestrator agent
     """
-    factory = MCPToolFactory()
-    return factory.create_orchestrator_schema(tools)
+    # Bypass constructor validation since orchestrator schema does not require endpoint or session
+    factory = object.__new__(MCPToolFactory)
+    return MCPToolFactory.create_orchestrator_schema(factory, tools)
 
 
 def fetch_mcp_tools_with_schema(
