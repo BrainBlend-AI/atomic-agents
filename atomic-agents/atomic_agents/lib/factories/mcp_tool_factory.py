@@ -1,11 +1,10 @@
 import asyncio
-import typing
 import logging
-import json
 import random
 import datetime
-from typing import Any, Dict, List, Type, Optional, Union, NamedTuple, Tuple, Literal
+from typing import Any, Dict, List, Type, Optional, Union, Tuple, Literal, cast
 from contextlib import AsyncExitStack
+import shlex
 
 from pydantic import create_model, Field, BaseModel
 
@@ -15,17 +14,10 @@ from mcp.client.stdio import stdio_client
 
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool
+from atomic_agents.lib.factories.schema_transformer import SchemaTransformer
+from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService, MCPToolDefinition
 
 logger = logging.getLogger(__name__)
-
-JSON_TYPE_MAP = {
-    "string": str,
-    "number": float,
-    "integer": int,
-    "boolean": bool,
-    "array": list,
-    "object": dict,
-}
 
 
 class MCPToolOutputSchema(BaseIOSchema):
@@ -34,31 +26,13 @@ class MCPToolOutputSchema(BaseIOSchema):
     result: Any = Field(..., description="The result returned by the MCP tool.")
 
 
+# Keep these for backward compatibility - will be deprecated in future
 def _json_schema_to_pydantic_field(prop_schema: Dict[str, Any], required: bool) -> tuple:
-    json_type = prop_schema.get("type")
-    description = prop_schema.get("description")
-    default = prop_schema.get("default")
-    python_type: Any = Any
-    if json_type in JSON_TYPE_MAP:
-        python_type = JSON_TYPE_MAP[json_type]
-        if json_type == "array":
-            items_schema = prop_schema.get("items", {})
-            item_type_str = items_schema.get("type")
-            if item_type_str in JSON_TYPE_MAP:
-                python_type = List[JSON_TYPE_MAP[item_type_str]]
-            else:
-                python_type = List[Any]
-        elif json_type == "object":
-            python_type = Dict[str, Any]
-    field_kwargs = {"description": description}
-    if required:
-        field_kwargs["default"] = ...
-    elif default is not None:
-        field_kwargs["default"] = default
-    else:
-        python_type = Optional[python_type]
-        field_kwargs["default"] = None
-    return (python_type, Field(**field_kwargs))
+    """
+    Legacy function for backward compatibility.
+    Use SchemaTransformer.json_to_pydantic_field instead.
+    """
+    return SchemaTransformer.json_to_pydantic_field(prop_schema, required)
 
 
 def json_schema_to_pydantic_model(
@@ -68,185 +42,281 @@ def json_schema_to_pydantic_model(
     docstring: Optional[str] = None,
 ) -> Type[BaseIOSchema]:
     """
-    Dynamically creates a Pydantic model subclassing BaseIOSchema from a JSON schema dictionary.
-    Includes a 'tool_name' field with a Literal type matching the provided tool name.
+    Legacy function for backward compatibility.
+    Use SchemaTransformer.create_model_from_schema instead.
     """
-    fields = {}
-    required_fields = set(schema.get("required", []))
-    properties = schema.get("properties")
-    if properties:
-        for prop_name, prop_schema in properties.items():
-            is_required = prop_name in required_fields
-            fields[prop_name] = _json_schema_to_pydantic_field(prop_schema, is_required)
-    elif schema.get("type") == "object" and not properties:
-        pass
-    elif schema:
-        logger.warning(
-            f"Schema for {model_name} is not a typical object with properties. Fields might be empty beyond tool_name."
+    return SchemaTransformer.create_model_from_schema(schema, model_name, tool_name_literal, docstring)
+
+
+class MCPToolFactory:
+    """Factory for creating MCP tool classes."""
+
+    def __init__(
+        self,
+        mcp_endpoint: Optional[str] = None,
+        use_stdio: bool = False,
+        client_session: Optional[ClientSession] = None,
+        event_loop: Optional[asyncio.AbstractEventLoop] = None,
+        working_directory: Optional[str] = None,
+    ):
+        """
+        Initialize the factory.
+
+        Args:
+            mcp_endpoint: URL of the MCP server (for SSE) or the full command to run the server (for STDIO)
+            use_stdio: If True, use STDIO transport instead of SSE
+            client_session: Optional pre-initialized ClientSession for reuse
+            event_loop: Optional event loop for running asynchronous operations
+            working_directory: Optional working directory to use when running STDIO commands
+        """
+        self.mcp_endpoint = mcp_endpoint
+        self.use_stdio = use_stdio
+        self.client_session = client_session
+        self.event_loop = event_loop
+        self.schema_transformer = SchemaTransformer()
+        self.working_directory = working_directory
+
+        # Validate configuration
+        if client_session is not None and event_loop is None:
+            raise ValueError("When `client_session` is provided an `event_loop` must also be supplied.")
+        if not mcp_endpoint and client_session is None:
+            raise ValueError("`mcp_endpoint` must be provided when no `client_session` is supplied.")
+
+    def create_tools(self) -> List[Type[BaseTool]]:
+        """
+        Create tool classes from the configured endpoint or session.
+
+        Returns:
+            List of dynamically generated BaseTool subclasses
+        """
+        tool_definitions = self._fetch_tool_definitions()
+        if not tool_definitions:
+            return []
+
+        return self._create_tool_classes(tool_definitions)
+
+    def _fetch_tool_definitions(self) -> List[MCPToolDefinition]:
+        """
+        Fetch tool definitions using the appropriate method.
+
+        Returns:
+            List of tool definitions
+        """
+        try:
+            if self.client_session is not None:
+                # Use existing session
+                async def _gather_defs():
+                    return await ToolDefinitionService.fetch_definitions_from_session(self.client_session)  # pragma: no cover
+
+                return cast(asyncio.AbstractEventLoop, self.event_loop).run_until_complete(_gather_defs())  # pragma: no cover
+            else:
+                # Create new connection
+                service = ToolDefinitionService(self.mcp_endpoint, self.use_stdio, self.working_directory)
+                return asyncio.run(service.fetch_definitions())
+        except Exception as e:
+            # Let exceptions propagate - they're already logged in the service
+            raise
+
+    def _create_tool_classes(self, tool_definitions: List[MCPToolDefinition]) -> List[Type[BaseTool]]:
+        """
+        Create tool classes from definitions.
+
+        Args:
+            tool_definitions: List of tool definitions
+
+        Returns:
+            List of dynamically generated BaseTool subclasses
+        """
+        generated_tools = []
+
+        for definition in tool_definitions:
+            try:
+                tool_name = definition.name
+                tool_description = definition.description or f"Dynamically generated tool for MCP tool: {tool_name}"
+                input_schema_dict = definition.input_schema
+
+                # Create input schema
+                InputSchema = self.schema_transformer.create_model_from_schema(
+                    input_schema_dict,
+                    f"{tool_name}InputSchema",
+                    tool_name,
+                    f"Input schema for {tool_name}",
+                )
+
+                # Create output schema
+                OutputSchema = type(
+                    f"{tool_name}OutputSchema", (MCPToolOutputSchema,), {"__doc__": f"Output schema for {tool_name}"}
+                )
+
+                # Create run method
+                def run_tool_sync(self, params: InputSchema) -> OutputSchema:  # type: ignore
+                    bound_tool_name = self.mcp_tool_name
+                    bound_mcp_endpoint = self.mcp_endpoint  # May be None when using external session
+                    bound_use_stdio = self.use_stdio
+                    persistent_session: Optional[ClientSession] = getattr(self, "_client_session", None)
+                    loop: Optional[asyncio.AbstractEventLoop] = getattr(self, "_event_loop", None)
+                    bound_working_directory = getattr(self, "working_directory", None)
+
+                    # Get arguments, excluding tool_name
+                    arguments = params.model_dump(exclude={"tool_name"}, exclude_none=True)
+
+                    async def _connect_and_call():
+                        stack = AsyncExitStack()
+                        try:
+                            if bound_use_stdio:
+                                # Split the command string into the command and its arguments
+                                command_parts = shlex.split(bound_mcp_endpoint)
+                                if not command_parts:
+                                    raise ValueError("STDIO command string cannot be empty.")
+                                command = command_parts[0]
+                                args = command_parts[1:]
+                                logger.debug(f"Executing tool '{bound_tool_name}' via STDIO: command='{command}', args={args}")
+                                server_params = StdioServerParameters(
+                                    command=command, args=args, env=None, cwd=bound_working_directory
+                                )
+                                stdio_transport = await stack.enter_async_context(stdio_client(server_params))
+                                read_stream, write_stream = stdio_transport
+                            else:
+                                sse_endpoint = f"{bound_mcp_endpoint}/sse"
+                                logger.debug(f"Executing tool '{bound_tool_name}' via SSE: endpoint={sse_endpoint}")
+                                sse_transport = await stack.enter_async_context(sse_client(sse_endpoint))
+                                read_stream, write_stream = sse_transport
+
+                            session = await stack.enter_async_context(ClientSession(read_stream, write_stream))
+                            await session.initialize()
+
+                            # Ensure arguments is a dict, even if empty
+                            call_args = arguments if isinstance(arguments, dict) else {}
+                            tool_result = await session.call_tool(name=bound_tool_name, arguments=call_args)
+                            return tool_result
+                        finally:
+                            await stack.aclose()
+
+                    async def _call_with_persistent_session():
+                        if loop is None:  # pragma: no cover
+                            raise RuntimeError("No event loop provided for the persistent MCP session.")  # pragma: no cover
+                        if persistent_session is None:  # pragma: no cover
+                            raise RuntimeError("Tool was instantiated without a persistent MCP session.")  # pragma: no cover
+
+                        # Ensure arguments is a dict, even if empty
+                        call_args = arguments if isinstance(arguments, dict) else {}
+                        return await persistent_session.call_tool(name=bound_tool_name, arguments=call_args)
+
+                    try:
+                        if persistent_session is not None:
+                            # Use the always‑on session/loop supplied at construction time.
+                            tool_result = cast(asyncio.AbstractEventLoop, loop).run_until_complete(
+                                _call_with_persistent_session()
+                            )
+                        else:
+                            # Legacy behaviour – open a fresh connection per invocation.
+                            tool_result = asyncio.run(_connect_and_call())
+
+                        # Process the result
+                        if isinstance(tool_result, BaseModel) and hasattr(tool_result, "content"):
+                            actual_result_content = tool_result.content
+                        elif isinstance(tool_result, dict) and "content" in tool_result:
+                            actual_result_content = tool_result["content"]
+                        else:
+                            actual_result_content = tool_result
+
+                        return OutputSchema(result=actual_result_content)
+
+                    except Exception as e:
+                        logger.error(f"Error executing MCP tool '{bound_tool_name}': {e}", exc_info=True)
+                        raise RuntimeError(f"Failed to execute MCP tool '{bound_tool_name}': {e}") from e
+
+                # Create the tool class
+                tool_class = type(
+                    tool_name,
+                    (BaseTool,),
+                    {
+                        "input_schema": InputSchema,
+                        "output_schema": OutputSchema,
+                        "run": run_tool_sync,
+                        "__doc__": tool_description,
+                        "mcp_tool_name": tool_name,
+                        "mcp_endpoint": self.mcp_endpoint,
+                        "use_stdio": self.use_stdio,
+                        "_client_session": self.client_session,
+                        "_event_loop": self.event_loop,
+                        "working_directory": self.working_directory,
+                    },
+                )
+
+                generated_tools.append(tool_class)
+
+            except Exception as e:
+                logger.error(f"Error generating class for tool '{definition.name}': {e}", exc_info=True)
+                continue
+
+        return generated_tools
+
+    def create_orchestrator_schema(self, tools: List[Type[BaseTool]]) -> Optional[Type[BaseIOSchema]]:
+        """
+        Create an orchestrator schema for the given tools.
+
+        Args:
+            tools: List of tool classes
+
+        Returns:
+            Orchestrator schema or None if no tools provided
+        """
+        if not tools:
+            logger.warning("No tools provided to create orchestrator schema")
+            return None
+
+        tool_schemas = [ToolClass.input_schema for ToolClass in tools]
+        tool_names = [ToolClass.mcp_tool_name for ToolClass in tools]
+
+        # Create a Union of all tool input schemas
+        ToolParameterUnion = Union[tuple(tool_schemas)]
+
+        # Dynamically create the output schema
+        orchestrator_schema = create_model(
+            "MCPOrchestratorOutputSchema",
+            __doc__="Output schema for the MCP Orchestrator Agent. Contains the parameters for the selected tool.",
+            __base__=BaseIOSchema,
+            tool_parameters=(
+                ToolParameterUnion,
+                Field(
+                    ...,
+                    description="The parameters for the selected tool, matching its specific schema (which includes the 'tool_name').",
+                ),
+            ),
         )
 
-    fields["tool_name"] = (
-        Literal[tool_name_literal],
-        Field(..., description=f"Required identifier for the {tool_name_literal} tool."),
-    )
-
-    model = create_model(
-        model_name,
-        __base__=BaseIOSchema,
-        __doc__=docstring or f"Dynamically generated Pydantic model for {model_name}",
-        **fields,
-    )
-    return model
+        return orchestrator_schema
 
 
-class MCPToolDefinition(NamedTuple):
-    name: str
-    description: Optional[str]
-    input_schema: Dict[str, Any]
+# Public API functions - these maintain backward compatibility
 
 
-async def _fetch_tool_definitions_async(server_url: str, use_stdio: bool = False) -> List[MCPToolDefinition]:
-    definitions = []
-    stack = AsyncExitStack()
-    try:
-        if use_stdio:
-            # Determine if it's a Python or JavaScript server
-            is_python = server_url.endswith(".py")
-            is_js = server_url.endswith(".js")
-            if not (is_python or is_js):
-                raise ValueError("Server script must be a .py or .js file")
-
-            command = "python" if is_python else "node"
-            server_params = StdioServerParameters(command=command, args=[server_url], env=None)
-            stdio_transport = await stack.enter_async_context(stdio_client(server_params))
-            read_stream, write_stream = stdio_transport
-        else:
-            sse_transport = await stack.enter_async_context(sse_client(f"{server_url}/sse"))
-            read_stream, write_stream = sse_transport
-
-        session = await stack.enter_async_context(ClientSession(read_stream, write_stream))
-        await session.initialize()
-        response = await session.list_tools()
-        for mcp_tool in response.tools:
-            definitions.append(
-                MCPToolDefinition(
-                    name=mcp_tool.name,
-                    description=mcp_tool.description,
-                    input_schema=mcp_tool.inputSchema or {"type": "object", "properties": {}},
-                )
-            )
-        if not definitions:
-            logger.warning(f"No tool definitions found on MCP server at {server_url}")
-            return []
-        logger.info(f"Successfully retrieved {len(definitions)} tool definitions from {server_url}")
-    except ConnectionError as e:
-        logger.error(f"Error fetching MCP tool definitions from {server_url}: {e}", exc_info=True)
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error fetching MCP tool definitions: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error during tool definition fetching: {e}") from e
-    finally:
-        await stack.aclose()
-    return definitions
-
-
-def fetch_mcp_tools(server_url: str, use_stdio: bool = False) -> List[Type[BaseTool]]:
+def fetch_mcp_tools(
+    mcp_endpoint: Optional[str] = None,
+    use_stdio: bool = False,
+    *,
+    client_session: Optional[ClientSession] = None,
+    event_loop: Optional[asyncio.AbstractEventLoop] = None,
+    working_directory: Optional[str] = None,
+) -> List[Type[BaseTool]]:
     """
     Connects to an MCP server via SSE or STDIO, discovers tool definitions, and dynamically generates
     synchronous Atomic Agents compatible BaseTool subclasses for each tool.
     Each generated tool will establish its own connection when its `run` method is called.
 
     Args:
-        server_url: URL of the MCP server (for SSE) or path to the server script (for STDIO)
-        use_stdio: If True, use STDIO transport instead of SSE
+        mcp_endpoint: URL of the MCP server (for SSE) or the full command string to run the server (for STDIO).
+        use_stdio: If True, use STDIO transport instead of SSE.
+        client_session: Optional pre-initialized ClientSession for reuse.
+        event_loop: Optional event loop for running asynchronous operations.
+        working_directory: Optional working directory to use when running STDIO commands.
     """
-    generated_tools = []
-    tool_definitions: List[MCPToolDefinition] = []
-    try:
-        tool_definitions = asyncio.run(_fetch_tool_definitions_async(server_url, use_stdio))
-        if not tool_definitions:
-            logger.warning(f"No tool definitions found on MCP server at {server_url}")
-            return []
-        logger.info(f"Successfully retrieved {len(tool_definitions)} tool definitions from {server_url}")
-    except ConnectionError as e:
-        logger.error(f"Error fetching MCP tool definitions from {server_url}: {e}", exc_info=True)
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error fetching MCP tool definitions: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error during tool definition fetching: {e}") from e
-    for definition in tool_definitions:
-        try:
-            tool_name = definition.name
-            tool_description = definition.description or f"Dynamically generated tool for MCP tool: {tool_name}"
-            input_schema_dict = definition.input_schema
-            InputSchema = json_schema_to_pydantic_model(
-                input_schema_dict,
-                f"{tool_name}InputSchema",
-                tool_name,
-                f"Input schema for {tool_name}",
-            )
-            OutputSchema = type(
-                f"{tool_name}OutputSchema", (MCPToolOutputSchema,), {"__doc__": f"Output schema for {tool_name}"}
-            )
-
-            def run_tool_sync(self, params: InputSchema) -> OutputSchema:
-                bound_tool_name = self.mcp_tool_name
-                bound_server_url = self.server_url
-                bound_use_stdio = self.use_stdio
-                arguments = params.model_dump(exclude_none=True)
-
-                async def _connect_and_call():
-                    stack = AsyncExitStack()
-                    try:
-                        if bound_use_stdio:
-                            is_python = bound_server_url.endswith(".py")
-                            is_js = bound_server_url.endswith(".js")
-                            if not (is_python or is_js):
-                                raise ValueError("Server script must be a .py or .js file")
-
-                            command = "python" if is_python else "node"
-                            server_params = StdioServerParameters(command=command, args=[bound_server_url], env=None)
-                            stdio_transport = await stack.enter_async_context(stdio_client(server_params))
-                            read_stream, write_stream = stdio_transport
-                        else:
-                            sse_transport = await stack.enter_async_context(sse_client(f"{bound_server_url}/sse"))
-                            read_stream, write_stream = sse_transport
-
-                        session = await stack.enter_async_context(ClientSession(read_stream, write_stream))
-                        await session.initialize()
-                        tool_result = await session.call_tool(name=bound_tool_name, arguments=arguments)
-                        return tool_result
-                    finally:
-                        await stack.aclose()
-
-                try:
-                    tool_result = asyncio.run(_connect_and_call())
-                    return OutputSchema(result=tool_result)
-                except Exception as e:
-                    logger.error(f"Error executing MCP tool '{bound_tool_name}' via connect-per-call: {e}", exc_info=True)
-                    raise RuntimeError(f"Failed to execute MCP tool '{bound_tool_name}': {e}") from e
-
-            tool_class = type(
-                tool_name,
-                (BaseTool,),
-                {
-                    "input_schema": InputSchema,
-                    "output_schema": OutputSchema,
-                    "run": run_tool_sync,
-                    "__doc__": tool_description,
-                    "mcp_tool_name": tool_name,
-                    "server_url": server_url,
-                    "use_stdio": use_stdio,
-                },
-            )
-            generated_tools.append(tool_class)
-        except Exception as e:
-            logger.error(f"Error generating class for tool '{definition.name}': {e}", exc_info=True)
-            continue
-    return generated_tools
+    factory = MCPToolFactory(mcp_endpoint, use_stdio, client_session, event_loop, working_directory)
+    return factory.create_tools()
 
 
-def create_mcp_orchestrator_schema(tools: List[Type[BaseTool]]) -> Type[BaseIOSchema]:
+def create_mcp_orchestrator_schema(tools: List[Type[BaseTool]]) -> Optional[Type[BaseIOSchema]]:
     """
     Creates a schema for the MCP Orchestrator's output using the Union of all tool input schemas.
 
@@ -256,154 +326,37 @@ def create_mcp_orchestrator_schema(tools: List[Type[BaseTool]]) -> Type[BaseIOSc
     Returns:
         A Pydantic model class to be used as the output schema for an orchestrator agent
     """
-    if not tools:
-        logger.warning("No tools provided to create orchestrator schema")
-        return None
-
-    tool_schemas = [ToolClass.input_schema for ToolClass in tools]
-    tool_names = [ToolClass.mcp_tool_name for ToolClass in tools]
-
-    # Create a Union of all tool input schemas
-    ToolParameterUnion = Union[tuple(tool_schemas)]
-
-    # Dynamically create the output schema
-    orchestrator_schema = create_model(
-        "MCPOrchestratorOutputSchema",
-        __doc__="Output schema for the MCP Orchestrator Agent. Contains the selected tool name and its parameters.",
-        __base__=BaseIOSchema,
-        tool_name=(str, Field(..., description=f"The name of the selected MCP tool. Must be one of: {tool_names}")),
-        tool_parameters=(
-            ToolParameterUnion,
-            Field(..., description="The parameters for the selected tool, matching its specific schema."),
-        ),
-    )
-
-    return orchestrator_schema
+    factory = MCPToolFactory()
+    return factory.create_orchestrator_schema(tools)
 
 
-def fetch_mcp_tools_with_schema(server_url: str, use_stdio: bool = False) -> Tuple[List[Type[BaseTool]], Type[BaseIOSchema]]:
+def fetch_mcp_tools_with_schema(
+    mcp_endpoint: Optional[str] = None,
+    use_stdio: bool = False,
+    *,
+    client_session: Optional[ClientSession] = None,
+    event_loop: Optional[asyncio.AbstractEventLoop] = None,
+    working_directory: Optional[str] = None,
+) -> Tuple[List[Type[BaseTool]], Optional[Type[BaseIOSchema]]]:
     """
     Fetches MCP tools and creates an orchestrator schema for them. Returns both as a tuple.
 
     Args:
-        server_url: URL of the MCP server (for SSE) or path to the server script (for STDIO)
-        use_stdio: If True, use STDIO transport instead of SSE
+        mcp_endpoint: URL of the MCP server (for SSE) or the full command string to run the server (for STDIO).
+        use_stdio: If True, use STDIO transport instead of SSE.
+        client_session: Optional pre-initialized ClientSession for reuse.
+        event_loop: Optional event loop for running asynchronous operations.
+        working_directory: Optional working directory to use when running STDIO commands.
 
     Returns:
         A tuple containing:
         - List of dynamically generated tool classes
-        - Orchestrator output schema with Union of tool input schemas
+        - Orchestrator output schema with Union of tool input schemas, or None if no tools found.
     """
-    tools = fetch_mcp_tools(server_url, use_stdio)
+    factory = MCPToolFactory(mcp_endpoint, use_stdio, client_session, event_loop, working_directory)
+    tools = factory.create_tools()
     if not tools:
         return [], None
 
-    orchestrator_schema = create_mcp_orchestrator_schema(tools)
+    orchestrator_schema = factory.create_orchestrator_schema(tools)
     return tools, orchestrator_schema
-
-
-if __name__ == "__main__":
-    # Example usage with both SSE and STDIO
-    MCP_SERVER_URL = "http://localhost:6969"
-    # MCP_STDIO_SERVER_PATH = "atomic-examples/mcp-agent/example-mcp-server/example_mcp_server/server_stdio.py"
-
-    # Moved function definition inside the main block
-    def generate_input_for_tool(tool_name: str, input_schema: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Generate appropriate input based on the tool name and input schema dictionary.
-        This function creates sensible inputs for different tool types based on name
-        or falls back to generic generation based on the schema types.
-        """
-        result = {}
-        properties = input_schema.get("properties", {})
-        if tool_name == "AddNumbers":
-            result = {"number1": random.randint(1, 100), "number2": random.randint(1, 100)}
-        elif tool_name == "DateDifference":
-            today = datetime.date.today()
-            days_diff = random.randint(1, 30)
-            date1 = today - datetime.timedelta(days=days_diff)
-            date2 = today
-            result = {"date1": date1.isoformat(), "date2": date2.isoformat()}
-        elif tool_name == "ReverseString":
-            words = ["hello", "world", "testing", "reverse", "string", "tool"]
-            result = {"text_to_reverse": random.choice(words)}
-        elif tool_name == "RandomNumber":
-            min_val = random.randint(0, 50)
-            max_val = random.randint(min_val + 10, min_val + 100)
-            result = {"min_value": min_val, "max_value": max_val}
-        elif tool_name == "CurrentTime":
-            result = {}
-        else:
-            if properties:
-                for prop_name, prop_schema in properties.items():
-                    prop_type = prop_schema.get("type")
-                    if prop_type == "string":
-                        result[prop_name] = f"random_string_{random.randint(1, 1000)}"
-                    elif prop_type == "number" or prop_type == "integer":
-                        result[prop_name] = random.randint(1, 100)
-                    elif prop_type == "boolean":
-                        result[prop_name] = random.choice([True, False])
-                    elif prop_type == "array":
-                        result[prop_name] = []
-                        if random.choice([True, False]):
-                            item_type = prop_schema.get("items", {}).get("type", "string")
-                            if item_type == "string":
-                                result[prop_name].append(f"item_{random.randint(1, 100)}")
-                            elif item_type == "number" or item_type == "integer":
-                                result[prop_name].append(random.randint(1, 100))
-                            elif item_type == "boolean":
-                                result[prop_name].append(random.choice([True, False]))
-                    elif prop_type == "object":
-                        result[prop_name] = {}
-        return result
-
-    # Fetch MCP tools via SSE
-    dynamic_tools_sse, orchestrator_schema_sse = fetch_mcp_tools_with_schema(MCP_SERVER_URL)
-
-    # Fetch MCP tools via STDIO
-    # dynamic_tools_stdio, orchestrator_schema_stdio = fetch_mcp_tools_with_schema(MCP_STDIO_SERVER_PATH, use_stdio=True)
-
-    # Test individual tools from both transports
-    print("\n=== Testing SSE Tools ===")
-    for ToolClass in dynamic_tools_sse:
-        tool = ToolClass()
-        tool_name = tool.mcp_tool_name
-        input_schema_dict = tool.input_schema.model_json_schema()
-        input_args = generate_input_for_tool(tool_name, input_schema_dict)
-        input_data = tool.input_schema(**input_args) if input_args else tool.input_schema()
-        print(f"\n--- {tool_name} ---")
-        print("Input:", input_data.model_dump())
-        output = tool.run(input_data)
-        print("Output:", output.result)
-
-    # print("\n=== Testing STDIO Tools ===")
-    # for ToolClass in dynamic_tools_stdio:
-    #     tool = ToolClass()
-    #     tool_name = tool.mcp_tool_name
-    #     input_schema_dict = tool.input_schema.model_json_schema()
-    #     input_args = generate_input_for_tool(tool_name, input_schema_dict)
-    #     input_data = tool.input_schema(**input_args) if input_args else tool.input_schema()
-    #     print(f"\n--- {tool_name} ---")
-    #     print("Input:", input_data.model_dump())
-    #     output = tool.run(input_data)
-    #     print("Output:", output.result)
-
-    # Display orchestrator schema
-    print("\n=== Orchestrator Schema ===")
-    if orchestrator_schema_sse:
-        print(f"Schema: {orchestrator_schema_sse.__name__}")
-        print(f"Documentation: {orchestrator_schema_sse.__doc__}")
-        print("Fields:")
-        for field_name, field in orchestrator_schema_sse.model_fields.items():
-            print(f"  - {field_name}: {field.annotation}")
-    else:
-        print("No orchestrator schema generated (no tools found)")
-
-    # if orchestrator_schema_stdio:
-    #     print(f"Schema: {orchestrator_schema_stdio.__name__}")
-    #     print(f"Documentation: {orchestrator_schema_stdio.__doc__}")
-    #     print("Fields:")
-    #     for field_name, field in orchestrator_schema_stdio.model_fields.items():
-    #         print(f"  - {field_name}: {field.annotation}")
-    # else:
-    #     print("No orchestrator schema generated (no tools found)")

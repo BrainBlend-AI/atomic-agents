@@ -15,21 +15,16 @@ from example_mcp_server.services.tool_service import ToolService
 from example_mcp_server.services.resource_service import ResourceService
 from example_mcp_server.interfaces.tool import Tool
 from example_mcp_server.interfaces.resource import Resource
-from example_mcp_server.tools import (
-    AdditionTool,
-    SubtractionTool,
-    MultiplicationTool,
-    DivisionTool,
-)
+from example_mcp_server.tools import AddNumbersTool, SubtractNumbersTool, MultiplyNumbersTool, DivideNumbersTool
 
 
 def get_available_tools() -> List[Tool]:
     """Get list of all available tools."""
     return [
-        AdditionTool(),
-        SubtractionTool(),
-        MultiplicationTool(),
-        DivisionTool(),
+        AddNumbersTool(),
+        SubtractNumbersTool(),
+        MultiplyNumbersTool(),
+        DivideNumbersTool(),
     ]
 
 
