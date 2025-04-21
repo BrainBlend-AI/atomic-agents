@@ -1,8 +1,8 @@
 """Interfaces for tool abstractions."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, ClassVar, Type, get_type_hints, Union, Generic, TypeVar
-from pydantic import BaseModel, Field, create_model
+from typing import Any, Dict, List, Optional, ClassVar, Type, TypeVar
+from pydantic import BaseModel, Field
 
 # Define a type variable for generic model support
 T = TypeVar("T", bound=BaseModel)

@@ -7,7 +7,7 @@ from starlette.requests import Request
 from starlette.routing import Mount, Route
 from mcp.server import Server
 import uvicorn
-from typing import List, Dict, Any
+from typing import List
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 

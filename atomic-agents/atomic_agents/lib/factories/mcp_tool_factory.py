@@ -1,8 +1,6 @@
 import asyncio
 import logging
-import random
-import datetime
-from typing import Any, Dict, List, Type, Optional, Union, Tuple, Literal, cast
+from typing import Any, Dict, List, Type, Optional, Union, Tuple, cast
 from contextlib import AsyncExitStack
 import shlex
 
@@ -113,7 +111,7 @@ class MCPToolFactory:
                 # Create new connection
                 service = ToolDefinitionService(self.mcp_endpoint, self.use_stdio, self.working_directory)
                 return asyncio.run(service.fetch_definitions())
-        except Exception as e:
+        except Exception:
             # Let exceptions propagate - they're already logged in the service
             raise
 
@@ -267,7 +265,6 @@ class MCPToolFactory:
             return None
 
         tool_schemas = [ToolClass.input_schema for ToolClass in tools]
-        tool_names = [ToolClass.mcp_tool_name for ToolClass in tools]
 
         # Create a Union of all tool input schemas
         ToolParameterUnion = Union[tuple(tool_schemas)]

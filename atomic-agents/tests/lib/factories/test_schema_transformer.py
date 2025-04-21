@@ -1,6 +1,5 @@
 import pytest
-from pydantic import Field
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.factories.schema_transformer import SchemaTransformer

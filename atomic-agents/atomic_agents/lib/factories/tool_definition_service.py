@@ -1,6 +1,5 @@
 """Module for fetching tool definitions from MCP endpoints."""
 
-import asyncio
 import logging
 import shlex
 from contextlib import AsyncExitStack
@@ -116,7 +115,7 @@ class ToolDefinitionService:
                 )
 
             if not definitions:
-                logger.warning(f"No tool definitions found on MCP server")
+                logger.warning("No tool definitions found on MCP server")
 
         except Exception as e:
             logger.error("Failed to list tools via MCP session: %s", e, exc_info=True)

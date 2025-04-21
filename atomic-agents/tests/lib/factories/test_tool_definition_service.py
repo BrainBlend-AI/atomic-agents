@@ -1,8 +1,5 @@
-import asyncio
 import pytest
-import shlex
 from unittest.mock import AsyncMock, MagicMock, patch
-import logging
 
 from atomic_agents.lib.factories.tool_definition_service import (
     ToolDefinitionService,

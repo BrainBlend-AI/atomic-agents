@@ -1,10 +1,10 @@
 """Tool for adding two numbers."""
 
-from typing import Optional, Dict, Any, Union
+from typing import Dict, Any, Union
 
 from pydantic import Field, BaseModel, ConfigDict
 
-from ..interfaces.tool import Tool, BaseToolInput, ToolResponse, ToolContent
+from ..interfaces.tool import Tool, BaseToolInput, ToolResponse
 
 
 class AddNumbersInput(BaseToolInput):

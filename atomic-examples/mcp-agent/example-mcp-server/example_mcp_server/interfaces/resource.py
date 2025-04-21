@@ -1,7 +1,7 @@
 """Interfaces for resource abstractions."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, ClassVar, Type
+from typing import List, Optional, ClassVar
 from pydantic import BaseModel, Field
 
 

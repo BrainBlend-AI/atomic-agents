@@ -1,9 +1,8 @@
 """Service layer for managing tools."""
 
-from typing import Dict, List, Any, Type, cast, Optional
-import json
+from typing import Dict, List, Any
 from mcp.server.fastmcp import FastMCP
-from example_mcp_server.interfaces.tool import Tool, ToolResponse, BaseToolInput, ToolContent
+from example_mcp_server.interfaces.tool import Tool, ToolResponse, ToolContent
 from pydantic import Field
 
 

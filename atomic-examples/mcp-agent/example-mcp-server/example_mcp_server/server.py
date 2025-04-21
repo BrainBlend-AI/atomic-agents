@@ -2,7 +2,6 @@
 
 import argparse
 import sys
-from typing import Literal
 
 
 def main():

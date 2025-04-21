@@ -253,7 +253,7 @@ async def test_tools_with_client(client: MCPClient, console: Console, connection
                     console.print(Syntax(json.dumps(result, indent=2), "json"))
                 else:
                     console.print(str(result))
-            except:
+            except Exception:
                 console.print(str(result))
 
 

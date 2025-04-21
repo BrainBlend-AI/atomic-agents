@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from pydantic import BaseModel
 from atomic_agents.lib.factories.mcp_tool_factory import (
     fetch_mcp_tools,
@@ -9,7 +8,7 @@ from atomic_agents.lib.factories.mcp_tool_factory import (
     json_schema_to_pydantic_model,
     _json_schema_to_pydantic_field,
 )
-from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition, ToolDefinitionService
+from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 
@@ -189,14 +188,12 @@ def test_run_tool(monkeypatch, use_stdio):
 
 def test_run_tool_with_persistent_session(monkeypatch):
     import atomic_agents.lib.factories.mcp_tool_factory as mtf
-    import asyncio
 
     # Setup persistent client
     class DummySessionPersistent:
         async def call_tool(self, name, arguments):
             return {"content": "persist-ok"}
 
-    loop = asyncio.new_event_loop()
     client = DummySessionPersistent()
     # Stub definition fetch for persistent
     definitions = [
@@ -208,7 +205,7 @@ def test_run_tool_with_persistent_session(monkeypatch):
 
     monkeypatch.setattr(mtf.ToolDefinitionService, "fetch_definitions_from_session", staticmethod(fake_fetch_defs))
     # Fetch with persistent session
-    tools = fetch_mcp_tools(None, False, client_session=client, event_loop=loop)
+    tools = fetch_mcp_tools(None, False, client_session=client, event_loop=None)
     tool_cls = tools[0]
     inst = tool_cls()
     result = inst.run(tool_cls.input_schema(tool_name="ToolB"))
@@ -217,14 +214,14 @@ def test_run_tool_with_persistent_session(monkeypatch):
 
 def test_fetch_tool_definitions_via_service(monkeypatch):
     from atomic_agents.lib.factories.mcp_tool_factory import MCPToolFactory
-    from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService, MCPToolDefinition
+    from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition
 
     defs = [MCPToolDefinition(name="X", description="d", input_schema={"type": "object", "properties": {}, "required": []})]
 
     async def fake_fetch(self):
         return defs
 
-    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch)
+    monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", fake_fetch)
     factory_http = MCPToolFactory("http://e", False)
     assert factory_http._fetch_tool_definitions() == defs
     factory_stdio = MCPToolFactory("http://e", True, working_directory="/tmp")
@@ -233,12 +230,11 @@ def test_fetch_tool_definitions_via_service(monkeypatch):
 
 def test_fetch_tool_definitions_propagates_error(monkeypatch):
     from atomic_agents.lib.factories.mcp_tool_factory import MCPToolFactory
-    from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService
 
     async def fake_fetch(self):
         raise RuntimeError("nope")
 
-    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch)
+    monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", fake_fetch)
     factory = MCPToolFactory("http://e", False)
     with pytest.raises(RuntimeError):
         factory._fetch_tool_definitions()

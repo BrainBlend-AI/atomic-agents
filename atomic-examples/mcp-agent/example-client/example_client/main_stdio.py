@@ -114,7 +114,6 @@ class OrchestratorOutputSchema(BaseIOSchema):
 
 # 3. Main logic and script entry point
 def main():
-    global stdio_session, stdio_loop, stdio_exit_stack  # Ensure access if cleanup is needed
     try:
         console.print("[bold green]Initializing MCP Agent System (STDIO mode)...[/bold green]")
         # Display available tools
@@ -136,9 +135,12 @@ def main():
                 memory=memory,
                 system_prompt_generator=SystemPromptGenerator(
                     background=[
-                        "You are an MCP Orchestrator Agent, designed to intelligently route user queries to appropriate tools or provide direct responses.",
-                        "Your primary responsibility is to analyze user queries and determine the most effective way to handle them using the available tools.",
-                        "You have access to a variety of specialized tools, each with specific capabilities and input requirements.",
+                        "You are an MCP Orchestrator Agent, designed to intelligently route user queries to appropriate "
+                        "tools or provide direct responses.",
+                        "Your primary responsibility is to analyze user queries and determine the most effective way to "
+                        "handle them using the available tools.",
+                        "You have access to a variety of specialized tools, each with specific capabilities and "
+                        "input requirements.",
                     ],
                     steps=[
                         "1. Carefully analyze the user's query to understand their intent and requirements.",
@@ -151,7 +153,10 @@ def main():
                         "Choose exactly one action schema that best matches the user's needs.",
                         "Ensure all required parameters are properly extracted and validated.",
                         "Maintain a professional and helpful tone in all responses.",
-                        "If applicable, it is important to break down the user's query into smaller, more manageable tasks and route them to the appropriate tool before responding with a final response.",
+                        (
+                            "If applicable, it is important to break down the user's query into smaller, more manageable "
+                            "tasks and route them to the appropriate tool before responding with a final response."
+                        ),
                     ],
                 ),
                 input_schema=MCPOrchestratorInputSchema,
@@ -180,11 +185,11 @@ def main():
                     schema_type = type(action_instance)
                     ToolClass = tool_schema_to_class_map.get(schema_type)
                     if not ToolClass:
-                        raise ValueError(f"Unknown schema type '{schema_type.__name__}' returned by orchestrator")
+                        raise ValueError(f"Unknown schema type '" f"{schema_type.__name__}" f"' returned by orchestrator")
 
                     tool_name = ToolClass.mcp_tool_name
                     console.print(f"[blue]Executing tool:[/blue] {tool_name}")
-                    console.print(f"[dim]Parameters:[/dim] {action_instance.model_dump()}")
+                    console.print(f"[dim]Parameters:[/dim] " f"{action_instance.model_dump()}")
 
                     tool_instance = ToolClass()
                     # The persistent session/loop are already part of the ToolClass definition
@@ -193,7 +198,7 @@ def main():
 
                     # Add tool result to agent memory
                     result_message = MCPOrchestratorInputSchema(
-                        query=f"Tool {tool_name} executed with result: {tool_output.result}"
+                        query=(f"Tool {tool_name} executed with result: " f"{tool_output.result}")
                     )
                     orchestrator_agent.memory.add_message("system", result_message)
 

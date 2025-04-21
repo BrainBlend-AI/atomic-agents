@@ -1,7 +1,7 @@
 """example-mcp-server MCP Server implementation."""
 
 from mcp.server.fastmcp import FastMCP
-from typing import List, Dict, Any
+from typing import List
 
 from example_mcp_server.services.tool_service import ToolService
 from example_mcp_server.services.resource_service import ResourceService

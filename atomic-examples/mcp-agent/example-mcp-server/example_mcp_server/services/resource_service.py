@@ -1,8 +1,7 @@
 """Service layer for managing resources."""
 
-from typing import Dict, List, Any, Set
+from typing import Dict, List
 import re
-import inspect
 from mcp.server.fastmcp import FastMCP
 from example_mcp_server.interfaces.resource import Resource, ResourceResponse
 
@@ -50,7 +49,6 @@ class ResourceService:
             match = re.match(regex_pattern, uri)
             if match:
                 # Found a matching pattern, extract parameters
-                params = match.groupdict()
                 # Cache the resource with the specific URI for future lookups
                 self._resources[uri] = resource
                 return resource
