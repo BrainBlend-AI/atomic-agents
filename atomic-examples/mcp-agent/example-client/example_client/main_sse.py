@@ -19,7 +19,12 @@ class MCPConfig:
     """Configuration for the MCP Agent system using SSE transport."""
 
     mcp_server_url: str = "http://localhost:6969"
-    openai_model: str = "gpt-4o-mini"
+
+    # NOTE: In contrast to other examples, we use gpt-4o and not gpt-4o-mini here.
+    # In my tests, gpt-4o-mini was not smart enough to deal with multiple tools like that
+    # and at the moment MCP does not yet allow for adding sufficient metadata to
+    # clarify tools even more and introduce more constraints.
+    openai_model: str = "gpt-4o"
     openai_api_key: str = os.getenv("OPENAI_API_KEY")
 
     def __post_init__(self):
@@ -101,28 +106,21 @@ def main():
                 memory=memory,
                 system_prompt_generator=SystemPromptGenerator(
                     background=[
-                        "You are an MCP Orchestrator Agent, designed to intelligently route user queries to appropriate "
-                        "tools or provide direct responses.",
-                        "Your primary responsibility is to analyze user queries and determine the most effective way to "
-                        "handle them using the available tools.",
-                        "You have access to a variety of specialized tools, each with specific capabilities and "
-                        "input requirements.",
+                        "You are an MCP Orchestrator Agent, designed to chat with users and",
+                        "determine the best way to handle their queries using the available tools.",
                     ],
                     steps=[
-                        "1. Carefully analyze the user's query to understand their intent and requirements.",
-                        "2. Evaluate whether the query can be handled by an available tool or requires a direct response.",
-                        "3. If using a tool: Extract and validate all necessary parameters from the query.",
-                        "4. If providing a direct response: Formulate a clear, helpful response that addresses the query.",
+                        "1. Use the reasoning field to determine if one or more successive tool calls could be used to handle the user's query.",
+                        "2. If so, choose the appropriate tool(s) one at a time and extract all necessary parameters from the query.",
+                        "3. If a single tool can not be used to handle the user's query, think about how to break down the query into smaller tasks and route them to the appropriate tool(s).",
+                        "4. If no sequence of tools could be used, or if you are finished processing the user's query, provide a final response to the user.",
                     ],
                     output_instructions=[
-                        "Always provide a detailed explanation of your decision-making process in the 'reasoning' field.",
-                        "Choose exactly one action schema that best matches the user's needs.",
-                        "Ensure all required parameters are properly extracted and validated.",
-                        "Maintain a professional and helpful tone in all responses.",
-                        (
-                            "If applicable, it is important to break down the user's query into smaller, more manageable "
-                            "tasks and route them to the appropriate tool before responding with a final response."
-                        ),
+                        "1. Always provide a detailed explanation of your decision-making process in the 'reasoning' field.",
+                        "2. Choose exactly one action schema (either a tool input or FinalResponseSchema).",
+                        "3. Ensure all required parameters for the chosen tool are properly extracted and validated.",
+                        "4. Maintain a professional and helpful tone in all responses.",
+                        "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
                     ],
                 ),
                 input_schema=MCPOrchestratorInputSchema,
