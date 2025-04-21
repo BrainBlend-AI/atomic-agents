@@ -26,6 +26,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.syntax import Syntax
 
+
 class MCPClient:
     """A simple client that can connect to MCP servers using either STDIO or SSE transport."""
 
@@ -42,8 +43,8 @@ class MCPClient:
         """
         try:
             # Determine script type (Python or JavaScript)
-            is_python = server_script_path.endswith('.py')
-            is_js = server_script_path.endswith('.js')
+            is_python = server_script_path.endswith(".py")
+            is_js = server_script_path.endswith(".js")
 
             if not (is_python or is_js):
                 raise ValueError("Server script must be a .py or .js file")
@@ -51,20 +52,14 @@ class MCPClient:
             command = "python" if is_python else "node"
 
             # Set up STDIO transport
-            server_params = StdioServerParameters(
-                command=command,
-                args=[server_script_path],
-                env=None
-            )
+            server_params = StdioServerParameters(command=command, args=[server_script_path], env=None)
 
             # Connect to the server
             stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
             read_stream, write_stream = stdio_transport
 
             # Initialize the session
-            self.session = await self.exit_stack.enter_async_context(
-                ClientSession(read_stream, write_stream)
-            )
+            self.session = await self.exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
             await self.session.initialize()
             self.transport_type = "stdio"
 
@@ -84,9 +79,7 @@ class MCPClient:
             read_stream, write_stream = sse_transport
 
             # Initialize the session
-            self.session = await self.exit_stack.enter_async_context(
-                ClientSession(read_stream, write_stream)
-            )
+            self.session = await self.exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
             await self.session.initialize()
             self.transport_type = "sse"
 
@@ -133,32 +126,21 @@ def generate_input_for_tool(tool_name: str, input_schema: Dict[str, Any]) -> Dic
 
     # Special handling for known tool types
     if tool_name == "AddNumbers":
-        result = {
-            "number1": random.randint(1, 100),
-            "number2": random.randint(1, 100)
-        }
+        result = {"number1": random.randint(1, 100), "number2": random.randint(1, 100)}
     elif tool_name == "DateDifference":
         # Generate two dates with a reasonable difference
         today = datetime.date.today()
         days_diff = random.randint(1, 30)
         date1 = today - datetime.timedelta(days=days_diff)
         date2 = today
-        result = {
-            "date1": date1.isoformat(),
-            "date2": date2.isoformat()
-        }
+        result = {"date1": date1.isoformat(), "date2": date2.isoformat()}
     elif tool_name == "ReverseString":
         words = ["hello", "world", "testing", "reverse", "string", "tool"]
-        result = {
-            "text_to_reverse": random.choice(words)
-        }
+        result = {"text_to_reverse": random.choice(words)}
     elif tool_name == "RandomNumber":
         min_val = random.randint(0, 50)
         max_val = random.randint(min_val + 10, min_val + 100)
-        result = {
-            "min_value": min_val,
-            "max_value": max_val
-        }
+        result = {"min_value": min_val, "max_value": max_val}
     elif tool_name == "CurrentTime":
         # This tool doesn't need any input
         result = {}
@@ -237,11 +219,7 @@ async def test_tools_with_client(client: MCPClient, console: Console, connection
     for tool in response.tools:
         parameters = format_parameter_info(tool.inputSchema)
 
-        table.add_row(
-            tool.name,
-            tool.description or "No description available",
-            parameters
-        )
+        table.add_row(tool.name, tool.description or "No description available", parameters)
 
     console.print(table)
 

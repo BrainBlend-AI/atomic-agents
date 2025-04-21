@@ -1,4 +1,5 @@
 """Service layer for managing tools."""
+
 from typing import Dict, List, Any, Type, cast, Optional
 import json
 from mcp.server.fastmcp import FastMCP
@@ -127,7 +128,4 @@ class ToolService:
             handler = namespace[tool.name]
 
             # Register the handler
-            mcp.tool(
-                name=tool.name,
-                description=tool.description
-            )(handler)
+            mcp.tool(name=tool.name, description=tool.description)(handler)

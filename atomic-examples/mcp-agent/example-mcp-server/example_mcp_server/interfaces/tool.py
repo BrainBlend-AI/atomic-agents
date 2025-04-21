@@ -1,18 +1,22 @@
 """Interfaces for tool abstractions."""
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, ClassVar, Type, get_type_hints, Union, Generic, TypeVar
 from pydantic import BaseModel, Field, create_model
 
 # Define a type variable for generic model support
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
+
 
 class BaseToolInput(BaseModel):
     """Base class for tool input models."""
+
     model_config = {"extra": "forbid"}  # Equivalent to additionalProperties: false
 
 
 class ToolContent(BaseModel):
     """Model for content in tool responses."""
+
     type: str = Field(default="text", description="Content type identifier")
 
     # Common fields for all content types
@@ -42,6 +46,7 @@ class ToolContent(BaseModel):
 
 class ToolResponse(BaseModel):
     """Model for tool responses."""
+
     content: List[ToolContent]
 
     @classmethod
@@ -56,15 +61,7 @@ class ToolResponse(BaseModel):
         Returns:
             A ToolResponse with the model data in JSON format
         """
-        return cls(
-            content=[
-                ToolContent(
-                    type="json",
-                    json_data=model.model_dump(),
-                    model=model
-                )
-            ]
-        )
+        return cls(content=[ToolContent(type="json", json_data=model.model_dump(), model=model)])
 
     @classmethod
     def from_text(cls, text: str) -> "ToolResponse":
@@ -76,18 +73,12 @@ class ToolResponse(BaseModel):
         Returns:
             A ToolResponse with text content
         """
-        return cls(
-            content=[
-                ToolContent(
-                    type="text",
-                    text=text
-                )
-            ]
-        )
+        return cls(content=[ToolContent(type="text", text=text)])
 
 
 class Tool(ABC):
     """Abstract base class for all tools."""
+
     name: ClassVar[str]
     description: ClassVar[str]
     input_model: ClassVar[Type[BaseToolInput]]
