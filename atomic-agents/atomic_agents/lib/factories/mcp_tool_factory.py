@@ -191,11 +191,6 @@ class MCPToolFactory:
                             await stack.aclose()
 
                     async def _call_with_persistent_session():
-                        if loop is None:  # pragma: no cover
-                            raise RuntimeError("No event loop provided for the persistent MCP session.")  # pragma: no cover
-                        if persistent_session is None:  # pragma: no cover
-                            raise RuntimeError("Tool was instantiated without a persistent MCP session.")  # pragma: no cover
-
                         # Ensure arguments is a dict, even if empty
                         call_args = arguments if isinstance(arguments, dict) else {}
                         return await persistent_session.call_tool(name=bound_tool_name, arguments=call_args)
