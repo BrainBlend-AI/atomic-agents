@@ -1,16 +1,13 @@
 import pytest
 from pydantic import BaseModel
+import asyncio
 from atomic_agents.lib.factories.mcp_tool_factory import (
     fetch_mcp_tools,
     create_mcp_orchestrator_schema,
     fetch_mcp_tools_with_schema,
     MCPToolFactory,
-    json_schema_to_pydantic_model,
-    _json_schema_to_pydantic_field,
 )
-from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-import asyncio
+from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition, ToolDefinitionService
 
 
 class DummySession:
@@ -94,34 +91,6 @@ def test_fetch_mcp_tools_with_schema_nonempty(monkeypatch):
     assert schema is dummy_schema
 
 
-def test_json_schema_to_pydantic_model():
-    schema = {
-        "type": "object",
-        "properties": {
-            "foo": {"type": "string", "description": "desc", "default": "bar"},
-        },
-        "required": ["foo"],
-    }
-    Model = json_schema_to_pydantic_model(schema, "TestModel", "ToolY", "TestDoc")
-    assert issubclass(Model, BaseIOSchema)
-    assert Model.__doc__ == "TestDoc"
-    inst = Model(foo="baz", tool_name="ToolY")
-    assert inst.foo == "baz"
-    assert inst.tool_name == "ToolY"
-
-
-def test_json_to_pydantic_field_private_required_and_optional():
-    # required field should have non-None default and correct description
-    typ, field = _json_schema_to_pydantic_field({"type": "string", "description": "desc"}, required=True)
-    assert typ is str
-    assert field.default is not None
-    assert field.description == "desc"
-    # optional field should default to None and preserve description
-    typ2, field2 = _json_schema_to_pydantic_field({"type": "string", "description": "d2"}, required=False)
-    assert field2.default is None
-    assert field2.description == "d2"
-
-
 def test_fetch_mcp_tools_with_stdio_and_working_directory(monkeypatch):
     input_schema = {"type": "object", "properties": {}, "required": []}
     definitions = [MCPToolDefinition(name="ToolZ", description=None, input_schema=input_schema)]
@@ -189,7 +158,6 @@ def test_run_tool(monkeypatch, use_stdio):
 
 def test_run_tool_with_persistent_session(monkeypatch):
     import atomic_agents.lib.factories.mcp_tool_factory as mtf
-    import asyncio
 
     # Setup persistent client
     class DummySessionPersistent:
@@ -248,8 +216,6 @@ def test_fetch_tool_definitions_propagates_error(monkeypatch):
 
 def test_run_tool_handles_special_result_types(monkeypatch):
     import atomic_agents.lib.factories.mcp_tool_factory as mtf
-    from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition
-    from pydantic import BaseModel
 
     class DummyTransportCM:
         def __init__(self, ret):
@@ -309,7 +275,6 @@ def test_run_tool_handles_special_result_types(monkeypatch):
 
 def test_run_invalid_stdio_command_raises(monkeypatch):
     import atomic_agents.lib.factories.mcp_tool_factory as mtf
-    from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition
 
     class DummyTransportCM:
         def __init__(self, ret):
@@ -344,10 +309,6 @@ def test_run_invalid_stdio_command_raises(monkeypatch):
 
 
 def test_create_tool_classes_skips_invalid(monkeypatch):
-    from atomic_agents.lib.factories.mcp_tool_factory import MCPToolFactory
-    from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition
-    from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-
     factory = MCPToolFactory("endpoint", False)
     defs = [
         MCPToolDefinition(name="Bad", description=None, input_schema={"type": "object", "properties": {}, "required": []}),
@@ -358,7 +319,7 @@ def test_create_tool_classes_skips_invalid(monkeypatch):
         def create_model_from_schema(self, schema, model_name, tname, doc):
             if tname == "Bad":
                 raise ValueError("fail")
-            return BaseIOSchema
+            return BaseModel
 
     factory.schema_transformer = FakeST()
     tools = factory._create_tool_classes(defs)
@@ -384,9 +345,7 @@ def test_force_mark_unreachable_lines_for_coverage():
 
 def test__fetch_tool_definitions_service_branch(monkeypatch):
     """Covers lines 112-113: ToolDefinitionService branch in _fetch_tool_definitions."""
-    from atomic_agents.lib.factories.mcp_tool_factory import MCPToolFactory
-    from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService
-    import asyncio
+    factory = MCPToolFactory("dummy_endpoint", False)
 
     # Patch fetch_definitions to avoid real async work
     async def dummy_fetch_definitions(self):
@@ -395,8 +354,6 @@ def test__fetch_tool_definitions_service_branch(monkeypatch):
         ]
 
     monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", dummy_fetch_definitions)
-
-    factory = MCPToolFactory("dummy_endpoint", False)
     result = factory._fetch_tool_definitions()
     assert result[0].name == "COV"
 
@@ -421,7 +378,6 @@ async def test_cover_line_195_async_test():
 def test_run_tool_with_persistent_session_no_event_loop(monkeypatch):
     """Covers AttributeError when no event loop is provided for persistent session."""
     import atomic_agents.lib.factories.mcp_tool_factory as mtf
-    import asyncio
 
     # Setup persistent client
     class DummySessionPersistent:

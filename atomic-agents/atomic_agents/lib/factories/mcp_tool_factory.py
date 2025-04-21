@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Dict, List, Type, Optional, Union, Tuple, cast
+from typing import Any, List, Type, Optional, Union, Tuple, cast
 from contextlib import AsyncExitStack
 import shlex
 
@@ -22,28 +22,6 @@ class MCPToolOutputSchema(BaseIOSchema):
     """Generic output schema for dynamically generated MCP tools."""
 
     result: Any = Field(..., description="The result returned by the MCP tool.")
-
-
-# Keep these for backward compatibility - will be deprecated in future
-def _json_schema_to_pydantic_field(prop_schema: Dict[str, Any], required: bool) -> tuple:
-    """
-    Legacy function for backward compatibility.
-    Use SchemaTransformer.json_to_pydantic_field instead.
-    """
-    return SchemaTransformer.json_to_pydantic_field(prop_schema, required)
-
-
-def json_schema_to_pydantic_model(
-    schema: Dict[str, Any],
-    model_name: str,
-    tool_name_literal: str,
-    docstring: Optional[str] = None,
-) -> Type[BaseIOSchema]:
-    """
-    Legacy function for backward compatibility.
-    Use SchemaTransformer.create_model_from_schema instead.
-    """
-    return SchemaTransformer.create_model_from_schema(schema, model_name, tool_name_literal, docstring)
 
 
 class MCPToolFactory:
@@ -100,20 +78,16 @@ class MCPToolFactory:
         Returns:
             List of tool definitions
         """
-        try:
-            if self.client_session is not None:
-                # Use existing session
-                async def _gather_defs():
-                    return await ToolDefinitionService.fetch_definitions_from_session(self.client_session)  # pragma: no cover
+        if self.client_session is not None:
+            # Use existing session
+            async def _gather_defs():
+                return await ToolDefinitionService.fetch_definitions_from_session(self.client_session)  # pragma: no cover
 
-                return cast(asyncio.AbstractEventLoop, self.event_loop).run_until_complete(_gather_defs())  # pragma: no cover
-            else:
-                # Create new connection
-                service = ToolDefinitionService(self.mcp_endpoint, self.use_stdio, self.working_directory)
-                return asyncio.run(service.fetch_definitions())
-        except Exception:
-            # Let exceptions propagate - they're already logged in the service
-            raise
+            return cast(asyncio.AbstractEventLoop, self.event_loop).run_until_complete(_gather_defs())  # pragma: no cover
+        else:
+            # Create new connection
+            service = ToolDefinitionService(self.mcp_endpoint, self.use_stdio, self.working_directory)
+            return asyncio.run(service.fetch_definitions())
 
     def _create_tool_classes(self, tool_definitions: List[MCPToolDefinition]) -> List[Type[BaseTool]]:
         """
@@ -281,9 +255,7 @@ class MCPToolFactory:
         return orchestrator_schema
 
 
-# Public API functions - these maintain backward compatibility
-
-
+# Public API functions
 def fetch_mcp_tools(
     mcp_endpoint: Optional[str] = None,
     use_stdio: bool = False,
