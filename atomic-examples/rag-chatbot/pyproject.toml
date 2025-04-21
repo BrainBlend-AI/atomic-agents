@@ -11,6 +11,7 @@ atomic-agents = {path = "../..", develop = true}
 chromadb = "^0.4.24"
 python-dotenv = ">=1.0.1,<2.0.0"
 openai = ">=1.35.12,<2.0.0"
+pulsar-client = ">=3.6.1,<4.0.0" 
 rich = ">=13.7.0,<14.0.0"
 wget = ">=3.2,<4.0"
 

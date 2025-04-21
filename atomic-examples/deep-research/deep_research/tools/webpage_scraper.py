@@ -69,6 +69,7 @@ class WebpageScraperToolConfig(BaseToolConfig):
         "Accept-Language": "en-US,en;q=0.9",
     }
     min_text_length: int = 200
+    max_content_length: int = 10 * 1024 * 1024  # 10 MB
     use_trafilatura: bool = True
 
 
@@ -252,6 +253,7 @@ class WebpageScraperTool(BaseTool[WebpageScraperToolInputSchema, WebpageScraperT
 if __name__ == "__main__":
     from rich.console import Console
     from rich.panel import Panel
+    from rich.markdown import Markdown
 
     console = Console()
     scraper = WebpageScraperTool()
@@ -268,7 +270,8 @@ if __name__ == "__main__":
         console.print(result.metadata.model_dump_json(indent=2))
 
         console.print(Panel.fit("Content Preview (first 500 chars)", style="bold green"))
-        console.print(result.content)
-
+        # To show as markdown with proper formatting
+        console.print(Panel.fit("Content as Markdown", style="bold green"))
+        console.print(Markdown(result.content[:500]))
     except Exception as e:
         console.print(f"[red]Error:[/red] {str(e)}")

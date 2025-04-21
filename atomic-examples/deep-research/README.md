@@ -24,7 +24,10 @@ This directory contains the Deep Research Agent example for the Atomic Agents pr
    ```env
    OPENAI_API_KEY=your_openai_api_key
    SEARXNG_BASE_URL=http://localhost:8080
+   SEARXNG_API_KEY=your_searxng_secret_key
    ```
+   
+   **Important**: To find your SearxNG secret key, check the `secret_key` value in your SearxNG `settings.yml` file, typically located at `/etc/searxng/settings.yml` or in the SearxNG installation directory.
 
 5. **Set up SearxNG:**
    - Install SearxNG from the [official repository](https://github.com/searxng/searxng)

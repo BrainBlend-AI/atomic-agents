@@ -203,7 +203,7 @@ if __name__ == "__main__":
 
     search_tool_instance = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url="http://localhost:8080", max_results=5))
 
-    search_input = SearxNGSearchTool.input_schema(
+    search_input = SearxNGSearchToolInputSchema(
         queries=["Python programming", "Machine learning", "Artificial intelligence"],
         category="news",
     )
