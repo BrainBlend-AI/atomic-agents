@@ -145,8 +145,10 @@ def main():
                     steps=[
                         "1. Use the reasoning field to determine if one or more successive tool calls could be used to handle the user's query.",
                         "2. If so, choose the appropriate tool(s) one at a time and extract all necessary parameters from the query.",
-                        "3. If a single tool can not be used to handle the user's query, think about how to break down the query into smaller tasks and route them to the appropriate tool(s).",
-                        "4. If no sequence of tools could be used, or if you are finished processing the user's query, provide a final response to the user.",
+                        "3. If a single tool can not be used to handle the user's query, think about how to break down the query into "
+                        "smaller tasks and route them to the appropriate tool(s).",
+                        "4. If no sequence of tools could be used, or if you are finished processing the user's query, provide a final "
+                        "response to the user.",
                     ],
                     output_instructions=[
                         "1. Always provide a detailed explanation of your decision-making process in the 'reasoning' field.",
