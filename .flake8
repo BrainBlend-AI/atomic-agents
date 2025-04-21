@@ -4,6 +4,7 @@ max-complexity = 10
 count = true
 statistics = true
 ignore = E203
+exclude = .venv,venv,__pycache__,build,dist
 
 per-file-ignores =
     */__main__.py:C901
