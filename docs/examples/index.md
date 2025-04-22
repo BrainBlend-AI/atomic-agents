@@ -96,3 +96,16 @@ Coordinate multiple agents for complex tasks:
 - Result aggregation
 
 [View Orchestration Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/orchestration-agent)
+
+## MCP Agent
+
+Build intelligent agents using the Model Context Protocol:
+
+- Server implementation with multiple transport methods
+- Dynamic tool discovery and registration
+- Natural language query processing
+- Stateful conversation handling
+- Extensible tool architecture
+
+[View MCP Agent Documentation](mcp_agent.md)
+[View MCP Agent Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/mcp-agent)

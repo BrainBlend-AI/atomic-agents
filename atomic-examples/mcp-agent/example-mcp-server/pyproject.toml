@@ -1,0 +1,19 @@
+[project]
+name = "example-mcp-server"
+version = "0.1.0"
+description = "example-mcp-server MCP server"
+authors = []
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]",
+    "rich>=13.0.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.15.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+example-mcp-server = "example_mcp_server.server:main"
