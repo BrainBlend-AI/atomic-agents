@@ -36,7 +36,6 @@ question_answering_agent = BaseAgent[QuestionAnsweringAgentInputSchema, Question
             ],
             steps=[
                 "You will receive a question and the context information.",
-                "Generate a detailed and accurate answer based on the context.",
                 "Provide up to 3 relevant references (HTTP URLs) used in formulating the answer.",
                 "Generate up to 3 follow-up questions related to the answer.",
             ],

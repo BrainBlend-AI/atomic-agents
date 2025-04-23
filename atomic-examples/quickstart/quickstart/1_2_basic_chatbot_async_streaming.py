@@ -4,6 +4,7 @@ import openai
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
+from rich.live import Live
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
@@ -27,8 +28,8 @@ memory = AgentMemory()
 initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
 memory.add_message("assistant", initial_message)
 
-# OpenAI client setup using the Instructor library for synchronous operations
-client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
+# OpenAI client setup using the Instructor library for async operations
+client = instructor.from_openai(openai.AsyncOpenAI(api_key=API_KEY))
 
 # Agent setup with specified configuration
 agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
@@ -49,11 +50,7 @@ console.print(Text("Agent:", style="bold green"), end=" ")
 console.print(Text(initial_message.chat_message, style="green"))
 
 
-def main():
-    """
-    Main function to handle the chat loop using synchronous streaming.
-    This demonstrates how to use BaseAgent.run_stream() instead of the async version.
-    """
+async def main():
     # Start an infinite loop to handle user inputs and agent responses
     while True:
         # Prompt the user for input with a styled prompt
@@ -63,36 +60,25 @@ def main():
             console.print("Exiting chat...")
             break
 
-        # Process the user's input through the agent
+        # Process the user's input through the agent and get the streaming response
         input_schema = BaseAgentInputSchema(chat_message=user_input)
         console.print()  # Add newline before response
-        console.print(Text("Agent: ", style="bold green"), end="")
 
-        # Current display string to avoid repeating output
-        current_display = ""
-
-        # Use run_stream for synchronous streaming responses
-        for partial_response in agent.run_stream(input_schema):
-            if hasattr(partial_response, "chat_message") and partial_response.chat_message:
-                # Only output the incremental part of the message
-                new_content = partial_response.chat_message
-                if new_content != current_display:
-                    # Only print the new part since the last update
-                    if new_content.startswith(current_display):
-                        incremental_text = new_content[len(current_display) :]
-                        console.print(Text(incremental_text, style="green"), end="")
-                        current_display = new_content
-                    else:
-                        # If there's a mismatch, print the full message
-                        # (this should rarely happen with most LLMs)
-                        console.print(Text(new_content, style="green"), end="")
-                        current_display = new_content
-
-                    # Flush to ensure output is displayed immediately
-                    console.file.flush()
-
-        console.print()  # Add a newline after the response is complete
+        # Use Live display to show streaming response
+        with Live("", refresh_per_second=10, auto_refresh=True) as live:
+            current_response = ""
+            # Use run_async_stream instead of run_async for streaming functionality
+            async for partial_response in agent.run_async_stream(input_schema):
+                if hasattr(partial_response, "chat_message") and partial_response.chat_message:
+                    # Only update if we have new content
+                    if partial_response.chat_message != current_response:
+                        current_response = partial_response.chat_message
+                        # Combine the label and response in the live display
+                        display_text = Text.assemble(("Agent: ", "bold green"), (current_response, "green"))
+                        live.update(display_text)
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+
+    asyncio.run(main())

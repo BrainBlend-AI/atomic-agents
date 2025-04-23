@@ -63,6 +63,7 @@ system_prompt_generator = SystemPromptGenerator(
         "Analyze the user's input to understand the context and intent.",
         "Formulate a relevant and informative response based on the assistant's knowledge.",
         "Generate 3 suggested follow-up questions for the user to explore the topic further.",
+        "When you get a simple number from the user, choose the corresponding question from the last list of suggested questions and answer it. Note that the first question is 1, the second is 2, and so on."
     ],
     output_instructions=[
         "Provide clear, concise, and accurate information in response to user queries.",
