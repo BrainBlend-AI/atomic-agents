@@ -6,7 +6,7 @@ authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.12,<4.0"
 atomic-agents = {path = "../..", develop = true}
 instructor = ">=1.3.4,<2.0.0"
 openai = ">=1.35.12,<2.0.0"
@@ -16,5 +16,5 @@ anthropic = ">=0.39.0,<1.0.0"
 python-dotenv = ">=1.0.1,<2.0.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
