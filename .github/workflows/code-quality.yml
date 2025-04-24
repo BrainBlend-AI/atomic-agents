@@ -17,6 +17,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: ""
 
       - name: Install Poetry
         run: |
@@ -27,6 +28,9 @@ jobs:
         run: |
           poetry config virtualenvs.create true
           poetry config virtualenvs.in-project true
+      - name: Select Python for Poetry
+        run: |
+          poetry env use $(which python)
 
       - name: Cache Poetry virtualenv
         uses: actions/cache@v4
