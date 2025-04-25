@@ -4,7 +4,7 @@
 
 The Atomic Agents framework uses Pydantic for schema validation and serialization. All input and output schemas follow this inheritance pattern:
 
-```
+```PlainText
 pydantic.BaseModel
     └── BaseIOSchema
         ├── BaseAgentInputSchema

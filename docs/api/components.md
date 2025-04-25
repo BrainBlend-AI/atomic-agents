@@ -194,12 +194,14 @@ class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
 ```
 
 Key features:
+
 - Structured input/output schemas
 - Configuration management
 - Title and description overrides
 - Error handling
 
 For full API details:
+
 ```{eval-rst}
 .. automodule:: atomic_agents.lib.components.agent_memory
    :members:

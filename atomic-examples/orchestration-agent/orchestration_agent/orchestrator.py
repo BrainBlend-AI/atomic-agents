@@ -72,29 +72,34 @@ class CurrentDateProvider(SystemPromptContextProviderBase):
 ######################
 # ORCHESTRATOR AGENT #
 ######################
+orchestrator_agent_config = BaseAgentConfig(
+    client=instructor.from_openai(openai.OpenAI()),
+    model="gpt-4o-mini",
+    system_prompt_generator=SystemPromptGenerator(
+        background=[
+            "You are an Orchestrator Agent that decides between using a search tool or a calculator tool based on user input.",
+            "Use the search tool for queries requiring factual information, current events, or specific data.",
+            "Use the calculator tool for mathematical calculations and expressions.",
+        ],
+        output_instructions=[
+            "Analyze the input to determine whether it requires a web search or a calculation.",
+            "For search queries, use the 'search' tool and provide 1-3 relevant search queries.",
+            "For calculations, use the 'calculator' tool and provide the mathematical expression to evaluate.",
+            "When uncertain, prefer using the search tool.",
+            "Format the output using the appropriate schema.",
+        ],
+    ),
+)
 orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](
-    BaseAgentConfig(
-        client=instructor.from_openai(openai.OpenAI()),
-        model="gpt-4o-mini",
-        system_prompt_generator=SystemPromptGenerator(
-            background=[
-                "You are an Orchestrator Agent that decides between using a search tool or a calculator tool based on user input.",
-                "Use the search tool for queries requiring factual information, current events, or specific data.",
-                "Use the calculator tool for mathematical calculations and expressions.",
-            ],
-            output_instructions=[
-                "Analyze the input to determine whether it requires a web search or a calculation.",
-                "For search queries, use the 'search' tool and provide 1-3 relevant search queries.",
-                "For calculations, use the 'calculator' tool and provide the mathematical expression to evaluate.",
-                "When uncertain, prefer using the search tool.",
-                "Format the output using the appropriate schema.",
-            ],
-        ),
-    )
+    config=orchestrator_agent_config
+)
+orchestrator_agent_final = BaseAgent[OrchestratorInputSchema, FinalAnswerSchema](
+    config=orchestrator_agent_config
 )
 
 # Register the current date provider
 orchestrator_agent.register_context_provider("current_date", CurrentDateProvider("Current Date"))
+orchestrator_agent_final.register_context_provider("current_date", CurrentDateProvider("Current Date"))
 
 
 def execute_tool(
@@ -171,11 +176,14 @@ if __name__ == "__main__":
 
         console.print("\n" + "-" * 80 + "\n")
 
-        orchestrator_agent.output_schema = FinalAnswerSchema
+        # Switch agent
+        memory = orchestrator_agent.memory
+        orchestrator_agent = orchestrator_agent_final
+        orchestrator_agent.memory = memory
         orchestrator_agent.memory.add_message("system", response)
         final_answer = orchestrator_agent.run(input_schema)
         console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
-        orchestrator_agent.output_schema = OrchestratorOutputSchema
-
-        # Reset the memory after each response
-        orchestrator_agent.memory = AgentMemory()
+        # Reset the agent to the original
+        orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](
+            config=orchestrator_agent_config
+        )

@@ -3,6 +3,7 @@ import logging
 from typing import Any, List, Type, Optional, Union, Tuple, cast
 from contextlib import AsyncExitStack
 import shlex
+import types
 
 from pydantic import create_model, Field, BaseModel
 
@@ -193,23 +194,30 @@ class MCPToolFactory:
                         logger.error(f"Error executing MCP tool '{bound_tool_name}': {e}", exc_info=True)
                         raise RuntimeError(f"Failed to execute MCP tool '{bound_tool_name}': {e}") from e
 
-                # Create the tool class
-                tool_class = type(
+                # Create the tool class using types.new_class() instead of type()
+                attrs = {
+                    "run": run_tool_sync,
+                    "__doc__": tool_description,
+                    "mcp_tool_name": tool_name,
+                    "mcp_endpoint": self.mcp_endpoint,
+                    "use_stdio": self.use_stdio,
+                    "_client_session": self.client_session,
+                    "_event_loop": self.event_loop,
+                    "working_directory": self.working_directory,
+                }
+                
+                # Create the class using new_class() for proper generic type support
+                tool_class = types.new_class(
                     tool_name,
-                    (BaseTool,),
-                    {
-                        "input_schema": InputSchema,
-                        "output_schema": OutputSchema,
-                        "run": run_tool_sync,
-                        "__doc__": tool_description,
-                        "mcp_tool_name": tool_name,
-                        "mcp_endpoint": self.mcp_endpoint,
-                        "use_stdio": self.use_stdio,
-                        "_client_session": self.client_session,
-                        "_event_loop": self.event_loop,
-                        "working_directory": self.working_directory,
-                    },
+                    (BaseTool[InputSchema, OutputSchema],),
+                    {},
+                    lambda ns: ns.update(attrs)
                 )
+                
+                # Add the input_schema and output_schema class attributes explicitly
+                # since they might not be properly inherited with types.new_class
+                setattr(tool_class, "input_schema", InputSchema)
+                setattr(tool_class, "output_schema", OutputSchema)
 
                 generated_tools.append(tool_class)
 

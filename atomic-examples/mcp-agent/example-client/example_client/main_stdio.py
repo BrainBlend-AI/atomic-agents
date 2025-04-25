@@ -114,6 +114,8 @@ class OrchestratorOutputSchema(BaseIOSchema):
     action: ActionUnion = Field(  # type: ignore[reportInvalidTypeForm]
         ..., description="The chosen action: either a tool's input schema instance or a final response schema instance."
     )
+    
+    model_config = {"arbitrary_types_allowed": True}
 
 
 # 3. Main logic and script entry point

@@ -173,7 +173,7 @@ def chat_loop() -> None:
     while True:
         user_message = console.input("\n[bold blue]Your question:[/bold blue] ").strip()
 
-        if user_message.lower() == "exit":
+        if user_message.lower() in ["/exit", "/quit"]:
             console.print("\n[bold]👋 Goodbye! Thanks for using Deep Research.[/bold]")
             break
 

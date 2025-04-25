@@ -7,16 +7,19 @@ This directory contains the YouTube Recipe Extractor example for the Atomic Agen
 To get started with the YouTube Recipe Extractor:
 
 1. **Clone the main Atomic Agents repository:**
+
    ```bash
    git clone https://github.com/BrainBlend-AI/atomic-agents
    ```
 
 2. **Navigate to the YouTube Recipe Extractor directory:**
+
    ```bash
    cd atomic-agents/atomic-examples/youtube-to-recipe
    ```
 
 3. **Install the dependencies using Poetry:**
+
    ```bash
    poetry install
    ```
@@ -24,6 +27,7 @@ To get started with the YouTube Recipe Extractor:
 4. **Set up environment variables:**
 
    Create a `.env` file in the `youtube-to-recipe` directory with the following content:
+
    ```env
    OPENAI_API_KEY=your_openai_api_key
    YOUTUBE_API_KEY=your_youtube_api_key
@@ -34,6 +38,7 @@ To get started with the YouTube Recipe Extractor:
    Replace `your_openai_api_key` and `your_youtube_api_key` with your actual API keys.
 
 5. **Run the YouTube Recipe Extractor:**
+
    ```bash
    poetry run python youtube_to_recipe/main.py
    ```
@@ -43,6 +48,7 @@ To get started with the YouTube Recipe Extractor:
 ### 1. Agent (`agent.py`)
 
 This module defines the `YouTubeRecipeExtractionAgent`, responsible for extracting structured recipe information from cooking video transcripts. It extracts:
+
 - Recipe name and description
 - Ingredients with quantities and units
 - Step-by-step cooking instructions
@@ -61,6 +67,7 @@ The entry point for the YouTube Recipe Extractor application. It orchestrates fe
 ## Example Output
 
 The agent extracts recipe information in a structured format including:
+
 - Detailed ingredient lists with measurements
 - Step-by-step cooking instructions with timing and temperature
 - Required kitchen equipment

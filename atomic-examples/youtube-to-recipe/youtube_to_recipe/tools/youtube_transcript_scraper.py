@@ -153,7 +153,8 @@ class YouTubeTranscriptTool(BaseTool[YouTubeTranscriptToolInputSchema, YouTubeTr
         Raises:
             Exception: If no metadata is found for the video.
         """
-        youtube = build("youtube", "v3", developerKey=self.api_key)
+        api_key = os.getenv("YOUTUBE_API_KEY")
+        youtube = build("youtube", "v3", developerKey=api_key)
         request = youtube.videos().list(part="snippet", id=video_id)
         response = request.execute()
 
@@ -179,7 +180,6 @@ if __name__ == "__main__":
     load_dotenv()
 
     rich_console = Console()
-    api_key = os.getenv("YOUTUBE_API_KEY")
     search_tool_instance = YouTubeTranscriptTool(config=YouTubeTranscriptToolConfig(api_key=api_key))
 
     search_input = YouTubeTranscriptTool.input_schema(video_url="https://www.youtube.com/watch?v=t1e8gqXLbsU", language="en")
