@@ -50,3 +50,6 @@ Repository = "https://github.com/BrainBlend-AI/atomic-agents"
 
 [tool.black]
 line-length = 127
+
+[tool.flake8]
+ignore = W503
