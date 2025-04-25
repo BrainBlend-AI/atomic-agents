@@ -2,9 +2,9 @@ name: Code Quality & Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, v2.0 ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, v2.0 ]
   workflow_dispatch:
 
 jobs:
@@ -33,9 +33,13 @@ jobs:
         id: cache
         with:
           path: ./.venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-python-${{ runner.python-version }}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            venv-${{ runner.os }}-
+            venv-${{ runner.os }}-python-${{ runner.python-version }}-
+
+      - name: Select Python for Poetry
+        run: |
+          poetry env use $(which python)
 
       - name: Install Dependencies
         run: |

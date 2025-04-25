@@ -3,7 +3,6 @@ name = "example-mcp-server"
 version = "0.1.0"
 description = "example-mcp-server MCP server"
 authors = []
-requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]",
     "rich>=13.0.0",
