@@ -305,14 +305,13 @@ def main():
                             if any(
                                 key in action_instance for key in ["response_text", "text", "response", "message", "content"]
                             ):
-                                response_content = (
-                                    action_instance.get("response_text")
-                                    or action_instance.get("text")
-                                    or action_instance.get("response")
-                                    or action_instance.get("message")
-                                    or action_instance.get("content")
-                                    or "No message content found"
-                                )
+                                response_content = \
+                                    action_instance.get("response_text") or \
+                                    action_instance.get("text") or \
+                                    action_instance.get("response") or \
+                                    action_instance.get("message") or \
+                                    action_instance.get("content") or \
+                                    "No message content found"
                                 console.print("[yellow]Appears to be a final response. Converting directly.[/yellow]")
                                 action_instance = FinalResponseSchema(response_text=response_content)
                                 continue
