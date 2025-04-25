@@ -9,10 +9,10 @@ from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
 
 from web_search_agent.tools.searxng_search import (
-    SearxNGSearchTool,
-    SearxNGSearchToolConfig,
-    SearxNGSearchToolInputSchema,
-    SearxNGSearchToolOutputSchema
+    SearXNGSearchTool,
+    SearXNGSearchToolConfig,
+    SearXNGSearchToolInputSchema,
+    SearXNGSearchToolOutputSchema
 )
 
 from web_search_agent.agents.query_agent import QueryAgentInputSchema, query_agent
@@ -29,12 +29,12 @@ console = Console()
 # Memory setup
 memory = AgentMemory()
 
-# Initialize the SearxNGSearchTool
-search_tool = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
+# Initialize the SearXNGSearchTool
+search_tool = SearXNGSearchTool(config=SearXNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
 
 
 class SearchResultsProvider(SystemPromptContextProviderBase):
-    def __init__(self, title: str, search_results: SearxNGSearchToolOutputSchema|Exception):
+    def __init__(self, title: str, search_results: SearXNGSearchToolOutputSchema|Exception):
         super().__init__(title=title)
         self.search_results = search_results
 
@@ -79,7 +79,7 @@ while True:
         console.print(f"- {query}")
 
     # Perform searches using the generated queries
-    search_input = SearxNGSearchToolInputSchema(queries=generated_queries.queries, category="general")
+    search_input = SearXNGSearchToolInputSchema(queries=generated_queries.queries, category="general")
 
     try:
         search_results = search_tool.run(search_input)

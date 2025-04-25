@@ -201,9 +201,16 @@ def chat_loop(chroma_db: ChromaDBService, rag_context: RAGContextProvider) -> No
         try:
             user_message = console.input("\n[bold blue]Your question:[/bold blue] ").strip()
 
-            if user_message.lower() == "exit":
+            if user_message.lower() in ["/exit", "/quit"]:
                 console.print("\n[bold]👋 Goodbye! Thanks for using the RAG Chatbot.[/bold]")
                 break
+
+            try:
+                i_question = int(user_message) - 1
+                if 0 <= i_question < len(STARTER_QUESTIONS):
+                    user_message = STARTER_QUESTIONS[i_question]
+            except ValueError:
+                pass
 
             console.print("\n" + "─" * 80)
             console.print("\n[bold magenta]🔄 Processing your question...[/bold magenta]")

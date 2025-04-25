@@ -132,7 +132,7 @@ def main():
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
         memory = AgentMemory()
-        orchestrator_agent = BaseAgent(
+        orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
             BaseAgentConfig(
                 client=client,
                 model=config.openai_model,
@@ -157,9 +157,7 @@ def main():
                         "4. Maintain a professional and helpful tone in all responses.",
                         "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
                     ],
-                ),
-                input_schema=MCPOrchestratorInputSchema,
-                output_schema=OrchestratorOutputSchema,
+                )            
             )
         )
         console.print("[green]Successfully created orchestrator agent.[/green]")
@@ -167,7 +165,7 @@ def main():
         console.print("[bold green]MCP Agent Interactive Chat (STDIO mode). Type 'exit' or 'quit' to leave.[/bold green]")
         while True:
             query = console.input("[bold yellow]You:[/bold yellow] ").strip()
-            if query.lower() in {"exit", "quit"}:
+            if query.lower() in {"/exit", "/quit"}:
                 console.print("[bold red]Exiting chat. Goodbye![/bold red]")
                 break
             if not query:

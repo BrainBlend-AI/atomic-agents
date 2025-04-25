@@ -224,7 +224,7 @@ from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentCo
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # Import the search tool you want to use
-from web_search_agent.tools.searxng_search import SearxNGSearchTool
+from web_search_agent.tools.searxng_search import SearXNGSearchTool
 
 # Define the input schema for the query agent
 class QueryAgentInputSchema(BaseIOSchema):
@@ -233,7 +233,7 @@ class QueryAgentInputSchema(BaseIOSchema):
     num_queries: int = Field(..., description="Number of queries to generate.")
 
 # Initialize the query agent
-query_agent = BaseAgent[QueryAgentInputSchema, SearxNGSearchTool.input_schema](
+query_agent = BaseAgent[QueryAgentInputSchema, SearXNGSearchTool.input_schema](
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
@@ -257,7 +257,7 @@ query_agent = BaseAgent[QueryAgentInputSchema, SearxNGSearchTool.input_schema](
 
 In this example:
 
-- **Modularity**: By setting the `output_schema` of the `query_agent` to match the `input_schema` of `SearxNGSearchTool`, you can directly use the output of the agent as input to the tool.
+- **Modularity**: By setting the `output_schema` of the `query_agent` to match the `input_schema` of `SearXNGSearchTool`, you can directly use the output of the agent as input to the tool.
 - **Swapability**: If you decide to switch to a different search provider, you can import a different search tool and update the `output_schema` accordingly.
 
 For instance, to switch to another search service:
@@ -318,7 +318,7 @@ API documentation can be found [here](https://brainblend-ai.github.io/atomic-age
 Atomic Forge is a collection of tools that can be used with Atomic Agents to extend its functionality. Current tools include:
 
 - Calculator
-- SearxNG Search
+- SearXNG Search
 - YouTube Transcript Scraper
 
 For more information on using and creating tools, see the [Atomic Forge README](/atomic-forge/README.md).

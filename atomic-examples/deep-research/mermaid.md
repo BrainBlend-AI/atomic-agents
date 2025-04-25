@@ -34,7 +34,7 @@ graph TD
     end
 
     subgraph Tools["External Tools"]
-        ST[SearxNG Search]
+        ST[SearXNG Search]
         WS[Webpage Scraper]
     end
 

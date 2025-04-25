@@ -5,7 +5,7 @@ from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
-from deep_research.tools.searxng_search import SearxNGSearchTool, SearxNGSearchToolInputSchema
+from deep_research.tools.searxng_search import SearXNGSearchTool, SearXNGSearchToolInputSchema
 
 
 class QueryAgentInputSchema(BaseIOSchema):
@@ -15,7 +15,7 @@ class QueryAgentInputSchema(BaseIOSchema):
     num_queries: int = Field(..., description="The number of search queries to generate.")
 
 
-query_agent = BaseAgent[QueryAgentInputSchema, SearxNGSearchToolInputSchema](
+query_agent = BaseAgent[QueryAgentInputSchema, SearXNGSearchToolInputSchema](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,

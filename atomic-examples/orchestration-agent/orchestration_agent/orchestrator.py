@@ -7,10 +7,10 @@ from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
 
 from orchestration_agent.tools.searxng_search import (
-    SearxNGSearchTool,
-    SearxNGSearchToolConfig,
-    SearxNGSearchToolInputSchema,
-    SearxNGSearchToolOutputSchema,
+    SearXNGSearchTool,
+    SearXNGSearchToolConfig,
+    SearXNGSearchToolInputSchema,
+    SearXNGSearchToolOutputSchema,
 )
 from orchestration_agent.tools.calculator import (
     CalculatorTool,
@@ -36,7 +36,7 @@ class OrchestratorOutputSchema(BaseIOSchema):
     """Combined output schema for the Orchestrator Agent. Contains the tool to use and its parameters."""
 
     tool: str = Field(..., description="The tool to use: 'search' or 'calculator'")
-    tool_parameters: Union[SearxNGSearchToolInputSchema, CalculatorToolInputSchema] = Field(
+    tool_parameters: Union[SearXNGSearchToolInputSchema, CalculatorToolInputSchema] = Field(
         ..., description="The parameters for the selected tool"
     )
 
@@ -53,7 +53,7 @@ class FinalAnswerSchema(BaseIOSchema):
 class OrchestratorAgentConfig(BaseAgentConfig):
     """Configuration for the Orchestrator Agent."""
 
-    searxng_config: SearxNGSearchToolConfig
+    searxng_config: SearXNGSearchToolConfig
     calculator_config: CalculatorToolConfig
 
 
@@ -98,8 +98,8 @@ orchestrator_agent.register_context_provider("current_date", CurrentDateProvider
 
 
 def execute_tool(
-    searxng_tool: SearxNGSearchTool, calculator_tool: CalculatorTool, orchestrator_output: OrchestratorOutputSchema
-) -> Union[SearxNGSearchToolOutputSchema, CalculatorToolOutputSchema]:
+    searxng_tool: SearXNGSearchTool, calculator_tool: CalculatorTool, orchestrator_output: OrchestratorOutputSchema
+) -> Union[SearXNGSearchToolOutputSchema, CalculatorToolOutputSchema]:
     if orchestrator_output.tool == "search":
         return searxng_tool.run(orchestrator_output.tool_parameters)
     elif orchestrator_output.tool == "calculator":
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
 
     # Initialize the tools
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url="http://localhost:8080", max_results=5))
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url="http://localhost:8080", max_results=5))
     calculator_tool = CalculatorTool(CalculatorToolConfig())
 
     # Initialize Rich console

@@ -12,13 +12,13 @@ def get_api_key() -> str:
 
 
 def get_searxng_base_url() -> str:
-    """Retrieve SearxNG base URL from environment or use default"""
+    """Retrieve SearXNG base URL from environment or use default"""
     base_url = os.getenv("SEARXNG_BASE_URL", "http://localhost:8080")
     return base_url
 
 
 def get_searxng_api_key() -> str:
-    """Retrieve SearxNG API key from environment"""
+    """Retrieve SearXNG API key from environment"""
     api_key = os.getenv("SEARXNG_API_KEY")
     return api_key
 

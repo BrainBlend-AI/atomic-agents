@@ -14,13 +14,24 @@ This project demonstrates an intelligent web search agent built using the Atomic
 The Web Search Agent consists of several key components:
 
 1. Query Agent (`query_agent.py`): Generates diverse and relevant search queries based on user input.
-2. SearXNG Search Tool (`searxng_search.py`): Performs web searches using the SearxNG meta-search engine.
+2. SearXNG Search Tool (`searxng_search.py`): Performs web searches using the SearXNG meta-search engine.
 3. Question Answering Agent (`question_answering_agent.py`): Analyzes search results and provides detailed answers to user questions.
 4. Main Script (`main.py`): Orchestrates the entire process, from query generation to final answer presentation.
 
 ## Getting Started
 
 To run the Web Search Agent:
+
+1. Setting up SearXNG server if you haven't:
+
+Make sure to add these lines to `settings.tml`:
+
+   ```yaml
+   search:
+   formats:
+      - html
+      - json
+   ```
 
 1. Clone the Atomic Agents repository:
 
@@ -48,7 +59,7 @@ To run the Web Search Agent:
    SEARXNG_BASE_URL=your_searxng_instance_url
    ```
 
-   Replace `your_openai_api_key` with your actual OpenAI API key and `your_searxng_instance_url` with the URL of your SearxNG instance.
+   Replace `your_openai_api_key` with your actual OpenAI API key and `your_searxng_instance_url` with the URL of your SearXNG instance.
 
 1. Run the Web Search Agent:
 
@@ -60,7 +71,7 @@ To run the Web Search Agent:
 
 1. The user provides an initial question or topic for research.
 2. The Query Agent generates multiple relevant search queries based on the user's input.
-3. The SearxNG Search Tool performs web searches using the generated queries.
+3. The SearXNG Search Tool performs web searches using the generated queries.
 4. The Question Answering Agent analyzes the search results and formulates a detailed answer.
 5. The main script presents the answer, along with references and follow-up questions.
 

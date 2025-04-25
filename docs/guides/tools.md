@@ -15,7 +15,7 @@ The Atomic Forge approach provides several key benefits:
 The Atomic Forge includes several pre-built tools:
 
 - **Calculator**: Perform mathematical calculations
-- **SearxNG Search**: Search the web using SearxNG
+- **SearXNG Search**: Search the web using SearXNG
 - **Tavily Search**: AI-powered web search
 - **YouTube Transcript Scraper**: Extract transcripts from YouTube videos
 - **Webpage Scraper**: Extract content from web pages
