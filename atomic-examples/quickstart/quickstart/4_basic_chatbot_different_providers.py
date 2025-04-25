@@ -57,6 +57,14 @@ def setup_client(provider):
             mode=instructor.Mode.JSON,
         )
         model = "gemini-2.0-flash-exp"
+    elif provider == "6" or provider == "openrouter":
+        from openai import OpenAI as OpenRouterClient
+
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        client = instructor.from_openai(
+            OpenRouterClient(base_url="https://openrouter.ai/api/v1", api_key=api_key)
+        )
+        model = "mistral/ministral-8b"
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -64,7 +72,7 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider from one in the list below.
-providers_list = ["openai", "anthropic", "groq", "ollama", "gemini"]
+providers_list = ["openai", "anthropic", "groq", "ollama", "gemini", "openrouter"]
 y = "bold yellow"
 b = "bold blue"
 g = "bold green"
