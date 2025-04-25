@@ -12,7 +12,7 @@ from web_search_agent.tools.searxng_search import (
     SearXNGSearchTool,
     SearXNGSearchToolConfig,
     SearXNGSearchToolInputSchema,
-    SearXNGSearchToolOutputSchema
+    SearXNGSearchToolOutputSchema,
 )
 
 from web_search_agent.agents.query_agent import QueryAgentInputSchema, query_agent
@@ -34,7 +34,7 @@ search_tool = SearXNGSearchTool(config=SearXNGSearchToolConfig(base_url=os.geten
 
 
 class SearchResultsProvider(SystemPromptContextProviderBase):
-    def __init__(self, title: str, search_results: SearXNGSearchToolOutputSchema|Exception):
+    def __init__(self, title: str, search_results: SearXNGSearchToolOutputSchema | Exception):
         super().__init__(title=title)
         self.search_results = search_results
 
@@ -121,5 +121,3 @@ while True:
             console.print(f"[bold blue]Follow-up Question:[/bold blue] {instruction}")
     except ValueError:
         pass
-
-

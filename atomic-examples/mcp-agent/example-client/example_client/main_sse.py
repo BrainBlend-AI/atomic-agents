@@ -83,7 +83,7 @@ class OrchestratorOutputSchema(BaseIOSchema):
     action: ActionUnion = Field(  # type: ignore[reportInvalidTypeForm]
         ..., description="The chosen action: either a tool's input schema instance or a final response schema instance."
     )
-    
+
     model_config = {"arbitrary_types_allowed": True}
 
 
@@ -91,25 +91,25 @@ class OrchestratorOutputSchema(BaseIOSchema):
 def format_math_expressions(text):
     """
     Format LaTeX-style math expressions for better readability in the terminal.
-    
+
     Args:
         text (str): Text containing LaTeX-style math expressions
-        
+
     Returns:
         str: Text with formatted math expressions
     """
     # Replace \( and \) with formatted brackets
-    text = re.sub(r'\\[\(\)]', '', text)
-    
+    text = re.sub(r"\\[\(\)]", "", text)
+
     # Replace LaTeX multiplication symbol with a plain x
-    text = text.replace('\\times', '×')
-    
+    text = text.replace("\\times", "×")
+
     # Format other common LaTeX symbols
-    text = text.replace('\\cdot', '·')
-    text = text.replace('\\div', '÷')
-    text = text.replace('\\sqrt', '√')
-    text = text.replace('\\pi', 'π')
-    
+    text = text.replace("\\cdot", "·")
+    text = text.replace("\\div", "÷")
+    text = text.replace("\\sqrt", "√")
+    text = text.replace("\\pi", "π")
+
     return text
 
 
@@ -166,7 +166,7 @@ def main():
                         "4. Maintain a professional and helpful tone in all responses.",
                         "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
                     ],
-                )
+                ),
             )
         )
         console.print("[green]Successfully created orchestrator agent.[/green]")
@@ -182,65 +182,75 @@ def main():
             try:
                 # Initial run with user query
                 orchestrator_output = orchestrator_agent.run(MCPOrchestratorInputSchema(query=query))
-                
+
                 # Debug output to see what's actually in the output
-                console.print(f"[dim]Debug - orchestrator_output type: {type(orchestrator_output)}, fields: {orchestrator_output.model_dump()}")
-                
+                console.print(
+                    f"[dim]Debug - orchestrator_output type: {type(orchestrator_output)}, fields: {orchestrator_output.model_dump()}"
+                )
+
                 # The model is returning a BaseAgentOutputSchema instead of OrchestratorOutputSchema
                 # We need to handle this case by creating a FinalResponseSchema directly
-                if hasattr(orchestrator_output, 'chat_message') and not hasattr(orchestrator_output, 'action'):
+                if hasattr(orchestrator_output, "chat_message") and not hasattr(orchestrator_output, "action"):
                     console.print("[yellow]Note: Converting BaseAgentOutputSchema to FinalResponseSchema[/yellow]")
                     action_instance = FinalResponseSchema(response_text=orchestrator_output.chat_message)
                     reasoning = "Response generated directly from chat model"
                 # Handle the original expected format if it exists
-                elif hasattr(orchestrator_output, 'action'):
+                elif hasattr(orchestrator_output, "action"):
                     action_instance = orchestrator_output.action
-                    reasoning = orchestrator_output.reasoning if hasattr(orchestrator_output, 'reasoning') else "No reasoning provided"
+                    reasoning = (
+                        orchestrator_output.reasoning if hasattr(orchestrator_output, "reasoning") else "No reasoning provided"
+                    )
                 else:
                     console.print("[yellow]Warning: Unexpected response format. Unable to process.[/yellow]")
                     continue
-                    
+
                 console.print(f"[cyan]Orchestrator reasoning:[/cyan] {reasoning}")
 
                 # Keep executing until we get a final response
                 while not isinstance(action_instance, FinalResponseSchema):
                     # Handle the case where action_instance is a dictionary
                     if isinstance(action_instance, dict):
-                        console.print("[yellow]Warning: Received dictionary instead of schema object. Attempting to convert...[/yellow]")
+                        console.print(
+                            "[yellow]Warning: Received dictionary instead of schema object. Attempting to convert...[/yellow]"
+                        )
                         console.print(f"[dim]Dictionary contents: {action_instance}[/dim]")
-                        
+
                         # Special handling for function-call format {"recipient_name": "functions.toolname", "parameters": {...}}
                         if "recipient_name" in action_instance and "parameters" in action_instance:
                             console.print("[yellow]Detected function call format with recipient_name and parameters[/yellow]")
                             recipient = action_instance.get("recipient_name", "")
                             parameters = action_instance.get("parameters", {})
-                            
+
                             # Extract tool name from recipient (format might be "functions.toolname")
                             tool_parts = recipient.split(".")
                             if len(tool_parts) > 1:
                                 tool_name = tool_parts[-1]  # Take last part after the dot
-                                console.print(f"[yellow]Extracted tool name '{tool_name}' from recipient '{recipient}'[/yellow]")
-                                
+                                console.print(
+                                    f"[yellow]Extracted tool name '{tool_name}' from recipient '{recipient}'[/yellow]"
+                                )
+
                                 # Special case for calculator
                                 if tool_name.lower() == "calculate":
                                     tool_name = "Calculator"
-                                    console.print(f"[yellow]Mapped 'calculate' to 'Calculator' tool[/yellow]")
-                                
+                                    console.print("[yellow]Mapped 'calculate' to 'Calculator' tool[/yellow]")
+
                                 # Try to find a matching tool class by name
                                 matching_tool = next((t for t in tools if t.mcp_tool_name.lower() == tool_name.lower()), None)
-                                
+
                                 if matching_tool:
                                     try:
                                         # Create an instance using the parameters
                                         action_instance = matching_tool.input_schema(**parameters)
-                                        console.print(f"[green]Successfully created {matching_tool.input_schema.__name__} from function call format[/green]")
+                                        console.print(
+                                            f"[green]Successfully created {matching_tool.input_schema.__name__} from function call format[/green]"
+                                        )
                                         continue
                                     except Exception as e:
                                         console.print(f"[red]Error creating schema from function parameters: {e}[/red]")
-                        
+
                         # Try to find a tool_name in the dictionary (original approach)
                         tool_name = action_instance.get("tool_name")
-                        
+
                         # If tool_name is not found, try alternative approaches to identify the tool
                         if not tool_name:
                             # Approach 1: Look for a field that might contain a tool name
@@ -248,52 +258,73 @@ def main():
                                 if "tool" in key.lower():
                                     tool_name = action_instance.get(key)
                                     if tool_name:
-                                        console.print(f"[yellow]Found potential tool name '{tool_name}' in field '{key}'[/yellow]")
-                                        break
-                            
+                                        console.print(
+                                            f"[yellow]Found potential tool name '{tool_name}' in field '{key}'[/yellow]"
+                                        )
+
                             # Approach 2: Try to match dictionary fields with tool schemas
                             if not tool_name:
                                 console.print("[yellow]Trying to match dictionary fields with available tools...[/yellow]")
                                 best_match = None
                                 best_match_score = 0
-                                
+
                                 for ToolClass in tools:
                                     if not hasattr(ToolClass, "input_schema"):
                                         continue
-                                        
+
                                     # Try to create a sample instance to get field names
                                     try:
-                                        schema_fields = set(ToolClass.input_schema.__annotations__.keys() if hasattr(ToolClass.input_schema, "__annotations__") else [])
+                                        schema_fields = set(
+                                            ToolClass.input_schema.__annotations__.keys()
+                                            if hasattr(ToolClass.input_schema, "__annotations__")
+                                            else []
+                                        )
                                         dict_fields = set(action_instance.keys())
-                                        
+
                                         # Count matching fields
                                         matching_fields = len(schema_fields.intersection(dict_fields))
                                         if matching_fields > best_match_score and matching_fields > 0:
                                             best_match_score = matching_fields
                                             best_match = ToolClass
-                                            console.print(f"[dim]Found {matching_fields} matching fields with {ToolClass.mcp_tool_name}[/dim]")
+                                            console.print(
+                                                f"[dim]Found {matching_fields} matching fields with {ToolClass.mcp_tool_name}[/dim]"
+                                            )
                                     except Exception as e:
-                                        console.print(f"[dim]Error checking {getattr(ToolClass, 'mcp_tool_name', 'unknown tool')}: {str(e)}[/dim]")
-                                
+                                        console.print(
+                                            f"[dim]Error checking {getattr(ToolClass, 'mcp_tool_name', 'unknown tool')}: {str(e)}[/dim]"
+                                        )
+
                                 if best_match:
                                     tool_name = best_match.mcp_tool_name
-                                    console.print(f"[yellow]Best matching tool: {tool_name} with {best_match_score} matching fields[/yellow]")
-                        
+                                    console.print(
+                                        f"[yellow]Best matching tool: {tool_name} with {best_match_score} matching fields[/yellow]"
+                                    )
+
                         if not tool_name:
                             # Final fallback: Check if this might be a final response
-                            if any(key in action_instance for key in ["response_text", "text", "response", "message", "content"]):
-                                response_content = action_instance.get("response_text") or action_instance.get("text") or action_instance.get("response") or action_instance.get("message") or action_instance.get("content") or "No message content found"
+                            if any(
+                                key in action_instance for key in ["response_text", "text", "response", "message", "content"]
+                            ):
+                                response_content = (
+                                    action_instance.get("response_text")
+                                    or action_instance.get("text")
+                                    or action_instance.get("response")
+                                    or action_instance.get("message")
+                                    or action_instance.get("content")
+                                    or "No message content found"
+                                )
                                 console.print("[yellow]Appears to be a final response. Converting directly.[/yellow]")
                                 action_instance = FinalResponseSchema(response_text=response_content)
                                 continue
-                            
+
                             console.print("[red]Error: Could not determine tool type from dictionary[/red]")
                             # Create a final response with an error message
                             action_instance = FinalResponseSchema(
-                                response_text="I encountered an internal error. The tool could not be determined from the response. Please try rephrasing your question."
+                                response_text="I encountered an internal error. The tool could not be determined from the response. "
+                                "Please try rephrasing your question."
                             )
                             break
-                            
+
                         # Try to find a matching tool class by name
                         matching_tool = next((t for t in tools if t.mcp_tool_name == tool_name), None)
                         if not matching_tool:
@@ -303,20 +334,24 @@ def main():
                                 response_text=f"I encountered an internal error. Could not find tool named '{tool_name}'."
                             )
                             break
-                            
+
                         # Create an instance of the input schema with the dictionary data
                         try:
                             # Remove tool_name if it's not a field in the schema
                             params = {}
                             has_annotations = hasattr(matching_tool.input_schema, "__annotations__")
-                            
+
                             for k, v in action_instance.items():
                                 # Include the key-value pair if it's not "tool_name" or if it's a valid field in the schema
-                                if k not in ["tool_name"] or (has_annotations and k in matching_tool.input_schema.__annotations__.keys()):
+                                if k not in ["tool_name"] or (
+                                    has_annotations and k in matching_tool.input_schema.__annotations__.keys()
+                                ):
                                     params[k] = v
-                                    
+
                             action_instance = matching_tool.input_schema(**params)
-                            console.print(f"[green]Successfully converted dictionary to {matching_tool.input_schema.__name__}[/green]")
+                            console.print(
+                                f"[green]Successfully converted dictionary to {matching_tool.input_schema.__name__}[/green]"
+                            )
                         except Exception as e:
                             console.print(f"[red]Error creating schema instance: {e}[/red]")
                             # Create a final response with an error message
@@ -324,7 +359,7 @@ def main():
                                 response_text=f"I encountered an internal error when trying to use the {tool_name} tool: {str(e)}"
                             )
                             break
-                    
+
                     schema_type = type(action_instance)
                     ToolClass = tool_schema_to_class_map.get(schema_type)
                     if not ToolClass:
@@ -337,7 +372,7 @@ def main():
 
                     tool_name = ToolClass.mcp_tool_name
                     console.print(f"[blue]Executing tool:[/blue] {tool_name}")
-                    console.print(f"[dim]Parameters:[/dim] " f"{action_instance.model_dump()}")
+                    console.print(f"[dim]Parameters: {action_instance.model_dump()}")
 
                     tool_instance = ToolClass()
                     tool_output = tool_instance.run(action_instance)
@@ -345,36 +380,43 @@ def main():
 
                     # Add tool result to agent memory
                     result_message = MCPOrchestratorInputSchema(
-                        query=(f"Tool {tool_name} executed with result: " f"{tool_output.result}")
+                        query=f"Tool {tool_name} executed with result: {tool_output.result}"
                     )
                     orchestrator_agent.memory.add_message("system", result_message)
 
                     # Run the agent again without parameters to continue the flow
                     orchestrator_output = orchestrator_agent.run()
-                    
+
                     # Debug output for subsequent responses
-                    console.print(f"[dim]Debug - subsequent orchestrator_output type: {type(orchestrator_output)}, fields: {orchestrator_output.model_dump()}")
-                    
+                    console.print(
+                        f"[dim]Debug - subsequent orchestrator_output type: {type(orchestrator_output)}, fields: {orchestrator_output.model_dump()}"
+                    )
+
                     # Handle different response formats
-                    if hasattr(orchestrator_output, 'chat_message') and not hasattr(orchestrator_output, 'action'):
+                    if hasattr(orchestrator_output, "chat_message") and not hasattr(orchestrator_output, "action"):
                         console.print("[yellow]Note: Converting BaseAgentOutputSchema to FinalResponseSchema[/yellow]")
                         action_instance = FinalResponseSchema(response_text=orchestrator_output.chat_message)
                         reasoning = "Response generated directly from chat model"
-                    elif hasattr(orchestrator_output, 'action'):
+                    elif hasattr(orchestrator_output, "action"):
                         action_instance = orchestrator_output.action
-                        reasoning = orchestrator_output.reasoning if hasattr(orchestrator_output, 'reasoning') else "No reasoning provided"
+                        reasoning = (
+                            orchestrator_output.reasoning
+                            if hasattr(orchestrator_output, "reasoning")
+                            else "No reasoning provided"
+                        )
                     else:
                         console.print("[yellow]Warning: Unexpected response format. Unable to process.[/yellow]")
                         break
-                        
+
                     console.print(f"[cyan]Orchestrator reasoning:[/cyan] {reasoning}")
 
                 # Final response from the agent
-                response_text = getattr(action_instance, 'response_text', 
-                                      getattr(action_instance, 'chat_message', str(action_instance)))
+                response_text = getattr(
+                    action_instance, "response_text", getattr(action_instance, "chat_message", str(action_instance))
+                )
                 md = Markdown(response_text)
                 # Render the response as markdown
-                console.print(f"[bold blue]Agent: [/bold blue]")
+                console.print("[bold blue]Agent: [/bold blue]")
                 console.print(md)
 
             except Exception as e:

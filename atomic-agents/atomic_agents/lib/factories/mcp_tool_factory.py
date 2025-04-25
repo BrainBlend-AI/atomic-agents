@@ -205,15 +205,12 @@ class MCPToolFactory:
                     "_event_loop": self.event_loop,
                     "working_directory": self.working_directory,
                 }
-                
+
                 # Create the class using new_class() for proper generic type support
                 tool_class = types.new_class(
-                    tool_name,
-                    (BaseTool[InputSchema, OutputSchema],),
-                    {},
-                    lambda ns: ns.update(attrs)
+                    tool_name, (BaseTool[InputSchema, OutputSchema],), {}, lambda ns: ns.update(attrs)
                 )
-                
+
                 # Add the input_schema and output_schema class attributes explicitly
                 # since they might not be properly inherited with types.new_class
                 setattr(tool_class, "input_schema", InputSchema)

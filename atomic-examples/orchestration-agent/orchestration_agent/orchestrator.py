@@ -3,7 +3,6 @@ import openai
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
 
 from orchestration_agent.tools.searxng_search import (
@@ -90,12 +89,8 @@ orchestrator_agent_config = BaseAgentConfig(
         ],
     ),
 )
-orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](
-    config=orchestrator_agent_config
-)
-orchestrator_agent_final = BaseAgent[OrchestratorInputSchema, FinalAnswerSchema](
-    config=orchestrator_agent_config
-)
+orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)
+orchestrator_agent_final = BaseAgent[OrchestratorInputSchema, FinalAnswerSchema](config=orchestrator_agent_config)
 
 # Register the current date provider
 orchestrator_agent.register_context_provider("current_date", CurrentDateProvider("Current Date"))
@@ -184,6 +179,4 @@ if __name__ == "__main__":
         final_answer = orchestrator_agent.run(input_schema)
         console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
         # Reset the agent to the original
-        orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](
-            config=orchestrator_agent_config
-        )
+        orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)

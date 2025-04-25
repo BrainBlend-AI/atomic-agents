@@ -1,5 +1,4 @@
-import numexpr
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from pydantic import Field
 from sympy import sympify
 

@@ -114,7 +114,7 @@ class OrchestratorOutputSchema(BaseIOSchema):
     action: ActionUnion = Field(  # type: ignore[reportInvalidTypeForm]
         ..., description="The chosen action: either a tool's input schema instance or a final response schema instance."
     )
-    
+
     model_config = {"arbitrary_types_allowed": True}
 
 
@@ -159,7 +159,7 @@ def main():
                         "4. Maintain a professional and helpful tone in all responses.",
                         "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
                     ],
-                )            
+                ),
             )
         )
         console.print("[green]Successfully created orchestrator agent.[/green]")

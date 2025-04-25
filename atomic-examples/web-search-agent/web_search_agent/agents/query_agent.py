@@ -5,8 +5,6 @@ from typing import List
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
-from web_search_agent.tools.searxng_search import SearXNGSearchTool
-
 
 class QueryAgentInputSchema(BaseIOSchema):
     """This is the input schema for the QueryAgent."""

@@ -1,10 +1,7 @@
 import os
-import re
-from typing import List, Optional, Dict, Any
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from typing import List, Optional, Any
 
-from pydantic import Field, BaseModel, HttpUrl
+from pydantic import Field, BaseModel
 from datetime import datetime
 
 from googleapiclient.discovery import build
@@ -13,9 +10,6 @@ from youtube_transcript_api import (
     TranscriptsDisabled,
     YouTubeTranscriptApi,
 )
-import requests
-from bs4 import BeautifulSoup
-
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 

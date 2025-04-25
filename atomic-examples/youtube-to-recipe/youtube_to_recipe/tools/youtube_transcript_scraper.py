@@ -1,8 +1,5 @@
 import os
-import re
 from typing import List, Optional
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
 from pydantic import Field, BaseModel
 from datetime import datetime
@@ -13,9 +10,6 @@ from youtube_transcript_api import (
     TranscriptsDisabled,
     YouTubeTranscriptApi,
 )
-import requests
-from bs4 import BeautifulSoup
-
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 
@@ -180,7 +174,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     rich_console = Console()
-    search_tool_instance = YouTubeTranscriptTool(config=YouTubeTranscriptToolConfig(api_key=api_key))
+    search_tool_instance = YouTubeTranscriptTool(config=YouTubeTranscriptToolConfig())
 
     search_input = YouTubeTranscriptTool.input_schema(video_url="https://www.youtube.com/watch?v=t1e8gqXLbsU", language="en")
 
