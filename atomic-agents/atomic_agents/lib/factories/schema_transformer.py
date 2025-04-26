@@ -112,4 +112,7 @@ class SchemaTransformer:
             **fields,
         )
 
+        # Set model schema title to match the tool name so that openai_schema["name"] will be the tool name
+        model.model_config = {"title": tool_name_literal}
+
         return model
