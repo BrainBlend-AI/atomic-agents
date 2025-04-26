@@ -23,8 +23,8 @@ console = Console()
 client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
 
 # System prompt generator setup
-sysyem_prompt_generator = SystemPromptGenerator(
-    background=["You are a math genious."],
+system_prompt_generator = SystemPromptGenerator(
+    background=["You are a math genius."],
     steps=["Think logically step by step and solve a math problem."],
     output_instructions=["Answer in plain English plus formulas."],
 )
@@ -33,7 +33,7 @@ agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model="o3-mini",
-        sysyem_prompt_generator=sysyem_prompt_generator,
+        system_prompt_generator=system_prompt_generator,
         # It is a convention to use "developer" as the system role for reasoning models from OpenAI such as o1, o3-mini.
         # Also these models are often used without a system prompt, which you can do by setting system_role=None
         system_role="developer",
