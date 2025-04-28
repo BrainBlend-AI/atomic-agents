@@ -109,10 +109,8 @@ class SchemaTransformer:
             model_name,
             __base__=BaseIOSchema,
             __doc__=docstring or f"Dynamically generated Pydantic model for {model_name}",
+            model_config={"title": tool_name_literal},
             **fields,
         )
-
-        # Set model schema title to match the tool name so that openai_schema["name"] will be the tool name
-        model.model_config = {"title": tool_name_literal}
 
         return model
