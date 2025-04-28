@@ -27,7 +27,7 @@ An **Atomic Tool** should always be self-contained and modular. This means it sh
 
 Each tool should be placed in its own folder with the following structure:
 
-```
+```PlainText
 tool_name/
 │   .coveragerc
 │   pyproject.toml

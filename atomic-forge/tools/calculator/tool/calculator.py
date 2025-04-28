@@ -63,9 +63,6 @@ class CalculatorTool(BaseTool[CalculatorToolInputSchema, CalculatorToolOutputSch
         allowed_functions (Dict[str, Any]): Functions to make available in the calculator.
     """
 
-    input_schema = CalculatorToolInputSchema
-    output_schema = CalculatorToolOutputSchema
-
     def __init__(self, config: CalculatorToolConfig = CalculatorToolConfig()):
         """
         Initializes the CalculatorTool.

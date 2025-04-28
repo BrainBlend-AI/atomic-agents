@@ -3,7 +3,7 @@ max-line-length = 150
 max-complexity = 10
 count = true
 statistics = true
-ignore = E203, W503
+ignore = E203, W293, W503
 exclude = .venv,venv,__pycache__,build,dist
 
 per-file-ignores =

@@ -206,7 +206,7 @@ if __name__ == "__main__":
         config=SearXNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5)
     )
 
-    search_input = SearXNGSearchTool.input_schema(
+    search_input = SearXNGSearchToolInputSchema(
         queries=["Python programming", "Machine learning", "Artificial intelligence"],
         category="news",
     )

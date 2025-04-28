@@ -79,8 +79,9 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
         self.search_depth = config.search_depth
         self.include_domains = config.include_domains
         self.exclude_domains = config.exclude_domains
+        self.include_answer = False  # Add this property to control whether to include the answer
 
-    async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str) -> List[dict]:
+    async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str) -> dict:
         headers = {
             "accept": "/",
             "content-type": "application/json",
@@ -96,6 +97,7 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
             "include_domains": self.include_domains,
             "exclude_domains": self.exclude_domains,
             "max_results": self.max_results,
+            "include_answer": self.include_answer,  # Add the include_answer flag to the API request
         }
 
         async with session.post("https://api.tavily.com/search", headers=headers, json=json_data) as response:
@@ -105,13 +107,15 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
                     f"Failed to fetch search results for query '{query}': {response.status} {response.reason}. Details: {error_message}"
                 )
             data = await response.json()
+
             results = data.get("results", [])
+            answer = data.get("answer", "")  # Get the answer from the response
 
             # Add query information to each result
             for result in results:
                 result["query"] = query
 
-            return results
+            return {"results": results, "answer": answer}  # Return both results and answer
 
     async def run_async(
         self, params: TavilySearchToolInputSchema, max_results: Optional[int] = None
@@ -119,11 +123,14 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
         async with aiohttp.ClientSession() as session:
             # Fetch results for all queries
             tasks = [self._fetch_search_results(session, query) for query in params.queries]
-            raw_results = await asyncio.gather(*tasks)
+            raw_responses = await asyncio.gather(*tasks)
 
         # Process results for each query
         processed_results = []
-        for query_results in raw_results:
+        for response in raw_responses:
+            query_results = response["results"]
+            answer = response["answer"]  # Get the answer for this query
+
             query_processed = []
             for result in query_results:
                 if all(key in result for key in ["title", "url", "content", "score"]):
@@ -135,6 +142,7 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
                             score=result.get("score", 0),
                             raw_content=result.get("raw_content"),
                             query=result.get("query"),
+                            answer=answer,  # Use the answer from the API response
                         )
                     )
                 else:
@@ -164,7 +172,7 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
             Exception: If the request to Tavily fails.
         """
         with ThreadPoolExecutor() as executor:
-            return executor.submit(
+            result = executor.submit(
                 asyncio.run,
                 self.run_async(
                     params,
@@ -172,18 +180,21 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
                 ),
             ).result()
 
+        return result
 
-#################
-# EXAMPLE USAGE #
-#################
+
+####
+# Main entry point for testing
 if __name__ == "__main__":
     from rich.console import Console
+    from dotenv import load_dotenv
 
+    load_dotenv()
     rich_console = Console()
 
     search_tool_instance = TavilySearchTool(config=TavilySearchToolConfig(api_key=os.getenv("TAVILY_API_KEY"), max_results=2))
 
-    search_input = TavilySearchTool.input_schema(queries=["Python programming", "Machine learning", "Artificial intelligence"])
+    search_input = TavilySearchToolInputSchema(queries=["Python programming", "Machine learning", "Artificial intelligence"])
 
     output = search_tool_instance.run(search_input)
 
