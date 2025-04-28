@@ -2,16 +2,44 @@
 
 <img src="./.assets/logo.png" alt="Atomic Agents" width="350"/>
 
----
-
 [![PyPI version](https://badge.fury.io/py/atomic-agents.svg)](https://badge.fury.io/py/atomic-agents)
+[![Documentation](https://img.shields.io/badge/docs-read%20the%20docs-blue?logo=readthedocs&style=flat-square)](https://brainblend-ai.github.io/atomic-agents/)
+[![Build Docs](https://github.com/BrainBlend-AI/atomic-agents/actions/workflows/docs.yml/badge.svg)](https://github.com/BrainBlend-AI/atomic-agents/actions/workflows/docs.yml)
+[![Code Quality](https://github.com/BrainBlend-AI/atomic-agents/actions/workflows/code-quality.yml/badge.svg)](https://github.com/BrainBlend-AI/atomic-agents/actions/workflows/code-quality.yml)
+[![Discord](https://img.shields.io/badge/chat-on%20discord-7289DA?logo=discord&style=flat-square)](https://discord.gg/J3W9b5AZJR)
+[![PyPI downloads](https://img.shields.io/pypi/dm/atomic-agents?style=flat-square)](https://pypi.org/project/atomic-agents/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/atomic-agents?style=flat-square)](https://pypi.org/project/atomic-agents/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/BrainBlend-AI/atomic-agents?style=social)](https://github.com/BrainBlend-AI/atomic-agents/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/BrainBlend-AI/atomic-agents?style=social)](https://github.com/BrainBlend-AI/atomic-agents/network/members)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Documentation](#documentation)
+- [Installation](#installation)
+- [Quickstart & Examples](#quickstart--examples)
+- [Why Atomic Agents?](#why-atomic-agents)
+- [Anatomy of an Agent](#anatomy-of-an-agent)
+- [Context Providers](#context-providers)
+- [Chaining Schemas and Agents](#chaining-schemas-and-agents)
+- [Running the CLI](#running-the-cli)
+- [Provider & Model Compatibility](#provider--model-compatibility)
+- [Atomic Forge](#atomic-forge)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Overview
 
 The Atomic Agents framework is designed around the concept of atomicity to be an extremely lightweight and modular framework for building Agentic AI pipelines and applications without sacrificing developer experience and maintainability. The framework provides a set of tools and agents that can be combined to create powerful applications. It is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data and schema validation and serialization.
 All logic and control flows are written in Python, enabling developers to apply familiar best practices and workflows from traditional software development without compromising flexibility or clarity.
 
-**NEW: We now also have an official subreddit at [/r/AtomicAgents](https://www.reddit.com/r/AtomicAgents/) - Be sure to join!**
+**NEW: Join our community on Discord at [discord.gg/J3W9b5AZJR](https://discord.gg/J3W9b5AZJR) and our official subreddit at [/r/AtomicAgents](https://www.reddit.com/r/AtomicAgents/)!**
 
----
+## Documentation
+
+Comprehensive documentation, including tutorials, examples, and API reference, is available at [https://brainblend-ai.github.io/atomic-agents/](https://brainblend-ai.github.io/atomic-agents/).
+For direct API docs and code references, visit our [API documentation](https://brainblend-ai.github.io/atomic-agents/).
 
 If you want to learn more about the motivation and philosophy behind Atomic Agents, [I suggest reading this Medium article (no account needed)](https://ai.gopubby.com/want-to-build-ai-agents-c83ab4535411?sk=b9429f7c57dbd3bda59f41154b65af35) or check out the overview video below:
 
@@ -312,9 +340,6 @@ The `atomic-assembler` CLI gives you complete control over your tools, avoiding 
 
 ## Provider & Model Compatibility
 Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) package. This means that in all examples where OpenAI is used, any other API supported by Instructor can also be used—such as Ollama, Groq, Mistral, Cohere, Anthropic, Gemini, and more. For a complete list, please refer to the Instructor documentation on its [GitHub page](https://github.com/jxnl/instructor).
-
-## API Documentation
-API documentation can be found [here](https://brainblend-ai.github.io/atomic-agents/).
 
 ## Atomic Forge
 
