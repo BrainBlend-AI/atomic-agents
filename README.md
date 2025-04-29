@@ -15,19 +15,25 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Documentation](#documentation)
-- [Installation](#installation)
-- [Quickstart & Examples](#quickstart--examples)
-- [Why Atomic Agents?](#why-atomic-agents)
-- [Anatomy of an Agent](#anatomy-of-an-agent)
-- [Context Providers](#context-providers)
-- [Chaining Schemas and Agents](#chaining-schemas-and-agents)
-- [Running the CLI](#running-the-cli)
-- [Provider & Model Compatibility](#provider--model-compatibility)
-- [Atomic Forge](#atomic-forge)
-- [Contributing](#contributing)
-- [License](#license)
+- [Atomic Agents](#atomic-agents)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [📚 Documentation](#-documentation)
+  - [Why Atomic Agents?](#why-atomic-agents)
+  - [Anatomy of an Agent](#anatomy-of-an-agent)
+  - [Installation](#installation)
+  - [Project Structure](#project-structure)
+  - [Quickstart \& Examples](#quickstart--examples)
+  - [Context Providers](#context-providers)
+    - [Using Context Providers](#using-context-providers)
+  - [Chaining Schemas and Agents](#chaining-schemas-and-agents)
+    - [Example: Generating Queries for Different Search Providers](#example-generating-queries-for-different-search-providers)
+  - [Running the CLI](#running-the-cli)
+  - [Provider \& Model Compatibility](#provider--model-compatibility)
+  - [Atomic Forge](#atomic-forge)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Star History](#star-history)
 
 ## Overview
 
@@ -36,10 +42,22 @@ All logic and control flows are written in Python, enabling developers to apply 
 
 **NEW: Join our community on Discord at [discord.gg/J3W9b5AZJR](https://discord.gg/J3W9b5AZJR) and our official subreddit at [/r/AtomicAgents](https://www.reddit.com/r/AtomicAgents/)!**
 
-## Documentation
+## 📚 Documentation
 
-Comprehensive documentation, including tutorials, examples, and API reference, is available at [https://brainblend-ai.github.io/atomic-agents/](https://brainblend-ai.github.io/atomic-agents/).
-For direct API docs and code references, visit our [API documentation](https://brainblend-ai.github.io/atomic-agents/).
+[![Read the Docs](https://img.shields.io/badge/docs-read%20the%20docs-blue?logo=readthedocs&style=for-the-badge)](https://brainblend-ai.github.io/atomic-agents/)
+
+> 🚀 Ready to explore our documentation? Dive in below!
+>
+> <img src="./.assets/docs.png" alt="Documentation Snapshot" width="700"/>
+>
+**Key Documentation Resources**
+
+- **Getting Started**: Installation instructions and Quickstart tutorials
+- **Examples & Tutorials**: Real-world use-cases and step-by-step guides
+- **API Reference**: Detailed class and function documentation
+- **Developer Guide**: Contribution guidelines and advanced topics
+
+[Visit the Documentation Site »](https://brainblend-ai.github.io/atomic-agents/)
 
 If you want to learn more about the motivation and philosophy behind Atomic Agents, [I suggest reading this Medium article (no account needed)](https://ai.gopubby.com/want-to-build-ai-agents-c83ab4535411?sk=b9429f7c57dbd3bda59f41154b65af35) or check out the overview video below:
 
@@ -56,8 +74,6 @@ If you just want to dive into the code straight away, I suggest checking out the
 <a href="https://www.youtube.com/watch?v=CyZxRU0ax3Q" target="_blank">
     <img src="./.assets/video-thumbnail-2.png" alt="Watch the video" width="350"/>
 </a>
-
----
 
 ## Why Atomic Agents?
 While existing frameworks for agentic AI focus on building autonomous multi-agent systems, they often lack the control and predictability required for real-world applications. Businesses need AI systems that produce consistent, reliable outputs aligned with their brand and objectives.
