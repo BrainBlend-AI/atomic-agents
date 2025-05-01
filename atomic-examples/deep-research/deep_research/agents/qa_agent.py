@@ -57,6 +57,6 @@ question_answering_agent = BaseAgent[QuestionAnsweringAgentInputSchema, Question
                 "- What are the limitations of your search capabilities?",
             ],
         ),
-        model_api_parameters={"temperature": 0.1},
+        api_parameters={"temperature": 0.1},
     )
 )

@@ -45,7 +45,7 @@ choice_agent = BaseAgent[ChoiceAgentInputSchema, ChoiceAgentOutputSchema](
                 "Your decision must match your reasoning - don't contradict yourself",
             ],
         ),
-        model_api_parameters={"temperature": 0.1},
+        api_parameters={"temperature": 0.1},
     )
 )
 

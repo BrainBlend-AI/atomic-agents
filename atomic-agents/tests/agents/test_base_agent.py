@@ -109,20 +109,20 @@ def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_
     assert agent.model == "gpt-4o-mini"
     assert agent.memory == mock_memory
     assert agent.system_prompt_generator == mock_system_prompt_generator
-    assert "max_tokens" not in agent.model_api_parameters
+    assert "max_tokens" not in agent.api_parameters
 
 
-# model_api_parameters should have priority over other settings
+# api_parameters should have priority over other settings
 def test_initialization_temperature_priority(mock_instructor, mock_memory, mock_system_prompt_generator):
     config = BaseAgentConfig(
         client=mock_instructor,
         model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
-        model_api_parameters={"temperature": 1.0},
+        api_parameters={"temperature": 1.0},
     )
     agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
-    assert agent.model_api_parameters["temperature"] == 1.0
+    assert agent.api_parameters["temperature"] == 1.0
 
 
 def test_initialization_without_temperature(mock_instructor, mock_memory, mock_system_prompt_generator):
@@ -131,10 +131,10 @@ def test_initialization_without_temperature(mock_instructor, mock_memory, mock_s
         model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
-        model_api_parameters={"temperature": 0.5},
+        api_parameters={"temperature": 0.5},
     )
     agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
-    assert agent.model_api_parameters["temperature"] == 0.5
+    assert agent.api_parameters["temperature"] == 0.5
 
 
 def test_initialization_without_max_tokens(mock_instructor, mock_memory, mock_system_prompt_generator):
@@ -143,10 +143,10 @@ def test_initialization_without_max_tokens(mock_instructor, mock_memory, mock_sy
         model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
-        model_api_parameters={"max_tokens": 1024},
+        api_parameters={"max_tokens": 1024},
     )
     agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
-    assert agent.model_api_parameters["max_tokens"] == 1024
+    assert agent.api_parameters["max_tokens"] == 1024
 
 
 def test_initialization_system_role_equals_developer(mock_instructor, mock_memory, mock_system_prompt_generator):
@@ -156,7 +156,7 @@ def test_initialization_system_role_equals_developer(mock_instructor, mock_memor
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
         system_role="developer",
-        model_api_parameters={},  # No temperature specified
+        api_parameters={},  # No temperature specified
     )
     agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
     _ = agent._prepare_messages()
@@ -170,7 +170,7 @@ def test_initialization_system_role_equals_None(mock_instructor, mock_memory, mo
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
         system_role=None,
-        model_api_parameters={},  # No temperature specified
+        api_parameters={},  # No temperature specified
     )
     agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
     _ = agent._prepare_messages()

@@ -35,7 +35,7 @@ agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
         client=instructor.from_openai(OpenAI(api_key=os.getenv("OPENAI_API_KEY"))),
         model="gpt-4-turbo-preview",
         memory=memory,
-        model_api_parameters={"max_tokens": 2048}
+        api_parameters={"max_tokens": 2048}
     )
 )
 
@@ -291,7 +291,7 @@ agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model=model,
-        model_api_parameters={"max_tokens": 2048}
+        api_parameters={"max_tokens": 2048}
     )
 )
 ```

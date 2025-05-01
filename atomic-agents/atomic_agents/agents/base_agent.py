@@ -68,7 +68,7 @@ class BaseAgentConfig(BaseModel):
         "system", description="The role of the system in the conversation. None means no system prompt."
     )
     model_config = {"arbitrary_types_allowed": True}
-    model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
+    api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
 
 
 class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
@@ -90,7 +90,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         system_role (Optional[str]): The role of the system in the conversation. None means no system prompt.
         initial_memory (AgentMemory): Initial state of the memory.
         current_user_input (Optional[InputSchema]): The current user input being processed.
-        model_api_parameters (dict): Additional parameters passed to the API provider.
+        api_parameters (dict): Additional parameters passed to the API provider.
             - Use this for parameters like 'temperature', 'max_tokens', etc.
     """
 
@@ -108,7 +108,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.system_role = config.system_role
         self.initial_memory = self.memory.copy()
         self.current_user_input = None
-        self.model_api_parameters = config.model_api_parameters or {}
+        self.api_parameters = config.api_parameters or {}
 
     def reset_memory(self):
         """
@@ -170,7 +170,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             messages=self.messages,
             model=self.model,
             response_model=self.output_schema,
-            **self.model_api_parameters,
+            **self.api_parameters,
         )
         self.memory.add_message("assistant", response)
 
@@ -203,7 +203,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             model=self.model,
             messages=self.messages,
             response_model=self.output_schema,
-            **self.model_api_parameters,
+            **self.api_parameters,
             stream=True,
         )
 
@@ -238,7 +238,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self._prepare_messages()
 
         response = await self.client.chat.completions.create(
-            model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
+            model=self.model, messages=self.messages, response_model=self.output_schema, **self.api_parameters
         )
 
         self.memory.add_message("assistant", response)
@@ -266,7 +266,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             model=self.model,
             messages=self.messages,
             response_model=self.output_schema,
-            **self.model_api_parameters,
+            **self.api_parameters,
             stream=True,
         )
 

@@ -80,7 +80,7 @@ client, model = setup_client(provider)
 
 # Agent setup with specified configuration
 agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
-    config=BaseAgentConfig(client=client, model=model, memory=memory, model_api_parameters={"max_tokens": 2048})
+    config=BaseAgentConfig(client=client, model=model, memory=memory, api_parameters={"max_tokens": 2048})
 )
 
 # Generate the default system prompt for the agent

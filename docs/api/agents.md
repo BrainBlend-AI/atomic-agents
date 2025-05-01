@@ -136,7 +136,7 @@ class BaseAgentConfig:
     system_prompt_generator: Optional[SystemPromptGenerator] = None  # Prompt generator
     input_schema: Optional[Type[BaseModel]] = None  # Custom input schema
     output_schema: Optional[Type[BaseModel]] = None  # Custom output schema
-    model_api_parameters: Optional[dict] = None  # Additional API parameters
+    api_parameters: Optional[dict] = None  # Additional API parameters
 ```
 
 ### Input/Output Schemas
