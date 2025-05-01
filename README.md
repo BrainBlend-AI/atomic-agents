@@ -50,7 +50,7 @@ All logic and control flows are written in Python, enabling developers to apply 
 
 > 🚀 Ready to explore our documentation? Dive in below!
 >
-> <img src="./.assets/docs.png" alt="Documentation Snapshot" width="700"/>
+> <img src="./.assets/docs.png" alt="Documentation Snapshot" width="350"/>
 >
 **Key Documentation Resources**
 
