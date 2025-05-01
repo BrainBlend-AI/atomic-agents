@@ -39,6 +39,7 @@ jobs:
       - name: Build documentation
         run: |
           cd docs
+          poetry run make singlehtml
           poetry run make html
 
       - name: Generate llms.txt
