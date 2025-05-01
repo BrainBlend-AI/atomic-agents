@@ -5,8 +5,7 @@ from markdownify import markdownify as md
 # Paths
 docs_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'docs'))
 single_dir = os.path.join(docs_dir, '_build', 'singlehtml')
-build_html_dir = os.path.join(docs_dir, '_build', 'html')
-llms_txt_path = os.path.join(build_html_dir, 'llms.txt')
+llms_txt_path = os.path.join(docs_dir, 'llms.txt')
 
 # Read single HTML index
 html_file = os.path.join(single_dir, 'index.html')
@@ -26,7 +25,6 @@ content_html = str(doc_main) if doc_main else html
 md_text = md(content_html)
 
 # Write full documentation to llms.txt
-os.makedirs(build_html_dir, exist_ok=True)
 with open(llms_txt_path, 'w', encoding='utf-8') as out_f:
     out_f.write(md_text)
 
