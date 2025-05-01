@@ -86,7 +86,7 @@ def agent_config(mock_instructor, mock_memory, mock_system_prompt_generator):
 
 @pytest.fixture
 def agent(agent_config):
-    return BaseAgent(agent_config)
+    return BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](agent_config)
 
 
 @pytest.fixture
@@ -101,7 +101,7 @@ def agent_config_async(mock_instructor_async, mock_memory, mock_system_prompt_ge
 
 @pytest.fixture
 def agent_async(agent_config_async):
-    return BaseAgent(agent_config_async)
+    return BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](agent_config_async)
 
 
 def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_generator):
@@ -109,22 +109,19 @@ def test_initialization(agent, mock_instructor, mock_memory, mock_system_prompt_
     assert agent.model == "gpt-4o-mini"
     assert agent.memory == mock_memory
     assert agent.system_prompt_generator == mock_system_prompt_generator
-    assert agent.input_schema == BaseAgentInputSchema
-    assert agent.output_schema == BaseAgentOutputSchema
     assert "max_tokens" not in agent.model_api_parameters
 
 
-# model_api_parameters should have priority over the deprecated temperature parameter if both are provided.
+# model_api_parameters should have priority over other settings
 def test_initialization_temperature_priority(mock_instructor, mock_memory, mock_system_prompt_generator):
     config = BaseAgentConfig(
         client=mock_instructor,
         model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
-        temperature=0.5,
         model_api_parameters={"temperature": 1.0},
     )
-    agent = BaseAgent(config)
+    agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
     assert agent.model_api_parameters["temperature"] == 1.0
 
 
@@ -134,10 +131,9 @@ def test_initialization_without_temperature(mock_instructor, mock_memory, mock_s
         model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
-        temperature=0.5,
-        model_api_parameters={},  # No temperature specified
+        model_api_parameters={"temperature": 0.5},
     )
-    agent = BaseAgent(config)
+    agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
     assert agent.model_api_parameters["temperature"] == 0.5
 
 
@@ -147,10 +143,9 @@ def test_initialization_without_max_tokens(mock_instructor, mock_memory, mock_sy
         model="gpt-4o-mini",
         memory=mock_memory,
         system_prompt_generator=mock_system_prompt_generator,
-        max_tokens=1024,
-        model_api_parameters={},  # No temperature specified
+        model_api_parameters={"max_tokens": 1024},
     )
-    agent = BaseAgent(config)
+    agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
     assert agent.model_api_parameters["max_tokens"] == 1024
 
 
@@ -163,7 +158,7 @@ def test_initialization_system_role_equals_developer(mock_instructor, mock_memor
         system_role="developer",
         model_api_parameters={},  # No temperature specified
     )
-    agent = BaseAgent(config)
+    agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
     _ = agent._prepare_messages()
     assert isinstance(agent.messages, list) and agent.messages[0]["role"] == "developer"
 
@@ -177,7 +172,7 @@ def test_initialization_system_role_equals_None(mock_instructor, mock_memory, mo
         system_role=None,
         model_api_parameters={},  # No temperature specified
     )
-    agent = BaseAgent(config)
+    agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
     _ = agent._prepare_messages()
     assert isinstance(agent.messages, list) and len(agent.messages) == 0
 
@@ -219,6 +214,18 @@ def test_unregister_context_provider(agent, mock_system_prompt_generator):
         agent.unregister_context_provider("non_existent_provider")
 
 
+def test_no_type_parameters(mock_instructor):
+    custom_config = BaseAgentConfig(
+        client=mock_instructor,
+        model="gpt-4o-mini",
+    )
+
+    custom_agent = BaseAgent(custom_config)
+
+    assert custom_agent.input_schema == BaseAgentInputSchema
+    assert custom_agent.output_schema == BaseAgentOutputSchema
+
+
 def test_custom_input_output_schemas(mock_instructor):
     class CustomInputSchema(BaseModel):
         custom_field: str
@@ -229,11 +236,9 @@ def test_custom_input_output_schemas(mock_instructor):
     custom_config = BaseAgentConfig(
         client=mock_instructor,
         model="gpt-4o-mini",
-        input_schema=CustomInputSchema,
-        output_schema=CustomOutputSchema,
     )
 
-    custom_agent = BaseAgent(custom_config)
+    custom_agent = BaseAgent[CustomInputSchema, CustomOutputSchema](custom_config)
 
     assert custom_agent.input_schema == CustomInputSchema
     assert custom_agent.output_schema == CustomOutputSchema
@@ -294,7 +299,7 @@ def test_run_stream(mock_instructor, mock_memory):
         memory=mock_memory,
         system_prompt_generator=None,  # No system prompt generator
     )
-    agent = BaseAgent(config)
+    agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
 
     mock_input = BaseAgentInputSchema(chat_message="Test input")
     mock_output = BaseAgentOutputSchema(chat_message="Test output")
@@ -345,36 +350,6 @@ async def test_run_async_stream(agent_async, mock_memory):
     # Create the expected full response content to check
     full_response_content = agent_async.output_schema(**responses[0].model_dump())
     mock_memory.add_message.assert_any_call("assistant", full_response_content)
-
-
-@pytest.mark.asyncio
-async def test_stream_response_async(agent, mock_memory, mock_instructor_async, mock_system_prompt_generator):
-    # Replace the agent's client with the async version
-    agent.client = mock_instructor_async
-
-    mock_input = BaseAgentInputSchema(chat_message="Test input")
-    mock_output = BaseAgentOutputSchema(chat_message="Test output")
-
-    # Since stream_response_async is deprecated and now just wraps run_async_stream,
-    # we need to mock run_async_stream directly
-
-    # Create a simple async generator for testing
-    async def mock_async_gen():
-        yield mock_output
-
-    # Mock the run_async_stream method
-    agent.run_async_stream = Mock(return_value=mock_async_gen())
-
-    responses = []
-    async for partial_response in agent.stream_response_async(mock_input):
-        responses.append(partial_response)
-
-    # Verify run_async_stream was called
-    agent.run_async_stream.assert_called_once_with(mock_input)
-
-    # Verify we got the expected response
-    assert len(responses) == 1
-    assert responses[0] == mock_output
 
 
 def test_model_from_chunks_patched():

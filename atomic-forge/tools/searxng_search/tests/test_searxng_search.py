@@ -7,10 +7,10 @@ from aiohttp import ClientSession
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tool.searxng_search import (  # noqa: E402
-    SearxNGSearchTool,
-    SearxNGSearchToolInputSchema,
-    SearxNGSearchToolOutputSchema,
-    SearxNGSearchToolConfig,
+    SearXNGSearchTool,
+    SearXNGSearchToolInputSchema,
+    SearXNGSearchToolOutputSchema,
+    SearXNGSearchToolConfig,
 )
 
 
@@ -49,14 +49,14 @@ async def test_searxng_search_tool_with_category(mock_aiohttp_session):
     mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
     # Initialize the tool
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=mock_searxng_url))
-    input_schema = SearxNGSearchToolInputSchema(queries=[mock_query], category="news")
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url=mock_searxng_url))
+    input_schema = SearXNGSearchToolInputSchema(queries=[mock_query], category="news")
 
     # Run the tool
     result = await searxng_tool.run_async(input_schema)
 
     # Assertions
-    assert isinstance(result, SearxNGSearchToolOutputSchema)
+    assert isinstance(result, SearXNGSearchToolOutputSchema)
     assert len(result.results) == 1
     assert result.results[0].title == "Test Result with Category"
     assert result.results[0].url == "https://example.com/test-category"
@@ -87,8 +87,8 @@ async def test_searxng_search_tool_missing_fields(mock_aiohttp_session):
     mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
     # Initialize the tool
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=mock_searxng_url))
-    input_schema = SearxNGSearchToolInputSchema(queries=[mock_query], category=None)
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url=mock_searxng_url))
+    input_schema = SearXNGSearchToolInputSchema(queries=[mock_query], category=None)
 
     # Run the tool
     result = await searxng_tool.run_async(input_schema)
@@ -137,8 +137,8 @@ async def test_searxng_search_tool_with_metadata_and_published_date(mock_aiohttp
     mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
     # Initialize the tool
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=mock_searxng_url))
-    input_schema = SearxNGSearchToolInputSchema(queries=[mock_query], category=None)
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url=mock_searxng_url))
+    input_schema = SearXNGSearchToolInputSchema(queries=[mock_query], category=None)
 
     # Run the tool
     result = await searxng_tool.run_async(input_schema)
@@ -173,8 +173,8 @@ def test_searxng_search_tool_sync_run_method(mock_aiohttp_session):
     mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
     # Initialize the tool
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=mock_searxng_url))
-    input_schema = SearxNGSearchToolInputSchema(queries=[mock_query], category=None)
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url=mock_searxng_url))
+    input_schema = SearXNGSearchToolInputSchema(queries=[mock_query], category=None)
 
     # Run the tool synchronously
     result = searxng_tool.run(input_schema)
@@ -204,8 +204,8 @@ async def test_searxng_search_tool_with_max_results(mock_aiohttp_session):
     mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
     # Initialize the tool
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=mock_searxng_url, max_results=10))
-    input_schema = SearxNGSearchToolInputSchema(queries=[mock_query], category=None)
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url=mock_searxng_url, max_results=10))
+    input_schema = SearXNGSearchToolInputSchema(queries=[mock_query], category=None)
 
     # Run the tool with max_results=5
     result = await searxng_tool.run_async(input_schema, max_results=5)
@@ -230,8 +230,8 @@ async def test_searxng_search_tool_no_results(mock_aiohttp_session):
     mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
     # Initialize the tool
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=mock_searxng_url))
-    input_schema = SearxNGSearchToolInputSchema(queries=[mock_query], category=None)
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url=mock_searxng_url))
+    input_schema = SearXNGSearchToolInputSchema(queries=[mock_query], category=None)
 
     # Run the tool
     result = await searxng_tool.run_async(input_schema)
@@ -255,8 +255,8 @@ async def test_searxng_search_tool_error(mock_aiohttp_session):
     mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
     # Initialize the tool
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url=mock_searxng_url))
-    input_schema = SearxNGSearchToolInputSchema(queries=[mock_query], category=None)
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url=mock_searxng_url))
+    input_schema = SearXNGSearchToolInputSchema(queries=[mock_query], category=None)
 
     # Run the tool and expect an exception
     with pytest.raises(Exception) as excinfo:

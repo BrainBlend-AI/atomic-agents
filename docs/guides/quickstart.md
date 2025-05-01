@@ -30,10 +30,11 @@ memory = AgentMemory()
 memory.add_assistant_message("Hello! I'm your AI assistant. How can I help you today?")
 
 # Create agent
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=instructor.from_openai(OpenAI(api_key=os.getenv("OPENAI_API_KEY"))),
         model="gpt-4-turbo-preview",
+        memory=memory,
         model_api_parameters={"max_tokens": 2048}
     )
 )
@@ -143,7 +144,7 @@ prompt_generator = SystemPromptGenerator(
 )
 
 # Create agent with dynamic context
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model=model,
@@ -286,7 +287,7 @@ provider = "openai"  # or "anthropic", "groq", "ollama", "gemini"
 client, model = setup_client(provider)
 
 # Create agent with chosen provider
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model=model,

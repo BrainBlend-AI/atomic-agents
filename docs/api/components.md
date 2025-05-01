@@ -179,7 +179,7 @@ class MyToolConfig(BaseToolConfig):
         description="API key for the service"
     )
 
-class MyTool(BaseTool):
+class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
     """Tool implementation"""
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema
@@ -194,12 +194,14 @@ class MyTool(BaseTool):
 ```
 
 Key features:
+
 - Structured input/output schemas
 - Configuration management
 - Title and description overrides
 - Error handling
 
 For full API details:
+
 ```{eval-rst}
 .. automodule:: atomic_agents.lib.components.agent_memory
    :members:

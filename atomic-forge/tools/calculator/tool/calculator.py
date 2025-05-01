@@ -1,3 +1,4 @@
+from typing import Dict, Any
 from pydantic import Field
 from sympy import sympify
 
@@ -36,25 +37,31 @@ class CalculatorToolOutputSchema(BaseIOSchema):
 class CalculatorToolConfig(BaseToolConfig):
     """
     Configuration for the CalculatorTool.
+
+    Attributes:
+        title (Optional[str]): Overrides the default title of the tool.
+        description (Optional[str]): Overrides the default description of the tool.
+        safe_mode (bool): Whether to run in safe mode with restricted operations.
+        allowed_functions (Dict[str, Any]): Functions to make available in the calculator.
     """
 
-    pass
+    safe_mode: bool = True
+    allowed_functions: Dict[str, Any] = {}
 
 
 #####################
 # MAIN TOOL & LOGIC #
 #####################
-class CalculatorTool(BaseTool):
+class CalculatorTool(BaseTool[CalculatorToolInputSchema, CalculatorToolOutputSchema]):
     """
-    Tool for performing calculations based on the provided mathematical expression.
+    Tool for evaluating mathematical expressions.
 
     Attributes:
-        input_schema (CalculatorToolInputSchema): The schema for the input data.
-        output_schema (CalculatorToolOutputSchema): The schema for the output data.
+        input_schema (CalculatorToolInputSchema): Schema defining the input data.
+        output_schema (CalculatorToolOutputSchema): Schema defining the output data.
+        safe_mode (bool): Whether to run in safe mode with restricted operations.
+        allowed_functions (Dict[str, Any]): Functions to make available in the calculator.
     """
-
-    input_schema = CalculatorToolInputSchema
-    output_schema = CalculatorToolOutputSchema
 
     def __init__(self, config: CalculatorToolConfig = CalculatorToolConfig()):
         """
@@ -64,6 +71,8 @@ class CalculatorTool(BaseTool):
             config (CalculatorToolConfig): Configuration for the tool.
         """
         super().__init__(config)
+        self.safe_mode = config.safe_mode
+        self.allowed_functions = config.allowed_functions
 
     def run(self, params: CalculatorToolInputSchema) -> CalculatorToolOutputSchema:
         """

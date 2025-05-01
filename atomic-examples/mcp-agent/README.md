@@ -9,6 +9,7 @@ This example consists of two main components:
 ### 1. Example Client (`example-client/`)
 
 An interactive agent that:
+
 - Connects to MCP servers using either STDIO or SSE transport
 - Dynamically discovers available tools
 - Processes natural language queries
@@ -21,6 +22,7 @@ An interactive agent that:
 ### 2. Example MCP Server (`example-mcp-server/`)
 
 A server that:
+
 - Provides MCP tools and resources
 - Supports both STDIO and SSE (HTTP) transport methods
 - Includes example tools for demonstration
@@ -50,18 +52,21 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 ## Getting Started
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/BrainBlend-AI/atomic-agents
    cd atomic-agents/atomic-examples/mcp-agent
    ```
 
 2. Set up the server:
+
    ```bash
    cd example-mcp-server
    poetry install
    ```
 
 3. Set up the client:
+
    ```bash
    cd ../example-client
    poetry install
@@ -70,21 +75,25 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 4. Run the example:
 
    **Using STDIO transport (default):**
+
    ```bash
    cd example-client
    poetry run python -m example_client.main
    ```
 
    **Using SSE transport:**
+
    ```bash
    # First terminal: Start the server
    cd example-mcp-server
-   poetry run example-mcp-server --mode=sse
+   poetry run example-mcp-server/server.py --mode=sse
 
-   # Second terminal: Run the client
+   # Second terminal: Run the client with SSE transport
    cd example-client
    poetry run python -m example_client.main --transport sse
    ```
+
+   **Note:** When using SSE transport, make sure the server is running before starting the client. The server runs on port 6969 by default.
 
 ## Example Queries
 
@@ -122,6 +131,7 @@ For more complex expressions like `((4**3)-10)/100)**2`, the agent:
 5. Uses `MultiplyNumbers` again for the final squaring operation
 
 Each step in the conversation shows:
+
 - The tool being executed
 - The parameters being used
 - The intermediate result

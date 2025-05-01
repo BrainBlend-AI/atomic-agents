@@ -63,6 +63,9 @@ system_prompt_generator = SystemPromptGenerator(
         "Analyze the user's input to understand the context and intent.",
         "Formulate a relevant and informative response based on the assistant's knowledge.",
         "Generate 3 suggested follow-up questions for the user to explore the topic further.",
+        "When you get a simple number from the user,"
+        "choose the corresponding question from the last list of suggested questions and answer it."
+        "Note that the first question is 1, the second is 2, and so on.",
     ],
     output_instructions=[
         "Provide clear, concise, and accurate information in response to user queries.",
@@ -73,13 +76,12 @@ system_prompt_generator = SystemPromptGenerator(
 console.print(Panel(system_prompt_generator.generate_prompt(), width=console.width, style="bold cyan"), style="bold cyan")
 
 # Agent setup with specified configuration and custom output schema
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
         memory=memory,
-        output_schema=CustomOutputSchema,
     )
 )
 

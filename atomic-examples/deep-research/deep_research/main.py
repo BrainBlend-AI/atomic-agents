@@ -5,7 +5,7 @@ from deep_research.agents.qa_agent import (
     QuestionAnsweringAgentOutputSchema,
 )
 from deep_research.agents.choice_agent import choice_agent, ChoiceAgentInputSchema
-from deep_research.tools.searxng_search import SearxNGSearchTool, SearxNGSearchToolConfig, SearxNGSearchToolInputSchema
+from deep_research.tools.searxng_search import SearXNGSearchTool, SearXNGSearchToolConfig, SearXNGSearchToolInputSchema
 from deep_research.tools.webpage_scraper import WebpageScraperTool, WebpageScraperToolInputSchema
 from deep_research.context_providers import ContentItem, CurrentDateContextProvider, ScrapedContentContextProvider
 
@@ -51,9 +51,9 @@ def perform_search_and_update_context(
 
         # Perform the search
         task = progress.add_task("[cyan]Searching the web...", total=None)
-        console.print("\n[bold yellow]🌐 Searching across the web using SearxNG...[/bold yellow]")
-        searxng_search_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url="http://localhost:8080/"))
-        search_results = searxng_search_tool.run(SearxNGSearchToolInputSchema(queries=query_agent_output.queries))
+        console.print("\n[bold yellow]🌐 Searching across the web using SearXNG...[/bold yellow]")
+        searxng_search_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url="http://localhost:8080/"))
+        search_results = searxng_search_tool.run(SearXNGSearchToolInputSchema(queries=query_agent_output.queries))
         progress.remove_task(task)
 
         # Scrape content from search results
@@ -173,7 +173,7 @@ def chat_loop() -> None:
     while True:
         user_message = console.input("\n[bold blue]Your question:[/bold blue] ").strip()
 
-        if user_message.lower() == "exit":
+        if user_message.lower() in ["/exit", "/quit"]:
             console.print("\n[bold]👋 Goodbye! Thanks for using Deep Research.[/bold]")
             break
 

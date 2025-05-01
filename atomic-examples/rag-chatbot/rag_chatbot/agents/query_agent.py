@@ -20,7 +20,7 @@ class RAGQueryAgentOutputSchema(BaseIOSchema):
     query: str = Field(..., description="The semantic search query to use for retrieving relevant chunks")
 
 
-query_agent = BaseAgent(
+query_agent = BaseAgent[RAGQueryAgentInputSchema, RAGQueryAgentOutputSchema](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
@@ -42,7 +42,5 @@ query_agent = BaseAgent(
                 "Explain your reasoning for the query formulation",
             ],
         ),
-        input_schema=RAGQueryAgentInputSchema,
-        output_schema=RAGQueryAgentOutputSchema,
     )
 )

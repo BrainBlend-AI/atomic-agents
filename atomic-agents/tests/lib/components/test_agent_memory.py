@@ -13,37 +13,37 @@ class InputSchema(BaseIOSchema):
     test_field: str = Field(..., description="A test field")
 
 
-class TestOutputSchema(BaseIOSchema):
+class MockOutputSchema(BaseIOSchema):
     """Test Output Schema"""
 
     test_field: str = Field(..., description="A test field")
 
 
-class TestNestedSchema(BaseIOSchema):
+class MockNestedSchema(BaseIOSchema):
     """Test Nested Schema"""
 
     nested_field: str = Field(..., description="A nested field")
     nested_int: int = Field(..., description="A nested integer")
 
 
-class TestComplexInputSchema(BaseIOSchema):
+class MockComplexInputSchema(BaseIOSchema):
     """Test Complex Input Schema"""
 
     text_field: str = Field(..., description="A text field")
     number_field: float = Field(..., description="A number field")
     list_field: List[str] = Field(..., description="A list of strings")
-    nested_field: TestNestedSchema = Field(..., description="A nested schema")
+    nested_field: MockNestedSchema = Field(..., description="A nested schema")
 
 
-class TestComplexOutputSchema(BaseIOSchema):
+class MockComplexOutputSchema(BaseIOSchema):
     """Test Complex Output Schema"""
 
     response_text: str = Field(..., description="A response text")
     calculated_value: int = Field(..., description="A calculated value")
-    data_dict: Dict[str, TestNestedSchema] = Field(..., description="A dictionary of nested schemas")
+    data_dict: Dict[str, MockNestedSchema] = Field(..., description="A dictionary of nested schemas")
 
 
-class TestMultimodalSchema(BaseIOSchema):
+class MockMultimodalSchema(BaseIOSchema):
     """Test schema for multimodal content"""
 
     instruction_text: str = Field(..., description="The instruction text")
@@ -83,7 +83,7 @@ def test_manage_overflow(memory):
 
 def test_get_history(memory):
     memory.add_message("user", InputSchema(test_field="Hello"))
-    memory.add_message("assistant", TestOutputSchema(test_field="Hi there"))
+    memory.add_message("assistant", MockOutputSchema(test_field="Hi there"))
     history = memory.get_history()
     assert len(history) == 2
     assert history[0]["role"] == "user"
@@ -115,19 +115,19 @@ def test_get_message_count(memory):
 def test_dump_and_load(memory):
     memory.add_message(
         "user",
-        TestComplexInputSchema(
+        MockComplexInputSchema(
             text_field="Hello",
             number_field=3.14,
             list_field=["item1", "item2"],
-            nested_field=TestNestedSchema(nested_field="Nested", nested_int=42),
+            nested_field=MockNestedSchema(nested_field="Nested", nested_int=42),
         ),
     )
     memory.add_message(
         "assistant",
-        TestComplexOutputSchema(
+        MockComplexOutputSchema(
             response_text="Hi there",
             calculated_value=100,
-            data_dict={"key": TestNestedSchema(nested_field="Nested Output", nested_int=10)},
+            data_dict={"key": MockNestedSchema(nested_field="Nested Output", nested_int=10)},
         ),
     )
 
@@ -138,8 +138,8 @@ def test_dump_and_load(memory):
     assert new_memory.max_messages == memory.max_messages
     assert new_memory.current_turn_id == memory.current_turn_id
     assert len(new_memory.history) == len(memory.history)
-    assert isinstance(new_memory.history[0].content, TestComplexInputSchema)
-    assert isinstance(new_memory.history[1].content, TestComplexOutputSchema)
+    assert isinstance(new_memory.history[0].content, MockComplexInputSchema)
+    assert isinstance(new_memory.history[1].content, MockComplexOutputSchema)
     assert new_memory.history[0].content.text_field == "Hello"
     assert new_memory.history[1].content.response_text == "Hi there"
 
@@ -173,23 +173,23 @@ def test_complex_scenario(memory):
     # Add complex input
     memory.add_message(
         "user",
-        TestComplexInputSchema(
+        MockComplexInputSchema(
             text_field="Complex input",
             number_field=2.718,
             list_field=["a", "b", "c"],
-            nested_field=TestNestedSchema(nested_field="Nested input", nested_int=99),
+            nested_field=MockNestedSchema(nested_field="Nested input", nested_int=99),
         ),
     )
 
     # Add complex output
     memory.add_message(
         "assistant",
-        TestComplexOutputSchema(
+        MockComplexOutputSchema(
             response_text="Complex output",
             calculated_value=200,
             data_dict={
-                "key1": TestNestedSchema(nested_field="Nested output 1", nested_int=10),
-                "key2": TestNestedSchema(nested_field="Nested output 2", nested_int=20),
+                "key1": MockNestedSchema(nested_field="Nested output 1", nested_int=10),
+                "key2": MockNestedSchema(nested_field="Nested output 2", nested_int=20),
             },
         ),
     )
@@ -201,8 +201,8 @@ def test_complex_scenario(memory):
 
     # Verify loaded data
     assert len(new_memory.history) == 2
-    assert isinstance(new_memory.history[0].content, TestComplexInputSchema)
-    assert isinstance(new_memory.history[1].content, TestComplexOutputSchema)
+    assert isinstance(new_memory.history[0].content, MockComplexInputSchema)
+    assert isinstance(new_memory.history[1].content, MockComplexOutputSchema)
     assert new_memory.history[0].content.text_field == "Complex input"
     assert new_memory.history[0].content.nested_field.nested_int == 99
     assert new_memory.history[1].content.response_text == "Complex output"
@@ -233,7 +233,7 @@ def test_memory_turn_consistency():
     memory.initialize_turn()
     turn_id = memory.get_current_turn_id()
     memory.add_message("user", InputSchema(test_field="Hello"))
-    memory.add_message("assistant", TestOutputSchema(test_field="Hi"))
+    memory.add_message("assistant", MockOutputSchema(test_field="Hi"))
     assert memory.history[0].turn_id == turn_id
     assert memory.history[1].turn_id == turn_id
 
@@ -290,7 +290,7 @@ def test_get_history_with_multimodal_content(memory):
     mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
 
     # Add a multimodal message
-    memory.add_message("user", TestMultimodalSchema(instruction_text="Analyze this image", images=[mock_image]))
+    memory.add_message("user", MockMultimodalSchema(instruction_text="Analyze this image", images=[mock_image]))
 
     # Get history and verify format
     history = memory.get_history()
@@ -304,7 +304,7 @@ def test_get_history_with_multimodal_content(memory):
 def test_get_history_with_multiple_images_multimodal_content(memory):
     """Test that get_history correctly handles multimodal content"""
 
-    class TestMultimodalSchemaArbitraryKeys(BaseIOSchema):
+    class MockMultimodalSchemaArbitraryKeys(BaseIOSchema):
         """Test schema for multimodal content"""
 
         instruction_text: str = Field(..., description="The instruction text")
@@ -319,7 +319,7 @@ def test_get_history_with_multiple_images_multimodal_content(memory):
     # Add a multimodal message
     memory.add_message(
         "user",
-        TestMultimodalSchemaArbitraryKeys(
+        MockMultimodalSchemaArbitraryKeys(
             instruction_text="Analyze this image",
             some_other_key_with_image=mock_image,
             some_key_for_images=[mock_image_2, mock_image_3],

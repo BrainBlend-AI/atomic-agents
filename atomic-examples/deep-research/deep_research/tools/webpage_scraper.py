@@ -1,13 +1,11 @@
-from typing import Optional
-from urllib.parse import urlparse
+from typing import Optional, Dict
 import re
-
 import requests
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from markdownify import markdownify
 from pydantic import Field, HttpUrl
 from readability import Document
-
 from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
 
@@ -54,46 +52,55 @@ class WebpageScraperToolOutputSchema(BaseIOSchema):
 # CONFIGURATION #
 #################
 class WebpageScraperToolConfig(BaseToolConfig):
-    """Configuration for the WebpageScraperTool."""
+    """
+    Configuration for the WebpageScraperTool.
 
-    user_agent: str = Field(
-        default=(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/91.0.4472.124 Safari/537.36"
-        ),
-        description="User agent string to use for requests.",
-    )
-    timeout: int = Field(
-        default=30,
-        description="Timeout in seconds for HTTP requests.",
-    )
-    max_content_length: int = Field(
-        default=100_000_000,
-        description="Maximum content length in bytes to process.",
-    )
+    Attributes:
+        timeout (int): Timeout for the HTTP request in seconds.
+        headers (Dict[str, str]): HTTP headers to use for the request.
+        min_text_length (int): Minimum length of text to consider the webpage valid.
+        use_trafilatura (bool): Whether to use trafilatura for webpage parsing.
+    """
+
+    timeout: int = 30
+    headers: Dict[str, str] = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+        "Accept": "text/html,application/xhtml+xml,application/xml",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+    min_text_length: int = 200
+    max_content_length: int = 10 * 1024 * 1024  # 10 MB
+    use_trafilatura: bool = True
 
 
 #####################
 # MAIN TOOL & LOGIC #
 #####################
-class WebpageScraperTool(BaseTool):
+class WebpageScraperTool(BaseTool[WebpageScraperToolInputSchema, WebpageScraperToolOutputSchema]):
     """
-    Tool for scraping webpage content and converting it to markdown format.
-    """
+    Tool for scraping and extracting information from a webpage.
 
-    input_schema = WebpageScraperToolInputSchema
-    output_schema = WebpageScraperToolOutputSchema
+    Attributes:
+        input_schema (WebpageScraperToolInputSchema): The schema for the input data.
+        output_schema (WebpageScraperToolOutputSchema): The schema for the output data.
+        timeout (int): Timeout for the HTTP request in seconds.
+        headers (Dict[str, str]): HTTP headers to use for the request.
+        min_text_length (int): Minimum length of text to consider the webpage valid.
+        use_trafilatura (bool): Whether to use trafilatura for webpage parsing.
+    """
 
     def __init__(self, config: WebpageScraperToolConfig = WebpageScraperToolConfig()):
         """
         Initializes the WebpageScraperTool.
 
         Args:
-            config (WebpageScraperToolConfig): Configuration for the tool.
+            config (WebpageScraperToolConfig): Configuration for the WebpageScraperTool.
         """
         super().__init__(config)
-        self.config = config
+        self.timeout = config.timeout
+        self.headers = config.headers
+        self.min_text_length = config.min_text_length
+        self.use_trafilatura = config.use_trafilatura
 
     def _fetch_webpage(self, url: str) -> str:
         """
@@ -105,15 +112,7 @@ class WebpageScraperTool(BaseTool):
         Returns:
             str: The HTML content of the webpage.
         """
-        headers = {
-            "User-Agent": self.config.user_agent,
-            "Accept": "text/html,application/xhtml+xml,application/xml;" "q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Connection": "keep-alive",
-        }
-
-        response = requests.get(url, headers=headers, timeout=self.config.timeout)
-        # response.raise_for_status()
+        response = requests.get(url, headers=self.headers, timeout=self.timeout)
 
         if len(response.content) > self.config.max_content_length:
             raise ValueError(f"Content length exceeds maximum of {self.config.max_content_length} bytes")
@@ -254,6 +253,7 @@ class WebpageScraperTool(BaseTool):
 if __name__ == "__main__":
     from rich.console import Console
     from rich.panel import Panel
+    from rich.markdown import Markdown
 
     console = Console()
     scraper = WebpageScraperTool()
@@ -270,7 +270,8 @@ if __name__ == "__main__":
         console.print(result.metadata.model_dump_json(indent=2))
 
         console.print(Panel.fit("Content Preview (first 500 chars)", style="bold green"))
-        console.print(result.content)
-
+        # To show as markdown with proper formatting
+        console.print(Panel.fit("Content as Markdown", style="bold green"))
+        console.print(Markdown(result.content[:500]))
     except Exception as e:
         console.print(f"[red]Error:[/red] {str(e)}")

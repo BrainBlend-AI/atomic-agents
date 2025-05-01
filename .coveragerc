@@ -3,8 +3,10 @@ show_missing=true
 exclude_lines =
     @abstractmethod
     @abc.abstractmethod
-exclude_also =
     if __name__ == .__main__.:
+    if __name__ == '__main__':
+    pragma: no cover
+    # pragma: no cover
 
 [run]
 omit =
