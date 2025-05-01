@@ -19,6 +19,8 @@
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [📚 Documentation](#-documentation)
+    - [Watch the Overview Video](#watch-the-overview-video)
+    - [Watch the Quickstart Video](#watch-the-quickstart-video)
   - [Why Atomic Agents?](#why-atomic-agents)
   - [Anatomy of an Agent](#anatomy-of-an-agent)
   - [Installation](#installation)
@@ -74,6 +76,8 @@ If you just want to dive into the code straight away, I suggest checking out the
 <a href="https://www.youtube.com/watch?v=CyZxRU0ax3Q" target="_blank">
     <img src="./.assets/video-thumbnail-2.png" alt="Watch the video" width="350"/>
 </a>
+
+---
 
 ## Why Atomic Agents?
 While existing frameworks for agentic AI focus on building autonomous multi-agent systems, they often lack the control and predictability required for real-world applications. Businesses need AI systems that produce consistent, reliable outputs aligned with their brand and objectives.

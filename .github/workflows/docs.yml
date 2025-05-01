@@ -41,6 +41,10 @@ jobs:
           cd docs
           poetry run make html
 
+      - name: Generate llms.txt
+        run: |
+          poetry run python scripts/generate_llms_txt.py
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
