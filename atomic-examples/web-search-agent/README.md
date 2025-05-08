@@ -43,7 +43,9 @@ To run the Web Search Agent:
    OPENAI_API_KEY=your_openai_api_key
    SEARXNG_BASE_URL=your_searxng_instance_url
    ```
-   Replace `your_openai_api_key` with your actual OpenAI API key and `your_searxng_instance_url` with the URL of your SearxNG instance.
+   Replace `your_openai_api_key` with your actual OpenAI API key and `your_searxng_instance_url` with the URL of your SearxNG instance.  
+   If you do not have a SearxNG instance, see the instructions below to set up one locally with docker.
+
 
 5. Run the Web Search Agent:
    ```
@@ -57,6 +59,30 @@ To run the Web Search Agent:
 3. The SearxNG Search Tool performs web searches using the generated queries.
 4. The Question Answering Agent analyzes the search results and formulates a detailed answer.
 5. The main script presents the answer, along with references and follow-up questions.
+
+## SearxNG Setup with docker
+
+From the [official instructions](https://docs.searxng.org/admin/installation-docker.html):
+
+```shell
+mkdir my-instance
+cd my-instance
+export PORT=8080
+docker pull searxng/searxng
+docker run --rm \
+           -d -p ${PORT}:8080 \
+           -v "${PWD}/searxng:/etc/searxng" \
+           -e "BASE_URL=http://localhost:$PORT/" \
+           -e "INSTANCE_NAME=my-instance" \
+           searxng/searxng
+```
+
+Set the `SEARXNG_BASE_URL` environment variable to `http://localhost:8080/` in your `.env` file.
+
+
+Note: for the agent to communicate with SearxNG, the instance must enable the JSON engine, which is disabled by default.
+Edit `searxng/settings.yml` and add `- json` in the `search.formats` section, then restart the container.  
+
 
 ## Customization
 
