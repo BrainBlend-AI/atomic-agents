@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
 
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
 
@@ -16,8 +15,6 @@ from web_search_agent.tools.searxng_search import (
 from web_search_agent.agents.query_agent import QueryAgentInputSchema, query_agent
 from web_search_agent.agents.question_answering_agent import question_answering_agent, QuestionAnsweringAgentInputSchema
 
-import openai
-import instructor
 
 load_dotenv()
 
@@ -29,15 +26,6 @@ memory = AgentMemory()
 
 # Initialize the SearxNGSearchTool
 search_tool = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
-
-# Initialize the BaseAgent
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))),
-        model="gpt-4o-mini",
-        memory=memory,
-    )
-)
 
 # Example usage
 instruction = "Tell me about the Atomic Agents AI agent framework."
