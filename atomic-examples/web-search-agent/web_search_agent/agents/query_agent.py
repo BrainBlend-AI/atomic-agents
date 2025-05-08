@@ -5,6 +5,9 @@ from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentCo
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 from web_search_agent.tools.searxng_search import SearxNGSearchTool
+import dotenv
+
+dotenv.load_dotenv()
 
 
 class QueryAgentInputSchema(BaseIOSchema):
