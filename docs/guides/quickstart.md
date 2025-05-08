@@ -63,7 +63,7 @@ while True:
 
 ## Streaming Responses
 
-For a more interactive experience, you can use streaming:
+For a more interactive experience, you can use streaming with async processing:
 
 ```python
 import os
@@ -71,8 +71,9 @@ import instructor
 import openai
 import asyncio
 from rich.console import Console
-from rich.live import Live
+from rich.panel import Panel
 from rich.text import Text
+from rich.live import Live
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
@@ -98,20 +99,25 @@ agent = BaseAgent(
     )
 )
 
+# Display the initial message from the assistant
+console.print(Text("Agent:", style="bold green"), end=" ")
+console.print(Text(initial_message.chat_message, style="green"))
+
 async def main():
-    # Start a loop to handle user inputs and agent responses with streaming
+    # Start an infinite loop to handle user inputs and agent responses
     while True:
-        # Prompt the user for input
-        user_input = console.input("[bold blue]You:[/bold blue] ")
+        # Prompt the user for input with a styled prompt
+        user_input = console.input("\n[bold blue]You:[/bold blue] ")
         # Check if the user wants to exit the chat
         if user_input.lower() in ["/exit", "/quit"]:
             console.print("Exiting chat...")
             break
 
-        # Process the user's input through the agent with streaming
+        # Process the user's input through the agent and get the streaming response
         input_schema = BaseAgentInputSchema(chat_message=user_input)
-        
-        # Stream the response
+        console.print()  # Add newline before response
+
+        # Use Live display to show streaming response
         with Live("", refresh_per_second=10, auto_refresh=True) as live:
             current_response = ""
             async for partial_response in agent.run_async(input_schema):
@@ -119,11 +125,12 @@ async def main():
                     # Only update if we have new content
                     if partial_response.chat_message != current_response:
                         current_response = partial_response.chat_message
-                        # Display the response
+                        # Combine the label and response in the live display
                         display_text = Text.assemble(("Agent: ", "bold green"), (current_response, "green"))
                         live.update(display_text)
 
 if __name__ == "__main__":
+    import asyncio
     asyncio.run(main())
 ```
 
