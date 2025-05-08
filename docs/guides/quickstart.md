@@ -16,44 +16,49 @@ Let's start with a simple chatbot:
 
 ```python
 import os
+import instructor
+import openai
 from rich.console import Console
-from dotenv import load_dotenv
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
-# Load environment variables and setup
-load_dotenv()
+# Initialize console for pretty outputs
 console = Console()
 
-# Initialize memory with assistant's first message
+# Memory setup
 memory = AgentMemory()
-memory.add_assistant_message("Hello! I'm your AI assistant. How can I help you today?")
 
-# Create agent
+# Initialize memory with an initial message from the assistant
+initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
+memory.add_message("assistant", initial_message)
+
+# OpenAI client setup using the Instructor library
+client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
+
+# Agent setup with specified configuration
 agent = BaseAgent(
     config=BaseAgentConfig(
-        client=instructor.from_openai(OpenAI(api_key=os.getenv("OPENAI_API_KEY"))),
-        model="gpt-4-turbo-preview",
-        model_api_parameters={"max_tokens": 2048}
+        client=client,
+        model="gpt-4o-mini",  # Using gpt-4o-mini model
+        memory=memory,
     )
 )
 
-# Chat loop
+# Start a loop to handle user inputs and agent responses
 while True:
-    # Get user input
-    user_input = console.input("[bold green]You:[/bold green] ")
-    if user_input.lower() in ["exit", "quit"]:
+    # Prompt the user for input
+    user_input = console.input("[bold blue]You:[/bold blue] ")
+    # Check if the user wants to exit the chat
+    if user_input.lower() in ["/exit", "/quit"]:
+        console.print("Exiting chat...")
         break
 
-    # Add user message to memory
-    memory.add_user_message(user_input)
+    # Process the user's input through the agent and get the response
+    input_schema = BaseAgentInputSchema(chat_message=user_input)
+    response = agent.run(input_schema)
 
-    # Get response from agent
-    response = agent.run(memory=memory)
-
-    # Add response to memory and display
-    memory.add_assistant_message(response)
-    console.print("[bold blue]Assistant:[/bold blue]", response)
+    # Display the agent's response
+    console.print("Agent: ", response.chat_message)
 ```
 
 ## Streaming Responses
@@ -62,31 +67,50 @@ For a more interactive experience, you can use streaming:
 
 ```python
 import os
+import instructor
+import openai
 from rich.console import Console
 from rich.live import Live
-from rich.markdown import Markdown
-from dotenv import load_dotenv
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
+from rich.text import Text
 from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
 
-# Setup as before...
+# Initialize console for pretty outputs
+console = Console()
 
-# Chat loop with streaming
+# Memory setup
+memory = AgentMemory()
+
+# OpenAI client setup using the Instructor library
+client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
+
+# Agent setup with specified configuration
+agent = BaseAgent(
+    config=BaseAgentConfig(
+        client=client,
+        model="gpt-4o-mini",
+        memory=memory,
+    )
+)
+
+# Start a loop to handle user inputs and agent responses with streaming
 while True:
-    user_input = console.input("[bold green]You:[/bold green] ")
-    if user_input.lower() in ["exit", "quit"]:
+    # Prompt the user for input
+    user_input = console.input("[bold blue]You:[/bold blue] ")
+    # Check if the user wants to exit the chat
+    if user_input.lower() in ["/exit", "/quit"]:
+        console.print("Exiting chat...")
         break
 
-    memory.add_user_message(user_input)
-
+    # Process the user's input through the agent with streaming
+    input_schema = BaseAgentInputSchema(chat_message=user_input)
+    
     # Stream the response
     with Live(console=console, refresh_per_second=4) as live:
-        response = ""
-        for chunk in agent.stream(memory=memory):
-            response += chunk
-            live.update(Markdown(f"**Assistant:** {response}"))
-
-    memory.add_assistant_message(response)
+        response_text = ""
+        for chunk in agent.stream(input_schema):
+            response_text += chunk
+            live.update(Text(f"Agent: {response_text}"))
 ```
 
 ## Custom Chatbot
@@ -146,7 +170,7 @@ prompt_generator = SystemPromptGenerator(
 agent = BaseAgent(
     config=BaseAgentConfig(
         client=client,
-        model=model,
+        model="gpt-4o-mini",
         system_prompt_generator=prompt_generator
     )
 )
@@ -199,7 +223,7 @@ class CustomOutput(BaseModel):
 agent = BaseAgent[CustomInput, CustomOutput](
     config=BaseAgentConfig(
         client=client,
-        model=model,
+        model="gpt-4o-mini",
         input_schema=CustomInput,
         output_schema=CustomOutput
     )
@@ -218,7 +242,7 @@ print(f"Confidence: {result.confidence}")
 print(f"Sources: {result.sources}")
 ```
 
-## Multiple Providers
+## Multiple Provider Supports
 
 The framework supports multiple AI providers:
 
@@ -237,13 +261,13 @@ def setup_client(provider):
         from openai import OpenAI
         api_key = os.getenv("OPENAI_API_KEY")
         client = instructor.from_openai(OpenAI(api_key=api_key))
-        model = "gpt-4-turbo-preview"
+        model = "gpt-4-turbo"
 
     elif provider == "anthropic":
         from anthropic import Anthropic
         api_key = os.getenv("ANTHROPIC_API_KEY")
         client = instructor.from_anthropic(Anthropic(api_key=api_key))
-        model = "claude-3-haiku-20240307"
+        model = "claude-3-opus"
 
     elif provider == "groq":
         from groq import Groq
@@ -252,17 +276,16 @@ def setup_client(provider):
             Groq(api_key=api_key),
             mode=instructor.Mode.JSON
         )
-        model = "mixtral-8x7b-32768"
+        model = "llama3-70b-8192"
 
     elif provider == "ollama":
         from openai import OpenAI as OllamaClient
         client = instructor.from_openai(
             OllamaClient(
                 base_url="http://localhost:11434/v1",
-                api_key="ollama"
             )
         )
-        model = "llama2"
+        model = "llama3:latest"
 
     elif provider == "gemini":
         from openai import OpenAI
@@ -281,17 +304,16 @@ def setup_client(provider):
 
     return client, model
 
-# Choose a provider
-provider = "openai"  # or "anthropic", "groq", "ollama", "gemini"
-client, model = setup_client(provider)
+# Model configuration
+model_config = BaseAgentConfig(
+    client=instructor.from_openai(openai.OpenAI()),
+    model="gpt-4o-mini",
+    model_api_parameters={"top_p": 0.8, "temperature": 0.7}
+)
 
 # Create agent with chosen provider
 agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model=model,
-        model_api_parameters={"max_tokens": 2048}
-    )
+    config=model_config
 )
 ```
 
@@ -304,6 +326,7 @@ The framework supports multiple providers through Instructor:
 - **Gemini**: Google's Gemini models
 
 Each provider requires its own API key (except Ollama) which should be set in environment variables:
+
 ```bash
 # OpenAI
 export OPENAI_API_KEY="your-openai-key"
