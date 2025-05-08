@@ -18,7 +18,7 @@
 - [Atomic Agents](#atomic-agents)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
-  - [📚 Documentation](#-documentation)
+  - [Documentation](#-documentation)
     - [Watch the Overview Video](#watch-the-overview-video)
     - [Watch the Quickstart Video](#watch-the-quickstart-video)
   - [Why Atomic Agents?](#why-atomic-agents)
@@ -44,13 +44,13 @@ All logic and control flows are written in Python, enabling developers to apply 
 
 **NEW: Join our community on Discord at [discord.gg/J3W9b5AZJR](https://discord.gg/J3W9b5AZJR) and our official subreddit at [/r/AtomicAgents](https://www.reddit.com/r/AtomicAgents/)!**
 
-## 📚 Documentation
+## Documentation
 
 [![Read the Docs](https://img.shields.io/badge/docs-read%20the%20docs-blue?logo=readthedocs&style=for-the-badge)](https://brainblend-ai.github.io/atomic-agents/)
 
 > 🚀 Ready to explore our documentation? Dive in below!
 >
-> <img src="./.assets/docs.png" alt="Documentation Snapshot" width="700"/>
+> <img src="./.assets/docs.png" alt="Documentation Snapshot" width="350"/>
 >
 **Key Documentation Resources**
 
