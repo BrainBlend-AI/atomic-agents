@@ -1,6 +1,7 @@
 # Quickstart Guide
 
 **See also:**
+
 - [Quickstart runnable examples on GitHub](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/quickstart)
 - [All Atomic Agents examples on GitHub](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples)
 
@@ -138,96 +139,6 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Custom Chatbot
-
-You can customize the agent's behavior using system prompts and context providers. Context providers are particularly useful for injecting dynamic information that changes between calls:
-
-```python
-from dataclasses import dataclass
-from typing import List
-from atomic_agents.lib.components.system_prompt_generator import (
-    SystemPromptGenerator,
-    SystemPromptContextProviderBase
-)
-
-@dataclass
-class SearchResult:
-    content: str
-    metadata: dict
-
-class SearchResultsProvider(SystemPromptContextProviderBase):
-    def __init__(self, title: str):
-        super().__init__(title=title)
-        self.results: List[SearchResult] = []
-
-    def get_info(self) -> str:
-        """Dynamically format search results for the system prompt"""
-        if not self.results:
-            return "No search results available."
-
-        return "\n\n".join([
-            f"Result {idx}:\nMetadata: {result.metadata}\nContent:\n{result.content}\n{'-' * 80}"
-            for idx, result in enumerate(self.results, 1)
-        ])
-
-# Create prompt generator with dynamic context
-prompt_generator = SystemPromptGenerator(
-    background=[
-        "You are an AI assistant that answers questions based on search results.",
-        "Analyze the provided search results to give accurate answers."
-    ],
-    steps=[
-        "1. Review all provided search results",
-        "2. Extract relevant information",
-        "3. Synthesize a comprehensive answer"
-    ],
-    output_instructions=[
-        "Base your answer only on the provided search results",
-        "Cite specific results when possible",
-        "Admit when information is not found in the results"
-    ],
-    context_providers={
-        "search_results": SearchResultsProvider("Search Results")
-    }
-)
-
-# Create agent with dynamic context
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model="gpt-4o-mini",
-        system_prompt_generator=prompt_generator
-    )
-)
-
-# Example usage with dynamic updates
-def process_question(question: str):
-    # Perform search and get results
-    results = perform_search(question)  # Your search implementation
-
-    # Update context provider with new results
-    search_provider = prompt_generator.context_providers["search_results"]
-    search_provider.results = [
-        SearchResult(content=result.text, metadata=result.meta)
-        for result in results
-    ]
-
-    # Each call to the agent will now include the updated search results
-    response = agent.run(memory=memory)
-```
-
-The key difference with context providers is that they allow you to:
-- Inject dynamic information that changes between calls
-- Update context (like search results, current state, etc.) without changing the base prompt
-- Keep a clear separation between static prompt elements and dynamic context
-- Handle potentially large or structured data in a clean way
-
-This pattern is especially useful for:
-- RAG (Retrieval Augmented Generation) systems
-- Agents that need access to external data
-- Stateful conversations where context changes
-- Multi-step processes with varying intermediate results
-
 ## Custom Input/Output Schema
 
 For more structured interactions, define custom schemas:
@@ -324,7 +235,7 @@ while True:
         console.print(f"[cyan]{i}. {question}[/cyan]")
     console.print()  # Add an empty line for better readability
 
-## Multiple Provider Support
+## Multiple AI Providers Support
 
 The framework supports multiple AI providers:
 
@@ -491,3 +402,7 @@ After trying these examples, you can:
 
 1. Learn about [tools and their integration](tools.md)
 2. Review the [API reference](../api/index) for detailed documentation
+
+## Explore More Examples
+
+For more advanced usage and examples, please check out the [Atomic Agents examples on GitHub](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples). These examples demonstrate various capabilities of the framework including custom schemas, advanced memory usage, tool integration, and more.
