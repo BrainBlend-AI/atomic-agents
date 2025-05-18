@@ -48,6 +48,7 @@ class WebpageScraperToolOutputSchema(BaseIOSchema):
 
     content: str = Field(..., description="The scraped content in markdown format.")
     metadata: WebpageMetadata = Field(..., description="Metadata about the scraped webpage.")
+    error: Optional[str] = Field(None, description="Error message if the scraping failed.")
 
 
 #################
@@ -214,38 +215,47 @@ class WebpageScraperTool(BaseTool):
         Returns:
             WebpageScraperToolOutputSchema: The output containing the markdown content and metadata.
         """
-        # Fetch webpage content
-        html_content = self._fetch_webpage(str(params.url))
 
-        # Parse HTML with BeautifulSoup
-        soup = BeautifulSoup(html_content, "html.parser")
+        try:
+            # Fetch webpage content
+            html_content = self._fetch_webpage(str(params.url))
 
-        # Extract main content using custom extraction
-        main_content = self._extract_main_content(soup)
+            # Parse HTML with BeautifulSoup
+            soup = BeautifulSoup(html_content, "html.parser")
 
-        # Convert to markdown
-        markdown_options = {
-            "strip": ["script", "style"],
-            "heading_style": "ATX",
-            "bullets": "-",
-            "wrap": True,
-        }
+            # Extract main content using custom extraction
+            main_content = self._extract_main_content(soup)
 
-        if not params.include_links:
-            markdown_options["strip"].append("a")
+            # Convert to markdown
+            markdown_options = {
+                "strip": ["script", "style"],
+                "heading_style": "ATX",
+                "bullets": "-",
+                "wrap": True,
+            }
 
-        markdown_content = markdownify(main_content, **markdown_options)
+            if not params.include_links:
+                markdown_options["strip"].append("a")
 
-        # Clean up the markdown
-        markdown_content = self._clean_markdown(markdown_content)
+            markdown_content = markdownify(main_content, **markdown_options)
 
-        # Extract metadata
-        metadata = self._extract_metadata(soup, Document(html_content), str(params.url))
+            # Clean up the markdown
+            markdown_content = self._clean_markdown(markdown_content)
 
-        return WebpageScraperToolOutputSchema(
-            content=markdown_content,
-            metadata=metadata,
-        )
+            # Extract metadata
+            metadata = self._extract_metadata(soup, Document(html_content), str(params.url))
+
+            return WebpageScraperToolOutputSchema(
+                content=markdown_content,
+                metadata=metadata,
+            )
+        except Exception as e:
+            # Create empty/minimal metadata with at least the domain
+            domain = urlparse(str(params.url)).netloc
+            minimal_metadata = WebpageMetadata(title="Error retrieving page", domain=domain)
+
+            # Return with error message in the error field
+            return WebpageScraperToolOutputSchema(content="", metadata=minimal_metadata, error=str(e))
 
 
 #################
@@ -266,11 +276,16 @@ if __name__ == "__main__":
             )
         )
 
-        console.print(Panel.fit("Metadata", style="bold green"))
-        console.print(result.metadata.model_dump_json(indent=2))
+        # Check if there was an error during scraping, otherwise print the results
+        if result.error:
+            console.print(Panel.fit("Error", style="bold red"))
+            console.print(f"[red]{result.error}[/red]")
+        else:
+            console.print(Panel.fit("Metadata", style="bold green"))
+            console.print(result.metadata.model_dump_json(indent=2))
 
-        console.print(Panel.fit("Content Preview (first 500 chars)", style="bold green"))
-        console.print(result.content)
+            console.print(Panel.fit("Content Preview (first 500 chars)", style="bold green"))
+            console.print(result.content[:500] + ("..." if len(result.content) > 500 else ""))
 
     except Exception as e:
         console.print(f"[red]Error:[/red] {str(e)}")
