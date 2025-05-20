@@ -375,7 +375,7 @@ For more information on using and creating tools, see the [Atomic Forge README](
 
 ## Contributing
 
-We welcome contributions! Please see the [Developer Guide](/guides/DEV_GUIDE.md) for detailed information on how to contribute to Atomic Agents. Here are some quick steps:
+We welcome contributions! Please see the [Contributing Guide](/docs/contributing.md) for detailed information on how to contribute to Atomic Agents. Here are some quick steps:
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature-branch`)

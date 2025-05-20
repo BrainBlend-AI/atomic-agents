@@ -33,7 +33,11 @@ Atomic Agents uses a monorepo structure, which means multiple related projects a
    ```
 4. Activate the virtual environment:
    ```
+   # For Poetry < 2.0
    poetry shell
+   
+   # For Poetry >= 2.0
+   poetry env activate
    ```
 
 ## Development Workflow
@@ -47,17 +51,17 @@ Atomic Agents uses a monorepo structure, which means multiple related projects a
 
 3. Format your code using Black:
    ```
-   black atomic_agents atomic_assembler
+   poetry run black atomic-agents atomic-assembler atomic-examples atomic-forge
    ```
 
 4. Lint your code using Flake8:
    ```
-   flake8 atomic_agents atomic_assembler
+   poetry run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
    ```
 
 5. Run the tests:
    ```
-   pytest --cov atomic_agents
+   poetry run pytest --cov=atomic_agents atomic-agents
    ```
 
 6. If you've added new functionality, make sure to add appropriate tests.
