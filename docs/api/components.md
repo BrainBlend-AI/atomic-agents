@@ -1,39 +1,39 @@
 # Components
 
-## Agent Memory
+## Agent History
 
-The `AgentMemory` class manages conversation history and state for AI agents:
+The `ChatHistory` class manages conversation history and state for AI agents:
 
 ```python
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
-# Initialize memory with optional max messages
-memory = AgentMemory(max_messages=10)
+# Initialize history with optional max messages
+history = ChatHistory(max_messages=10)
 
 # Add messages
-memory.add_message(
+history.add_message(
     role="user",
     content=BaseIOSchema(...)
 )
 
 # Initialize a new turn
-memory.initialize_turn()
-turn_id = memory.get_current_turn_id()
+history.initialize_turn()
+turn_id = history.get_current_turn_id()
 
 # Access history
-history = memory.get_history()
+history = history.get_history()
 
-# Manage memory
-memory.get_message_count()  # Get number of messages
-memory.delete_turn_id(turn_id)  # Delete messages by turn
+# Manage history
+history.get_message_count()  # Get number of messages
+history.delete_turn_id(turn_id)  # Delete messages by turn
 
 # Persistence
-serialized = memory.dump()  # Save to string
-memory.load(serialized)  # Load from string
+serialized = history.dump()  # Save to string
+history.load(serialized)  # Load from string
 
 # Create copy
-new_memory = memory.copy()
+new_history = history.copy()
 ```
 
 Key features:
@@ -41,12 +41,12 @@ Key features:
 - Turn-based conversation tracking
 - Support for multimodal content (images, etc.)
 - Serialization and persistence
-- Memory size management
+- History size management
 - Deep copy functionality
 
 ### Message Structure
 
-Messages in memory are structured as:
+Messages in history are structured as:
 
 ```python
 class Message(BaseModel):
@@ -57,11 +57,11 @@ class Message(BaseModel):
 
 ### Multimodal Support
 
-The memory system automatically handles multimodal content:
+The history system automatically handles multimodal content:
 
 ```python
 # For content with images
-history = memory.get_history()
+history = history.get_history()
 for message in history:
     if isinstance(message.content, list):
         text_content = message.content[0]  # JSON string
@@ -201,7 +201,7 @@ Key features:
 
 For full API details:
 ```{eval-rst}
-.. automodule:: atomic_agents.lib.components.agent_memory
+.. automodule:: atomic_agents.lib.components.agent_history
    :members:
    :undoc-members:
    :show-inheritance:

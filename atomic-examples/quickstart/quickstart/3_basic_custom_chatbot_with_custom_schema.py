@@ -7,7 +7,7 @@ from rich.text import Text
 from typing import List
 from pydantic import Field
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
@@ -24,8 +24,8 @@ if not API_KEY:
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
 
 # Custom output schema
@@ -42,12 +42,12 @@ class CustomOutputSchema(BaseIOSchema):
     )
 
 
-# Initialize memory with an initial message from the assistant
+# Initialize history with an initial message from the assistant
 initial_message = CustomOutputSchema(
     chat_message="Hello! How can I assist you today?",
     suggested_user_questions=["What can you do?", "Tell me a joke", "Tell me about how you were made"],
 )
-memory.add_message("assistant", initial_message)
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library
 client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
@@ -77,7 +77,7 @@ agent = BaseAgent(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=memory,
+        history=history,
         output_schema=CustomOutputSchema,
     )
 )

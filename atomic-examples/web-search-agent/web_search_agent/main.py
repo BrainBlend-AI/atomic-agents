@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
 
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
 
 from web_search_agent.tools.searxng_search import (
@@ -21,8 +21,8 @@ load_dotenv()
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
 # Initialize the SearxNGSearchTool
 search_tool = SearxNGSearchTool(config=SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))

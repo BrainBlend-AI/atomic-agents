@@ -3,7 +3,7 @@ import openai
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
 
 from orchestration_agent.tools.searxng_search import (
@@ -174,10 +174,10 @@ if __name__ == "__main__":
         console.print("\n" + "-" * 80 + "\n")
 
         orchestrator_agent.output_schema = FinalAnswerSchema
-        orchestrator_agent.memory.add_message("system", response)
+        orchestrator_agent.history.add_message("system", response)
         final_answer = orchestrator_agent.run(input_schema)
         console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
         orchestrator_agent.output_schema = OrchestratorOutputSchema
 
-        # Reset the memory after each response
-        orchestrator_agent.memory = AgentMemory()
+        # Reset the history after each response
+        orchestrator_agent.history = ChatHistory()

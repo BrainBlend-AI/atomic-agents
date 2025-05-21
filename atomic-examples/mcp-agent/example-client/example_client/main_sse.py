@@ -8,7 +8,7 @@ import instructor
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from typing import Union, Type, Dict
 from dataclasses import dataclass
 
@@ -98,12 +98,12 @@ def main():
         console.print(table)
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
-        memory = AgentMemory()
+        history = ChatHistory()
         orchestrator_agent = BaseAgent(
             BaseAgentConfig(
                 client=client,
                 model=config.openai_model,
-                memory=memory,
+                history=history,
                 system_prompt_generator=SystemPromptGenerator(
                     background=[
                         "You are an MCP Orchestrator Agent, designed to chat with users and",
@@ -161,11 +161,11 @@ def main():
                     tool_output = tool_instance.run(action_instance)
                     console.print(f"[bold green]Result:[/bold green] {tool_output.result}")
 
-                    # Add tool result to agent memory
+                    # Add tool result to agent history
                     result_message = MCPOrchestratorInputSchema(
                         query=(f"Tool {tool_name} executed with result: " f"{tool_output.result}")
                     )
-                    orchestrator_agent.memory.add_message("system", result_message)
+                    orchestrator_agent.history.add_message("system", result_message)
 
                     # Run the agent again without parameters to continue the flow
                     orchestrator_output = orchestrator_agent.run()

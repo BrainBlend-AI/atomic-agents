@@ -95,7 +95,7 @@ In Atomic Agents, an agent is composed of several key components:
 - **System Prompt:** Defines the agent's behavior and purpose.
 - **Input Schema:** Specifies the structure and validation rules for the agent's input.
 - **Output Schema:** Specifies the structure and validation rules for the agent's output.
-- **Memory:** Stores conversation history or other relevant data.
+- **History:** Stores conversation history or other relevant data.
 - **Context Providers:** Inject dynamic context into the agent's system prompt at runtime.
 
 Here's a high-level architecture diagram:
@@ -171,7 +171,7 @@ agent = BaseAgent(
         client=your_openai_client,  # Replace with your actual client
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=AgentMemory(),
+        history=ChatHistory(),
         output_schema=CustomOutputSchema
     )
 )
@@ -179,7 +179,7 @@ agent = BaseAgent(
 # Use the agent
 response = agent.run(user_input)
 print(f"Agent: {response.chat_message}")
-print("Suggested questions:")
+print("Suggestemd questions:")
 for question in response.suggested_questions:
     print(f"- {question}")
 ```
