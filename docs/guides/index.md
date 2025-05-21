@@ -22,7 +22,7 @@ The framework supports various implementation patterns and use cases:
 - Streaming responses
 - Custom response schemas
 - Suggested follow-up questions
-- Memory management and context retention
+- History management and context retention
 - Multi-turn conversations
 
 ### RAG Systems
