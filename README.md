@@ -179,7 +179,7 @@ agent = BaseAgent(
 # Use the agent
 response = agent.run(user_input)
 print(f"Agent: {response.chat_message}")
-print("Suggestemd questions:")
+print("Suggested questions:")
 for question in response.suggested_questions:
     print(f"- {question}")
 ```
