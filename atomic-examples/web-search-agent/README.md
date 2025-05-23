@@ -81,7 +81,7 @@ Set the `SEARXNG_BASE_URL` environment variable to `http://localhost:8080/` in y
 
 
 Note: for the agent to communicate with SearxNG, the instance must enable the JSON engine, which is disabled by default.
-Edit `searxng/settings.yml` and add `- json` in the `search.formats` section, then restart the container.  
+Edit `/etc/searxng/settings.yml` and add `- json` in the `search.formats` section, then restart the container.
 
 
 ## Customization

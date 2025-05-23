@@ -52,6 +52,8 @@ All logic and control flows are written in Python, enabling developers to apply 
 >
 > <img src="./.assets/docs.png" alt="Documentation Snapshot" width="350"/>
 >
+> (we totally promise this is not really the case)
+
 **Key Documentation Resources**
 
 - **Getting Started**: Installation instructions and Quickstart tutorials
@@ -373,7 +375,7 @@ For more information on using and creating tools, see the [Atomic Forge README](
 
 ## Contributing
 
-We welcome contributions! Please see the [Developer Guide](/guides/DEV_GUIDE.md) for detailed information on how to contribute to Atomic Agents. Here are some quick steps:
+We welcome contributions! Please see the [Contributing Guide](/docs/contributing.md) for detailed information on how to contribute to Atomic Agents. Here are some quick steps:
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature-branch`)
