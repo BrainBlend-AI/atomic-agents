@@ -9,7 +9,7 @@ from readability import Document
 # Add the parent directory to sys.path to find the tool module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tool.webpage_scraper import (
+from tool.webpage_scraper import (  # noqa: E402
     WebpageScraperTool,
     WebpageScraperToolConfig,
     WebpageScraperToolInputSchema,
