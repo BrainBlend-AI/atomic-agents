@@ -70,6 +70,7 @@ class BaseAgentConfig(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
 
+
 class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     """
     Base class for chat agents.

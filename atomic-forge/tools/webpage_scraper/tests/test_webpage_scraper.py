@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from readability import Document
 
 # Add the parent directory to sys.path to find the tool module
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tool.webpage_scraper import (
     WebpageScraperTool,
@@ -277,7 +277,7 @@ class TestWebpageScraperTool(unittest.TestCase):
 
         # Test the method
         result = self.tool.run(params)
-        
+
         # Check that the error is captured in the result
         self.assertIsNotNone(result.error)
         self.assertIn("404 Client Error", result.error)
@@ -296,7 +296,7 @@ class TestWebpageScraperTool(unittest.TestCase):
 
         # Test the method
         result = self.tool.run(params)
-        
+
         # Check that the error is captured in the result
         self.assertIsNotNone(result.error)
         self.assertIn("Connection timed out", result.error)
