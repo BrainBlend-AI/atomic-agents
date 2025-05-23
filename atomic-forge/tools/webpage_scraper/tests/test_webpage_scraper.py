@@ -1,8 +1,13 @@
 import unittest
 from unittest.mock import patch, Mock
 import requests
+import sys
+import os
 from bs4 import BeautifulSoup
 from readability import Document
+
+# Add the parent directory to sys.path to find the tool module
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from tool.webpage_scraper import (
     WebpageScraperTool,
@@ -271,8 +276,11 @@ class TestWebpageScraperTool(unittest.TestCase):
         )
 
         # Test the method
-        with self.assertRaises(requests.exceptions.HTTPError):
-            self.tool.run(params)
+        result = self.tool.run(params)
+        
+        # Check that the error is captured in the result
+        self.assertIsNotNone(result.error)
+        self.assertIn("404 Client Error", result.error)
 
     @patch("requests.get")
     def test_connection_timeout(self, mock_get):
@@ -287,8 +295,11 @@ class TestWebpageScraperTool(unittest.TestCase):
         )
 
         # Test the method
-        with self.assertRaises(requests.exceptions.Timeout):
-            self.tool.run(params)
+        result = self.tool.run(params)
+        
+        # Check that the error is captured in the result
+        self.assertIsNotNone(result.error)
+        self.assertIn("Connection timed out", result.error)
 
     def test_tool_config(self):
         """Test tool configuration."""

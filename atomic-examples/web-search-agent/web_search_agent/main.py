@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 from pydantic import Field
 
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.agents.base_agent import BaseIOSchema
 from atomic_agents.lib.components.agent_memory import AgentMemory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
 
@@ -18,8 +18,6 @@ from web_search_agent.tools.searxng_search import (
 from web_search_agent.agents.query_agent import QueryAgentInputSchema, query_agent
 from web_search_agent.agents.question_answering_agent import question_answering_agent, QuestionAnsweringAgentInputSchema
 
-import openai
-import instructor
 
 load_dotenv()
 
@@ -54,15 +52,6 @@ class MainAgentOutputSchema(BaseIOSchema):
 
     chat_message: str = Field(..., description="Response to the user's message.")
 
-
-# Initialize the BaseAgent
-agent = BaseAgent[MainAgentInputSchema, MainAgentOutputSchema](
-    config=BaseAgentConfig(
-        client=instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))),
-        model="gpt-4o-mini",
-        memory=memory,
-    )
-)
 
 # Example usage
 instruction = "Tell me about the Atomic Agents AI agent framework."

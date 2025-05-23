@@ -174,7 +174,7 @@ trio = ["trio (>=0.26.1)"]
 
 [[package]]
 name = "atomic-agents"
-version = "1.0.16"
+version = "1.1.0"
 description = "A versatile framework for creating and managing intelligent agents."
 optional = false
 python-versions = ">=3.12,<4.0"
@@ -1172,7 +1172,7 @@ name = "pydantic"
 version = "2.10.3"
 description = "Data validation using Python type hints"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
     {file = "pydantic-2.10.3-py3-none-any.whl", hash = "sha256:be04d85bbc7b65651c5f8e6b9976ed9c6f41782a55524cef079a34a0bb82144d"},
@@ -1193,7 +1193,7 @@ name = "pydantic-core"
 version = "2.27.1"
 description = "Core functionality for Pydantic validation and serialization"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
     {file = "pydantic_core-2.27.1-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:71a5e35c75c021aaf400ac048dacc855f000bdfed91614b4a726f7432f1f3d6a"},

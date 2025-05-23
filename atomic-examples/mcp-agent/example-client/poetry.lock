@@ -178,7 +178,7 @@ develop = true
 gitpython = ">=3.1.43,<4.0.0"
 instructor = ">=1.3.4,<2.0.0"
 mcp = {version = "^1.6.0", extras = ["cli"]}
-pydantic = "2.10.3"
+pydantic = ">=2.10.3,<3.0.0"
 pyfiglet = ">=1.0.2,<2.0.0"
 pyyaml = ">=6.0.2,<7.0.0"
 requests = ">=2.32.3,<3.0.0"

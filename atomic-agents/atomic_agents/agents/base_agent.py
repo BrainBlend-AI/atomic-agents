@@ -59,17 +59,16 @@ class BaseAgentOutputSchema(BaseIOSchema):
 
 class BaseAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
-    model: str = Field("gpt-4o-mini", description="The model to use for generating responses.")
-    memory: Optional[AgentMemory] = Field(None, description="Memory component for storing chat history.")
+    model: str = Field(default="gpt-4o-mini", description="The model to use for generating responses.")
+    memory: Optional[AgentMemory] = Field(default=None, description="Memory component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
-        None, description="Component for generating system prompts."
+        default=None, description="Component for generating system prompts."
     )
     system_role: Optional[str] = Field(
-        "system", description="The role of the system in the conversation. None means no system prompt."
+        default="system", description="The role of the system in the conversation. None means no system prompt."
     )
     model_config = {"arbitrary_types_allowed": True}
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
-
 
 class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     """

@@ -109,6 +109,7 @@ class SchemaTransformer:
             model_name,
             __base__=BaseIOSchema,
             __doc__=docstring or f"Dynamically generated Pydantic model for {model_name}",
+            __config__={"title": tool_name_literal},
             **fields,
         )
 

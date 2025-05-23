@@ -9,7 +9,7 @@ readme = "README.md"
 python = ">=3.12,<4.0"
 atomic-agents = {path = "../..", develop = true}
 instructor = "^1.6.1"
-pydantic = "^2.9.2"
+pydantic = ">=2.10.3,<3.0.0"
 sympy = "^1.13.3"
 python-dotenv = ">=1.0.1,<2.0.0"
 openai = ">=1.35.12,<2.0.0"
