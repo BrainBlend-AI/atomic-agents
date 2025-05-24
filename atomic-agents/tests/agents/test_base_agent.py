@@ -9,7 +9,7 @@ from atomic_agents.agents.base_agent import (
     BaseAgentInputSchema,
     BaseAgentOutputSchema,
     SystemPromptGenerator,
-    AgentMemory,
+    AgentHistory,
     SystemPromptContextProviderBase,
 )
 from instructor.dsl.partial import PartialBase
@@ -58,10 +58,10 @@ def mock_instructor_async():
 
 @pytest.fixture
 def mock_memory():
-    mock = Mock(spec=AgentMemory)
+    mock = Mock(spec=AgentHistory)
     mock.get_history.return_value = []
     mock.add_message = Mock()
-    mock.copy = Mock(return_value=Mock(spec=AgentMemory))
+    mock.copy = Mock(return_value=Mock(spec=AgentHistory))
     mock.initialize_turn = Mock()
     return mock
 

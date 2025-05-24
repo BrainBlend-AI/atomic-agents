@@ -20,7 +20,7 @@ class Message(BaseModel):
     turn_id: Optional[str] = None
 
 
-class AgentMemory:
+class AgentHistory:
     """
     Manages the chat history for an AI agent.
 
@@ -32,7 +32,7 @@ class AgentMemory:
 
     def __init__(self, max_messages: Optional[int] = None):
         """
-        Initializes the AgentMemory with an empty history and optional constraints.
+        Initializes the AgentHistory with an empty history and optional constraints.
 
         Args:
             max_messages (Optional[int]): Maximum number of messages to keep in history.
@@ -124,14 +124,14 @@ class AgentMemory:
                 history.append({"role": message.role, "content": json.dumps(content.model_dump(mode="json"))})
         return history
 
-    def copy(self) -> "AgentMemory":
+    def copy(self) -> "AgentHistory":
         """
         Creates a copy of the chat memory.
 
         Returns:
-            AgentMemory: A copy of the chat memory.
+            AgentHistory: A copy of the chat memory.
         """
-        new_memory = AgentMemory(max_messages=self.max_messages)
+        new_memory = AgentHistory(max_messages=self.max_messages)
         new_memory.load(self.dump())
         new_memory.current_turn_id = self.current_turn_id
         return new_memory
@@ -182,10 +182,10 @@ class AgentMemory:
 
     def dump(self) -> str:
         """
-        Serializes the entire AgentMemory instance to a JSON string.
+        Serializes the entire AgentHistory instance to a JSON string.
 
         Returns:
-            str: A JSON string representation of the AgentMemory.
+            str: A JSON string representation of the AgentHistory.
         """
         serialized_history = []
         for message in self.history:
@@ -209,10 +209,10 @@ class AgentMemory:
 
     def load(self, serialized_data: str) -> None:
         """
-        Deserializes a JSON string and loads it into the AgentMemory instance.
+        Deserializes a JSON string and loads it into the AgentHistory instance.
 
         Args:
-            serialized_data (str): A JSON string representation of the AgentMemory.
+            serialized_data (str): A JSON string representation of the AgentHistory.
 
         Raises:
             ValueError: If the serialized data is invalid or cannot be deserialized.
@@ -287,7 +287,7 @@ if __name__ == "__main__":
         images: List[instructor.Image] = Field(..., description="The images to analyze")
 
     # Create and populate the original memory with complex data
-    original_memory = AgentMemory(max_messages=10)
+    original_memory = AgentHistory(max_messages=10)
 
     # Add a complex input message
     original_memory.add_message(
@@ -330,7 +330,7 @@ if __name__ == "__main__":
     print(dumped_data)
 
     # Create a new memory and load the dumped data
-    loaded_memory = AgentMemory()
+    loaded_memory = AgentHistory()
     loaded_memory.load(dumped_data)
 
     # Print detailed information about the loaded memory

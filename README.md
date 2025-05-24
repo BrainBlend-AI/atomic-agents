@@ -140,7 +140,7 @@ import instructor
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_memory import AgentHistory
 
 # Define a custom output schema
 class CustomOutputSchema(BaseIOSchema):
@@ -173,7 +173,7 @@ agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=AgentMemory(),
+        memory=AgentHistory(),
     )
 )
 

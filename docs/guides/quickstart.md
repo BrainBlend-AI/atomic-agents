@@ -24,14 +24,14 @@ import os
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_memory import AgentHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # Initialize console for pretty outputs
 console = Console()
 
 # Memory setup
-memory = AgentMemory()
+memory = AgentHistory()
 
 # Initialize memory with an initial message from the assistant
 initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
@@ -80,14 +80,14 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_memory import AgentHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # Initialize console for pretty outputs
 console = Console()
 
 # Memory setup
-memory = AgentMemory()
+memory = AgentHistory()
 
 # Initialize memory with an initial message from the assistant
 initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
@@ -152,7 +152,7 @@ from rich.console import Console
 from typing import List
 from pydantic import Field
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_memory import AgentHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
@@ -160,7 +160,7 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 console = Console()
 
 # Memory setup
-memory = AgentMemory()
+memory = AgentHistory()
 
 # Custom output schema
 class CustomOutputSchema(BaseIOSchema):
@@ -258,7 +258,7 @@ import os
 import instructor
 from rich.console import Console
 from rich.text import Text
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_memory import AgentHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 from dotenv import load_dotenv
 
@@ -268,7 +268,7 @@ load_dotenv()
 console = Console()
 
 # Memory setup
-memory = AgentMemory()
+memory = AgentHistory()
 
 # Initialize memory with an initial message from the assistant
 initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")

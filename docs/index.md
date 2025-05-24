@@ -61,7 +61,7 @@ Here's a glimpse of how easy it is to create an agent:
 ```python
 import instructor
 import openai
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_memory import AgentHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 
@@ -70,7 +70,7 @@ from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgen
 # or pass it to the client: openai.OpenAI(api_key="your-api-key")
 
 # Initialize agent with memory
-memory = AgentMemory()
+memory = AgentHistory()
 
 # Set up client with your preferred provider
 client = instructor.from_openai(openai.OpenAI())  # Pass your API key here if not in environment

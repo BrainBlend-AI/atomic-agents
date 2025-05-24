@@ -2,7 +2,7 @@ import pytest
 import json
 from typing import List, Dict
 from pydantic import Field
-from atomic_agents.lib.components.agent_history import AgentMemory, Message
+from atomic_agents.lib.components.agent_history import AgentHistory, Message
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 import instructor
 
@@ -52,7 +52,7 @@ class MockMultimodalSchema(BaseIOSchema):
 
 @pytest.fixture
 def memory():
-    return AgentMemory(max_messages=5)
+    return AgentHistory(max_messages=5)
 
 
 def test_initialization(memory):
@@ -132,7 +132,7 @@ def test_dump_and_load(memory):
     )
 
     dumped_data = memory.dump()
-    new_memory = AgentMemory()
+    new_memory = AgentHistory()
     new_memory.load(dumped_data)
 
     assert new_memory.max_messages == memory.max_messages
@@ -151,7 +151,7 @@ def test_load_invalid_data(memory):
 
 def test_get_class_from_string():
     class_string = "tests.lib.components.test_agent_memory.InputSchema"
-    cls = AgentMemory._get_class_from_string(class_string)
+    cls = AgentHistory._get_class_from_string(class_string)
     assert cls.__name__ == InputSchema.__name__
     assert cls.__module__.endswith("test_agent_memory")
     assert issubclass(cls, BaseIOSchema)
@@ -159,7 +159,7 @@ def test_get_class_from_string():
 
 def test_get_class_from_string_invalid():
     with pytest.raises((ImportError, AttributeError)):
-        AgentMemory._get_class_from_string("invalid.module.Class")
+        AgentHistory._get_class_from_string("invalid.module.Class")
 
 
 def test_message_model():
@@ -196,7 +196,7 @@ def test_complex_scenario(memory):
 
     # Dump and load
     dumped_data = memory.dump()
-    new_memory = AgentMemory()
+    new_memory = AgentHistory()
     new_memory.load(dumped_data)
 
     # Verify loaded data
@@ -215,21 +215,21 @@ def test_complex_scenario(memory):
 
 
 def test_memory_with_no_max_messages():
-    unlimited_memory = AgentMemory()
+    unlimited_memory = AgentHistory()
     for i in range(100):
         unlimited_memory.add_message("user", InputSchema(test_field=f"Message {i}"))
     assert len(unlimited_memory.history) == 100
 
 
 def test_memory_with_zero_max_messages():
-    zero_max_memory = AgentMemory(max_messages=0)
+    zero_max_memory = AgentHistory(max_messages=0)
     for i in range(10):
         zero_max_memory.add_message("user", InputSchema(test_field=f"Message {i}"))
     assert len(zero_max_memory.history) == 0
 
 
 def test_memory_turn_consistency():
-    memory = AgentMemory()
+    memory = AgentHistory()
     memory.initialize_turn()
     turn_id = memory.get_current_turn_id()
     memory.add_message("user", InputSchema(test_field="Hello"))
@@ -248,7 +248,7 @@ def test_agent_memory_delete_turn_id(memory):
     mock_input = InputSchema(test_field="Test input")
     mock_output = InputSchema(test_field="Test output")
 
-    memory = AgentMemory()
+    memory = AgentHistory()
     initial_turn_id = "123-456"
     memory.current_turn_id = initial_turn_id
 

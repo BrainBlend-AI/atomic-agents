@@ -2,14 +2,14 @@
 
 ## Agent Memory
 
-The `AgentMemory` class manages conversation history and state for AI agents:
+The `AgentHistory` class manages conversation history and state for AI agents:
 
 ```python
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_memory import AgentHistory
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 # Initialize memory with optional max messages
-memory = AgentMemory(max_messages=10)
+memory = AgentHistory(max_messages=10)
 
 # Add messages
 memory.add_message(
