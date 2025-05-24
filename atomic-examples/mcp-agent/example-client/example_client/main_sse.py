@@ -9,7 +9,7 @@ import instructor
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_history import AgentMemory
 from typing import Union, Type, Dict
 from dataclasses import dataclass
 import re

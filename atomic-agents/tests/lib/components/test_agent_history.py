@@ -2,7 +2,7 @@ import pytest
 import json
 from typing import List, Dict
 from pydantic import Field
-from atomic_agents.lib.components.agent_memory import AgentMemory, Message
+from atomic_agents.lib.components.agent_history import AgentMemory, Message
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 import instructor
 

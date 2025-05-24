@@ -4,7 +4,7 @@ import openai
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.agent_history import AgentMemory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # API Key setup
