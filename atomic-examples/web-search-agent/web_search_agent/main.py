@@ -24,8 +24,8 @@ load_dotenv()
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentHistory()
+# History setup
+history = AgentHistory()
 
 # Initialize the SearXNGSearchTool
 search_tool = SearXNGSearchTool(config=SearXNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))

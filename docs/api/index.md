@@ -35,7 +35,7 @@ The components module contains essential building blocks:
   - Turn-based conversation tracking
   - Multimodal content
   - Serialization and persistence
-  - Memory size management
+  - History size management
 
 - `SystemPromptGenerator`: Creates structured system prompts with:
   - Background information

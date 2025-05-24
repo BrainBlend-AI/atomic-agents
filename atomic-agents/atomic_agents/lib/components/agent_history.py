@@ -126,15 +126,15 @@ class AgentHistory:
 
     def copy(self) -> "AgentHistory":
         """
-        Creates a copy of the chat memory.
+        Creates a copy of the chat history.
 
         Returns:
-            AgentHistory: A copy of the chat memory.
+            AgentHistory: A copy of the chat history.
         """
-        new_memory = AgentHistory(max_messages=self.max_messages)
-        new_memory.load(self.dump())
-        new_memory.current_turn_id = self.current_turn_id
-        return new_memory
+        new_history = AgentHistory(max_messages=self.max_messages)
+        new_history.load(self.dump())
+        new_history.current_turn_id = self.current_turn_id
+        return new_history
 
     def get_current_turn_id(self) -> Optional[str]:
         """
@@ -147,7 +147,7 @@ class AgentHistory:
 
     def delete_turn_id(self, turn_id: int):
         """
-        Delete messages from the memory by its turn ID.
+        Delete messages from the history by its turn ID.
 
         Args:
             turn_id (int): The turn ID of the message to delete.
@@ -156,13 +156,13 @@ class AgentHistory:
             str: A success message with the deleted turn ID.
 
         Raises:
-            ValueError: If the specified turn ID is not found in the memory.
+            ValueError: If the specified turn ID is not found in the history.
         """
         initial_length = len(self.history)
         self.history = [msg for msg in self.history if msg.turn_id != turn_id]
 
         if len(self.history) == initial_length:
-            raise ValueError(f"Turn ID {turn_id} not found in memory.")
+            raise ValueError(f"Turn ID {turn_id} not found in history.")
 
         # Update current_turn_id if necessary
         if not len(self.history):
@@ -200,12 +200,12 @@ class AgentHistory:
             }
             serialized_history.append(serialized_message)
 
-        memory_data = {
+        history_data = {
             "history": serialized_history,
             "max_messages": self.max_messages,
             "current_turn_id": self.current_turn_id,
         }
-        return json.dumps(memory_data)
+        return json.dumps(history_data)
 
     def load(self, serialized_data: str) -> None:
         """
@@ -218,12 +218,12 @@ class AgentHistory:
             ValueError: If the serialized data is invalid or cannot be deserialized.
         """
         try:
-            memory_data = json.loads(serialized_data)
+            history_data = json.loads(serialized_data)
             self.history = []
-            self.max_messages = memory_data["max_messages"]
-            self.current_turn_id = memory_data["current_turn_id"]
+            self.max_messages = history_data["max_messages"]
+            self.current_turn_id = history_data["current_turn_id"]
 
-            for message_data in memory_data["history"]:
+            for message_data in history_data["history"]:
                 content_info = message_data["content"]
                 content_class = self._get_class_from_string(content_info["class_name"])
                 content_instance = content_class(**content_info["data"])
@@ -286,11 +286,11 @@ if __name__ == "__main__":
         instruction_text: str = Field(..., description="The instruction text")
         images: List[instructor.Image] = Field(..., description="The images to analyze")
 
-    # Create and populate the original memory with complex data
-    original_memory = AgentHistory(max_messages=10)
+    # Create and populate the original history with complex data
+    original_history = AgentHistory(max_messages=10)
 
     # Add a complex input message
-    original_memory.add_message(
+    original_history.add_message(
         "user",
         ComplexInputSchema(
             text_field="Hello, this is a complex input",
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     )
 
     # Add a complex output message
-    original_memory.add_message(
+    original_history.add_message(
         "assistant",
         ComplexOutputSchema(
             response_text="This is a complex response",
@@ -317,7 +317,7 @@ if __name__ == "__main__":
     test_image_path = os.path.join("test_images", "test.jpg")
     if os.path.exists(test_image_path):
         # Add a multimodal message
-        original_memory.add_message(
+        original_history.add_message(
             "user",
             MultimodalSchema(
                 instruction_text="Please analyze this image", images=[instructor.Image.from_path(test_image_path)]
@@ -325,17 +325,17 @@ if __name__ == "__main__":
         )
 
     # Continue with existing tests...
-    dumped_data = original_memory.dump()
+    dumped_data = original_history.dump()
     print("Dumped data:")
     print(dumped_data)
 
-    # Create a new memory and load the dumped data
-    loaded_memory = AgentHistory()
-    loaded_memory.load(dumped_data)
+    # Create a new history and load the dumped data
+    loaded_history = AgentHistory()
+    loaded_history.load(dumped_data)
 
-    # Print detailed information about the loaded memory
-    print("\nLoaded memory details:")
-    for i, message in enumerate(loaded_memory.history):
+    # Print detailed information about the loaded history
+    print("\nLoaded history details:")
+    for i, message in enumerate(loaded_history.history):
         print(f"\nMessage {i + 1}:")
         print(f"Role: {message.role}")
         print(f"Turn ID: {message.turn_id}")
@@ -346,8 +346,8 @@ if __name__ == "__main__":
 
     # Final verification
     print("\nFinal verification:")
-    print(f"Max messages: {loaded_memory.max_messages}")
-    print(f"Current turn ID: {loaded_memory.get_current_turn_id()}")
+    print(f"Max messages: {loaded_history.max_messages}")
+    print(f"Current turn ID: {loaded_history.get_current_turn_id()}")
     print("Last message content:")
-    last_message = loaded_memory.history[-1]
+    last_message = loaded_history.history[-1]
     print(last_message.content.model_dump())

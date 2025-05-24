@@ -60,7 +60,7 @@ agent = BaseAgent[BaseAgentInputSchema, PersonSchema](
 async def exec_agent(message: str):
     """Execute the agent with the provided message."""
     user_input = BaseAgentInputSchema(chat_message=message)
-    agent.reset_memory()
+    agent.reset_history()
     response = await agent.run_async(user_input)
     return response
 

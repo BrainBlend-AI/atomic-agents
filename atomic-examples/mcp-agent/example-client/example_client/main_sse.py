@@ -140,12 +140,12 @@ def main():
         console.print(table)
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
-        memory = AgentHistory()
+        history = AgentHistory()
         orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
             BaseAgentConfig(
                 client=client,
                 model=config.openai_model,
-                memory=memory,
+                history=history,
                 system_prompt_generator=SystemPromptGenerator(
                     background=[
                         "You are an MCP Orchestrator Agent, designed to chat with users and",
@@ -378,11 +378,11 @@ def main():
                     tool_output = tool_instance.run(action_instance)
                     console.print(f"[bold green]Result:[/bold green] {tool_output.result}")
 
-                    # Add tool result to agent memory
+                    # Add tool result to agent history
                     result_message = MCPOrchestratorInputSchema(
                         query=f"Tool {tool_name} executed with result: {tool_output.result}"
                     )
-                    orchestrator_agent.memory.add_message("system", result_message)
+                    orchestrator_agent.history.add_message("system", result_message)
 
                     # Run the agent again without parameters to continue the flow
                     orchestrator_output = orchestrator_agent.run()

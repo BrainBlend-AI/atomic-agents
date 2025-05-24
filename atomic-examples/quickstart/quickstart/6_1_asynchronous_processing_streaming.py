@@ -67,7 +67,7 @@ async def exec_agent(message: str, idx: int, progress_dict: dict):
     # Acquire the semaphore to limit concurrent executions
     async with sem:
         user_input = BaseAgentInputSchema(chat_message=message)
-        agent.reset_memory()
+        agent.reset_history()
 
         # Track streaming progress
         partial_data = {}

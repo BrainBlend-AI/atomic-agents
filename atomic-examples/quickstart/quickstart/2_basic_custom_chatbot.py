@@ -21,14 +21,14 @@ if not API_KEY:
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentHistory()
+# History setup
+history = AgentHistory()
 
-# Initialize memory with an initial message from the assistant
+# Initialize history with an initial message from the assistant
 initial_message = BaseAgentOutputSchema(
     chat_message="How do you do? What can I do for you? Tell me, pray, what is your need today?"
 )
-memory.add_message("assistant", initial_message)
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library
 # Note, you can also set up a client using any other LLM provider, such as Anthropic, Cohere, etc.
@@ -55,7 +55,7 @@ agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=memory,
+        history=history,
     )
 )
 
