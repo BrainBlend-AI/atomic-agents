@@ -60,7 +60,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 class BaseAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field(default="gpt-4o-mini", description="The model to use for generating responses.")
-    history: Optional[AgentHistory] = Field(default=None, description="history component for storing chat history.")
+    history: Optional[AgentHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         default=None, description="Component for generating system prompts."
     )

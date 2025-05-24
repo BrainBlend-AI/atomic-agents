@@ -159,7 +159,7 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 # Initialize console for pretty outputs
 console = Console()
 
-# history setup
+# History setup
 history = AgentHistory()
 
 # Custom output schema
@@ -267,7 +267,7 @@ load_dotenv()
 # Initialize console for pretty outputs
 console = Console()
 
-# history setup
+# History setup
 history = AgentHistory()
 
 # Initialize history with an initial message from the assistant
