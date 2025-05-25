@@ -4,7 +4,7 @@ import openai
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from atomic_agents.lib.components.agent_history import AgentHistory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # API Key setup
@@ -21,7 +21,7 @@ if not API_KEY:
 console = Console()
 
 # History setup
-history = AgentHistory()
+history = ChatHistory()
 
 # Initialize history with an initial message from the assistant
 initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")

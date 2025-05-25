@@ -9,7 +9,7 @@ import instructor
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_history import AgentHistory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from typing import Union, Type, Dict
 from dataclasses import dataclass
 import re
@@ -140,7 +140,7 @@ def main():
         console.print(table)
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
-        history = AgentHistory()
+        history = ChatHistory()
         orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
             BaseAgentConfig(
                 client=client,

@@ -103,7 +103,7 @@ The `BaseAgent` class is the foundation for building AI agents in the Atomic Age
 
 ```python
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.agent_history import AgentHistory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # Create agent with basic configuration
@@ -111,7 +111,7 @@ agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=instructor.from_openai(OpenAI()),
         model="gpt-4-turbo-preview",
-        history=AgentHistory(),
+        history=ChatHistory(),
         system_prompt_generator=SystemPromptGenerator()
     )
 )
@@ -132,7 +132,7 @@ The `BaseAgentConfig` class provides configuration options:
 class BaseAgentConfig:
     client: instructor.Instructor  # Client for interacting with the language model
     model: str = "gpt-4-turbo-preview"  # Model to use
-    history: Optional[AgentHistory] = None  # History component
+    history: Optional[ChatHistory] = None  # History component
     system_prompt_generator: Optional[SystemPromptGenerator] = None  # Prompt generator
     input_schema: Optional[Type[BaseModel]] = None  # Custom input schema
     output_schema: Optional[Type[BaseModel]] = None  # Custom output schema
@@ -207,7 +207,7 @@ async def chat():
 
 ### History Management
 
-The agent automatically manages conversation history through the `AgentHistory` component:
+The agent automatically manages conversation history through the `ChatHistory` component:
 
 ```python
 # Access history

@@ -20,7 +20,7 @@ class Message(BaseModel):
     turn_id: Optional[str] = None
 
 
-class AgentHistory:
+class ChatHistory:
     """
     Manages the chat history for an AI agent.
 
@@ -32,7 +32,7 @@ class AgentHistory:
 
     def __init__(self, max_messages: Optional[int] = None):
         """
-        Initializes the AgentHistory with an empty history and optional constraints.
+        Initializes the ChatHistory with an empty history and optional constraints.
 
         Args:
             max_messages (Optional[int]): Maximum number of messages to keep in history.
@@ -124,14 +124,14 @@ class AgentHistory:
                 history.append({"role": message.role, "content": json.dumps(content.model_dump(mode="json"))})
         return history
 
-    def copy(self) -> "AgentHistory":
+    def copy(self) -> "ChatHistory":
         """
         Creates a copy of the chat history.
 
         Returns:
-            AgentHistory: A copy of the chat history.
+            ChatHistory: A copy of the chat history.
         """
-        new_history = AgentHistory(max_messages=self.max_messages)
+        new_history = ChatHistory(max_messages=self.max_messages)
         new_history.load(self.dump())
         new_history.current_turn_id = self.current_turn_id
         return new_history
@@ -182,10 +182,10 @@ class AgentHistory:
 
     def dump(self) -> str:
         """
-        Serializes the entire AgentHistory instance to a JSON string.
+        Serializes the entire ChatHistory instance to a JSON string.
 
         Returns:
-            str: A JSON string representation of the AgentHistory.
+            str: A JSON string representation of the ChatHistory.
         """
         serialized_history = []
         for message in self.history:
@@ -209,10 +209,10 @@ class AgentHistory:
 
     def load(self, serialized_data: str) -> None:
         """
-        Deserializes a JSON string and loads it into the AgentHistory instance.
+        Deserializes a JSON string and loads it into the ChatHistory instance.
 
         Args:
-            serialized_data (str): A JSON string representation of the AgentHistory.
+            serialized_data (str): A JSON string representation of the ChatHistory.
 
         Raises:
             ValueError: If the serialized data is invalid or cannot be deserialized.
@@ -287,7 +287,7 @@ if __name__ == "__main__":
         images: List[instructor.Image] = Field(..., description="The images to analyze")
 
     # Create and populate the original history with complex data
-    original_history = AgentHistory(max_messages=10)
+    original_history = ChatHistory(max_messages=10)
 
     # Add a complex input message
     original_history.add_message(
@@ -330,7 +330,7 @@ if __name__ == "__main__":
     print(dumped_data)
 
     # Create a new history and load the dumped data
-    loaded_history = AgentHistory()
+    loaded_history = ChatHistory()
     loaded_history.load(dumped_data)
 
     # Print detailed information about the loaded history

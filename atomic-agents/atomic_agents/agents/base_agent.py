@@ -1,7 +1,7 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type, Generator, AsyncGenerator, get_args
-from atomic_agents.lib.components.agent_history import AgentHistory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import (
     SystemPromptContextProviderBase,
     SystemPromptGenerator,
@@ -60,7 +60,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 class BaseAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field(default="gpt-4o-mini", description="The model to use for generating responses.")
-    history: Optional[AgentHistory] = Field(default=None, description="History component for storing chat history.")
+    history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         default=None, description="Component for generating system prompts."
     )
@@ -85,10 +85,10 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     Attributes:
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
-        history (AgentHistory): History component for storing chat history.
+        history (ChatHistory): History component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
         system_role (Optional[str]): The role of the system in the conversation. None means no system prompt.
-        initial_history (AgentHistory): Initial state of the history.
+        initial_history (ChatHistory): Initial state of the history.
         current_user_input (Optional[InputSchema]): The current user input being processed.
         model_api_parameters (dict): Additional parameters passed to the API provider.
             - Use this for parameters like 'temperature', 'max_tokens', etc.
@@ -103,7 +103,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         """
         self.client = config.client
         self.model = config.model
-        self.history = config.history or AgentHistory()
+        self.history = config.history or ChatHistory()
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.system_role = config.system_role
         self.initial_history = self.history.copy()

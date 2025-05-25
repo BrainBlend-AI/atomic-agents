@@ -9,7 +9,7 @@ from atomic_agents.agents.base_agent import (
     BaseAgentInputSchema,
     BaseAgentOutputSchema,
     SystemPromptGenerator,
-    AgentHistory,
+    ChatHistory,
     SystemPromptContextProviderBase,
 )
 from instructor.dsl.partial import PartialBase
@@ -58,10 +58,10 @@ def mock_instructor_async():
 
 @pytest.fixture
 def mock_history():
-    mock = Mock(spec=AgentHistory)
+    mock = Mock(spec=ChatHistory)
     mock.get_history.return_value = []
     mock.add_message = Mock()
-    mock.copy = Mock(return_value=Mock(spec=AgentHistory))
+    mock.copy = Mock(return_value=Mock(spec=ChatHistory))
     mock.initialize_turn = Mock()
     return mock
 

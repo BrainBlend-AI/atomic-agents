@@ -7,7 +7,7 @@ from rich.text import Text
 from typing import List
 from pydantic import Field
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_history import AgentHistory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
@@ -25,7 +25,7 @@ if not API_KEY:
 console = Console()
 
 # History setup
-history = AgentHistory()
+history = ChatHistory()
 
 
 # Custom output schema

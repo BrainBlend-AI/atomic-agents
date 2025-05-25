@@ -2,7 +2,7 @@ import pytest
 import json
 from typing import List, Dict
 from pydantic import Field
-from atomic_agents.lib.components.agent_history import AgentHistory, Message
+from atomic_agents.lib.components.agent_history import ChatHistory, Message
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 import instructor
 
@@ -52,7 +52,7 @@ class MockMultimodalSchema(BaseIOSchema):
 
 @pytest.fixture
 def history():
-    return AgentHistory(max_messages=5)
+    return ChatHistory(max_messages=5)
 
 
 def test_initialization(history):
@@ -132,7 +132,7 @@ def test_dump_and_load(history):
     )
 
     dumped_data = history.dump()
-    new_history = AgentHistory()
+    new_history = ChatHistory()
     new_history.load(dumped_data)
 
     assert new_history.max_messages == history.max_messages
@@ -151,7 +151,7 @@ def test_load_invalid_data(history):
 
 def test_get_class_from_string():
     class_string = "tests.lib.components.test_agent_history.InputSchema"
-    cls = AgentHistory._get_class_from_string(class_string)
+    cls = ChatHistory._get_class_from_string(class_string)
     assert cls.__name__ == InputSchema.__name__
     assert cls.__module__.endswith("test_agent_history")
     assert issubclass(cls, BaseIOSchema)
@@ -159,7 +159,7 @@ def test_get_class_from_string():
 
 def test_get_class_from_string_invalid():
     with pytest.raises((ImportError, AttributeError)):
-        AgentHistory._get_class_from_string("invalid.module.Class")
+        ChatHistory._get_class_from_string("invalid.module.Class")
 
 
 def test_message_model():
@@ -196,7 +196,7 @@ def test_complex_scenario(history):
 
     # Dump and load
     dumped_data = history.dump()
-    new_history = AgentHistory()
+    new_history = ChatHistory()
     new_history.load(dumped_data)
 
     # Verify loaded data
@@ -215,21 +215,21 @@ def test_complex_scenario(history):
 
 
 def test_history_with_no_max_messages():
-    unlimited_history = AgentHistory()
+    unlimited_history = ChatHistory()
     for i in range(100):
         unlimited_history.add_message("user", InputSchema(test_field=f"Message {i}"))
     assert len(unlimited_history.history) == 100
 
 
 def test_history_with_zero_max_messages():
-    zero_max_history = AgentHistory(max_messages=0)
+    zero_max_history = ChatHistory(max_messages=0)
     for i in range(10):
         zero_max_history.add_message("user", InputSchema(test_field=f"Message {i}"))
     assert len(zero_max_history.history) == 0
 
 
 def test_history_turn_consistency():
-    history = AgentHistory()
+    history = ChatHistory()
     history.initialize_turn()
     turn_id = history.get_current_turn_id()
     history.add_message("user", InputSchema(test_field="Hello"))
@@ -248,7 +248,7 @@ def test_agent_history_delete_turn_id(history):
     mock_input = InputSchema(test_field="Test input")
     mock_output = InputSchema(test_field="Test output")
 
-    history = AgentHistory()
+    history = ChatHistory()
     initial_turn_id = "123-456"
     history.current_turn_id = initial_turn_id
 

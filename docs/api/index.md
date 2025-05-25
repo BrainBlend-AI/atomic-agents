@@ -30,7 +30,7 @@ The agents module provides the base classes for creating AI agents:
 
 The components module contains essential building blocks:
 
-- `AgentHistory`: Manages conversation history and state with support for:
+- `ChatHistory`: Manages conversation history and state with support for:
   - Message history with role-based messages
   - Turn-based conversation tracking
   - Multimodal content

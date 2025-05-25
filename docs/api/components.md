@@ -2,14 +2,14 @@
 
 ## Agent History
 
-The `AgentHistory` class manages conversation history and state for AI agents:
+The `ChatHistory` class manages conversation history and state for AI agents:
 
 ```python
-from atomic_agents.lib.components.agent_history import AgentHistory
+from atomic_agents.lib.components.agent_history import ChatHistory
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 # Initialize history with optional max messages
-history = AgentHistory(max_messages=10)
+history = ChatHistory(max_messages=10)
 
 # Add messages
 history.add_message(
