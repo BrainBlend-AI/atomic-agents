@@ -1,7 +1,7 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type, Generator, AsyncGenerator, get_args
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import (
     SystemPromptContextProviderBase,
     SystemPromptGenerator,

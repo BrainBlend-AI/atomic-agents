@@ -11,7 +11,7 @@ from contextlib import AsyncExitStack
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from typing import Union, Type, Dict, Optional
 from dataclasses import dataclass
 from mcp import ClientSession, StdioServerParameters

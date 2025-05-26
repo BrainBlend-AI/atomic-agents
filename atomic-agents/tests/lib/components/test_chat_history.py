@@ -2,7 +2,7 @@ import pytest
 import json
 from typing import List, Dict
 from pydantic import Field
-from atomic_agents.lib.components.agent_history import ChatHistory, Message
+from atomic_agents.lib.components.chat_history import ChatHistory, Message
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 import instructor
 
@@ -150,10 +150,10 @@ def test_load_invalid_data(history):
 
 
 def test_get_class_from_string():
-    class_string = "tests.lib.components.test_agent_history.InputSchema"
+    class_string = "tests.lib.components.test_chat_history.InputSchema"
     cls = ChatHistory._get_class_from_string(class_string)
     assert cls.__name__ == InputSchema.__name__
-    assert cls.__module__.endswith("test_agent_history")
+    assert cls.__module__.endswith("test_chat_history")
     assert issubclass(cls, BaseIOSchema)
 
 
@@ -244,7 +244,7 @@ def test_history_turn_consistency():
     assert history.history[2].turn_id == new_turn_id
 
 
-def test_agent_history_delete_turn_id(history):
+def test_chat_history_delete_turn_id(history):
     mock_input = InputSchema(test_field="Test input")
     mock_output = InputSchema(test_field="Test output")
 

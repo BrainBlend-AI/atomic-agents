@@ -5,7 +5,7 @@
 The `ChatHistory` class manages conversation history and state for AI agents:
 
 ```python
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 # Initialize history with optional max messages
@@ -203,7 +203,7 @@ Key features:
 For full API details:
 
 ```{eval-rst}
-.. automodule:: atomic_agents.lib.components.agent_history
+.. automodule:: atomic_agents.lib.components.chat_history
    :members:
    :undoc-members:
    :show-inheritance:

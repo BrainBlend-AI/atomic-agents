@@ -24,7 +24,7 @@ import os
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # Initialize console for pretty outputs
@@ -80,7 +80,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # Initialize console for pretty outputs
@@ -152,7 +152,7 @@ from rich.console import Console
 from typing import List
 from pydantic import Field
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
@@ -258,7 +258,7 @@ import os
 import instructor
 from rich.console import Console
 from rich.text import Text
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 from dotenv import load_dotenv
 

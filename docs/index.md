@@ -61,7 +61,7 @@ Here's a glimpse of how easy it is to create an agent:
 ```python
 import instructor
 import openai
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 

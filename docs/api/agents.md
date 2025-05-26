@@ -103,7 +103,7 @@ The `BaseAgent` class is the foundation for building AI agents in the Atomic Age
 
 ```python
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.agent_history import ChatHistory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # Create agent with basic configuration
