@@ -81,7 +81,7 @@ def initialize_conversation() -> None:
         answer=WELCOME_MESSAGE,
         follow_up_questions=STARTER_QUESTIONS,
     )
-    question_answering_agent.memory.add_message("assistant", initial_answer)
+    question_answering_agent.history.add_message("assistant", initial_answer)
 
 
 def display_welcome() -> None:
@@ -164,7 +164,7 @@ def chat_loop() -> None:
     question_answering_agent.register_context_provider("scraped_content", scraped_content_context_provider)
     query_agent.register_context_provider("scraped_content", scraped_content_context_provider)
 
-    console.print("[dim]• Initializing conversation memory...[/dim]")
+    console.print("[dim]• Initializing conversation history...[/dim]")
     initialize_conversation()
 
     console.print("[bold green]✨ System initialized successfully![/bold green]\n")

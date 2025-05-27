@@ -86,7 +86,7 @@ In Atomic Agents, an agent is composed of several key components:
 - **System Prompt:** Defines the agent's behavior and purpose.
 - **Input Schema:** Specifies the structure and validation rules for the agent's input.
 - **Output Schema:** Specifies the structure and validation rules for the agent's output.
-- **Memory:** Stores conversation history or other relevant data.
+- **History:** Stores conversation history or other relevant data.
 - **Context Providers:** Inject dynamic context into the agent's system prompt at runtime.
 
 Here's a high-level architecture diagram:
@@ -140,7 +140,7 @@ import instructor
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.chat_history import ChatHistory
 
 # Define a custom output schema
 class CustomOutputSchema(BaseIOSchema):
@@ -173,7 +173,7 @@ agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=AgentMemory(),
+        history=ChatHistory(),
     )
 )
 

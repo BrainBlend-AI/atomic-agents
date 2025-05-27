@@ -5,7 +5,7 @@ from rich.markdown import Markdown
 from pydantic import Field
 
 from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
 
 from web_search_agent.tools.searxng_search import (
@@ -24,8 +24,8 @@ load_dotenv()
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
 # Initialize the SearXNGSearchTool
 search_tool = SearXNGSearchTool(config=SearXNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))

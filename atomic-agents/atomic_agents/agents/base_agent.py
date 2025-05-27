@@ -1,7 +1,7 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type, Generator, AsyncGenerator, get_args
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import (
     SystemPromptContextProviderBase,
     SystemPromptGenerator,
@@ -60,7 +60,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 class BaseAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field(default="gpt-4o-mini", description="The model to use for generating responses.")
-    memory: Optional[AgentMemory] = Field(default=None, description="Memory component for storing chat history.")
+    history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         default=None, description="Component for generating system prompts."
     )
@@ -75,7 +75,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     """
     Base class for chat agents.
 
-    This class provides the core functionality for handling chat interactions, including managing memory,
+    This class provides the core functionality for handling chat interactions, including managing history,
     generating system prompts, and obtaining responses from a language model.
 
     Type Parameters:
@@ -85,10 +85,10 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     Attributes:
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
-        memory (AgentMemory): Memory component for storing chat history.
+        history (ChatHistory): History component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
         system_role (Optional[str]): The role of the system in the conversation. None means no system prompt.
-        initial_memory (AgentMemory): Initial state of the memory.
+        initial_history (ChatHistory): Initial state of the history.
         current_user_input (Optional[InputSchema]): The current user input being processed.
         model_api_parameters (dict): Additional parameters passed to the API provider.
             - Use this for parameters like 'temperature', 'max_tokens', etc.
@@ -103,18 +103,18 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         """
         self.client = config.client
         self.model = config.model
-        self.memory = config.memory or AgentMemory()
+        self.history = config.history or ChatHistory()
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.system_role = config.system_role
-        self.initial_memory = self.memory.copy()
+        self.initial_history = self.history.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
 
-    def reset_memory(self):
+    def reset_history(self):
         """
-        Resets the memory to its initial state.
+        Resets the history to its initial state.
         """
-        self.memory = self.initial_memory.copy()
+        self.history = self.initial_history.copy()
 
     @property
     def input_schema(self) -> Type[BaseIOSchema]:
@@ -145,14 +145,14 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
                 }
             ]
 
-        self.messages += self.memory.get_history()
+        self.messages += self.history.get_history()
 
     def run(self, user_input: Optional[InputSchema] = None) -> OutputSchema:
         """
         Runs the chat agent with the given user input synchronously.
 
         Args:
-            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
 
         Returns:
             OutputSchema: The response from the chat agent.
@@ -161,9 +161,9 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             self.client, instructor.client.AsyncInstructor
         ), "The run method is not supported for async clients. Use run_async instead."
         if user_input:
-            self.memory.initialize_turn()
+            self.history.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            self.history.add_message("user", user_input)
 
         self._prepare_messages()
         response = self.client.chat.completions.create(
@@ -172,7 +172,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             response_model=self.output_schema,
             **self.model_api_parameters,
         )
-        self.memory.add_message("assistant", response)
+        self.history.add_message("assistant", response)
 
         return response
 
@@ -181,7 +181,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Runs the chat agent with the given user input, supporting streaming output.
 
         Args:
-            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
 
         Yields:
             OutputSchema: Partial responses from the chat agent.
@@ -193,9 +193,9 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             self.client, instructor.client.AsyncInstructor
         ), "The run_stream method is not supported for async clients. Use run_async instead."
         if user_input:
-            self.memory.initialize_turn()
+            self.history.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            self.history.add_message("user", user_input)
 
         self._prepare_messages()
 
@@ -211,7 +211,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         full_response_content = self.output_schema(**partial_response.model_dump())
-        self.memory.add_message("assistant", full_response_content)
+        self.history.add_message("assistant", full_response_content)
 
         return full_response_content
 
@@ -220,7 +220,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Runs the chat agent asynchronously with the given user input.
 
         Args:
-            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
 
         Returns:
             OutputSchema: The response from the chat agent.
@@ -231,9 +231,9 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         """
         assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
-            self.memory.initialize_turn()
+            self.history.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            self.history.add_message("user", user_input)
 
         self._prepare_messages()
 
@@ -241,7 +241,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
         )
 
-        self.memory.add_message("assistant", response)
+        self.history.add_message("assistant", response)
         return response
 
     async def run_async_stream(self, user_input: Optional[InputSchema] = None) -> AsyncGenerator[OutputSchema, None]:
@@ -249,16 +249,16 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Runs the chat agent asynchronously with the given user input, supporting streaming output.
 
         Args:
-            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
 
         Yields:
             OutputSchema: Partial responses from the chat agent.
         """
         assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
-            self.memory.initialize_turn()
+            self.history.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            self.history.add_message("user", user_input)
 
         self._prepare_messages()
 
@@ -277,7 +277,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
         if last_response:
             full_response_content = self.output_schema(**last_response.model_dump())
-            self.memory.add_message("assistant", full_response_content)
+            self.history.add_message("assistant", full_response_content)
 
     def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
         """
@@ -365,7 +365,7 @@ if __name__ == "__main__":
         info_table.add_column("Value", style="yellow")
 
         info_table.add_row("Model", agent.model)
-        info_table.add_row("Memory", str(type(agent.memory).__name__))
+        info_table.add_row("History", str(type(agent.history).__name__))
         info_table.add_row("System Prompt Generator", str(type(agent.system_prompt_generator).__name__))
 
         return info_table

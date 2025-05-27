@@ -4,7 +4,7 @@ import openai
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # API Key setup
@@ -20,12 +20,12 @@ if not API_KEY:
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
-# Initialize memory with an initial message from the assistant
+# Initialize history with an initial message from the assistant
 initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
-memory.add_message("assistant", initial_message)
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library
 client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
@@ -35,7 +35,7 @@ agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=client,
         model="gpt-4o-mini",
-        memory=memory,
+        history=history,
     )
 )
 

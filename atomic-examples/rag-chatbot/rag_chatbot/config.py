@@ -35,6 +35,6 @@ SIMILARITY_METRIC = "cosine"
 # ChromaDB Configuration
 CHROMA_PERSIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "chroma_db")
 
-# Memory Configuration
-MEMORY_SIZE = 10  # Number of messages to keep in conversation memory
+# History Configuration
+HISTORY_SIZE = 10  # Number of messages to keep in conversation history
 MAX_CONTEXT_LENGTH = 4000  # Maximum length of combined context to send to the model

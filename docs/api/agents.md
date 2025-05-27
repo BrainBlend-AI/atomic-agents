@@ -99,11 +99,11 @@ class CustomOutputSchema(BaseIOSchema):
 
 ## Base Agent
 
-The `BaseAgent` class is the foundation for building AI agents in the Atomic Agents framework. It handles chat interactions, memory management, system prompts, and responses from language models.
+The `BaseAgent` class is the foundation for building AI agents in the Atomic Agents framework. It handles chat interactions, history management, system prompts, and responses from language models.
 
 ```python
 from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.agent_memory import AgentMemory
+from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 
 # Create agent with basic configuration
@@ -111,7 +111,7 @@ agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
     config=BaseAgentConfig(
         client=instructor.from_openai(OpenAI()),
         model="gpt-4-turbo-preview",
-        memory=AgentMemory(),
+        history=ChatHistory(),
         system_prompt_generator=SystemPromptGenerator()
     )
 )
@@ -132,7 +132,7 @@ The `BaseAgentConfig` class provides configuration options:
 class BaseAgentConfig:
     client: instructor.Instructor  # Client for interacting with the language model
     model: str = "gpt-4-turbo-preview"  # Model to use
-    memory: Optional[AgentMemory] = None  # Memory component
+    history: Optional[ChatHistory] = None  # History component
     system_prompt_generator: Optional[SystemPromptGenerator] = None  # Prompt generator
     input_schema: Optional[Type[BaseModel]] = None  # Custom input schema
     output_schema: Optional[Type[BaseModel]] = None  # Custom output schema
@@ -164,7 +164,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 - `run(user_input: Optional[BaseIOSchema] = None) -> BaseIOSchema`: Process user input and get response
 - `run_async(user_input: Optional[BaseIOSchema] = None)`: Stream responses asynchronously
 - `get_response(response_model=None) -> Type[BaseModel]`: Get direct model response
-- `reset_memory()`: Reset memory to initial state
+- `reset_history()`: Reset history to initial state
 - `get_context_provider(provider_name: str)`: Get a registered context provider
 - `register_context_provider(provider_name: str, provider: SystemPromptContextProviderBase)`: Register a new context provider
 - `unregister_context_provider(provider_name: str)`: Remove a context provider
@@ -205,20 +205,20 @@ async def chat():
         print(partial_response.chat_message)
 ```
 
-### Memory Management
+### History Management
 
-The agent automatically manages conversation history through the `AgentMemory` component:
+The agent automatically manages conversation history through the `ChatHistory` component:
 
 ```python
-# Access memory
-history = agent.memory.get_history()
+# Access history
+history = agent.history.get_history()
 
 # Reset to initial state
-agent.reset_memory()
+agent.reset_history()
 
-# Save/load memory state
-serialized = agent.memory.dump()
-agent.memory.load(serialized)
+# Save/load history state
+serialized = agent.history.dump()
+agent.history.load(serialized)
 ```
 
 ### Custom Schemas

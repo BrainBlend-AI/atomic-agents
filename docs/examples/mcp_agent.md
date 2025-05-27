@@ -99,7 +99,7 @@ tool_schema_to_class_map = {
 2. **Query Processing**:
 - Uses an orchestrator agent to analyze queries
 - Extracts parameters and selects appropriate tools
-- Maintains conversation context through AgentMemory
+- Maintains conversation context through ChatHistory
 
 ## MCP Transport Methods
 
