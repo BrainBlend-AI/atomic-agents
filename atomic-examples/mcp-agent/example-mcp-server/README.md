@@ -65,13 +65,13 @@ poetry run example-mcp-server --mode=sse --host 127.0.0.1 --port 8000
 poetry run example-mcp-server --mode=sse --reload
 
 # Run in HTTP Stream mode (default http://0.0.0.0:6969/mcp)
-poetry run example-mcp-server --mode=http
+poetry run example-mcp-server --mode=http_stream
 
 # Run in HTTP Stream mode with custom host/port
-poetry run example-mcp-server --mode=http --host 127.0.0.1 --port 8000
+poetry run example-mcp-server --mode=http_stream --host 127.0.0.1 --port 8000
 
 # Run in HTTP Stream mode with auto-reload
-poetry run example-mcp-server --mode=http --reload
+poetry run example-mcp-server --mode=http_stream --reload
 ```
 
 ### Using Python Module
@@ -82,7 +82,7 @@ Alternatively, you can run the server as a Python module:
 # Using the unified server script
 poetry run python -m example_mcp_server.server --mode=stdio
 poetry run python -m example_mcp_server.server --mode=sse
-poetry run python -m example_mcp_server.server --mode=http
+poetry run python -m example_mcp_server.server --mode=http_stream
 
 # Or call the specific implementations directly
 poetry run python -m example_mcp_server.server_stdio

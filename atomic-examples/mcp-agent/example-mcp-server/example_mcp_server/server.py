@@ -11,14 +11,14 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["stdio", "sse", "http"],
-        help="Server mode: stdio for standard I/O, sse for Server-Sent Events, or http for HTTP Stream Transport",
+        choices=["stdio", "sse", "http_stream"],
+        help="Server mode: stdio for standard I/O, sse for Server-Sent Events, or http_stream for HTTP Stream Transport",
     )
 
-    # SSE specific arguments
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (SSE mode only)")
-    parser.add_argument("--port", type=int, default=6969, help="Port to listen on (SSE mode only)")
-    parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development (SSE mode only)")
+    # HTTP Stream specific arguments
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (sse/http_stream mode only)")
+    parser.add_argument("--port", type=int, default=6969, help="Port to listen on (sse/http_stream mode only)")
+    parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development (sse/http_stream mode only)")
 
     args = parser.parse_args()
 
@@ -35,7 +35,7 @@ def main():
         if args.reload:
             sys.argv.append("--reload")
         sse_main()
-    elif args.mode == "http":
+    elif args.mode == "http_stream":
         # Import and run the HTTP Stream Transport server
         from example_mcp_server.server_http import main as http_main
 
