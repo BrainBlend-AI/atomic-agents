@@ -23,7 +23,13 @@ class MCPToolDefinition(NamedTuple):
 class ToolDefinitionService:
     """Service for fetching tool definitions from MCP endpoints."""
 
-    def __init__(self, endpoint: Optional[str] = None, use_stdio: bool = False, use_http_stream: bool = False, working_directory: Optional[str] = None):
+    def __init__(
+        self,
+        endpoint: Optional[str] = None,
+        use_stdio: bool = False,
+        use_http_stream: bool = False,
+        working_directory: Optional[str] = None,
+    ):
         """
         Initialize the service.
 

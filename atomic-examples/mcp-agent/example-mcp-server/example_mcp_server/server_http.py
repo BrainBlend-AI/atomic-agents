@@ -11,7 +11,6 @@ from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 import uvicorn
 from typing import List
-import json
 
 from example_mcp_server.services.tool_service import ToolService
 from example_mcp_server.services.resource_service import ResourceService
@@ -37,10 +36,10 @@ def get_available_resources() -> List[Resource]:
 
 def create_http_app(mcp_server: Server) -> Starlette:
     """Create a Starlette app supporting HTTP Stream Transport."""
-    
+
     # Create SSE transport for handling the connection
     sse = SseServerTransport("/messages/")
-    
+
     async def handle_mcp(request: Request):
         """Handle MCP requests over HTTP Stream - accepts GET for connection."""
         try:
@@ -55,16 +54,9 @@ def create_http_app(mcp_server: Server) -> Starlette:
                     write_stream,
                     mcp_server.create_initialization_options(),
                 )
-                
+
         except Exception as e:
-            error_response = {
-                "jsonrpc": "2.0", 
-                "id": None,
-                "error": {
-                    "code": -32603,
-                    "message": f"Internal error: {str(e)}"
-                }
-            }
+            error_response = {"jsonrpc": "2.0", "id": None, "error": {"code": -32603, "message": f"Internal error: {str(e)}"}}
             return JSONResponse(error_response, status_code=500)
 
     middleware = [
@@ -95,7 +87,7 @@ resource_service = ResourceService()
 tool_service.register_tools(get_available_tools())
 tool_service.register_mcp_handlers(mcp)
 
-# Register all resources and their MCP handlers - same as SSE  
+# Register all resources and their MCP handlers - same as SSE
 resource_service.register_resources(get_available_resources())
 resource_service.register_mcp_handlers(mcp)
 
@@ -114,19 +106,13 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Run MCP HTTP Stream server")
-    parser.add_argument(
-        "--host", default="0.0.0.0", help="Host to bind to"
-    )
-    parser.add_argument(
-        "--port", type=int, default=6969, help="Port to listen on"
-    )
-    parser.add_argument(
-        "--reload", action="store_true", help="Enable auto-reload for development"
-    )
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
+    parser.add_argument("--port", type=int, default=6969, help="Port to listen on")
+    parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
     args = parser.parse_args()
-    
+
     print(f"MCP HTTP Stream Server starting on {args.host}:{args.port}")
-    
+
     uvicorn.run(
         "example_mcp_server.server_http:app",
         host=args.host,
