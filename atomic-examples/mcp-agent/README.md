@@ -107,7 +107,7 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 
    # Second terminal: Run the client with HTTP Stream transport
    cd example-client
-   poetry run python -m example_client.main --transport http
+   poetry run python -m example_client.main --transport http_stream
    ```
 
 ## Example Queries

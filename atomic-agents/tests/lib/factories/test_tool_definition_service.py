@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from atomic_agents.lib.factories.tool_definition_service import (
     ToolDefinitionService,
     MCPToolDefinition,
+    MCPTransportType,
 )
 
 
@@ -91,7 +92,7 @@ class TestToolDefinitionService:
     @pytest.mark.asyncio
     async def test_fetch_via_stdio(self):
         # Create service
-        service = ToolDefinitionService("command arg1 arg2", use_stdio=True)
+        service = ToolDefinitionService("command arg1 arg2", MCPTransportType.STDIO)
 
         # Mock the fetch_definitions_from_session method
         service.fetch_definitions_from_session = AsyncMock(
@@ -123,7 +124,7 @@ class TestToolDefinitionService:
     @pytest.mark.asyncio
     async def test_stdio_empty_command(self):
         # Create service with empty command
-        service = ToolDefinitionService("", use_stdio=True)
+        service = ToolDefinitionService("", MCPTransportType.STDIO)
 
         # Test that ValueError is raised for empty command
         with pytest.raises(ValueError, match="Endpoint is required"):
@@ -173,7 +174,7 @@ class TestToolDefinitionService:
 
     @pytest.mark.asyncio
     async def test_stdio_command_parts_empty(self):
-        svc = ToolDefinitionService("   ", use_stdio=True)
+        svc = ToolDefinitionService("   ", MCPTransportType.STDIO)
         with pytest.raises(
             RuntimeError, match="Unexpected error during tool definition fetching: STDIO command string cannot be empty"
         ):

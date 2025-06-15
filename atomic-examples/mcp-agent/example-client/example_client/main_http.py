@@ -5,6 +5,7 @@ Communicates with the server_http.py `/mcp` endpoint using HTTP GET/POST/DELETE 
 
 import sys
 from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools
+from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 from rich.console import Console
 from rich.table import Table
 from pydantic import Field
@@ -38,7 +39,7 @@ def main():
     client = instructor.from_openai(openai.OpenAI(api_key=config.openai_api_key))
 
     console.print("[bold green]Initializing MCP Agent System (HTTP Stream mode)...[/bold green]")
-    tools = fetch_mcp_tools(mcp_endpoint=config.mcp_server_url, use_stdio=False, use_http_stream=True)
+    tools = fetch_mcp_tools(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.HTTP_STREAM)
     if not tools:
         console.print(f"[bold red]No MCP tools found at {config.mcp_server_url}[/bold red]")
         sys.exit(1)

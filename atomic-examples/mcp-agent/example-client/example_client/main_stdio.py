@@ -1,5 +1,6 @@
 # pyright: reportInvalidTypeForm=false
 from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools
+from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 from rich.console import Console
 from rich.table import Table
 import openai
@@ -77,7 +78,7 @@ stdio_session = stdio_loop.run_until_complete(_bootstrap_stdio())
 # Fetch tools and build ActionUnion statically
 tools = fetch_mcp_tools(
     mcp_endpoint=None,
-    use_stdio=True,
+    transport_type=MCPTransportType.STDIO,
     client_session=stdio_session,  # Pass persistent session
     event_loop=stdio_loop,  # Pass corresponding loop
 )

@@ -7,7 +7,7 @@ from atomic_agents.lib.factories.mcp_tool_factory import (
     fetch_mcp_tools_with_schema,
     MCPToolFactory,
 )
-from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition, ToolDefinitionService
+from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition, ToolDefinitionService, MCPTransportType
 
 
 class DummySession:
@@ -21,12 +21,12 @@ def test_fetch_mcp_tools_no_endpoint_raises():
 
 def test_fetch_mcp_tools_event_loop_without_client_session_raises():
     with pytest.raises(ValueError):
-        fetch_mcp_tools(None, False, client_session=DummySession(), event_loop=None)
+        fetch_mcp_tools(None, MCPTransportType.HTTP_STREAM, client_session=DummySession(), event_loop=None)
 
 
 def test_fetch_mcp_tools_empty_definitions(monkeypatch):
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: [])
-    tools = fetch_mcp_tools("http://example.com", use_stdio=False)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
     assert tools == []
 
 
@@ -34,12 +34,12 @@ def test_fetch_mcp_tools_with_definitions_http(monkeypatch):
     input_schema = {"type": "object", "properties": {}, "required": []}
     definitions = [MCPToolDefinition(name="ToolX", description="Dummy tool", input_schema=input_schema)]
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
-    tools = fetch_mcp_tools("http://example.com", use_stdio=False)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
     assert len(tools) == 1
     tool_cls = tools[0]
     # verify class attributes
     assert tool_cls.mcp_endpoint == "http://example.com"
-    assert tool_cls.use_stdio is False
+    assert tool_cls.transport_type == MCPTransportType.HTTP_STREAM
     # input_schema has only tool_name field
     Model = tool_cls.input_schema
     assert "tool_name" in Model.model_fields
@@ -76,7 +76,7 @@ def test_fetch_mcp_tools_with_schema_no_endpoint_raises():
 
 def test_fetch_mcp_tools_with_schema_empty(monkeypatch):
     monkeypatch.setattr(MCPToolFactory, "create_tools", lambda self: [])
-    tools, schema = fetch_mcp_tools_with_schema("endpoint", False)
+    tools, schema = fetch_mcp_tools_with_schema("endpoint", MCPTransportType.HTTP_STREAM)
     assert tools == []
     assert schema is None
 
@@ -86,7 +86,7 @@ def test_fetch_mcp_tools_with_schema_nonempty(monkeypatch):
     dummy_schema = object()
     monkeypatch.setattr(MCPToolFactory, "create_tools", lambda self: dummy_tools)
     monkeypatch.setattr(MCPToolFactory, "create_orchestrator_schema", lambda self, t: dummy_schema)
-    tools, schema = fetch_mcp_tools_with_schema("endpoint", True)
+    tools, schema = fetch_mcp_tools_with_schema("endpoint", MCPTransportType.STDIO)
     assert tools == dummy_tools
     assert schema is dummy_schema
 
@@ -95,16 +95,16 @@ def test_fetch_mcp_tools_with_stdio_and_working_directory(monkeypatch):
     input_schema = {"type": "object", "properties": {}, "required": []}
     definitions = [MCPToolDefinition(name="ToolZ", description=None, input_schema=input_schema)]
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
-    tools = fetch_mcp_tools("run me", True, working_directory="/tmp")
+    tools = fetch_mcp_tools("run me", MCPTransportType.STDIO, working_directory="/tmp")
     assert len(tools) == 1
     tool_cls = tools[0]
-    assert tool_cls.use_stdio is True
+    assert tool_cls.transport_type == MCPTransportType.STDIO
     assert tool_cls.mcp_endpoint == "run me"
     assert tool_cls.working_directory == "/tmp"
 
 
-@pytest.mark.parametrize("use_stdio", [False, True])
-def test_run_tool(monkeypatch, use_stdio):
+@pytest.mark.parametrize("transport_type", [MCPTransportType.HTTP_STREAM, MCPTransportType.STDIO])
+def test_run_tool(monkeypatch, transport_type):
     # Setup dummy transports and session
     import atomic_agents.lib.factories.mcp_tool_factory as mtf
 
@@ -148,8 +148,10 @@ def test_run_tool(monkeypatch, use_stdio):
     definitions = [MCPToolDefinition(name="ToolA", description="desc", input_schema=input_schema)]
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
     # Run fetch and execute tool
-    endpoint = "cmd run" if use_stdio else "http://e"
-    tools = fetch_mcp_tools(endpoint, use_stdio, working_directory="wd" if use_stdio else None)
+    endpoint = "cmd run" if transport_type == MCPTransportType.STDIO else "http://e"
+    tools = fetch_mcp_tools(
+        endpoint, transport_type, working_directory="wd" if transport_type == MCPTransportType.STDIO else None
+    )
     tool_cls = tools[0]
     inst = tool_cls()
     result = inst.run(tool_cls.input_schema(tool_name="ToolA"))
@@ -177,7 +179,7 @@ def test_run_tool_with_persistent_session(monkeypatch):
     # Create and pass an event loop
     loop = asyncio.new_event_loop()
     try:
-        tools = fetch_mcp_tools(None, False, client_session=client, event_loop=loop)
+        tools = fetch_mcp_tools(None, MCPTransportType.HTTP_STREAM, client_session=client, event_loop=loop)
         tool_cls = tools[0]
         inst = tool_cls()
         result = inst.run(tool_cls.input_schema(tool_name="ToolB"))
@@ -196,9 +198,9 @@ def test_fetch_tool_definitions_via_service(monkeypatch):
         return defs
 
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", fake_fetch)
-    factory_http = MCPToolFactory("http://e", False)
+    factory_http = MCPToolFactory("http://e", MCPTransportType.HTTP_STREAM)
     assert factory_http._fetch_tool_definitions() == defs
-    factory_stdio = MCPToolFactory("http://e", True, working_directory="/tmp")
+    factory_stdio = MCPToolFactory("http://e", MCPTransportType.STDIO, working_directory="/tmp")
     assert factory_stdio._fetch_tool_definitions() == defs
 
 
@@ -209,7 +211,7 @@ def test_fetch_tool_definitions_propagates_error(monkeypatch):
         raise RuntimeError("nope")
 
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", fake_fetch)
-    factory = MCPToolFactory("http://e", False)
+    factory = MCPToolFactory("http://e", MCPTransportType.HTTP_STREAM)
     with pytest.raises(RuntimeError):
         factory._fetch_tool_definitions()
 
@@ -259,7 +261,7 @@ def test_run_tool_handles_special_result_types(monkeypatch):
         MCPToolDefinition(name="T", description=None, input_schema={"type": "object", "properties": {}, "required": []})
     ]
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
-    tool_cls = fetch_mcp_tools("e", False)[0]
+    tool_cls = fetch_mcp_tools("e", MCPTransportType.HTTP_STREAM)[0]
     result = tool_cls().run(tool_cls.input_schema(tool_name="T"))
     assert result.result == "hello"
 
@@ -269,7 +271,7 @@ def test_run_tool_handles_special_result_types(monkeypatch):
             return 123
 
     monkeypatch.setattr(mtf, "ClientSession", PlainSession)
-    result2 = fetch_mcp_tools("e", False)[0]().run(tool_cls.input_schema(tool_name="T"))
+    result2 = fetch_mcp_tools("e", MCPTransportType.HTTP_STREAM)[0]().run(tool_cls.input_schema(tool_name="T"))
     assert result2.result == 123
 
 
@@ -302,14 +304,14 @@ def test_run_invalid_stdio_command_raises(monkeypatch):
         ],
     )
     # Use a blank-space endpoint to bypass init validation but trigger empty command in STDIO
-    tool_cls = fetch_mcp_tools(" ", True, working_directory="/wd")[0]
+    tool_cls = fetch_mcp_tools(" ", MCPTransportType.STDIO, working_directory="/wd")[0]
     with pytest.raises(RuntimeError) as exc:
         tool_cls().run(tool_cls.input_schema(tool_name="Bad"))
     assert "STDIO command string cannot be empty" in str(exc.value)
 
 
 def test_create_tool_classes_skips_invalid(monkeypatch):
-    factory = MCPToolFactory("endpoint", False)
+    factory = MCPToolFactory("endpoint", MCPTransportType.HTTP_STREAM)
     defs = [
         MCPToolDefinition(name="Bad", description=None, input_schema={"type": "object", "properties": {}, "required": []}),
         MCPToolDefinition(name="Good", description=None, input_schema={"type": "object", "properties": {}, "required": []}),
@@ -345,7 +347,7 @@ def test_force_mark_unreachable_lines_for_coverage():
 
 def test__fetch_tool_definitions_service_branch(monkeypatch):
     """Covers lines 112-113: ToolDefinitionService branch in _fetch_tool_definitions."""
-    factory = MCPToolFactory("dummy_endpoint", False)
+    factory = MCPToolFactory("dummy_endpoint", MCPTransportType.HTTP_STREAM)
 
     # Patch fetch_definitions to avoid real async work
     async def dummy_fetch_definitions(self):
@@ -396,7 +398,7 @@ def test_run_tool_with_persistent_session_no_event_loop(monkeypatch):
     # Create tool with persistent session and a valid event loop
     loop = asyncio.new_event_loop()
     try:
-        tools = fetch_mcp_tools(None, False, client_session=client, event_loop=loop)
+        tools = fetch_mcp_tools(None, MCPTransportType.HTTP_STREAM, client_session=client, event_loop=loop)
         tool_cls = tools[0]
         inst = tool_cls()
         # Remove the event loop to simulate the error path
