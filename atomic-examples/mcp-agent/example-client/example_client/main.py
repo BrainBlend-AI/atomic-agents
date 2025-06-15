@@ -13,9 +13,9 @@ def main():
     parser = argparse.ArgumentParser(description="MCP Agent example client")
     parser.add_argument(
         "--transport",
-        choices=["stdio", "sse"],
+        choices=["stdio", "sse", "http"],
         default="stdio",
-        help="Transport method to use for MCP communication (stdio or sse)",
+        help="Transport method to use for MCP communication (stdio, sse, or http)",
     )
     args = parser.parse_args()
 
@@ -28,7 +28,7 @@ def main():
         except ImportError as e:
             print(f"Failed to import STDIO implementation: {e}")
             sys.exit(1)
-    else:
+    elif args.transport == "sse":
         # Import and run SSE implementation
         try:
             from example_client.main_sse import main as sse_main
@@ -37,6 +37,18 @@ def main():
         except ImportError as e:
             print(f"Failed to import SSE implementation: {e}")
             sys.exit(1)
+    elif args.transport == "http":
+        # Import and run HTTP implementation
+        try:
+            from example_client.main_http import main as http_main
+
+            http_main()
+        except ImportError as e:
+            print(f"Failed to import HTTP implementation: {e}")
+            sys.exit(1)
+    else:
+        print(f"Unknown transport: {args.transport}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

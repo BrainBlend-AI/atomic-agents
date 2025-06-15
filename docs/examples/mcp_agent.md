@@ -4,7 +4,7 @@ This guide provides a detailed overview of the Model Context Protocol (MCP) serv
 
 ## Overview
 
-The MCP example demonstrates how to build an intelligent agent system using the Model Context Protocol, showcasing both server and client implementations. The example supports two transport methods: STDIO and Server-Sent Events (SSE).
+The MCP example demonstrates how to build an intelligent agent system using the Model Context Protocol, showcasing both server and client implementations. The example supports three transport methods: STDIO, Server-Sent Events (SSE), and HTTP Stream.
 
 ## Architecture
 
@@ -19,6 +19,7 @@ Key components:
 1. **Transport Layers**:
    - `server_stdio.py`: Implements STDIO-based communication
    - `server_sse.py`: Implements SSE-based HTTP communication
+   - `server_http.py`: Implements unified HTTP streaming transport 
 
 2. **Tools Service**:
    - Manages registration and execution of MCP tools
@@ -56,7 +57,7 @@ The client component (`example-client`) is an intelligent agent that:
 
 ### Server Implementation
 
-The server supports two transport methods:
+The server supports three transport methods:
 
 1. **SSE Transport** (`server_sse.py`):
 ```python
@@ -75,6 +76,10 @@ app = create_starlette_app(mcp_server)
 - Runs as a subprocess
 - Communicates through standard input/output
 - Ideal for local development
+
+3. **HTTP Stream Transport** (`server_http.py`):
+- Single `/mcp` endpoint for JSON-RPC and SSE-style streaming
+- Handles session via `Mcp-Session-Id` header; allows resumable and cancelable streams
 
 ### Client Implementation
 

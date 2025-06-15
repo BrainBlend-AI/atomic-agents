@@ -23,17 +23,19 @@ class MCPToolDefinition(NamedTuple):
 class ToolDefinitionService:
     """Service for fetching tool definitions from MCP endpoints."""
 
-    def __init__(self, endpoint: Optional[str] = None, use_stdio: bool = False, working_directory: Optional[str] = None):
+    def __init__(self, endpoint: Optional[str] = None, use_stdio: bool = False, use_http_stream: bool = False, working_directory: Optional[str] = None):
         """
         Initialize the service.
 
         Args:
-            endpoint: URL of the MCP server (for SSE) or command string (for STDIO)
+            endpoint: URL of the MCP server (for SSE/HTTP stream) or command string (for STDIO)
             use_stdio: Whether to use STDIO transport
+            use_http_stream: Whether to use HTTP stream transport (no '/sse')
             working_directory: Optional working directory to use when running STDIO commands
         """
         self.endpoint = endpoint
         self.use_stdio = use_stdio
+        self.use_http_stream = use_http_stream
         self.working_directory = working_directory
 
     async def fetch_definitions(self) -> List[MCPToolDefinition]:
@@ -55,7 +57,7 @@ class ToolDefinitionService:
         stack = AsyncExitStack()
         try:
             if self.use_stdio:
-                # Split the command string into the command and its arguments
+                # STDIO transport
                 command_parts = shlex.split(self.endpoint)
                 if not command_parts:
                     raise ValueError("STDIO command string cannot be empty.")
@@ -65,11 +67,18 @@ class ToolDefinitionService:
                 server_params = StdioServerParameters(command=command, args=args, env=None, cwd=self.working_directory)
                 stdio_transport = await stack.enter_async_context(stdio_client(server_params))
                 read_stream, write_stream = stdio_transport
+            elif self.use_http_stream:
+                # HTTP Stream transport
+                transport_endpoint = f"{self.endpoint}/mcp"
+                logger.info(f"Attempting HTTP Stream connection to {transport_endpoint}")
+                transport = await stack.enter_async_context(sse_client(transport_endpoint))
+                read_stream, write_stream = transport
             else:
-                sse_endpoint = f"{self.endpoint}/sse"
-                logger.info(f"Attempting SSE connection to {sse_endpoint}")
-                sse_transport = await stack.enter_async_context(sse_client(sse_endpoint))
-                read_stream, write_stream = sse_transport
+                # Default to SSE transport (deprecated)
+                transport_endpoint = f"{self.endpoint}/sse"
+                logger.info(f"Attempting SSE connection to {transport_endpoint}")
+                transport = await stack.enter_async_context(sse_client(transport_endpoint))
+                read_stream, write_stream = transport
 
             session = await stack.enter_async_context(ClientSession(read_stream, write_stream))
             definitions = await self.fetch_definitions_from_session(session)

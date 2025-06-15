@@ -11,8 +11,8 @@ def main():
         "--mode",
         type=str,
         required=True,
-        choices=["stdio", "sse"],
-        help="Server mode: stdio for standard I/O or sse for HTTP Server-Sent Events",
+        choices=["stdio", "sse", "http"],
+        help="Server mode: stdio for standard I/O, sse for Server-Sent Events, or http for HTTP Stream Transport",
     )
 
     # SSE specific arguments
@@ -35,6 +35,14 @@ def main():
         if args.reload:
             sys.argv.append("--reload")
         sse_main()
+    elif args.mode == "http":
+        # Import and run the HTTP Stream Transport server
+        from example_mcp_server.server_http import main as http_main
+
+        sys.argv = [sys.argv[0], "--host", args.host, "--port", str(args.port)]
+        if args.reload:
+            sys.argv.append("--reload")
+        http_main()
     else:
         parser.print_help()
         sys.exit(1)
