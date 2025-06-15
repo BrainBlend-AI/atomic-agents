@@ -49,6 +49,12 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 - Multiple clients can connect to one server
 - Better for production deployments
 
+### HTTP Stream Transport
+
+- The server exposes a single `/mcp` HTTP endpoint for session negotiation, JSON-RPC calls, and termination
+- Supports GET (stream/session ID), POST (JSON-RPC payloads), and DELETE (session cancel)
+- Useful for HTTP clients that prefer a single transport endpoint
+
 ## Getting Started
 
 1. Clone the repository:
@@ -64,9 +70,8 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    cd example-mcp-server
    poetry install
    ```
-
+   
 3. Set up the client:
-
    ```bash
    cd ../example-client
    poetry install
@@ -80,7 +85,7 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    cd example-client
    poetry run python -m example_client.main
    ```
-
+   
    **Using SSE transport:**
 
    ```bash
@@ -92,8 +97,18 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    cd example-client
    poetry run python -m example_client.main --transport sse
    ```
+   
+   **Using HTTP Stream transport:**
 
-   **Note:** When using SSE transport, make sure the server is running before starting the client. The server runs on port 6969 by default.
+   ```bash
+   # First terminal: Start the server
+   cd example-mcp-server
+   poetry run python -m example_mcp_server.server_http
+
+   # Second terminal: Run the client with HTTP Stream transport
+   cd example-client
+   poetry run python -m example_client.main --transport http
+   ```
 
 ## Example Queries
 
