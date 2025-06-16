@@ -110,6 +110,8 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    poetry run python -m example_client.main --transport http_stream
    ```
 
+**Note:** When using SSE or HTTP Stream transport, make sure the server is running before starting the client. The server runs on port 6969 by default.
+
 ## Example Queries
 
 The example includes a set of basic arithmetic tools that demonstrate the agent's capability to break down and solve complex mathematical expressions:
