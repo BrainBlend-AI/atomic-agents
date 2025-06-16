@@ -9,6 +9,7 @@ from enum import Enum
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 
 logger = logging.getLogger(__name__)
 
@@ -80,11 +81,12 @@ class ToolDefinitionService:
                 stdio_transport = await stack.enter_async_context(stdio_client(server_params))
                 read_stream, write_stream = stdio_transport
             elif self.transport_type == MCPTransportType.HTTP_STREAM:
-                # HTTP Stream transport
-                transport_endpoint = f"{self.endpoint}/mcp"
+                # HTTP Stream transport - use trailing slash to avoid redirect
+                # See: https://github.com/modelcontextprotocol/python-sdk/issues/732
+                transport_endpoint = f"{self.endpoint}/mcp/"
                 logger.info(f"Attempting HTTP Stream connection to {transport_endpoint}")
-                transport = await stack.enter_async_context(sse_client(transport_endpoint))
-                read_stream, write_stream = transport
+                transport = await stack.enter_async_context(streamablehttp_client(transport_endpoint))
+                read_stream, write_stream, _ = transport
             elif self.transport_type == MCPTransportType.SSE:
                 # SSE transport (deprecated)
                 transport_endpoint = f"{self.endpoint}/sse"

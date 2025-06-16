@@ -8,6 +8,7 @@ from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools
 from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 from rich.console import Console
 from rich.table import Table
+from rich.markdown import Markdown
 from pydantic import Field
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
@@ -79,15 +80,31 @@ def main():
         action: ActionUnion
 
     history = ChatHistory()
-    orchestrator = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
+    orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
         BaseAgentConfig(
             client=client,
             model=config.openai_model,
             history=history,
             system_prompt_generator=SystemPromptGenerator(
-                background=["You are an MCP orchestrator via HTTP."],
-                steps=["Decide and invoke tools over HTTP stream."],
-                output_instructions=["Provide reasoning and a single action schema."],
+                background=[
+                    "You are an MCP Orchestrator Agent, designed to chat with users and",
+                    "determine the best way to handle their queries using the available tools.",
+                ],
+                steps=[
+                    "1. Use the reasoning field to determine if one or more successive tool calls could be used to handle the user's query.",
+                    "2. If so, choose the appropriate tool(s) one at a time and extract all necessary parameters from the query.",
+                    "3. If a single tool can not be used to handle the user's query, think about how to break down the query into "
+                    "smaller tasks and route them to the appropriate tool(s).",
+                    "4. If no sequence of tools could be used, or if you are finished processing the user's query, provide a final "
+                    "response to the user.",
+                ],
+                output_instructions=[
+                    "1. Always provide a detailed explanation of your decision-making process in the 'reasoning' field.",
+                    "2. Choose exactly one action schema (either a tool input or FinalResponseSchema).",
+                    "3. Ensure all required parameters for the chosen tool are properly extracted and validated.",
+                    "4. Maintain a professional and helpful tone in all responses.",
+                    "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
+                ],
             ),
         )
     )
@@ -102,7 +119,12 @@ def main():
 
         try:
             # Initial run with user query
-            orchestrator_output = orchestrator.run(MCPOrchestratorInputSchema(query=query))
+            orchestrator_output = orchestrator_agent.run(MCPOrchestratorInputSchema(query=query))
+
+            # Debug output to see what's actually in the output
+            console.print(
+                f"[dim]Debug - orchestrator_output type: {type(orchestrator_output)}, fields: {orchestrator_output.model_dump()}"
+            )
 
             # Handle the output similar to SSE version
             if hasattr(orchestrator_output, "chat_message") and not hasattr(orchestrator_output, "action"):
@@ -133,17 +155,25 @@ def main():
 
                 # Execute the tool
                 console.print(f"[blue]Executing {tool_class.mcp_tool_name}...[/blue]")
+                console.print(f"[dim]Parameters: {action_instance.model_dump()}")
                 tool_instance = tool_class()
                 try:
                     result = tool_instance.run(action_instance)
-                    console.print(f"[green]Tool result:[/green] {result}")
+                    console.print(f"[bold green]Result:[/bold green] {result.result}")
 
                     # Ask orchestrator what to do next with the result
-                    next_query = f"Based on the tool result: {result}, please provide the final response to the user's original query: {query}"
-                    next_output = orchestrator.run(MCPOrchestratorInputSchema(query=next_query))
+                    next_query = f"Based on the tool result: {result.result}, please provide the final response to the user's original query: {query}"
+                    next_output = orchestrator_agent.run(MCPOrchestratorInputSchema(query=next_query))
+
+                    # Debug output for subsequent responses
+                    console.print(
+                        f"[dim]Debug - subsequent orchestrator_output type: {type(next_output)}, fields: {next_output.model_dump()}"
+                    )
 
                     if hasattr(next_output, "action"):
                         action_instance = next_output.action
+                        if hasattr(next_output, "reasoning"):
+                            console.print(f"[cyan]Orchestrator reasoning:[/cyan] {next_output.reasoning}")
                     else:
                         # If no action, treat as final response
                         action_instance = FinalResponseSchema(response_text=next_output.chat_message)
@@ -157,7 +187,9 @@ def main():
 
             # Display final response
             if isinstance(action_instance, FinalResponseSchema):
-                console.print(f"[bold green]Assistant:[/bold green] {action_instance.response_text}")
+                md = Markdown(action_instance.response_text)
+                console.print("[bold blue]Agent:[/bold blue]")
+                console.print(md)
             else:
                 console.print("[red]Error: Expected final response but got something else[/red]")
 

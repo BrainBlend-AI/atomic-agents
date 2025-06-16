@@ -26,9 +26,9 @@ def main():
 
     # Map transport values to their corresponding main functions
     transport_mapping = {
-        MCPTransportType.STDIO.value: ("example_client.main_stdio", "stdio_main"),
-        MCPTransportType.SSE.value: ("example_client.main_sse", "sse_main"),
-        MCPTransportType.HTTP_STREAM.value: ("example_client.main_http", "http_main"),
+        MCPTransportType.STDIO.value: ("example_client.main_stdio", "main"),
+        MCPTransportType.SSE.value: ("example_client.main_sse", "main"),
+        MCPTransportType.HTTP_STREAM.value: ("example_client.main_http", "main"),
     }
 
     if args.transport in transport_mapping:

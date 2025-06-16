@@ -10,6 +10,7 @@ from pydantic import create_model, Field, BaseModel
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool
@@ -154,11 +155,12 @@ class MCPToolFactory:
                                 stdio_transport = await stack.enter_async_context(stdio_client(server_params))
                                 read_stream, write_stream = stdio_transport
                             elif bound_transport_type == MCPTransportType.HTTP_STREAM:
-                                # HTTP streaming transport (preferred)
-                                http_endpoint = f"{bound_mcp_endpoint}/mcp"
-                                logger.debug(f"Executing tool '{bound_tool_name}' via HTTP stream: endpoint={http_endpoint}")
-                                stream_transport = await stack.enter_async_context(sse_client(http_endpoint))
-                                read_stream, write_stream = stream_transport
+                                # HTTP Stream transport - use trailing slash to avoid redirect
+                                # See: https://github.com/modelcontextprotocol/python-sdk/issues/732
+                                http_endpoint = f"{bound_mcp_endpoint}/mcp/"
+                                logger.debug(f"Executing tool '{bound_tool_name}' via HTTP Stream: endpoint={http_endpoint}")
+                                http_transport = await stack.enter_async_context(streamablehttp_client(http_endpoint))
+                                read_stream, write_stream, _ = http_transport
                             elif bound_transport_type == MCPTransportType.SSE:
                                 # SSE transport (deprecated)
                                 sse_endpoint = f"{bound_mcp_endpoint}/sse"
