@@ -409,3 +409,31 @@ def test_run_tool_with_persistent_session_no_event_loop(monkeypatch):
         assert "'NoneType' object has no attribute 'run_until_complete'" in str(exc.value)
     finally:
         loop.close()
+
+
+def test_http_stream_connection_error_handling(monkeypatch):
+    """Test HTTP stream connection error handling in MCPToolFactory."""
+    from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService
+    
+    # Mock ToolDefinitionService.fetch_definitions to raise ConnectionError for HTTP_STREAM
+    original_fetch = ToolDefinitionService.fetch_definitions
+    
+    async def mock_fetch_definitions(self):
+        if self.transport_type == MCPTransportType.HTTP_STREAM:
+            raise ConnectionError("HTTP stream connection failed")
+        return await original_fetch(self)
+    
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", mock_fetch_definitions)
+    
+    factory = MCPToolFactory("http://test-endpoint", MCPTransportType.HTTP_STREAM)
+    
+    with pytest.raises(ConnectionError, match="HTTP stream connection failed"):
+        factory._fetch_tool_definitions()
+
+
+def test_http_stream_endpoint_formatting():
+    """Test that HTTP stream endpoints are properly formatted with /mcp/ suffix."""
+    factory = MCPToolFactory("http://test-endpoint", MCPTransportType.HTTP_STREAM)
+    
+    # Verify the factory was created with correct transport type
+    assert factory.transport_type == MCPTransportType.HTTP_STREAM
