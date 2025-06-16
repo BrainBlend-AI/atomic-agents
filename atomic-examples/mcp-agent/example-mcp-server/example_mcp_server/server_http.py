@@ -60,7 +60,7 @@ def create_http_app():
     # This avoids the task group initialization issue
     # See: https://github.com/modelcontextprotocol/python-sdk/issues/732
     app = mcp_server.streamable_http_app()  # type: ignore[attr-defined]
-    
+
     # Apply CORS middleware manually
     app = CORSMiddleware(
         app,
@@ -69,7 +69,7 @@ def create_http_app():
         allow_headers=["*"],
         allow_credentials=True,
     )
-    
+
     return app
 
 
