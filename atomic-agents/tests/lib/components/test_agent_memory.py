@@ -48,6 +48,7 @@ class TestMultimodalSchema(BaseIOSchema):
 
     instruction_text: str = Field(..., description="The instruction text")
     images: List[instructor.Image] = Field(..., description="The images to analyze")
+    pdfs: List[instructor.multimodal.PDF] = Field(..., description="The PDFs to analyze")
 
 
 @pytest.fixture
@@ -87,7 +88,8 @@ def test_get_history(memory):
     history = memory.get_history()
     assert len(history) == 2
     assert history[0]["role"] == "user"
-    assert json.loads(history[0]["content"]) == {"test_field": "Hello"}
+    assert json.loads(history[0]["content"][0]) == {"test_field": "Hello"}
+    assert json.loads(history[1]["content"][0]) == {"test_field": "Hi there"}
 
 
 def test_copy(memory):
@@ -288,9 +290,14 @@ def test_get_history_with_multimodal_content(memory):
     """Test that get_history correctly handles multimodal content"""
     # Create a mock image
     mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
+    mock_pdf = instructor.multimodal.PDF(source="test_pdf_url")
 
     # Add a multimodal message
-    memory.add_message("user", TestMultimodalSchema(instruction_text="Analyze this image", images=[mock_image]))
+    memory.add_message("user", TestMultimodalSchema(
+        instruction_text="Analyze this image",
+        images=[mock_image],
+        pdfs=[mock_pdf]
+    ))
 
     # Get history and verify format
     history = memory.get_history()
@@ -299,6 +306,7 @@ def test_get_history_with_multimodal_content(memory):
     assert isinstance(history[0]["content"], list)
     assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
     assert history[0]["content"][1] == mock_image
+    assert history[0]["content"][2] == mock_pdf
 
 
 def test_get_history_with_multiple_images_multimodal_content(memory):

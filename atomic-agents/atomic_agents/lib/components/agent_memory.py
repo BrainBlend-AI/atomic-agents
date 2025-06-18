@@ -1,8 +1,14 @@
-import uuid
 import json
+import uuid
 from typing import Dict, List, Optional, Type
+
+from instructor.multimodal import PDF, Image, Audio
 from pydantic import BaseModel, Field
+
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+
+
+INSTRUCTOR_MULTIMODAL_TYPES = (Image, Audio, PDF)
 
 
 class Message(BaseModel):
@@ -85,43 +91,40 @@ class AgentMemory:
 
         Returns:
             List[Dict]: The list of messages in the chat history as dictionaries.
+            Each dictionary has 'role' and 'content' keys, where 'content' is a list
+            that may contain strings (JSON) or multimodal objects.
+
+        Note:
+            This method does not support nested multimodal content. If your schema
+            contains nested objects that themselves contain multimodal content,
+            only the top-level multimodal content will be properly processed.
+
         """
         history = []
         for message in self.history:
-            content = message.content
-            message_content = content.model_dump()
 
-            images = []
-            image_keys = []
+            # TODO: this does not support nested multi-modal content
 
-            for key, value in message_content.items():
-                if isinstance(value, list):
-                    for list_item in value:
-                        if isinstance(list_item, dict) and list_item.get("media_type", "").startswith("image"):
-                            images.extend(value)
-                            image_keys.append(key)
-                            break
+            input_content = message.content
+            processed_content = []
+            for field_name, field in input_content.__class__.model_fields.items():
 
-                if isinstance(value, dict) and value.get("media_type", "").startswith("image"):
-                    images.append(value)
-                    image_keys.append(key)
+                field_value = getattr(input_content, field_name)
 
-            if len(images) > 0:
-                # For multimodal content, format as a list with text and images
-                # delete image keys from model
-                images = []
-                for key in image_keys:
-                    message_content.pop(key)
-                    image_content = getattr(content, key)
-                    if isinstance(image_content, list):
-                        images.extend(image_content)
+                if isinstance(field_value, list):
+                    for item in field_value:
+                        if isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES):
+                            processed_content.append(item)
+                        else:
+                            processed_content.append(json.dumps({field_name: field_value}))
+                else:
+                    if isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
+                        processed_content.append(field_value)
                     else:
-                        images.append(image_content)
+                        processed_content.append(json.dumps({field_name: field_value}))
 
-                history.append({"role": message.role, "content": [json.dumps(message_content), *images]})
-            else:
-                # For regular content, serialize to JSON string
-                history.append({"role": message.role, "content": json.dumps(content.model_dump(mode="json"))})
+            history.append({"role": message.role, "content": processed_content})
+
         return history
 
     def copy(self) -> "AgentMemory":
