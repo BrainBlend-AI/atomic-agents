@@ -293,11 +293,9 @@ def test_get_history_with_multimodal_content(memory):
     mock_pdf = instructor.multimodal.PDF(source="test_pdf_url")
 
     # Add a multimodal message
-    memory.add_message("user", TestMultimodalSchema(
-        instruction_text="Analyze this image",
-        images=[mock_image],
-        pdfs=[mock_pdf]
-    ))
+    memory.add_message(
+        "user", TestMultimodalSchema(instruction_text="Analyze this image", images=[mock_image], pdfs=[mock_pdf])
+    )
 
     # Get history and verify format
     history = memory.get_history()
