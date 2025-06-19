@@ -10,11 +10,12 @@ from pydantic import create_model, Field, BaseModel
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool
 from atomic_agents.lib.factories.schema_transformer import SchemaTransformer
-from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService, MCPToolDefinition
+from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService, MCPToolDefinition, MCPTransportType
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class MCPToolFactory:
     def __init__(
         self,
         mcp_endpoint: Optional[str] = None,
-        use_stdio: bool = False,
+        transport_type: MCPTransportType = MCPTransportType.HTTP_STREAM,
         client_session: Optional[ClientSession] = None,
         event_loop: Optional[asyncio.AbstractEventLoop] = None,
         working_directory: Optional[str] = None,
@@ -40,14 +41,14 @@ class MCPToolFactory:
         Initialize the factory.
 
         Args:
-            mcp_endpoint: URL of the MCP server (for SSE) or the full command to run the server (for STDIO)
-            use_stdio: If True, use STDIO transport instead of SSE
+            mcp_endpoint: URL of the MCP server (for SSE/HTTP stream) or the full command to run the server (for STDIO)
+            transport_type: Type of transport to use (SSE, HTTP_STREAM, or STDIO)
             client_session: Optional pre-initialized ClientSession for reuse
             event_loop: Optional event loop for running asynchronous operations
             working_directory: Optional working directory to use when running STDIO commands
         """
         self.mcp_endpoint = mcp_endpoint
-        self.use_stdio = use_stdio
+        self.transport_type = transport_type
         self.client_session = client_session
         self.event_loop = event_loop
         self.schema_transformer = SchemaTransformer()
@@ -87,7 +88,11 @@ class MCPToolFactory:
             return cast(asyncio.AbstractEventLoop, self.event_loop).run_until_complete(_gather_defs())  # pragma: no cover
         else:
             # Create new connection
-            service = ToolDefinitionService(self.mcp_endpoint, self.use_stdio, self.working_directory)
+            service = ToolDefinitionService(
+                self.mcp_endpoint,
+                self.transport_type,
+                self.working_directory,
+            )
             return asyncio.run(service.fetch_definitions())
 
     def _create_tool_classes(self, tool_definitions: List[MCPToolDefinition]) -> List[Type[BaseTool]]:
@@ -125,7 +130,7 @@ class MCPToolFactory:
                 def run_tool_sync(self, params: InputSchema) -> OutputSchema:  # type: ignore
                     bound_tool_name = self.mcp_tool_name
                     bound_mcp_endpoint = self.mcp_endpoint  # May be None when using external session
-                    bound_use_stdio = self.use_stdio
+                    bound_transport_type = self.transport_type
                     persistent_session: Optional[ClientSession] = getattr(self, "_client_session", None)
                     loop: Optional[asyncio.AbstractEventLoop] = getattr(self, "_event_loop", None)
                     bound_working_directory = getattr(self, "working_directory", None)
@@ -136,7 +141,7 @@ class MCPToolFactory:
                     async def _connect_and_call():
                         stack = AsyncExitStack()
                         try:
-                            if bound_use_stdio:
+                            if bound_transport_type == MCPTransportType.STDIO:
                                 # Split the command string into the command and its arguments
                                 command_parts = shlex.split(bound_mcp_endpoint)
                                 if not command_parts:
@@ -149,11 +154,24 @@ class MCPToolFactory:
                                 )
                                 stdio_transport = await stack.enter_async_context(stdio_client(server_params))
                                 read_stream, write_stream = stdio_transport
-                            else:
+                            elif bound_transport_type == MCPTransportType.HTTP_STREAM:
+                                # HTTP Stream transport - use trailing slash to avoid redirect
+                                # See: https://github.com/modelcontextprotocol/python-sdk/issues/732
+                                http_endpoint = f"{bound_mcp_endpoint}/mcp/"
+                                logger.debug(f"Executing tool '{bound_tool_name}' via HTTP Stream: endpoint={http_endpoint}")
+                                http_transport = await stack.enter_async_context(streamablehttp_client(http_endpoint))
+                                read_stream, write_stream, _ = http_transport
+                            elif bound_transport_type == MCPTransportType.SSE:
+                                # SSE transport (deprecated)
                                 sse_endpoint = f"{bound_mcp_endpoint}/sse"
                                 logger.debug(f"Executing tool '{bound_tool_name}' via SSE: endpoint={sse_endpoint}")
                                 sse_transport = await stack.enter_async_context(sse_client(sse_endpoint))
                                 read_stream, write_stream = sse_transport
+                            else:
+                                available_types = [t.value for t in MCPTransportType]
+                                raise ValueError(
+                                    f"Unknown transport type: {bound_transport_type}. Available transport types: {available_types}"
+                                )
 
                             session = await stack.enter_async_context(ClientSession(read_stream, write_stream))
                             await session.initialize()
@@ -200,7 +218,7 @@ class MCPToolFactory:
                     "__doc__": tool_description,
                     "mcp_tool_name": tool_name,
                     "mcp_endpoint": self.mcp_endpoint,
-                    "use_stdio": self.use_stdio,
+                    "transport_type": self.transport_type,
                     "_client_session": self.client_session,
                     "_event_loop": self.event_loop,
                     "working_directory": self.working_directory,
@@ -263,25 +281,25 @@ class MCPToolFactory:
 # Public API functions
 def fetch_mcp_tools(
     mcp_endpoint: Optional[str] = None,
-    use_stdio: bool = False,
+    transport_type: MCPTransportType = MCPTransportType.HTTP_STREAM,
     *,
     client_session: Optional[ClientSession] = None,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
     working_directory: Optional[str] = None,
 ) -> List[Type[BaseTool]]:
     """
-    Connects to an MCP server via SSE or STDIO, discovers tool definitions, and dynamically generates
+    Connects to an MCP server via SSE, HTTP Stream or STDIO, discovers tool definitions, and dynamically generates
     synchronous Atomic Agents compatible BaseTool subclasses for each tool.
     Each generated tool will establish its own connection when its `run` method is called.
 
     Args:
-        mcp_endpoint: URL of the MCP server (for SSE) or the full command string to run the server (for STDIO).
-        use_stdio: If True, use STDIO transport instead of SSE.
+        mcp_endpoint: URL of the MCP server or command for STDIO.
+        transport_type: Type of transport to use (SSE, HTTP_STREAM, or STDIO).
         client_session: Optional pre-initialized ClientSession for reuse.
         event_loop: Optional event loop for running asynchronous operations.
-        working_directory: Optional working directory to use when running STDIO commands.
+        working_directory: Optional working directory for STDIO.
     """
-    factory = MCPToolFactory(mcp_endpoint, use_stdio, client_session, event_loop, working_directory)
+    factory = MCPToolFactory(mcp_endpoint, transport_type, client_session, event_loop, working_directory)
     return factory.create_tools()
 
 
@@ -302,7 +320,7 @@ def create_mcp_orchestrator_schema(tools: List[Type[BaseTool]]) -> Optional[Type
 
 def fetch_mcp_tools_with_schema(
     mcp_endpoint: Optional[str] = None,
-    use_stdio: bool = False,
+    transport_type: MCPTransportType = MCPTransportType.HTTP_STREAM,
     *,
     client_session: Optional[ClientSession] = None,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
@@ -312,18 +330,18 @@ def fetch_mcp_tools_with_schema(
     Fetches MCP tools and creates an orchestrator schema for them. Returns both as a tuple.
 
     Args:
-        mcp_endpoint: URL of the MCP server (for SSE) or the full command string to run the server (for STDIO).
-        use_stdio: If True, use STDIO transport instead of SSE.
+        mcp_endpoint: URL of the MCP server or command for STDIO.
+        transport_type: Type of transport to use (SSE, HTTP_STREAM, or STDIO).
         client_session: Optional pre-initialized ClientSession for reuse.
         event_loop: Optional event loop for running asynchronous operations.
-        working_directory: Optional working directory to use when running STDIO commands.
+        working_directory: Optional working directory for STDIO.
 
     Returns:
         A tuple containing:
         - List of dynamically generated tool classes
         - Orchestrator output schema with Union of tool input schemas, or None if no tools found.
     """
-    factory = MCPToolFactory(mcp_endpoint, use_stdio, client_session, event_loop, working_directory)
+    factory = MCPToolFactory(mcp_endpoint, transport_type, client_session, event_loop, working_directory)
     tools = factory.create_tools()
     if not tools:
         return [], None

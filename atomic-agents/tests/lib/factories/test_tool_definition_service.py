@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from atomic_agents.lib.factories.tool_definition_service import (
     ToolDefinitionService,
     MCPToolDefinition,
+    MCPTransportType,
 )
 
 
@@ -62,7 +63,7 @@ class TestToolDefinitionService:
         mock_client_session_cls.return_value = mock_session
 
         # Create service
-        service = ToolDefinitionService("http://test-endpoint")
+        service = ToolDefinitionService("http://test-endpoint", transport_type=MCPTransportType.SSE)
 
         # Mock the fetch_definitions_from_session to return directly
         original_method = service.fetch_definitions_from_session
@@ -89,9 +90,50 @@ class TestToolDefinitionService:
         service.fetch_definitions_from_session = original_method
 
     @pytest.mark.asyncio
+    @patch("atomic_agents.lib.factories.tool_definition_service.streamablehttp_client")
+    @patch("atomic_agents.lib.factories.tool_definition_service.ClientSession")
+    async def test_fetch_via_http_stream(self, mock_client_session_cls, mock_http_client, mock_client_session):
+        # Setup
+        mock_transport = MockAsyncContextManager(return_value=(AsyncMock(), AsyncMock(), AsyncMock()))
+        mock_http_client.return_value = mock_transport
+
+        mock_session = MockAsyncContextManager(return_value=mock_client_session)
+        mock_client_session_cls.return_value = mock_session
+
+        # Create service with HTTP_STREAM transport
+        service = ToolDefinitionService("http://test-endpoint", transport_type=MCPTransportType.HTTP_STREAM)
+
+        # Mock the fetch_definitions_from_session to return directly
+        original_method = service.fetch_definitions_from_session
+        service.fetch_definitions_from_session = AsyncMock(
+            return_value=[
+                MCPToolDefinition(
+                    name="MockTool",
+                    description="Mock tool for testing",
+                    input_schema={"type": "object", "properties": {"param": {"type": "string"}}},
+                )
+            ]
+        )
+
+        # Execute
+        result = await service.fetch_definitions()
+
+        # Verify
+        assert len(result) == 1
+        assert isinstance(result[0], MCPToolDefinition)
+        assert result[0].name == "MockTool"
+        assert result[0].description == "Mock tool for testing"
+
+        # Verify HTTP client was called with correct endpoint (should have /mcp/ suffix)
+        mock_http_client.assert_called_once_with("http://test-endpoint/mcp/")
+
+        # Restore the original method
+        service.fetch_definitions_from_session = original_method
+
+    @pytest.mark.asyncio
     async def test_fetch_via_stdio(self):
         # Create service
-        service = ToolDefinitionService("command arg1 arg2", use_stdio=True)
+        service = ToolDefinitionService("command arg1 arg2", MCPTransportType.STDIO)
 
         # Mock the fetch_definitions_from_session method
         service.fetch_definitions_from_session = AsyncMock(
@@ -123,7 +165,7 @@ class TestToolDefinitionService:
     @pytest.mark.asyncio
     async def test_stdio_empty_command(self):
         # Create service with empty command
-        service = ToolDefinitionService("", use_stdio=True)
+        service = ToolDefinitionService("", MCPTransportType.STDIO)
 
         # Test that ValueError is raised for empty command
         with pytest.raises(ValueError, match="Endpoint is required"):
@@ -173,7 +215,7 @@ class TestToolDefinitionService:
 
     @pytest.mark.asyncio
     async def test_stdio_command_parts_empty(self):
-        svc = ToolDefinitionService("   ", use_stdio=True)
+        svc = ToolDefinitionService("   ", MCPTransportType.STDIO)
         with pytest.raises(
             RuntimeError, match="Unexpected error during tool definition fetching: STDIO command string cannot be empty"
         ):
@@ -182,14 +224,21 @@ class TestToolDefinitionService:
     @pytest.mark.asyncio
     async def test_sse_connection_error(self):
         with patch("atomic_agents.lib.factories.tool_definition_service.sse_client", side_effect=ConnectionError):
-            svc = ToolDefinitionService("http://host")
+            svc = ToolDefinitionService("http://host", transport_type=MCPTransportType.SSE)
+            with pytest.raises(ConnectionError):
+                await svc.fetch_definitions()
+
+    @pytest.mark.asyncio
+    async def test_http_stream_connection_error(self):
+        with patch("atomic_agents.lib.factories.tool_definition_service.streamablehttp_client", side_effect=ConnectionError):
+            svc = ToolDefinitionService("http://host", transport_type=MCPTransportType.HTTP_STREAM)
             with pytest.raises(ConnectionError):
                 await svc.fetch_definitions()
 
     @pytest.mark.asyncio
     async def test_generic_error_wrapped(self):
         with patch("atomic_agents.lib.factories.tool_definition_service.sse_client", side_effect=OSError("BOOM")):
-            svc = ToolDefinitionService("http://host")
+            svc = ToolDefinitionService("http://host", transport_type=MCPTransportType.SSE)
             with pytest.raises(RuntimeError):
                 await svc.fetch_definitions()
 

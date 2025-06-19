@@ -1,5 +1,6 @@
 # pyright: reportInvalidTypeForm=false
 from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools
+from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
@@ -48,7 +49,7 @@ class FinalResponseSchema(BaseIOSchema):
 # Fetch tools and build ActionUnion statically
 tools = fetch_mcp_tools(
     mcp_endpoint=config.mcp_server_url,
-    use_stdio=False,
+    transport_type=MCPTransportType.SSE,
 )
 if not tools:
     raise RuntimeError("No MCP tools found. Please ensure the MCP server is running and accessible.")

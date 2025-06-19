@@ -11,7 +11,7 @@ example-mcp-server = { path = "../example-mcp-server", develop = true }
 pydantic = ">=2.10.3,<3.0.0"
 rich = ">=13.0.0"
 openai = ">=1.0.0"
-mcp = {extras = ["cli"], version = "^1.6.0"}
+mcp = {extras = ["cli"], version = "^1.9.4"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
