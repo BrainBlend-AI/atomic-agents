@@ -87,10 +87,17 @@ The client uses a sophisticated orchestration system:
 
 1. **Tool Management**:
 ```python
-# Fetch available tools
+# Fetch available tools (synchronous)
 tools = fetch_mcp_tools(
     mcp_endpoint=config.mcp_server_url,
-    use_stdio=False,
+    transport_type=MCPTransportType.HTTP_STREAM,
+)
+
+# Or fetch tools asynchronously (must be called within async context)
+tools = await fetch_mcp_tools_async(
+    mcp_endpoint=config.mcp_server_command,
+    transport_type=MCPTransportType.STDIO,
+    client_session=session,  # Optional pre-initialized session
 )
 
 # Build tool schema mapping
@@ -106,9 +113,35 @@ tool_schema_to_class_map = {
 - Extracts parameters and selects appropriate tools
 - Maintains conversation context through ChatHistory
 
+3. **Async vs Sync Tool Fetching**:
+```python
+# Synchronous fetching (suitable for HTTP/SSE)
+tools = fetch_mcp_tools(
+    mcp_endpoint="http://localhost:6969", 
+    transport_type=MCPTransportType.HTTP_STREAM
+)
+
+# Asynchronous fetching (optimized for STDIO with persistent sessions)
+async def setup_tools():
+    tools = await fetch_mcp_tools_async(
+        transport_type=MCPTransportType.STDIO,
+        client_session=session  # Reuse existing session
+    )
+    return tools
+```
+
 ## MCP Transport Methods
 
-The example implements two distinct transport methods, each with its own advantages:
+The example implements three distinct transport methods via the `MCPTransportType` enum, each with its own advantages:
+
+```python
+from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
+
+# Available transport types
+MCPTransportType.STDIO       # Standard input/output transport  
+MCPTransportType.SSE         # Server-Sent Events transport
+MCPTransportType.HTTP_STREAM # HTTP Stream transport
+```
 
 ### 1. STDIO Transport
 
@@ -169,6 +202,30 @@ async def handle_sse(request: Request) -> None:
 - Scalable agent infrastructure
 - Cross-network operation
 
+### 3. HTTP Stream Transport
+
+HTTP Stream transport uses a single `/mcp` endpoint for JSON-RPC and streaming communication:
+
+```python
+# Client-side HTTP Stream setup
+tools = fetch_mcp_tools(
+    mcp_endpoint="http://localhost:6969",
+    transport_type=MCPTransportType.HTTP_STREAM,
+)
+```
+
+**Key advantages**:
+- Single endpoint for all MCP operations
+- Session management via headers
+- Resumable and cancelable streams
+- Modern HTTP-based architecture
+
+**Use cases**:
+- Modern web applications
+- Cloud-native deployments  
+- Microservice architectures
+- API gateway integration
+
 ## Tool Interface
 
 The MCP server defines a standardized tool interface that all tools must implement:
@@ -225,10 +282,12 @@ The tool interface consists of:
 The server can be configured through command-line arguments:
 ```bash
 poetry run example-mcp-server --mode=sse --host=0.0.0.0 --port=6969 --reload
+poetry run example-mcp-server --mode=stdio
+poetry run example-mcp-server --mode=http_stream --host=0.0.0.0 --port=6969
 ```
 
 Options:
-- `--mode`: Transport mode (sse/stdio)
+- `--mode`: Transport mode (sse/stdio/http_stream)
 - `--host`: Host to bind to
 - `--port`: Port to listen on
 - `--reload`: Enable auto-reload for development
