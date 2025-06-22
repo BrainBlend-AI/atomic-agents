@@ -303,6 +303,34 @@ def fetch_mcp_tools(
     return factory.create_tools()
 
 
+async def fetch_mcp_tools_async(
+    mcp_endpoint: Optional[str] = None,
+    transport_type: MCPTransportType = MCPTransportType.STDIO,
+    *,
+    client_session: Optional[ClientSession] = None,
+    working_directory: Optional[str] = None,
+) -> List[Type[BaseTool]]:
+    """
+    Asynchronously connects to an MCP server and dynamically generates BaseTool subclasses for each tool.
+    Must be called within an existing asyncio event loop context.
+
+    Args:
+        mcp_endpoint: URL of the MCP server (for HTTP/SSE) or command for STDIO.
+        transport_type: Type of transport to use (SSE, HTTP_STREAM, or STDIO).
+        client_session: Optional pre-initialized ClientSession for reuse.
+        working_directory: Optional working directory for STDIO transport.
+    """
+    if client_session is not None:
+        tool_defs = await ToolDefinitionService.fetch_definitions_from_session(client_session)
+        factory = MCPToolFactory(mcp_endpoint, transport_type, client_session, asyncio.get_running_loop(), working_directory)
+    else:
+        service = ToolDefinitionService(mcp_endpoint, transport_type, working_directory)
+        tool_defs = await service.fetch_definitions()
+        factory = MCPToolFactory(mcp_endpoint, transport_type, None, None, working_directory)
+
+    return factory._create_tool_classes(tool_defs)
+
+
 def create_mcp_orchestrator_schema(tools: List[Type[BaseTool]]) -> Optional[Type[BaseIOSchema]]:
     """
     Creates a schema for the MCP Orchestrator's output using the Union of all tool input schemas.
