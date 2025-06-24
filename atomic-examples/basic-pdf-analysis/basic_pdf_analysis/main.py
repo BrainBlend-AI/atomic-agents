@@ -15,20 +15,19 @@ load_dotenv()
 
 class InputSchema(BaseIOSchema):
     """PDF file to analyze."""
-    pdf: PDF = Field(..., description="The PDF data") #PDF class from instructor
+
+    pdf: PDF = Field(..., description="The PDF data")  # PDF class from instructor
 
 
 class ExtractionResult(BaseIOSchema):
     """Extracted information from the PDF."""
+
     pdf_title: str = Field(..., description="The title of the PDF file")
     page_count: int = Field(..., description="The number of pages in the PDF file")
 
 
 # Define the LLM CLient using GenAI instructor wrapper:
-client = instructor.from_genai(
-    client=genai.Client(api_key=os.getenv("GEMINI_API_KEY")),
-    mode=instructor.Mode.GENAI_TOOLS
-)
+client = instructor.from_genai(client=genai.Client(api_key=os.getenv("GEMINI_API_KEY")), mode=instructor.Mode.GENAI_TOOLS)
 
 # Define the system prompt:
 system_prompt_generator = SystemPromptGenerator(
@@ -36,9 +35,7 @@ system_prompt_generator = SystemPromptGenerator(
     steps=[
         "Analyze the PDF, extract its title and count the number of pages.",
     ],
-    output_instructions=[
-        "Return pdf_title and page_count."
-    ]
+    output_instructions=["Return pdf_title and page_count."],
 )
 
 # Define the agent

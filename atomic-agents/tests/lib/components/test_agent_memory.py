@@ -152,8 +152,7 @@ def test_dump_and_load_multimodal_data(memory):
 
     # multimodal message
     memory.add_message(
-        role="user",
-        content=TestMultimodalSchema(instruction_text="Analyze this image", images=[test_image], pdfs=[test_pdf])
+        role="user", content=TestMultimodalSchema(instruction_text="Analyze this image", images=[test_image], pdfs=[test_pdf])
     )
 
     dumped_data = memory.dump()
