@@ -1,6 +1,7 @@
 import json
 import uuid
 from typing import Dict, List, Optional, Type
+from pathlib import Path
 
 from instructor.multimodal import PDF, Image, Audio
 from pydantic import BaseModel, Field
@@ -197,7 +198,7 @@ class AgentMemory:
                 "role": message.role,
                 "content": {
                     "class_name": f"{content_class.__module__}.{content_class.__name__}",
-                    "data": message.content.model_dump(),
+                    "data": message.content.model_dump_json(),
                 },
                 "turn_id": message.turn_id,
             }
@@ -229,7 +230,10 @@ class AgentMemory:
             for message_data in memory_data["history"]:
                 content_info = message_data["content"]
                 content_class = self._get_class_from_string(content_info["class_name"])
-                content_instance = content_class(**content_info["data"])
+                content_instance = content_class.model_validate_json(content_info["data"])
+
+                # Process any Image objects to convert string paths back to Path objects
+                self._process_multimodal_paths(content_instance)
 
                 message = Message(role=message_data["role"], content=content_instance, turn_id=message_data["turn_id"])
                 self.history.append(message)
@@ -253,6 +257,37 @@ class AgentMemory:
         module_name, class_name = class_string.rsplit(".", 1)
         module = __import__(module_name, fromlist=[class_name])
         return getattr(module, class_name)
+
+    def _process_multimodal_paths(self, obj):
+        """
+        Process multimodal objects to convert string paths to Path objects.
+
+        Args:
+            obj: The object to process.
+
+        """
+        if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES) and isinstance(obj.source, str):
+            # Check if the string looks like a file path (not a URL or base64 data)
+            if not obj.source.startswith(('http://', 'https://', 'data:')):
+                obj.source = Path(obj.source)
+        elif isinstance(obj, list):
+            # Process each item in the list
+            for item in obj:
+                self._process_multimodal_paths(item)
+        elif isinstance(obj, dict):
+            # Process each value in the dictionary
+            for value in obj.values():
+                self._process_multimodal_paths(value)
+        elif hasattr(obj, 'model_fields'):
+            # Process each field of the Pydantic model
+            for field_name in obj.model_fields:
+                if hasattr(obj, field_name):
+                    self._process_multimodal_paths(getattr(obj, field_name))
+        elif hasattr(obj, '__dict__'):
+            # Process each attribute of the object
+            for attr_name, attr_value in obj.__dict__.items():
+                if attr_name != '__pydantic_fields_set__':  # Skip pydantic internal fields
+                    self._process_multimodal_paths(attr_value)
 
 
 if __name__ == "__main__":
