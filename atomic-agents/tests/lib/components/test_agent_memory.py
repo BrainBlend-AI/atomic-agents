@@ -146,6 +146,29 @@ def test_dump_and_load(memory):
     assert new_memory.history[1].content.response_text == "Hi there"
 
 
+def test_dump_and_load_multimodal_data(memory):
+    test_image = instructor.Image.from_path(path="atomic-agents/tests/files/image_sample.jpg")
+    test_pdf = instructor.multimodal.PDF.from_path(path="atomic-agents/tests/files/pdf_sample.pdf")
+
+    # multimodal message
+    memory.add_message(
+        role="user",
+        content=TestMultimodalSchema(instruction_text="Analyze this image", images=[test_image], pdfs=[test_pdf])
+    )
+
+    dumped_data = memory.dump()
+    new_memory = AgentMemory()
+    new_memory.load(dumped_data)
+
+    assert new_memory.max_messages == memory.max_messages
+    assert new_memory.current_turn_id == memory.current_turn_id
+    assert len(new_memory.history) == len(memory.history)
+    assert isinstance(new_memory.history[0].content, TestMultimodalSchema)
+    assert new_memory.history[0].content.instruction_text == memory.history[0].content.instruction_text
+    assert new_memory.history[0].content.images == memory.history[0].content.images
+    assert new_memory.history[0].content.pdfs == memory.history[0].content.pdfs
+
+
 def test_load_invalid_data(memory):
     with pytest.raises(ValueError):
         memory.load("invalid json")
