@@ -103,8 +103,6 @@ class AgentMemory:
         """
         history = []
         for message in self.history:
-            # TODO: this does not support nested multi-modal content
-
             input_content = message.content
             processed_content = []
             for field_name, field in input_content.__class__.model_fields.items():
