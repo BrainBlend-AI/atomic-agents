@@ -261,11 +261,14 @@ class AgentMemory:
         """
         Process multimodal objects to convert string paths to Path objects.
 
+        Note: this is necessary only for PDF and Image instructor types. The from_path
+        behavior is slightly different for Audio as it keeps the source as a string.
+
         Args:
             obj: The object to process.
 
         """
-        if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES) and isinstance(obj.source, str):
+        if isinstance(obj, (Image, PDF)) and isinstance(obj.source, str):
             # Check if the string looks like a file path (not a URL or base64 data)
             if not obj.source.startswith(("http://", "https://", "data:")):
                 obj.source = Path(obj.source)
