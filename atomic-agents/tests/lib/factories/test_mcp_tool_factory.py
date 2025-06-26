@@ -5,6 +5,7 @@ from atomic_agents.lib.factories.mcp_tool_factory import (
     fetch_mcp_tools,
     create_mcp_orchestrator_schema,
     fetch_mcp_tools_with_schema,
+    fetch_mcp_tools_async,
     MCPToolFactory,
 )
 from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition, ToolDefinitionService, MCPTransportType
@@ -437,3 +438,245 @@ def test_http_stream_endpoint_formatting():
 
     # Verify the factory was created with correct transport type
     assert factory.transport_type == MCPTransportType.HTTP_STREAM
+
+
+# Tests for fetch_mcp_tools_async function
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_with_client_session(monkeypatch):
+    """Test fetch_mcp_tools_async with pre-initialized client session."""
+    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+
+    # Setup persistent client
+    class DummySessionPersistent:
+        async def call_tool(self, name, arguments):
+            return {"content": "async-session-ok"}
+
+    client = DummySessionPersistent()
+    definitions = [
+        MCPToolDefinition(
+            name="AsyncTool", description="Test async tool", input_schema={"type": "object", "properties": {}, "required": []}
+        )
+    ]
+
+    async def fake_fetch_defs(session):
+        return definitions
+
+    monkeypatch.setattr(mtf.ToolDefinitionService, "fetch_definitions_from_session", staticmethod(fake_fetch_defs))
+
+    # Call fetch_mcp_tools_async with client session
+    tools = await fetch_mcp_tools_async(None, MCPTransportType.HTTP_STREAM, client_session=client)
+
+    assert len(tools) == 1
+    tool_cls = tools[0]
+    # Verify the tool was created correctly
+    assert hasattr(tool_cls, "mcp_tool_name")
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_without_client_session(monkeypatch):
+    """Test fetch_mcp_tools_async without pre-initialized client session."""
+
+    definitions = [
+        MCPToolDefinition(
+            name="AsyncTool2",
+            description="Test async tool 2",
+            input_schema={"type": "object", "properties": {}, "required": []},
+        )
+    ]
+
+    async def fake_fetch_defs(self):
+        return definitions
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs)
+
+    # Call fetch_mcp_tools_async without client session
+    tools = await fetch_mcp_tools_async("http://test-endpoint", MCPTransportType.HTTP_STREAM)
+
+    assert len(tools) == 1
+    tool_cls = tools[0]
+    # Verify the tool was created correctly
+    assert hasattr(tool_cls, "mcp_tool_name")
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_stdio_transport(monkeypatch):
+    """Test fetch_mcp_tools_async with STDIO transport."""
+    definitions = [
+        MCPToolDefinition(
+            name="StdioAsyncTool",
+            description="Test stdio async tool",
+            input_schema={"type": "object", "properties": {}, "required": []},
+        )
+    ]
+
+    async def fake_fetch_defs(self):
+        return definitions
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs)
+
+    # Call fetch_mcp_tools_async with STDIO transport
+    tools = await fetch_mcp_tools_async("test-command", MCPTransportType.STDIO, working_directory="/tmp")
+
+    assert len(tools) == 1
+    tool_cls = tools[0]
+    # Verify the tool was created correctly
+    assert hasattr(tool_cls, "mcp_tool_name")
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_empty_definitions(monkeypatch):
+    """Test fetch_mcp_tools_async returns empty list when no definitions found."""
+
+    async def fake_fetch_defs(self):
+        return []
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs)
+
+    # Call fetch_mcp_tools_async
+    tools = await fetch_mcp_tools_async("http://test-endpoint", MCPTransportType.HTTP_STREAM)
+
+    assert tools == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_connection_error(monkeypatch):
+    """Test fetch_mcp_tools_async propagates connection errors."""
+
+    async def fake_fetch_defs_error(self):
+        raise ConnectionError("Failed to connect to MCP server")
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs_error)
+
+    # Call fetch_mcp_tools_async and expect ConnectionError
+    with pytest.raises(ConnectionError, match="Failed to connect to MCP server"):
+        await fetch_mcp_tools_async("http://test-endpoint", MCPTransportType.HTTP_STREAM)
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_runtime_error(monkeypatch):
+    """Test fetch_mcp_tools_async propagates runtime errors."""
+
+    async def fake_fetch_defs_error(self):
+        raise RuntimeError("Unexpected error during fetching")
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs_error)
+
+    # Call fetch_mcp_tools_async and expect RuntimeError
+    with pytest.raises(RuntimeError, match="Unexpected error during fetching"):
+        await fetch_mcp_tools_async("http://test-endpoint", MCPTransportType.HTTP_STREAM)
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_with_working_directory(monkeypatch):
+    """Test fetch_mcp_tools_async with working directory parameter."""
+    definitions = [
+        MCPToolDefinition(
+            name="WorkingDirTool",
+            description="Test tool with working dir",
+            input_schema={"type": "object", "properties": {}, "required": []},
+        )
+    ]
+
+    async def fake_fetch_defs(self):
+        return definitions
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs)
+
+    # Call fetch_mcp_tools_async with working directory
+    tools = await fetch_mcp_tools_async("test-command", MCPTransportType.STDIO, working_directory="/custom/working/dir")
+
+    assert len(tools) == 1
+    tool_cls = tools[0]
+    # Verify the tool was created correctly
+    assert hasattr(tool_cls, "mcp_tool_name")
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_session_error_propagation(monkeypatch):
+    """Test fetch_mcp_tools_async with client session error propagation."""
+    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+
+    class DummySessionPersistent:
+        async def call_tool(self, name, arguments):
+            return {"content": "session-ok"}
+
+    client = DummySessionPersistent()
+
+    async def fake_fetch_defs_error(session):
+        raise ValueError("Session fetch error")
+
+    monkeypatch.setattr(mtf.ToolDefinitionService, "fetch_definitions_from_session", staticmethod(fake_fetch_defs_error))
+
+    # Call fetch_mcp_tools_async with client session and expect error
+    with pytest.raises(ValueError, match="Session fetch error"):
+        await fetch_mcp_tools_async(None, MCPTransportType.HTTP_STREAM, client_session=client)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("transport_type", [MCPTransportType.HTTP_STREAM, MCPTransportType.STDIO, MCPTransportType.SSE])
+async def test_fetch_mcp_tools_async_all_transport_types(monkeypatch, transport_type):
+    """Test fetch_mcp_tools_async with all supported transport types."""
+    definitions = [
+        MCPToolDefinition(
+            name=f"Tool_{transport_type.value}",
+            description=f"Test tool for {transport_type.value}",
+            input_schema={"type": "object", "properties": {}, "required": []},
+        )
+    ]
+
+    async def fake_fetch_defs(self):
+        return definitions
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs)
+
+    # Determine endpoint based on transport type
+    endpoint = "test-command" if transport_type == MCPTransportType.STDIO else "http://test-endpoint"
+    working_dir = "/tmp" if transport_type == MCPTransportType.STDIO else None
+
+    # Call fetch_mcp_tools_async with different transport types
+    tools = await fetch_mcp_tools_async(endpoint, transport_type, working_directory=working_dir)
+
+    assert len(tools) == 1
+    tool_cls = tools[0]
+    # Verify the tool was created correctly
+    assert hasattr(tool_cls, "mcp_tool_name")
+
+
+@pytest.mark.asyncio
+async def test_fetch_mcp_tools_async_multiple_tools(monkeypatch):
+    """Test fetch_mcp_tools_async with multiple tool definitions."""
+    definitions = [
+        MCPToolDefinition(
+            name="Tool1", description="First tool", input_schema={"type": "object", "properties": {}, "required": []}
+        ),
+        MCPToolDefinition(
+            name="Tool2",
+            description="Second tool",
+            input_schema={"type": "object", "properties": {"param": {"type": "string"}}, "required": ["param"]},
+        ),
+        MCPToolDefinition(
+            name="Tool3",
+            description="Third tool",
+            input_schema={
+                "type": "object",
+                "properties": {"x": {"type": "number"}, "y": {"type": "number"}},
+                "required": ["x", "y"],
+            },
+        ),
+    ]
+
+    async def fake_fetch_defs(self):
+        return definitions
+
+    monkeypatch.setattr(ToolDefinitionService, "fetch_definitions", fake_fetch_defs)
+
+    # Call fetch_mcp_tools_async
+    tools = await fetch_mcp_tools_async("http://test-endpoint", MCPTransportType.HTTP_STREAM)
+
+    assert len(tools) == 3
+    tool_names = [getattr(tool_cls, "mcp_tool_name", None) for tool_cls in tools]
+    assert "Tool1" in tool_names
+    assert "Tool2" in tool_names
+    assert "Tool3" in tool_names
