@@ -24,6 +24,7 @@ class ExtractionResult(BaseIOSchema):
 
     pdf_title: str = Field(..., description="The title of the PDF file")
     page_count: int = Field(..., description="The number of pages in the PDF file")
+    summary: str = Field(..., description="A short summary of the document")
 
 
 # Define the LLM CLient using GenAI instructor wrapper:
@@ -70,6 +71,7 @@ def main():
         print("\n===== Analysis Results =====")
         print(f"PDF Title: {analysis_result.pdf_title}")
         print(f"Page Count: {analysis_result.page_count}")
+        print(f"Document summary: {analysis_result.summary}")
 
     except Exception as e:
         print(f"Analysis failed: {str(e)}")

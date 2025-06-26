@@ -69,6 +69,7 @@ Analyzing PDF file: pdf_sample.pdf ...
 ===== Analysis Results =====
 PDF Title: Sample PDF Document
 Page Count: 3
+Document summary: This PDF is three pages long and contains Latin text.
 
 Analysis completed successfully
 ```
