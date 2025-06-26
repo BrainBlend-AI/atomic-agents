@@ -6,7 +6,7 @@ authors = ["Renaud Dufour <renaud.dufour59@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.12,<3.14"
 atomic-agents = {path = "../..", develop = true}
 instructor = ">=1.9.0,<2.0.0"
 google-genai = ">=1.18.0,<2.0.0"
