@@ -48,6 +48,8 @@ class TestMultimodalSchema(BaseIOSchema):
 
     instruction_text: str = Field(..., description="The instruction text")
     images: List[instructor.Image] = Field(..., description="The images to analyze")
+    pdfs: List[instructor.multimodal.PDF] = Field(..., description="The PDFs to analyze")
+    audio: instructor.multimodal.Audio = Field(..., description="The Audio to analyze")
 
 
 @pytest.fixture
@@ -87,7 +89,8 @@ def test_get_history(memory):
     history = memory.get_history()
     assert len(history) == 2
     assert history[0]["role"] == "user"
-    assert json.loads(history[0]["content"]) == {"test_field": "Hello"}
+    assert json.loads(history[0]["content"][0]) == {"test_field": "Hello"}
+    assert json.loads(history[1]["content"][0]) == {"test_field": "Hi there"}
 
 
 def test_copy(memory):
@@ -142,6 +145,33 @@ def test_dump_and_load(memory):
     assert isinstance(new_memory.history[1].content, TestComplexOutputSchema)
     assert new_memory.history[0].content.text_field == "Hello"
     assert new_memory.history[1].content.response_text == "Hi there"
+
+
+def test_dump_and_load_multimodal_data(memory):
+    test_image = instructor.Image.from_path(path="atomic-agents/tests/files/image_sample.jpg")
+    test_pdf = instructor.multimodal.PDF.from_path(path="atomic-agents/tests/files/pdf_sample.pdf")
+    test_audio = instructor.multimodal.Audio.from_path(path="atomic-agents/tests/files/audio_sample.mp3")
+
+    # multimodal message
+    memory.add_message(
+        role="user",
+        content=TestMultimodalSchema(
+            instruction_text="Analyze this image", images=[test_image], pdfs=[test_pdf], audio=test_audio
+        ),
+    )
+
+    dumped_data = memory.dump()
+    new_memory = AgentMemory()
+    new_memory.load(dumped_data)
+
+    assert new_memory.max_messages == memory.max_messages
+    assert new_memory.current_turn_id == memory.current_turn_id
+    assert len(new_memory.history) == len(memory.history)
+    assert isinstance(new_memory.history[0].content, TestMultimodalSchema)
+    assert new_memory.history[0].content.instruction_text == memory.history[0].content.instruction_text
+    assert new_memory.history[0].content.images == memory.history[0].content.images
+    assert new_memory.history[0].content.pdfs == memory.history[0].content.pdfs
+    assert new_memory.history[0].content.audio == memory.history[0].content.audio
 
 
 def test_load_invalid_data(memory):
@@ -288,9 +318,14 @@ def test_get_history_with_multimodal_content(memory):
     """Test that get_history correctly handles multimodal content"""
     # Create a mock image
     mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
+    mock_pdf = instructor.multimodal.PDF(source="test_pdf_url")
+    mock_audio = instructor.multimodal.Audio(source="test_audio_url", media_type="audio/mpeg")
 
     # Add a multimodal message
-    memory.add_message("user", TestMultimodalSchema(instruction_text="Analyze this image", images=[mock_image]))
+    memory.add_message(
+        "user",
+        TestMultimodalSchema(instruction_text="Analyze this image", images=[mock_image], pdfs=[mock_pdf], audio=mock_audio),
+    )
 
     # Get history and verify format
     history = memory.get_history()
@@ -299,6 +334,8 @@ def test_get_history_with_multimodal_content(memory):
     assert isinstance(history[0]["content"], list)
     assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
     assert history[0]["content"][1] == mock_image
+    assert history[0]["content"][2] == mock_pdf
+    assert history[0]["content"][3] == mock_audio
 
 
 def test_get_history_with_multiple_images_multimodal_content(memory):
