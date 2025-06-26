@@ -103,7 +103,6 @@ class AgentMemory:
         """
         history = []
         for message in self.history:
-
             # TODO: this does not support nested multi-modal content
 
             input_content = message.content
