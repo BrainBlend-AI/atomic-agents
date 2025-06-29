@@ -93,7 +93,9 @@ class TavilySearchTool(BaseTool):
         self.include_answer = config.include_answer
         self.include_raw_content = config.include_raw_content
 
-    async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str, max_results: Optional[int]) -> List[dict]:
+    async def _fetch_search_results(
+        self, session: aiohttp.ClientSession, query: str, max_results: Optional[int]
+    ) -> List[dict]:
         headers = {
             "accept": "/",
             "content-type": "application/json",
@@ -137,7 +139,10 @@ class TavilySearchTool(BaseTool):
     ) -> TavilySearchToolOutputSchema:
         async with aiohttp.ClientSession() as session:
             # Fetch results for all queries
-            tasks = [self._fetch_search_results(session, query, max_results if max_results is not None else self.max_results) for query in params.queries]
+            tasks = [
+                self._fetch_search_results(session, query, max_results if max_results is not None else self.max_results)
+                for query in params.queries
+            ]
             raw_results = await asyncio.gather(*tasks)
 
         # Process results for each query
