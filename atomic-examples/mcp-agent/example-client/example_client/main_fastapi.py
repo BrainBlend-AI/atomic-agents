@@ -60,7 +60,7 @@ config = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize MCP tools and orchestrator agent on startup."""
-    global mcp_tools, tool_schema_map, config
+    global config
 
     config = MCPConfig()
 
