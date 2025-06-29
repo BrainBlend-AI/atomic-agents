@@ -216,7 +216,10 @@ class MCPToolFactory:
 
                     if persistent_session is not None:
                         # Use the always‑on session/loop supplied at construction time.
-                        return cast(asyncio.AbstractEventLoop, loop).run_until_complete(self.arun(params))
+                        try:
+                            return cast(asyncio.AbstractEventLoop, loop).run_until_complete(self.arun(params))
+                        except AttributeError as e:
+                            raise RuntimeError(f"Failed to execute MCP tool '{tool_name}': {e}") from e
                     else:
                         # Legacy behaviour – run in new event loop.
                         return asyncio.run(self.arun(params))
