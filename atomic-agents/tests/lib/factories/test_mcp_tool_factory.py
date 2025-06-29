@@ -680,3 +680,134 @@ async def test_fetch_mcp_tools_async_multiple_tools(monkeypatch):
     assert "Tool1" in tool_names
     assert "Tool2" in tool_names
     assert "Tool3" in tool_names
+
+
+# Tests for arun functionality
+
+
+def test_arun_attribute_exists_on_generated_tools(monkeypatch):
+    """Test that dynamically generated tools have the arun attribute."""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    definitions = [MCPToolDefinition(name="TestTool", description="test", input_schema=input_schema)]
+    monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
+
+    # Create tool
+    tools = fetch_mcp_tools("http://test", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+
+    # Verify the class has arun as an attribute
+    assert hasattr(tool_cls, "arun")
+
+    # Verify instance has arun
+    inst = tool_cls()
+    assert hasattr(inst, "arun")
+    assert callable(getattr(inst, "arun"))
+
+
+@pytest.mark.asyncio
+async def test_arun_tool_async_execution(monkeypatch):
+    """Test that arun method executes tool asynchronously."""
+    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+
+    class DummyTransportCM:
+        def __init__(self, ret):
+            self.ret = ret
+
+        async def __aenter__(self):
+            return self.ret
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+    def dummy_http_client(endpoint):
+        return DummyTransportCM((None, None, None))
+
+    class DummySessionCM:
+        def __init__(self, rs=None, ws=None, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            return {"content": f"async-{name}-{arguments}-ok"}
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+    monkeypatch.setattr(mtf, "streamablehttp_client", dummy_http_client)
+    monkeypatch.setattr(mtf, "ClientSession", DummySessionCM)
+
+    # Prepare definitions
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    definitions = [MCPToolDefinition(name="AsyncTool", description="async test", input_schema=input_schema)]
+    monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
+
+    # Create tool and test arun
+    tools = fetch_mcp_tools("http://test", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+    inst = tool_cls()
+
+    # Test arun execution
+    arun_method = getattr(inst, "arun")  # type: ignore
+    params = tool_cls.input_schema(tool_name="AsyncTool")  # type: ignore
+    result = await arun_method(params)
+    assert result.result == "async-AsyncTool-{}-ok"
+
+
+@pytest.mark.asyncio
+async def test_arun_error_handling(monkeypatch):
+    """Test that arun properly handles and wraps errors."""
+    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+
+    class DummyTransportCM:
+        def __init__(self, ret):
+            self.ret = ret
+
+        async def __aenter__(self):
+            return self.ret
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+    def dummy_http_client(endpoint):
+        return DummyTransportCM((None, None, None))
+
+    class ErrorSessionCM:
+        def __init__(self, rs=None, ws=None, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            raise RuntimeError("Tool execution failed")
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+    monkeypatch.setattr(mtf, "streamablehttp_client", dummy_http_client)
+    monkeypatch.setattr(mtf, "ClientSession", ErrorSessionCM)
+
+    # Prepare definitions
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    definitions = [MCPToolDefinition(name="ErrorTool", description="error test", input_schema=input_schema)]
+    monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
+
+    # Create tool and test arun error handling
+    tools = fetch_mcp_tools("http://test", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+    inst = tool_cls()
+
+    # Test that arun properly wraps errors
+    arun_method = getattr(inst, "arun")  # type: ignore
+    params = tool_cls.input_schema(tool_name="ErrorTool")  # type: ignore
+    with pytest.raises(RuntimeError) as exc_info:
+        await arun_method(params)
+    assert "Failed to execute MCP tool 'ErrorTool'" in str(exc_info.value)

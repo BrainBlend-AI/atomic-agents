@@ -14,8 +14,10 @@ An interactive agent that:
 - Dynamically discovers available tools
 - Processes natural language queries
 - Selects appropriate tools based on user intent
-- Executes tools with extracted parameters
+- Executes tools with extracted parameters (sync and async)
 - Provides responses in a conversational format
+
+The client includes both synchronous (`main.py`) and asynchronous (`main_fastapi.py`) implementations. The FastAPI version demonstrates async MCP tool execution using `fetch_mcp_tools_async()` and the `arun()` method for non-blocking tool execution in web applications.
 
 [View Example Client README](example-client/README.md)
 
@@ -108,6 +110,19 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    # Second terminal: Run the client with HTTP Stream transport
    cd example-client
    poetry run python -m example_client.main --transport http_stream
+   ```
+
+   **Using FastAPI async client:**
+
+   ```bash
+   # First terminal: Start the MCP server
+   cd example-mcp-server
+   poetry run python -m example_mcp_server.server --mode=http_stream
+
+   # Second terminal: Run the async FastAPI client
+   cd example-client
+   poetry run python -m example_client.main_fastapi
+   # Then visit http://localhost:8000 for the API interface
    ```
 
 **Note:** When using SSE or HTTP Stream transport, make sure the server is running before starting the client. The server runs on port 6969 by default.
