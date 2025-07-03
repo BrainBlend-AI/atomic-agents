@@ -126,13 +126,12 @@ class MCPToolFactory:
                     f"{tool_name}OutputSchema", (MCPToolOutputSchema,), {"__doc__": f"Output schema for {tool_name}"}
                 )
 
-                # Create run method
-                def run_tool_sync(self, params: InputSchema) -> OutputSchema:  # type: ignore
+                # Async implementation
+                async def run_tool_async(self, params: InputSchema) -> OutputSchema:  # type: ignore
                     bound_tool_name = self.mcp_tool_name
                     bound_mcp_endpoint = self.mcp_endpoint  # May be None when using external session
                     bound_transport_type = self.transport_type
                     persistent_session: Optional[ClientSession] = getattr(self, "_client_session", None)
-                    loop: Optional[asyncio.AbstractEventLoop] = getattr(self, "_event_loop", None)
                     bound_working_directory = getattr(self, "working_directory", None)
 
                     # Get arguments, excluding tool_name
@@ -191,12 +190,10 @@ class MCPToolFactory:
                     try:
                         if persistent_session is not None:
                             # Use the always‑on session/loop supplied at construction time.
-                            tool_result = cast(asyncio.AbstractEventLoop, loop).run_until_complete(
-                                _call_with_persistent_session()
-                            )
+                            tool_result = await _call_with_persistent_session()
                         else:
                             # Legacy behaviour – open a fresh connection per invocation.
-                            tool_result = asyncio.run(_connect_and_call())
+                            tool_result = await _connect_and_call()
 
                         # Process the result
                         if isinstance(tool_result, BaseModel) and hasattr(tool_result, "content"):
@@ -212,8 +209,24 @@ class MCPToolFactory:
                         logger.error(f"Error executing MCP tool '{bound_tool_name}': {e}", exc_info=True)
                         raise RuntimeError(f"Failed to execute MCP tool '{bound_tool_name}': {e}") from e
 
+                # Create sync wrapper
+                def run_tool_sync(self, params: InputSchema) -> OutputSchema:  # type: ignore
+                    persistent_session: Optional[ClientSession] = getattr(self, "_client_session", None)
+                    loop: Optional[asyncio.AbstractEventLoop] = getattr(self, "_event_loop", None)
+
+                    if persistent_session is not None:
+                        # Use the always‑on session/loop supplied at construction time.
+                        try:
+                            return cast(asyncio.AbstractEventLoop, loop).run_until_complete(self.arun(params))
+                        except AttributeError as e:
+                            raise RuntimeError(f"Failed to execute MCP tool '{tool_name}': {e}") from e
+                    else:
+                        # Legacy behaviour – run in new event loop.
+                        return asyncio.run(self.arun(params))
+
                 # Create the tool class using types.new_class() instead of type()
                 attrs = {
+                    "arun": run_tool_async,
                     "run": run_tool_sync,
                     "__doc__": tool_description,
                     "mcp_tool_name": tool_name,
