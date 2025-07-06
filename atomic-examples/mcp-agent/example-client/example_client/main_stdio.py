@@ -1,6 +1,4 @@
 # pyright: reportInvalidTypeForm=false
-from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools
-from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 from rich.console import Console
 from rich.table import Table
 import openai
@@ -10,9 +8,8 @@ import asyncio
 import shlex
 from contextlib import AsyncExitStack
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.chat_history import ChatHistory
+from atomic_agents.lib.factories import fetch_mcp_tools, MCPTransportType
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, ChatHistory, SystemPromptGenerator
 from typing import Union, Type, Dict, Optional
 from dataclasses import dataclass
 from mcp import ClientSession, StdioServerParameters
