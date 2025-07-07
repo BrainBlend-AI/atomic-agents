@@ -418,7 +418,7 @@ def test_get_history_with_multimodal_content(memory):
     assert len(history) == 1
     assert history[0]["role"] == "user"
     assert isinstance(history[0]["content"], list)
-    assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
+    assert history[0]["content"][0] == '{"instruction_text":"Analyze this image"}'
     assert history[0]["content"][1] == mock_image
     assert history[0]["content"][2] == mock_pdf
     assert history[0]["content"][3] == mock_audio
@@ -454,7 +454,7 @@ def test_get_history_with_multiple_images_multimodal_content(memory):
     assert len(history) == 1
     assert history[0]["role"] == "user"
     assert isinstance(history[0]["content"], list)
-    assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
+    assert history[0]["content"][0] == '{"instruction_text":"Analyze this image"}'
     assert mock_image in history[0]["content"]
     assert mock_image_2 in history[0]["content"]
     assert mock_image_3 in history[0]["content"]
