@@ -363,6 +363,43 @@ def test_agent_memory_delete_turn_id(memory):
         memory.delete_turn_id("non-existent-id")
 
 
+def test_get_history_nested_model(memory):
+    """Test that get_history works with nested models."""
+    # Add complex input
+    memory.add_message(
+        "user",
+        TestComplexInputSchema(
+            text_field="Complex input",
+            number_field=2.718,
+            list_field=["a", "b", "c"],
+            nested_field=TestNestedSchema(nested_field="Nested input", nested_int=99),
+        ),
+    )
+
+    # Add complex output
+    memory.add_message(
+        "assistant",
+        TestComplexOutputSchema(
+            response_text="Complex output",
+            calculated_value=200,
+            data_dict={
+                "key1": TestNestedSchema(nested_field="Nested output 1", nested_int=10),
+                "key2": TestNestedSchema(nested_field="Nested output 2", nested_int=20),
+            },
+        ),
+    )
+
+    # Get history and verify the format
+    history = memory.get_history()
+
+    assert len(history) == 2
+    assert history[0]["role"] == "user"
+    assert history[1]["role"] == "assistant"
+
+    assert history[0]["content"][0] == '{"text_field":"Complex input"}'
+    assert history[1]["content"][0] == '{"response_text":"Complex output"}'
+
+
 def test_get_history_with_multimodal_content(memory):
     """Test that get_history correctly handles multimodal content"""
     # Create a mock image
