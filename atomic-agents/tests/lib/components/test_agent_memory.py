@@ -1,3 +1,5 @@
+from enum import Enum
+
 import pytest
 import json
 from typing import List, Dict
@@ -50,6 +52,16 @@ class TestMultimodalSchema(BaseIOSchema):
     images: List[instructor.Image] = Field(..., description="The images to analyze")
     pdfs: List[instructor.multimodal.PDF] = Field(..., description="The PDFs to analyze")
     audio: instructor.multimodal.Audio = Field(..., description="The Audio to analyze")
+
+
+class ColorEnum(str, Enum):
+    BLUE = "blue"
+    RED = "red"
+
+
+class TestEnumSchema(BaseIOSchema):
+    """Test Input Schema with Enum."""
+    color: ColorEnum = Field(..., description="Some color.")
 
 
 @pytest.fixture
@@ -190,6 +202,25 @@ def test_dump_and_load_multimodal_data(memory):
     assert new_memory.history[0].content.images == memory.history[0].content.images
     assert new_memory.history[0].content.pdfs == memory.history[0].content.pdfs
     assert new_memory.history[0].content.audio == memory.history[0].content.audio
+
+
+def test_dump_and_load_with_enum(memory):
+    """Test that get_history works with Enum."""
+
+    memory.add_message(
+        "user",
+        TestEnumSchema(
+            color=ColorEnum.RED,
+        ),
+    )
+
+    dumped_data = memory.dump()
+    new_memory = AgentMemory()
+    new_memory.load(dumped_data)
+
+    assert new_memory.max_messages == memory.max_messages
+    assert new_memory.current_turn_id == memory.current_turn_id
+    assert len(new_memory.history) == len(memory.history)
 
 
 def test_load_invalid_data(memory):
