@@ -1,7 +1,8 @@
 import json
 import uuid
-from typing import Dict, List, Optional, Type
+from enum import Enum
 from pathlib import Path
+from typing import Dict, List, Optional, Type
 
 from instructor.multimodal import PDF, Image, Audio
 from pydantic import BaseModel, Field
@@ -283,7 +284,7 @@ class AgentMemory:
             for field_name in obj.model_fields:
                 if hasattr(obj, field_name):
                     self._process_multimodal_paths(getattr(obj, field_name))
-        elif hasattr(obj, "__dict__"):
+        elif hasattr(obj, "__dict__") and not isinstance(obj, Enum):
             # Process each attribute of the object
             for attr_name, attr_value in obj.__dict__.items():
                 if attr_name != "__pydantic_fields_set__":  # Skip pydantic internal fields
