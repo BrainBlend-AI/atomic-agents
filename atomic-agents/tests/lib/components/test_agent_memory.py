@@ -61,6 +61,7 @@ class ColorEnum(str, Enum):
 
 class TestEnumSchema(BaseIOSchema):
     """Test Input Schema with Enum."""
+
     color: ColorEnum = Field(..., description="Some color.")
 
 
