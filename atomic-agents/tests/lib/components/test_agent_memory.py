@@ -84,6 +84,12 @@ def test_manage_overflow(memory):
 
 
 def test_get_history(memory):
+    """
+    Ensure non-ASCII characters are serialized without Unicode escaping, because
+    it can cause issue with some OpenAI models like GPT-4.1.
+
+    Reference ticket: https://github.com/BrainBlend-AI/atomic-agents/issues/138.
+    """
     memory.add_message("user", InputSchema(test_field="Hello"))
     memory.add_message("assistant", TestOutputSchema(test_field="Hi there"))
     history = memory.get_history()
@@ -91,6 +97,18 @@ def test_get_history(memory):
     assert history[0]["role"] == "user"
     assert json.loads(history[0]["content"][0]) == {"test_field": "Hello"}
     assert json.loads(history[1]["content"][0]) == {"test_field": "Hi there"}
+
+
+def test_get_history_allow_unicode(memory):
+    memory.add_message("user", InputSchema(test_field="àéèï"))
+    memory.add_message("assistant", TestOutputSchema(test_field="â"))
+    history = memory.get_history()
+    assert len(history) == 2
+    assert history[0]["role"] == "user"
+    assert history[0]["content"][0] == '{"test_field":"àéèï"}'
+    assert history[1]["content"][0] == '{"test_field":"â"}'
+    assert json.loads(history[0]["content"][0]) == {"test_field": "àéèï"}
+    assert json.loads(history[1]["content"][0]) == {"test_field": "â"}
 
 
 def test_copy(memory):
