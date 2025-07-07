@@ -115,12 +115,12 @@ class AgentMemory:
                         if isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES):
                             processed_content.append(item)
                         else:
-                            processed_content.append(json.dumps({field_name: field_value}))
+                            processed_content.append(input_content.model_dump_json(include=field_name))
                 else:
                     if isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
                         processed_content.append(field_value)
                     else:
-                        processed_content.append(json.dumps({field_name: field_value}))
+                        processed_content.append(input_content.model_dump_json(include=field_name))
 
             history.append({"role": message.role, "content": processed_content})
 
