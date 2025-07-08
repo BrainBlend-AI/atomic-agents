@@ -1,3 +1,5 @@
+from enum import Enum
+
 import pytest
 import json
 from typing import List, Dict
@@ -48,6 +50,19 @@ class MockMultimodalSchema(BaseIOSchema):
 
     instruction_text: str = Field(..., description="The instruction text")
     images: List[instructor.Image] = Field(..., description="The images to analyze")
+    pdfs: List[instructor.multimodal.PDF] = Field(..., description="The PDFs to analyze")
+    audio: instructor.multimodal.Audio = Field(..., description="The audio to analyze")
+
+
+class ColorEnum(str, Enum):
+    BLUE = "blue"
+    RED = "red"
+
+
+class MockEnumSchema(BaseIOSchema):
+    """Test Input Schema with Enum."""
+
+    color: ColorEnum = Field(..., description="Some color.")
 
 
 @pytest.fixture
@@ -82,12 +97,31 @@ def test_manage_overflow(history):
 
 
 def test_get_history(history):
+    """
+    Ensure non-ASCII characters are serialized without Unicode escaping, because
+    it can cause issue with some OpenAI models like GPT-4.1.
+
+    Reference ticket: https://github.com/BrainBlend-AI/atomic-agents/issues/138.
+    """
     history.add_message("user", InputSchema(test_field="Hello"))
     history.add_message("assistant", MockOutputSchema(test_field="Hi there"))
     history = history.get_history()
     assert len(history) == 2
     assert history[0]["role"] == "user"
-    assert json.loads(history[0]["content"]) == {"test_field": "Hello"}
+    assert json.loads(history[0]["content"][0]) == {"test_field": "Hello"}
+    assert json.loads(history[1]["content"][0]) == {"test_field": "Hi there"}
+
+
+def test_get_history_allow_unicode(history):
+    history.add_message("user", InputSchema(test_field="àéèï"))
+    history.add_message("assistant", MockOutputSchema(test_field="â"))
+    history = history.get_history()
+    assert len(history) == 2
+    assert history[0]["role"] == "user"
+    assert history[0]["content"][0] == '{"test_field":"àéèï"}'
+    assert history[1]["content"][0] == '{"test_field":"â"}'
+    assert json.loads(history[0]["content"][0]) == {"test_field": "àéèï"}
+    assert json.loads(history[1]["content"][0]) == {"test_field": "â"}
 
 
 def test_copy(history):
@@ -142,6 +176,54 @@ def test_dump_and_load(history):
     assert isinstance(new_history.history[1].content, MockComplexOutputSchema)
     assert new_history.history[0].content.text_field == "Hello"
     assert new_history.history[1].content.response_text == "Hi there"
+
+
+def test_dump_and_load_multimodal_data(history):
+    import os
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    test_image = instructor.Image.from_path(path=os.path.join(base_path, "files/image_sample.jpg"))
+    test_pdf = instructor.multimodal.PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
+    test_audio = instructor.multimodal.Audio.from_path(path=os.path.join(base_path, "files/audio_sample.mp3"))
+
+    # multimodal message
+    history.add_message(
+        role="user",
+        content=MockMultimodalSchema(
+            instruction_text="Analyze this image", images=[test_image], pdfs=[test_pdf], audio=test_audio
+        ),
+    )
+
+    dumped_data = history.dump()
+    new_history = ChatHistory()
+    new_history.load(dumped_data)
+
+    assert new_history.max_messages == history.max_messages
+    assert new_history.current_turn_id == history.current_turn_id
+    assert len(new_history.history) == len(history.history)
+    assert isinstance(new_history.history[0].content, MockMultimodalSchema)
+    assert new_history.history[0].content.instruction_text == history.history[0].content.instruction_text
+    assert new_history.history[0].content.images == history.history[0].content.images
+    assert new_history.history[0].content.pdfs == history.history[0].content.pdfs
+    assert new_history.history[0].content.audio == history.history[0].content.audio
+
+
+def test_dump_and_load_with_enum(history):
+    """Test that get_history works with Enum."""
+
+    history.add_message(
+        "user",
+        MockEnumSchema(
+            color=ColorEnum.RED,
+        ),
+    )
+
+    dumped_data = history.dump()
+    new_history = ChatHistory()
+    new_history.load(dumped_data)
+
+    assert new_history.max_messages == history.max_messages
+    assert new_history.current_turn_id == history.current_turn_id
+    assert len(new_history.history) == len(history.history)
 
 
 def test_load_invalid_data(history):
@@ -244,6 +326,43 @@ def test_history_turn_consistency():
     assert history.history[2].turn_id == new_turn_id
 
 
+def test_get_history_nested_model(history):
+    """Test that get_history works with nested models."""
+    # Add complex input
+    history.add_message(
+        "user",
+        MockComplexInputSchema(
+            text_field="Complex input",
+            number_field=2.718,
+            list_field=["a", "b", "c"],
+            nested_field=MockNestedSchema(nested_field="Nested input", nested_int=99),
+        ),
+    )
+
+    # Add complex output
+    history.add_message(
+        "assistant",
+        MockComplexOutputSchema(
+            response_text="Complex output",
+            calculated_value=200,
+            data_dict={
+                "key1": MockNestedSchema(nested_field="Nested output 1", nested_int=10),
+                "key2": MockNestedSchema(nested_field="Nested output 2", nested_int=20),
+            },
+        ),
+    )
+
+    # Get history and verify the format
+    history = history.get_history()
+
+    assert len(history) == 2
+    assert history[0]["role"] == "user"
+    assert history[1]["role"] == "assistant"
+
+    assert history[0]["content"][0] == '{"text_field":"Complex input"}'
+    assert history[1]["content"][0] == '{"response_text":"Complex output"}'
+
+
 def test_chat_history_delete_turn_id(history):
     mock_input = InputSchema(test_field="Test input")
     mock_output = InputSchema(test_field="Test output")
@@ -286,18 +405,25 @@ def test_chat_history_delete_turn_id(history):
 
 def test_get_history_with_multimodal_content(history):
     """Test that get_history correctly handles multimodal content"""
-    # Create a mock image
+    # Create mock multimodal objects
     mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
+    mock_pdf = instructor.multimodal.PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
+    mock_audio = instructor.multimodal.Audio(source="test_audio_url", media_type="audio/mp3", detail="low")
 
     # Add a multimodal message
-    history.add_message("user", MockMultimodalSchema(instruction_text="Analyze this image", images=[mock_image]))
+    history.add_message("user", MockMultimodalSchema(
+        instruction_text="Analyze this image", 
+        images=[mock_image],
+        pdfs=[mock_pdf],
+        audio=mock_audio
+    ))
 
     # Get history and verify format
     history = history.get_history()
     assert len(history) == 1
     assert history[0]["role"] == "user"
     assert isinstance(history[0]["content"], list)
-    assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
+    assert json.loads(history[0]["content"][0]) == {"instruction_text": "Analyze this image"}
     assert history[0]["content"][1] == mock_image
 
 
@@ -331,7 +457,7 @@ def test_get_history_with_multiple_images_multimodal_content(history):
     assert len(history) == 1
     assert history[0]["role"] == "user"
     assert isinstance(history[0]["content"], list)
-    assert history[0]["content"][0] == '{"instruction_text": "Analyze this image"}'
+    assert json.loads(history[0]["content"][0]) == {"instruction_text": "Analyze this image"}
     assert mock_image in history[0]["content"]
     assert mock_image_2 in history[0]["content"]
     assert mock_image_3 in history[0]["content"]
