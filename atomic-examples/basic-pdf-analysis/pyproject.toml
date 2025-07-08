@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "basic-pdf-analysis"
+version = "1.0.0"
+description = "Basic PDF analysis Quickstart example for Atomic Agents"
+authors = ["Renaud Dufour <renaud.dufour59@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.14"
+atomic-agents = {path = "../..", develop = true}
+instructor = ">=1.9.0,<2.0.0"
+google-genai = ">=1.18.0,<2.0.0"
+jsonref = ">=1.1.0,<2.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
