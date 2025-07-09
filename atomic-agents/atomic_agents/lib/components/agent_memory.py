@@ -111,16 +111,18 @@ class AgentMemory:
                 field_value = getattr(input_content, field_name)
 
                 if isinstance(field_value, list):
+                    has_multimodal_in_list = False
                     for item in field_value:
                         if isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES):
                             processed_content.append(item)
-                        else:
-                            processed_content.append(input_content.model_dump_json(include=field_name))
+                            has_multimodal_in_list = True
+                    if not has_multimodal_in_list:
+                        processed_content.append(input_content.model_dump_json(include={field_name}))
                 else:
                     if isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
                         processed_content.append(field_value)
                     else:
-                        processed_content.append(input_content.model_dump_json(include=field_name))
+                        processed_content.append(input_content.model_dump_json(include={field_name}))
 
             history.append({"role": message.role, "content": processed_content})
 

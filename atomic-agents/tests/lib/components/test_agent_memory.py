@@ -459,3 +459,34 @@ def test_get_history_with_multiple_images_multimodal_content(memory):
     assert mock_image in history[0]["content"]
     assert mock_image_2 in history[0]["content"]
     assert mock_image_3 in history[0]["content"]
+
+
+def test_process_multimodal_paths_with_dict_object():
+    """Test that _process_multimodal_paths handles objects with __dict__ correctly"""
+    from pathlib import Path
+
+    class CustomObject:
+        """A custom object with __dict__ that isn't a Pydantic model or Enum"""
+
+        def __init__(self):
+            self.image = instructor.Image(source="test_path.jpg", media_type="image/jpeg")
+            self.text = "some text"
+            self.nested = None
+
+    # Create test object
+    custom_obj = CustomObject()
+    custom_obj.nested = CustomObject()  # Nested object to test recursion
+
+    # Create a memory instance to access the method
+    memory = AgentMemory()
+
+    # Call _process_multimodal_paths directly
+    memory._process_multimodal_paths(custom_obj)
+
+    # Verify the image path was converted
+    assert isinstance(custom_obj.image.source, Path)
+    assert custom_obj.image.source == Path("test_path.jpg")
+
+    # Verify nested object was also processed
+    assert isinstance(custom_obj.nested.image.source, Path)
+    assert custom_obj.nested.image.source == Path("test_path.jpg")
