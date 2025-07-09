@@ -2,17 +2,13 @@
 HTTP Stream transport client for MCP Agent example.
 Communicates with the server_http.py `/mcp` endpoint using HTTP GET/POST/DELETE for JSON-RPC streams.
 """
-
+from atomic_agents.lib.factories import fetch_mcp_tools, MCPTransportType
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, ChatHistory, SystemPromptGenerator
 import sys
-from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools
-from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.chat_history import ChatHistory
 import openai
 import os
 import instructor
