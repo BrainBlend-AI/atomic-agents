@@ -139,6 +139,18 @@ async def test_tavily_search_tool_with_max_results(mock_aiohttp_session):
     # Assertions
     assert len(result.results) == 5
 
+    # Verify the API was called with correct max_results parameter
+    mock_aiohttp_session.post.assert_called_once()
+    call_args = mock_aiohttp_session.post.call_args
+    assert call_args[1]["json"]["max_results"] == 5
+
+    # Test with default max_results from config
+    mock_aiohttp_session.post.reset_mock()
+    result2 = await tavily_tool.run_async(input_schema)
+    assert len(result2.results) == 10  # Uses config default
+    call_args2 = mock_aiohttp_session.post.call_args
+    assert call_args2[1]["json"]["max_results"] == 10
+
 
 @pytest.mark.asyncio
 async def test_tavily_search_tool_no_results(mock_aiohttp_session):
