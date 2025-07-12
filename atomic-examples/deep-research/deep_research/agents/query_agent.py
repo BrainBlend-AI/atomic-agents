@@ -2,8 +2,7 @@ from deep_research.config import ChatConfig
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, SystemPromptGenerator
 
 from deep_research.tools.searxng_search import SearXNGSearchToolInputSchema
 
