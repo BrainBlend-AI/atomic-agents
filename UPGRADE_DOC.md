@@ -1,153 +1,58 @@
-# Atomic Agents Import Simplification Upgrade Guide
+# Atomic Agents Import Strategy Upgrade Guide
 
 ## Overview
 
-We have significantly improved the import system for Atomic Agents by adding strategic `__init__.py` files throughout the codebase. This allows for much shorter, cleaner imports while maintaining full backward compatibility.
+Atomic Agents now uses a **tiered import strategy** that organizes imports by usage frequency and logical grouping, rather than pulling everything to the top level. This provides cleaner namespaces while maintaining full backward compatibility.
 
 ## What Changed
 
-### New `__init__.py` Files Added
+We've moved from a "pull everything to the top" approach to a structured tiered system:
 
-1. **Main Package**: `/atomic_agents/__init__.py`
-2. **Library Module**: `/atomic_agents/lib/__init__.py`
-3. **Agents Module**: `/atomic_agents/agents/__init__.py` (enhanced)
-4. **Components Module**: `/atomic_agents/lib/components/__init__.py` (enhanced)
-5. **Base Module**: `/atomic_agents/lib/base/__init__.py`
-6. **Utils Module**: `/atomic_agents/lib/utils/__init__.py` (enhanced)
-7. **Factories Module**: `/atomic_agents/lib/factories/__init__.py`
+- **Core tier**: Essential classes (90% of users)
+- **Common tier**: Frequently used components  
+- **Specialized tier**: Advanced functionality
 
-### Core Exports Available
+## New Import Patterns
 
-The main `atomic_agents` package now exports these key classes directly:
-
-- `BaseAgent`, `BaseAgentConfig`, `BaseAgentInputSchema`, `BaseAgentOutputSchema`
-- `BaseIOSchema`
-- `BaseTool`, `BaseToolConfig`
-- `ChatHistory`
-- `SystemPromptGenerator`, `SystemPromptContextProviderBase`
-
-## New Import Options
-
-### 1. Top-Level Imports (Shortest)
-
-**Before:**
+### Core Imports (90% of users)
+Essential classes for basic agent creation:
 ```python
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.chat_history import ChatHistory
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
 ```
 
-**After:**
+### Common Imports (building full applications)
+Components and utilities for complete applications:
 ```python
-from atomic_agents import (
-    BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema,
-    SystemPromptGenerator, ChatHistory
-)
+from atomic_agents.lib import ChatHistory, SystemPromptGenerator, BaseTool
+from atomic_agents.agents import BaseAgentInputSchema, BaseAgentOutputSchema
 ```
 
-### 2. Module-Level Imports (Organized)
-
-**Before:**
+### Specialized Imports (advanced features)
+For specific functionality:
 ```python
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.chat_history import ChatHistory
-```
-
-**After:**
-```python
-from atomic_agents.agents import BaseAgent, BaseAgentConfig
-from atomic_agents.lib import BaseIOSchema, SystemPromptGenerator, ChatHistory
-```
-
-### 3. Namespace Imports (Clean)
-
-**Before:**
-```python
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-```
-
-**After:**
-```python
-import atomic_agents as aa
-
-agent = aa.BaseAgent[aa.BaseAgentInputSchema, aa.BaseAgentOutputSchema](
-    config=aa.BaseAgentConfig(...)
-)
-```
-
-### 4. Specific Module Imports
-
-**Tools:**
-```python
-# Before
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
-
-# After
-from atomic_agents.lib.base import BaseTool, BaseToolConfig
-# OR
-from atomic_agents import BaseTool, BaseToolConfig
-```
-
-**Components:**
-```python
-# Before
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-
-# After
-from atomic_agents.lib.components import ChatHistory, SystemPromptGenerator
-# OR
-from atomic_agents import ChatHistory, SystemPromptGenerator
-```
-
-**Utilities:**
-```python
-# Before
-from atomic_agents.lib.utils.format_tool_message import format_tool_message
-
-# After
+from atomic_agents.lib.factories import MCPToolFactory, fetch_mcp_tools
 from atomic_agents.lib.utils import format_tool_message
-# OR
-from atomic_agents.lib import format_tool_message
 ```
 
-## Updated Examples
+## Migration Examples
 
-### Basic Chatbot Example
-
+### Basic Agent Creation
 **Before:**
 ```python
-import instructor
-import openai
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
-from atomic_agents.lib.components.chat_history import ChatHistory
+from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
+from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.lib.components.chat_history import ChatHistory
 ```
 
-**After (Option 1 - Top-level):**
+**After:**
 ```python
-import instructor
-import openai
-from atomic_agents import (
-    BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema,
-    ChatHistory, SystemPromptGenerator
-)
-```
-
-**After (Option 2 - Module-level):**
-```python
-import instructor
-import openai
-from atomic_agents.agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
 from atomic_agents.lib import ChatHistory, SystemPromptGenerator
+from atomic_agents.agents import BaseAgentInputSchema
 ```
 
-### Custom Tool Example
-
+### Custom Tool Creation
 **Before:**
 ```python
 from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
@@ -156,110 +61,34 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 **After:**
 ```python
-from atomic_agents import BaseTool, BaseToolConfig, BaseIOSchema
+from atomic_agents import BaseIOSchema
+from atomic_agents.lib import BaseTool, BaseToolConfig
 ```
-
-### Custom Schema Example
-
-**Before:**
-```python
-from pydantic import Field
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-```
-
-**After:**
-```python
-from pydantic import Field
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-```
-
-## Basic PDF Analysis Example - Generic Type Parameters
-
-### Issue Fixed
-The `basic-pdf-analysis` example was missing generic type parameters in the BaseAgent declaration, causing it to return `BaseAgentOutputSchema` instead of the custom `ExtractionResult` schema.
-
-### Change Made
-**Before:**
-```python
-agent = BaseAgent(
-    config=BaseAgentConfig(
-        client=client,
-        model="gemini-2.0-flash",
-        system_prompt_generator=system_prompt_generator,
-        input_schema=InputSchema,
-        output_schema=ExtractionResult,
-    )
-)
-```
-
-**After:**
-```python
-agent = BaseAgent[InputSchema, ExtractionResult](
-    config=BaseAgentConfig(
-        client=client,
-        model="gemini-2.0-flash",
-        system_prompt_generator=system_prompt_generator,
-        input_schema=InputSchema,
-        output_schema=ExtractionResult,
-    )
-)
-```
-
-### Why This Fix Was Needed
-Without the generic type parameters `[InputSchema, ExtractionResult]`, the BaseAgent falls back to the default `BaseAgentOutputSchema`, causing attribute errors when trying to access custom schema fields like `pdf_title`, `page_count`, and `summary`.
 
 ## Benefits
 
-1. **Reduced Import Depth**: From 4 levels deep to 1-2 levels
-2. **Cleaner Code**: Less verbose import statements
-3. **Better Developer Experience**: Easier to remember and type imports
-4. **Backward Compatible**: All existing imports continue to work
-5. **Flexible**: Multiple import styles supported based on preference
-6. **IDE Friendly**: Better autocomplete with flatter import structure
+1. **Cleaner namespaces**: Top-level package only exports essentials
+2. **Logical organization**: Import paths reflect component purpose
+3. **Reduced maintenance**: Fewer cascading changes needed
+4. **Better performance**: Smaller import footprint
+5. **Clear intent**: Import structure indicates usage patterns
 
 ## Migration Strategy
 
-### Immediate Benefits (No Code Changes Required)
-- All existing code continues to work unchanged
-- No breaking changes introduced
-
-### Optional Migration (For Cleaner Code)
-You can gradually update your imports to use the shorter forms:
-
-1. **Start with new projects**: Use the new short imports for new code
-2. **Gradual updates**: Update existing files when you're already modifying them
-3. **Bulk updates**: Use find/replace to update all imports at once (optional)
+### No Breaking Changes
+All existing imports continue to work unchanged. The new patterns are optional improvements.
 
 ### Recommended Approach
+1. **New projects**: Use the tiered import patterns
+2. **Existing projects**: Gradually adopt new patterns when convenient
+3. **Mixed usage**: Feel free to mix old and new patterns as needed
 
-For **new projects**, we recommend:
-```python
-# Primary imports - most common classes
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema, ChatHistory
+## Important Notes
 
-# Specific imports as needed
-from atomic_agents.lib.components import SystemPromptGenerator
-```
-
-For **existing projects**, you can:
-1. Keep current imports (they all still work)
-2. Gradually adopt shorter imports when convenient
-3. Use mixed approaches as needed
-
-## No Breaking Changes
-
-**Important**: This upgrade is 100% backward compatible. All existing import statements will continue to work exactly as before. The new shorter imports are additional options, not replacements.
+- **100% backward compatible**: All existing code works unchanged
+- **Optional migration**: Update at your own pace
+- **Multiple styles supported**: Choose what works best for your project
 
 ## Version Information
 
 These import improvements are available starting from Atomic Agents v2.0.0.
-
-## Examples in the Wild
-
-Check the updated examples in the repository to see the new import patterns in action:
-- `/atomic-examples/quickstart/`
-- `/atomic-examples/web-search-agent/`
-- `/atomic-examples/rag-chatbot/`
-
-The examples demonstrate both old and new import styles to help with your migration.

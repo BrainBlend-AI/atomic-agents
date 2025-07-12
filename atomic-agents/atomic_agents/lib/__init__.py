@@ -1,25 +1,23 @@
 """Library components for Atomic Agents."""
 
-# Base classes
-from .base.base_io_schema import BaseIOSchema
-from .base.base_tool import BaseTool, BaseToolConfig
-
-# Components
+# Common utilities and components
 from .components.chat_history import ChatHistory
 from .components.system_prompt_generator import (
     SystemPromptGenerator,
     SystemPromptContextProviderBase,
 )
 
+# Base classes for extension
+from .base.base_tool import BaseTool, BaseToolConfig
+
 # Utilities
 from .utils.format_tool_message import format_tool_message
 
 __all__ = [
-    "BaseIOSchema",
-    "BaseTool", 
-    "BaseToolConfig",
     "ChatHistory",
     "SystemPromptGenerator",
     "SystemPromptContextProviderBase",
+    "BaseTool", 
+    "BaseToolConfig",
     "format_tool_message",
 ]
