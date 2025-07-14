@@ -1,9 +1,8 @@
 from typing import Union
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents.components import SystemPromptGenerator, SystemPromptContextProviderBase
 
 from orchestration_agent.tools.searxng_search import (
     SearXNGSearchTool,

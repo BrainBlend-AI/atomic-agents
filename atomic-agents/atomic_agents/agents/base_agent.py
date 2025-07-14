@@ -1,12 +1,12 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type, Generator, AsyncGenerator, get_args
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.lib.components.system_prompt_generator import (
+from atomic_agents.components.chat_history import ChatHistory
+from atomic_agents.components.system_prompt_generator import (
     SystemPromptContextProviderBase,
     SystemPromptGenerator,
 )
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.base.base_io_schema import BaseIOSchema
 
 from instructor.dsl.partial import PartialBase
 from jiter import from_json

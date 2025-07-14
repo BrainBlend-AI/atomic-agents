@@ -1,7 +1,8 @@
 import os
 
 import instructor
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema, SystemPromptGenerator
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents.lib import SystemPromptGenerator
 from dotenv import load_dotenv
 from google import genai
 from instructor.multimodal import PDF

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List
-from atomic_agents import SystemPromptContextProviderBase
+from atomic_agents.lib import SystemPromptContextProviderBase
 
 
 @dataclass

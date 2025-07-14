@@ -6,7 +6,7 @@ This file serves as a launcher that can run either the STDIO or SSE transport ve
 
 import argparse
 import sys
-from atomic_agents.lib.factories import MCPTransportType
+from atomic_agents.factories import MCPTransportType
 
 
 def main():

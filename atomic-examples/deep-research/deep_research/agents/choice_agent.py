@@ -1,7 +1,8 @@
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.lib import SystemPromptGenerator
 
 from deep_research.config import ChatConfig
 
