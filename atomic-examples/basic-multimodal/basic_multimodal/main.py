@@ -1,5 +1,5 @@
 from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
-from atomic_agents.lib import SystemPromptGenerator
+from atomic_agents.components import SystemPromptGenerator
 import instructor
 import openai
 from pydantic import Field
