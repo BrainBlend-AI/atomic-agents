@@ -3,8 +3,8 @@ import asyncio
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
+from atomic_agents.components import SystemPromptGenerator
 
 # API Key setup
 API_KEY = ""

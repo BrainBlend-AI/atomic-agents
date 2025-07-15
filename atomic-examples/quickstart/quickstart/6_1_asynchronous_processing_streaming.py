@@ -6,8 +6,8 @@ from rich.console import Console
 from rich.live import Live
 from rich.table import Table
 from rich.text import Text
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
+from atomic_agents.components import SystemPromptGenerator
 
 # API Key setup
 API_KEY = ""
