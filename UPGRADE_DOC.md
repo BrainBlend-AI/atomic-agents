@@ -2,36 +2,38 @@
 
 ## Overview
 
-Atomic Agents now uses a **tiered import strategy** that organizes imports by usage frequency and logical grouping, rather than pulling everything to the top level. This provides cleaner namespaces while maintaining full backward compatibility.
+Atomic Agents now provides **simplified import paths** that eliminate the need for the `.lib` directory in imports while maintaining full backward compatibility.
 
 ## What Changed
 
-We've moved from a "pull everything to the top" approach to a structured tiered system:
+We've added module re-exports to the main package, allowing shorter, cleaner import paths:
 
-- **Core tier**: Essential classes (90% of users)
-- **Common tier**: Frequently used components  
-- **Specialized tier**: Advanced functionality
+- **Core classes**: All essential base classes available from main package
+- **Module re-exports**: Components, factories, and utils accessible without `.lib`
+- **Backward compatibility**: All existing import paths continue to work
 
 ## New Import Patterns
 
-### Core Imports (90% of users)
-Essential classes for basic agent creation:
+### Core Imports (Essential Classes)
+All base classes available from the main package:
 ```python
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema, BaseTool, BaseToolConfig
 ```
 
-### Common Imports (building full applications)
-Components and utilities for complete applications:
+### Component Imports (Cleaner Paths)
+**New (Recommended):**
 ```python
-from atomic_agents.lib import ChatHistory, SystemPromptGenerator, BaseTool
-from atomic_agents.agents import BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.components import ChatHistory, SystemPromptGenerator
+from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
+from atomic_agents.utils import format_tool_message
 ```
 
-### Specialized Imports (advanced features)
-For specific functionality:
+**Old (Still Works):**
 ```python
-from atomic_agents.lib.factories import MCPToolFactory, fetch_mcp_tools
-from atomic_agents.lib.utils import format_tool_message
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.lib.components.chat_history import ChatHistory
+from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools_async
+from atomic_agents.lib.utils.format_tool_message import format_tool_message
 ```
 
 ## Migration Examples
@@ -39,17 +41,15 @@ from atomic_agents.lib.utils import format_tool_message
 ### Basic Agent Creation
 **Before:**
 ```python
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from atomic_agents.lib.components.chat_history import ChatHistory
 ```
 
 **After:**
 ```python
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
-from atomic_agents.lib import ChatHistory, SystemPromptGenerator
-from atomic_agents.agents import BaseAgentInputSchema
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.components import SystemPromptGenerator, ChatHistory
 ```
 
 ### Custom Tool Creation
@@ -61,17 +61,26 @@ from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 
 **After:**
 ```python
-from atomic_agents import BaseIOSchema
-from atomic_agents.lib import BaseTool, BaseToolConfig
+from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig
+```
+
+### MCP Integration
+**Before:**
+```python
+from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools_async
+```
+
+**After:**
+```python
+from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
 ```
 
 ## Benefits
 
-1. **Cleaner namespaces**: Top-level package only exports essentials
-2. **Logical organization**: Import paths reflect component purpose
-3. **Reduced maintenance**: Fewer cascading changes needed
-4. **Better performance**: Smaller import footprint
-5. **Clear intent**: Import structure indicates usage patterns
+1. **Shorter imports**: Eliminated `.lib` from import paths
+2. **Consistent API**: All base classes from main package
+3. **Cleaner code**: More readable import statements
+4. **Full compatibility**: No breaking changes
 
 ## Migration Strategy
 
@@ -79,15 +88,15 @@ from atomic_agents.lib import BaseTool, BaseToolConfig
 All existing imports continue to work unchanged. The new patterns are optional improvements.
 
 ### Recommended Approach
-1. **New projects**: Use the tiered import patterns
-2. **Existing projects**: Gradually adopt new patterns when convenient
-3. **Mixed usage**: Feel free to mix old and new patterns as needed
+1. **New projects**: Use the shorter import patterns
+2. **Existing projects**: Update imports gradually or keep existing ones
+3. **Mixed usage**: Both old and new patterns work together
 
 ## Important Notes
 
 - **100% backward compatible**: All existing code works unchanged
 - **Optional migration**: Update at your own pace
-- **Multiple styles supported**: Choose what works best for your project
+- **Choose your style**: Use whatever import style works best for your project
 
 ## Version Information
 
