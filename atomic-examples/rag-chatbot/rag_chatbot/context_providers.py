@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents.components import SystemPromptContextProviderBase
 
 
 @dataclass
