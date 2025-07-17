@@ -3,8 +3,8 @@ import openai
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseIOSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase, SystemPromptGenerator
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents.components import SystemPromptContextProviderBase, SystemPromptGenerator
 
 
 class YtTranscriptProvider(SystemPromptContextProviderBase):
