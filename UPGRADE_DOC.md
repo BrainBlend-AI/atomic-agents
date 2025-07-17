@@ -2,15 +2,15 @@
 
 ## Overview
 
-Atomic Agents now provides **simplified import paths** that eliminate the need for the `.lib` directory in imports while maintaining full backward compatibility.
+Atomic Agents now provides **simplified import paths** that eliminate the need for the `.lib` directory in imports. This is a breaking change that requires updating import paths.
 
 ## What Changed
 
-We've added module re-exports to the main package, allowing shorter, cleaner import paths:
+We've refactored the package structure to use module re-exports, allowing shorter, cleaner import paths:
 
 - **Core classes**: All essential base classes available from main package
 - **Module re-exports**: Components, factories, and utils accessible without `.lib`
-- **Backward compatibility**: All existing import paths continue to work
+- **Breaking change**: Old import paths using `.lib` are no longer supported.
 
 ## New Import Patterns
 
@@ -28,7 +28,7 @@ from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
 from atomic_agents.utils import format_tool_message
 ```
 
-**Old (Still Works):**
+**Old (No Longer Works):**
 ```python
 from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
 from atomic_agents.lib.components.chat_history import ChatHistory
@@ -80,23 +80,20 @@ from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
 1. **Shorter imports**: Eliminated `.lib` from import paths
 2. **Consistent API**: All base classes from main package
 3. **Cleaner code**: More readable import statements
-4. **Full compatibility**: No breaking changes
 
 ## Migration Strategy
 
-### No Breaking Changes
-All existing imports continue to work unchanged. The new patterns are optional improvements.
+### Required Migration
+This upgrade introduces breaking changes. All projects must be updated to use the new import paths.
 
 ### Recommended Approach
-1. **New projects**: Use the shorter import patterns
-2. **Existing projects**: Update imports gradually or keep existing ones
-3. **Mixed usage**: Both old and new patterns work together
+1. **Update all imports**: Replace old `.lib` imports with the new, shorter paths.
+2. **Test thoroughly**: Ensure all parts of your application work as expected after the migration.
 
 ## Important Notes
 
-- **100% backward compatible**: All existing code works unchanged
-- **Optional migration**: Update at your own pace
-- **Choose your style**: Use whatever import style works best for your project
+- **Breaking Changes**: This version is not backward compatible.
+- **Mandatory Migration**: You must update your import paths to continue using the library.
 
 ## Version Information
 
