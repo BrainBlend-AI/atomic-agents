@@ -9,6 +9,7 @@ readme = "README.md"
 python = ">=3.12,<4.0"
 atomic-agents = {path = "../..", develop = true}
 chromadb = "^0.4.24"
+numpy = ">=1.22.5,<2.0"
 python-dotenv = ">=1.0.1,<2.0.0"
 openai = ">=1.35.12,<2.0.0"
 pulsar-client = ">=3.6.1,<4.0.0" 

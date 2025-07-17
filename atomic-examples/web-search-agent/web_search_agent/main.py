@@ -4,9 +4,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from pydantic import Field
 
-from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents import BaseIOSchema
+from atomic_agents.components import ChatHistory, SystemPromptContextProviderBase
 
 from web_search_agent.tools.searxng_search import (
     SearXNGSearchTool,
