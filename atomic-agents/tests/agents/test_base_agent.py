@@ -2,16 +2,14 @@ import pytest
 from unittest.mock import Mock, call, patch
 from pydantic import BaseModel
 import instructor
-from atomic_agents.agents.base_agent import (
+from atomic_agents import (
     BaseIOSchema,
     BaseAgent,
     BaseAgentConfig,
     BaseAgentInputSchema,
     BaseAgentOutputSchema,
-    SystemPromptGenerator,
-    ChatHistory,
-    BaseDynamicContextProvider,
 )
+from atomic_agents.context import ChatHistory, SystemPromptGenerator, BaseDynamicContextProvider
 from instructor.dsl.partial import PartialBase
 
 

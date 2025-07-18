@@ -77,7 +77,7 @@ You can create custom input/output schemas by inheriting from `BaseIOSchema`:
 ```python
 from pydantic import Field
 from typing import List
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents import BaseIOSchema
 
 class CustomInputSchema(BaseIOSchema):
     chat_message: str = Field(..., description="User's message")
@@ -102,9 +102,8 @@ class CustomOutputSchema(BaseIOSchema):
 The `BaseAgent` class is the foundation for building AI agents in the Atomic Agents framework. It handles chat interactions, history management, system prompts, and responses from language models.
 
 ```python
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseAgent, BaseAgentConfig
+from atomic_agents.context import ChatHistory, SystemPromptGenerator
 
 # Create agent with basic configuration
 agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
@@ -174,7 +173,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 Context providers can be used to inject dynamic information into the system prompt:
 
 ```python
-from atomic_agents.lib.components.system_prompt_generator import BaseDynamicContextProvider
+from atomic_agents.context import BaseDynamicContextProvider
 
 class SearchResultsProvider(BaseDynamicContextProvider):
     def __init__(self, title: str):

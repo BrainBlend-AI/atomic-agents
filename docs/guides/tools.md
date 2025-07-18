@@ -89,8 +89,7 @@ You can create your own tools by following these guidelines:
 ### 1. Basic Structure
 
 ```python
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
-from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents import BaseTool, BaseToolConfig, BaseIOSchema
 
 ################
 # Input Schema #

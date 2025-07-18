@@ -1,12 +1,12 @@
-# Components
+# Context
 
 ## Agent History
 
 The `ChatHistory` class manages conversation history and state for AI agents:
 
 ```python
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import BaseIOSchema
 
 # Initialize history with optional max messages
 history = ChatHistory(max_messages=10)
@@ -73,7 +73,7 @@ for message in history:
 The `SystemPromptGenerator` creates structured system prompts for AI agents:
 
 ```python
-from atomic_agents.lib.components.system_prompt_generator import (
+from atomic_agents.context import (
     SystemPromptGenerator,
     BaseDynamicContextProvider
 )
@@ -150,7 +150,7 @@ The generated prompt will include:
 Base class for all input/output schemas:
 
 ```python
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents import BaseIOSchema
 from pydantic import Field
 
 class CustomSchema(BaseIOSchema):
@@ -169,7 +169,7 @@ Key features:
 Base class for creating tools:
 
 ```python
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
+from atomic_agents import BaseTool, BaseToolConfig
 from pydantic import Field
 
 class MyToolConfig(BaseToolConfig):
@@ -203,22 +203,22 @@ Key features:
 For full API details:
 
 ```{eval-rst}
-.. automodule:: atomic_agents.lib.components.chat_history
+.. automodule:: atomic_agents.context.chat_history
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: atomic_agents.lib.components.system_prompt_generator
+.. automodule:: atomic_agents.context.system_prompt_generator
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: atomic_agents.lib.base.base_io_schema
+.. automodule:: atomic_agents.base.base_io_schema
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: atomic_agents.lib.base.base_tool
+.. automodule:: atomic_agents.base.base_tool
    :members:
    :undoc-members:
    :show-inheritance:

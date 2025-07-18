@@ -1,7 +1,7 @@
 import uuid
 from pydantic import BaseModel
 import pytest
-from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents import BaseIOSchema
 from atomic_agents.utils import format_tool_message
 
 

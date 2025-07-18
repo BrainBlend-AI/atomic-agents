@@ -233,7 +233,7 @@ def test_load_invalid_data(history):
 
 
 def test_get_class_from_string():
-    class_string = "tests.lib.components.test_chat_history.InputSchema"
+    class_string = "tests.context.test_chat_history.InputSchema"
     cls = ChatHistory._get_class_from_string(class_string)
     assert cls.__name__ == InputSchema.__name__
     assert cls.__module__.endswith("test_chat_history")

@@ -52,8 +52,8 @@ def mock_client_session():
 
 class TestToolDefinitionService:
     @pytest.mark.asyncio
-    @patch("atomic_agents.lib.factories.tool_definition_service.sse_client")
-    @patch("atomic_agents.lib.factories.tool_definition_service.ClientSession")
+    @patch("atomic_agents.connectors.mcp.tool_definition_service.sse_client")
+    @patch("atomic_agents.connectors.mcp.tool_definition_service.ClientSession")
     async def test_fetch_via_sse(self, mock_client_session_cls, mock_sse_client, mock_client_session):
         # Setup
         mock_transport = MockAsyncContextManager(return_value=(AsyncMock(), AsyncMock()))
@@ -90,8 +90,8 @@ class TestToolDefinitionService:
         service.fetch_definitions_from_session = original_method
 
     @pytest.mark.asyncio
-    @patch("atomic_agents.lib.factories.tool_definition_service.streamablehttp_client")
-    @patch("atomic_agents.lib.factories.tool_definition_service.ClientSession")
+    @patch("atomic_agents.connectors.mcp.tool_definition_service.streamablehttp_client")
+    @patch("atomic_agents.connectors.mcp.tool_definition_service.ClientSession")
     async def test_fetch_via_http_stream(self, mock_client_session_cls, mock_http_client, mock_client_session):
         # Setup
         mock_transport = MockAsyncContextManager(return_value=(AsyncMock(), AsyncMock(), AsyncMock()))
@@ -147,11 +147,11 @@ class TestToolDefinitionService:
         )
 
         # Patch the stdio_client to avoid actual subprocess execution
-        with patch("atomic_agents.lib.factories.tool_definition_service.stdio_client") as mock_stdio:
+        with patch("atomic_agents.connectors.mcp.tool_definition_service.stdio_client") as mock_stdio:
             mock_transport = MockAsyncContextManager(return_value=(AsyncMock(), AsyncMock()))
             mock_stdio.return_value = mock_transport
 
-            with patch("atomic_agents.lib.factories.tool_definition_service.ClientSession") as mock_session_cls:
+            with patch("atomic_agents.connectors.mcp.tool_definition_service.ClientSession") as mock_session_cls:
                 mock_session = MockAsyncContextManager(return_value=AsyncMock())
                 mock_session_cls.return_value = mock_session
 
@@ -223,21 +223,21 @@ class TestToolDefinitionService:
 
     @pytest.mark.asyncio
     async def test_sse_connection_error(self):
-        with patch("atomic_agents.lib.factories.tool_definition_service.sse_client", side_effect=ConnectionError):
+        with patch("atomic_agents.connectors.mcp.tool_definition_service.sse_client", side_effect=ConnectionError):
             svc = ToolDefinitionService("http://host", transport_type=MCPTransportType.SSE)
             with pytest.raises(ConnectionError):
                 await svc.fetch_definitions()
 
     @pytest.mark.asyncio
     async def test_http_stream_connection_error(self):
-        with patch("atomic_agents.lib.factories.tool_definition_service.streamablehttp_client", side_effect=ConnectionError):
+        with patch("atomic_agents.connectors.mcp.tool_definition_service.streamablehttp_client", side_effect=ConnectionError):
             svc = ToolDefinitionService("http://host", transport_type=MCPTransportType.HTTP_STREAM)
             with pytest.raises(ConnectionError):
                 await svc.fetch_definitions()
 
     @pytest.mark.asyncio
     async def test_generic_error_wrapped(self):
-        with patch("atomic_agents.lib.factories.tool_definition_service.sse_client", side_effect=OSError("BOOM")):
+        with patch("atomic_agents.connectors.mcp.tool_definition_service.sse_client", side_effect=OSError("BOOM")):
             svc = ToolDefinitionService("http://host", transport_type=MCPTransportType.SSE)
             with pytest.raises(RuntimeError):
                 await svc.fetch_definitions()

@@ -8,7 +8,7 @@ from rich.live import Live
 from typing import List
 from pydantic import Field
 from atomic_agents.context import SystemPromptGenerator, ChatHistory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
 
 # API Key setup
 API_KEY = ""
