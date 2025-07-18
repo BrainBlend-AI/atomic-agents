@@ -1,9 +1,9 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type, Generator, AsyncGenerator, get_args
-from atomic_agents.components.chat_history import ChatHistory
-from atomic_agents.components.system_prompt_generator import (
-    SystemPromptContextProviderBase,
+from atomic_agents.context.chat_history import ChatHistory
+from atomic_agents.context.system_prompt_generator import (
+    BaseDynamicContextProvider,
     SystemPromptGenerator,
 )
 from atomic_agents.base.base_io_schema import BaseIOSchema
@@ -279,7 +279,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             full_response_content = self.output_schema(**last_response.model_dump())
             self.history.add_message("assistant", full_response_content)
 
-    def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
+    def get_context_provider(self, provider_name: str) -> Type[BaseDynamicContextProvider]:
         """
         Retrieves a context provider by name.
 
@@ -296,7 +296,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             raise KeyError(f"Context provider '{provider_name}' not found.")
         return self.system_prompt_generator.context_providers[provider_name]
 
-    def register_context_provider(self, provider_name: str, provider: SystemPromptContextProviderBase):
+    def register_context_provider(self, provider_name: str, provider: BaseDynamicContextProvider):
         """
         Registers a new context provider.
 

@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
-from atomic_agents.components import ChatHistory, SystemPromptGenerator
+from atomic_agents.connectors.mcp import fetch_mcp_tools_async, MCPTransportType
+from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
 import openai
 import instructor

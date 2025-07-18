@@ -10,14 +10,19 @@ This example consists of two main components:
 
 An interactive agent that:
 
-- Connects to MCP servers using either STDIO or SSE transport
+- Connects to MCP servers using multiple transport methods (STDIO, SSE, HTTP Stream)
 - Dynamically discovers available tools
 - Processes natural language queries
 - Selects appropriate tools based on user intent
 - Executes tools with extracted parameters (sync and async)
 - Provides responses in a conversational format
 
-The client includes both synchronous (`main.py`) and asynchronous (`main_fastapi.py`) implementations. The FastAPI version demonstrates async MCP tool execution using `fetch_mcp_tools_async()` and the `arun()` method for non-blocking tool execution in web applications.
+The client features a universal launcher that supports multiple implementations:
+- **stdio**: Blocking STDIO CLI client (default)
+- **stdio_async**: Async STDIO client
+- **sse**: SSE CLI client
+- **http_stream**: HTTP Stream CLI client
+- **fastapi**: FastAPI HTTP API server
 
 [View Example Client README](example-client/README.md)
 
@@ -85,7 +90,16 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 
    ```bash
    cd example-client
+   poetry run python -m example_client.main --client stdio
+   # or simply:
    poetry run python -m example_client.main
+   ```
+   
+   **Using async STDIO transport:**
+
+   ```bash
+   cd example-client
+   poetry run python -m example_client.main --client stdio_async
    ```
    
    **Using SSE transport:**
@@ -93,11 +107,11 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    ```bash
    # First terminal: Start the server
    cd example-mcp-server
-   poetry run example-mcp-server/server.py --mode=sse
+   poetry run example-mcp-server --mode=sse
 
    # Second terminal: Run the client with SSE transport
    cd example-client
-   poetry run python -m example_client.main --transport sse
+   poetry run python -m example_client.main --client sse
    ```
    
    **Using HTTP Stream transport:**
@@ -105,23 +119,23 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    ```bash
    # First terminal: Start the server
    cd example-mcp-server
-   poetry run python -m example_mcp_server.server_http
+   poetry run python -m example_mcp_server.server --mode=http_stream
 
    # Second terminal: Run the client with HTTP Stream transport
    cd example-client
-   poetry run python -m example_client.main --transport http_stream
+   poetry run python -m example_client.main --client http_stream
    ```
 
-   **Using FastAPI async client:**
+   **Using FastAPI server:**
 
    ```bash
    # First terminal: Start the MCP server
    cd example-mcp-server
    poetry run python -m example_mcp_server.server --mode=http_stream
 
-   # Second terminal: Run the async FastAPI client
+   # Second terminal: Run the FastAPI client server
    cd example-client
-   poetry run python -m example_client.main_fastapi
+   poetry run python -m example_client.main --client fastapi
    # Then visit http://localhost:8000 for the API interface
    ```
 

@@ -14,8 +14,8 @@ from mcp.client.streamable_http import streamablehttp_client
 
 from atomic_agents.base.base_io_schema import BaseIOSchema
 from atomic_agents.base.base_tool import BaseTool
-from atomic_agents.factories.schema_transformer import SchemaTransformer
-from atomic_agents.factories.tool_definition_service import ToolDefinitionService, MCPToolDefinition, MCPTransportType
+from atomic_agents.connectors.mcp.schema_transformer import SchemaTransformer
+from atomic_agents.connectors.mcp.tool_definition_service import ToolDefinitionService, MCPToolDefinition, MCPTransportType
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 # pyright: reportInvalidTypeForm=false
-from atomic_agents.factories import fetch_mcp_tools, MCPTransportType
+from atomic_agents.connectors.mcp import fetch_mcp_tools, MCPTransportType
 from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.components import ChatHistory, SystemPromptGenerator
+from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from rich.console import Console
 from rich.table import Table
 import openai
