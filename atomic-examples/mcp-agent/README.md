@@ -126,20 +126,20 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    poetry run python -m example_client.main --client http_stream
    ```
 
-   **Using FastAPI server:**
+   **Using FastAPI client:**
 
    ```bash
    # First terminal: Start the MCP server
    cd example-mcp-server
    poetry run python -m example_mcp_server.server --mode=http_stream
 
-   # Second terminal: Run the FastAPI client server
+   # Second terminal: Run the FastAPI client
    cd example-client
    poetry run python -m example_client.main --client fastapi
    # Then visit http://localhost:8000 for the API interface
    ```
 
-**Note:** When using SSE or HTTP Stream transport, make sure the server is running before starting the client. The server runs on port 6969 by default.
+**Note:** When using SSE, FastAPI or HTTP Stream transport, make sure the server is running before starting the client. The server runs on port 6969 by default.
 
 ## Example Queries
 
