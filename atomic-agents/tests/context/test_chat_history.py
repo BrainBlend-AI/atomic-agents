@@ -181,7 +181,7 @@ def test_dump_and_load(history):
 def test_dump_and_load_multimodal_data(history):
     import os
 
-    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     test_image = instructor.Image.from_path(path=os.path.join(base_path, "files/image_sample.jpg"))
     test_pdf = instructor.multimodal.PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
     test_audio = instructor.multimodal.Audio.from_path(path=os.path.join(base_path, "files/audio_sample.mp3"))
