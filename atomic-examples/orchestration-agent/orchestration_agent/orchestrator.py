@@ -2,7 +2,7 @@ from typing import Union
 import openai
 from pydantic import Field
 from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
-from atomic_agents.components import SystemPromptGenerator, SystemPromptContextProviderBase
+from atomic_agents.context import SystemPromptGenerator, BaseDynamicContextProvider
 
 from orchestration_agent.tools.searxng_search import (
     SearXNGSearchTool,
@@ -58,7 +58,7 @@ class OrchestratorAgentConfig(BaseAgentConfig):
 #####################
 # CONTEXT PROVIDERS #
 #####################
-class CurrentDateProvider(SystemPromptContextProviderBase):
+class CurrentDateProvider(BaseDynamicContextProvider):
     def __init__(self, title):
         super().__init__(title)
         self.date = datetime.now().strftime("%Y-%m-%d")
