@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from atomic_agents.lib.factories.tool_definition_service import (
+from atomic_agents.connectors.mcp import (
     ToolDefinitionService,
     MCPToolDefinition,
     MCPTransportType,

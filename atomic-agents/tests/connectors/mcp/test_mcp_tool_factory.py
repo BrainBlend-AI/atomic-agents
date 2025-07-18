@@ -1,14 +1,14 @@
 import pytest
 from pydantic import BaseModel
 import asyncio
-from atomic_agents.lib.factories.mcp_tool_factory import (
+from atomic_agents.connectors.mcp import (
     fetch_mcp_tools,
     create_mcp_orchestrator_schema,
     fetch_mcp_tools_with_schema,
     fetch_mcp_tools_async,
     MCPToolFactory,
 )
-from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition, ToolDefinitionService, MCPTransportType
+from atomic_agents.connectors.mcp import MCPToolDefinition, ToolDefinitionService, MCPTransportType
 
 
 class DummySession:

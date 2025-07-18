@@ -4,8 +4,8 @@ import pytest
 import json
 from typing import List, Dict
 from pydantic import Field
-from atomic_agents.lib.components.chat_history import ChatHistory, Message
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.context import ChatHistory, Message
+from atomic_agents import BaseIOSchema
 import instructor
 
 

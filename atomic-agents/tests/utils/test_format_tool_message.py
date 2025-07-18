@@ -2,7 +2,7 @@ import uuid
 from pydantic import BaseModel
 import pytest
 from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.utils.format_tool_message import format_tool_message
+from atomic_agents.utils import format_tool_message
 
 
 # Mock classes for testing
