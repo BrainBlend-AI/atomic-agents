@@ -3,7 +3,7 @@ import openai
 from pydantic import Field
 from typing import List
 from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.components import SystemPromptGenerator
+from atomic_agents.context import SystemPromptGenerator
 
 
 class QueryAgentInputSchema(BaseIOSchema):
