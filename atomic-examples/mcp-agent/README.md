@@ -102,12 +102,12 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    poetry run python -m example_client.main --client stdio_async
    ```
    
-   **Using SSE transport:**
+   **Using SSE transport (Deprecated):**
 
    ```bash
    # First terminal: Start the server
    cd example-mcp-server
-   poetry run example-mcp-server --mode=sse
+   poetry run -m example_mcp_server.server --mode=sse
 
    # Second terminal: Run the client with SSE transport
    cd example-client
