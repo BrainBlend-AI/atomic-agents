@@ -3,7 +3,7 @@
 Universal launcher for the MCP examples.
   stdio_async  - runs the async STDIO client
   fastapi      - serves the FastAPI HTTP API
-  http         - HTTP-stream CLI client
+  http_stream  - HTTP-stream CLI client
   sse          - SSE CLI client
   stdio        - blocking STDIO CLI client
 """
