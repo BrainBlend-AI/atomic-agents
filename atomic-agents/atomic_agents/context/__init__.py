@@ -1,7 +1,4 @@
-from .chat_history import (
-    ChatHistory, 
-    Message
-)
+from .chat_history import ChatHistory, Message
 from .system_prompt_generator import (
     SystemPromptGenerator,
     BaseDynamicContextProvider,

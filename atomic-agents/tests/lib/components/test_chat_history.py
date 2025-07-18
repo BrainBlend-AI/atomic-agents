@@ -180,6 +180,7 @@ def test_dump_and_load(history):
 
 def test_dump_and_load_multimodal_data(history):
     import os
+
     base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     test_image = instructor.Image.from_path(path=os.path.join(base_path, "files/image_sample.jpg"))
     test_pdf = instructor.multimodal.PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
@@ -411,12 +412,10 @@ def test_get_history_with_multimodal_content(history):
     mock_audio = instructor.multimodal.Audio(source="test_audio_url", media_type="audio/mp3", detail="low")
 
     # Add a multimodal message
-    history.add_message("user", MockMultimodalSchema(
-        instruction_text="Analyze this image", 
-        images=[mock_image],
-        pdfs=[mock_pdf],
-        audio=mock_audio
-    ))
+    history.add_message(
+        "user",
+        MockMultimodalSchema(instruction_text="Analyze this image", images=[mock_image], pdfs=[mock_pdf], audio=mock_audio),
+    )
 
     # Get history and verify format
     history = history.get_history()

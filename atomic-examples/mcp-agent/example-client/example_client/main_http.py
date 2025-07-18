@@ -2,6 +2,7 @@
 HTTP Stream transport client for MCP Agent example.
 Communicates with the server_http.py `/mcp` endpoint using HTTP GET/POST/DELETE for JSON-RPC streams.
 """
+
 from atomic_agents.connectors.mcp import fetch_mcp_tools, MCPTransportType
 from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
