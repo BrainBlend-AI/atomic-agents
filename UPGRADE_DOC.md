@@ -21,7 +21,7 @@ All base classes available from the main package:
 from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema, BaseTool, BaseToolConfig
 ```
 
-### Component Imports (Cleaner Paths)
+### Context Imports (Cleaner Paths)
 **New (Recommended):**
 ```python
 from atomic_agents.context import ChatHistory, SystemPromptGenerator, BaseDynamicContextProvider
@@ -86,6 +86,7 @@ from atomic_agents.connectors.mcp import fetch_mcp_tools_async, MCPTransportType
 4. **Better organization**: 
    - `components` → `context` (better reflects purpose)
    - `factories` → `connectors` with MCP-specific functionality grouped under `connectors.mcp`
+   - `connectors` structure allows future extension for agent-to-agent communications and other connectivity modules
    - More intuitive class naming (`BaseDynamicContextProvider` vs `SystemPromptContextProviderBase`)
 
 ## Migration Strategy
