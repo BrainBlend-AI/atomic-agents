@@ -9,7 +9,8 @@ Atomic Agents now provides **simplified import paths** that eliminate the need f
 We've refactored the package structure to use module re-exports, allowing shorter, cleaner import paths:
 
 - **Core classes**: All essential base classes available from main package
-- **Module re-exports**: Components, factories, and utils accessible without `.lib`
+- **Module re-exports**: Components moved to `context`, factories moved to `connectors` with MCP-specific functionality under `connectors.mcp`
+- **Class renames**: `SystemPromptContextProviderBase` → `BaseDynamicContextProvider`
 - **Breaking change**: Old import paths using `.lib` are no longer supported.
 
 ## New Import Patterns
@@ -23,16 +24,17 @@ from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema, BaseTool, Ba
 ### Component Imports (Cleaner Paths)
 **New (Recommended):**
 ```python
-from atomic_agents.components import ChatHistory, SystemPromptGenerator
-from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
+from atomic_agents.context import ChatHistory, SystemPromptGenerator, BaseDynamicContextProvider
+from atomic_agents.connectors.mcp import fetch_mcp_tools_async, MCPTransportType
 from atomic_agents.utils import format_tool_message
 ```
 
 **Old (No Longer Works):**
 ```python
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
 from atomic_agents.lib.components.chat_history import ChatHistory
 from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools_async
+from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 from atomic_agents.lib.utils.format_tool_message import format_tool_message
 ```
 
@@ -42,14 +44,14 @@ from atomic_agents.lib.utils.format_tool_message import format_tool_message
 **Before:**
 ```python
 from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
 from atomic_agents.lib.components.chat_history import ChatHistory
 ```
 
 **After:**
 ```python
 from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.components import SystemPromptGenerator, ChatHistory
+from atomic_agents.context import SystemPromptGenerator, BaseDynamicContextProvider, ChatHistory
 ```
 
 ### Custom Tool Creation
@@ -68,11 +70,12 @@ from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig
 **Before:**
 ```python
 from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools_async
+from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
 ```
 
 **After:**
 ```python
-from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
+from atomic_agents.connectors.mcp import fetch_mcp_tools_async, MCPTransportType
 ```
 
 ## Benefits
@@ -80,6 +83,10 @@ from atomic_agents.factories import fetch_mcp_tools_async, MCPTransportType
 1. **Shorter imports**: Eliminated `.lib` from import paths
 2. **Consistent API**: All base classes from main package
 3. **Cleaner code**: More readable import statements
+4. **Better organization**: 
+   - `components` → `context` (better reflects purpose)
+   - `factories` → `connectors` with MCP-specific functionality grouped under `connectors.mcp`
+   - More intuitive class naming (`BaseDynamicContextProvider` vs `SystemPromptContextProviderBase`)
 
 ## Migration Strategy
 
