@@ -10,7 +10,7 @@ from atomic_agents.agents.base_agent import (
     BaseAgentOutputSchema,
     SystemPromptGenerator,
     ChatHistory,
-    SystemPromptContextProviderBase,
+    BaseDynamicContextProvider,
 )
 from instructor.dsl.partial import PartialBase
 
@@ -185,7 +185,7 @@ def test_reset_history(agent, mock_history):
 
 
 def test_get_context_provider(agent, mock_system_prompt_generator):
-    mock_provider = Mock(spec=SystemPromptContextProviderBase)
+    mock_provider = Mock(spec=BaseDynamicContextProvider)
     mock_system_prompt_generator.context_providers = {"test_provider": mock_provider}
 
     result = agent.get_context_provider("test_provider")
@@ -196,7 +196,7 @@ def test_get_context_provider(agent, mock_system_prompt_generator):
 
 
 def test_register_context_provider(agent, mock_system_prompt_generator):
-    mock_provider = Mock(spec=SystemPromptContextProviderBase)
+    mock_provider = Mock(spec=BaseDynamicContextProvider)
     agent.register_context_provider("new_provider", mock_provider)
 
     assert "new_provider" in mock_system_prompt_generator.context_providers
@@ -204,7 +204,7 @@ def test_register_context_provider(agent, mock_system_prompt_generator):
 
 
 def test_unregister_context_provider(agent, mock_system_prompt_generator):
-    mock_provider = Mock(spec=SystemPromptContextProviderBase)
+    mock_provider = Mock(spec=BaseDynamicContextProvider)
     mock_system_prompt_generator.context_providers = {"test_provider": mock_provider}
 
     agent.unregister_context_provider("test_provider")

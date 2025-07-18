@@ -75,7 +75,7 @@ The `SystemPromptGenerator` creates structured system prompts for AI agents:
 ```python
 from atomic_agents.lib.components.system_prompt_generator import (
     SystemPromptGenerator,
-    SystemPromptContextProviderBase
+    BaseDynamicContextProvider
 )
 
 # Create generator with static content
@@ -113,7 +113,7 @@ class SearchResult:
     content: str
     metadata: dict
 
-class SearchResultsProvider(SystemPromptContextProviderBase):
+class SearchResultsProvider(BaseDynamicContextProvider):
     def __init__(self, title: str):
         super().__init__(title=title)
         self.results: List[SearchResult] = []

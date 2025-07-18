@@ -166,7 +166,7 @@ class BaseAgentOutputSchema(BaseIOSchema):
 - `get_response(response_model=None) -> Type[BaseModel]`: Get direct model response
 - `reset_history()`: Reset history to initial state
 - `get_context_provider(provider_name: str)`: Get a registered context provider
-- `register_context_provider(provider_name: str, provider: SystemPromptContextProviderBase)`: Register a new context provider
+- `register_context_provider(provider_name: str, provider: BaseDynamicContextProvider)`: Register a new context provider
 - `unregister_context_provider(provider_name: str)`: Remove a context provider
 
 ### Context Providers
@@ -174,9 +174,9 @@ class BaseAgentOutputSchema(BaseIOSchema):
 Context providers can be used to inject dynamic information into the system prompt:
 
 ```python
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents.lib.components.system_prompt_generator import BaseDynamicContextProvider
 
-class SearchResultsProvider(SystemPromptContextProviderBase):
+class SearchResultsProvider(BaseDynamicContextProvider):
     def __init__(self, title: str):
         super().__init__(title=title)
         self.results = []

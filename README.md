@@ -227,14 +227,14 @@ Atomic Agents allows you to enhance your agents with dynamic context using **Con
 
 ### Using Context Providers
 
-To use a Context Provider, create a class that inherits from `SystemPromptContextProviderBase` and implements the `get_info()` method, which returns the context string to be added to the system prompt.
+To use a Context Provider, create a class that inherits from `BaseDynamicContextProvider` and implements the `get_info()` method, which returns the context string to be added to the system prompt.
 
 Here's a simple example:
 
 ```python
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents.lib.components.system_prompt_generator import BaseDynamicContextProvider
 
-class SearchResultsProvider(SystemPromptContextProviderBase):
+class SearchResultsProvider(BaseDynamicContextProvider):
     def __init__(self, title: str, search_results: List[str]):
         super().__init__(title=title)
         self.search_results = search_results

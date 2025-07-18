@@ -287,7 +287,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             provider_name (str): The name of the context provider.
 
         Returns:
-            SystemPromptContextProviderBase: The context provider if found.
+            BaseDynamicContextProvider: The context provider if found.
 
         Raises:
             KeyError: If the context provider is not found.
@@ -302,7 +302,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
         Args:
             provider_name (str): The name of the context provider.
-            provider (SystemPromptContextProviderBase): The context provider instance.
+            provider (BaseDynamicContextProvider): The context provider instance.
         """
         self.system_prompt_generator.context_providers[provider_name] = provider
 
