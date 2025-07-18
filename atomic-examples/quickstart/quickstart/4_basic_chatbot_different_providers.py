@@ -3,7 +3,7 @@ import instructor
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from atomic_agents.components import ChatHistory
+from atomic_agents.context import ChatHistory
 from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 from dotenv import load_dotenv
 

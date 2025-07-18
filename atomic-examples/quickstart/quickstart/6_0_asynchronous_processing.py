@@ -4,7 +4,7 @@ import instructor
 import openai
 from rich.console import Console
 from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.components import SystemPromptGenerator
+from atomic_agents.context import SystemPromptGenerator
 
 # API Key setup
 API_KEY = ""

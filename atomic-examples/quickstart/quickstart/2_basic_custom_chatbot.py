@@ -4,7 +4,7 @@ import openai
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from atomic_agents.components import SystemPromptGenerator, ChatHistory
+from atomic_agents.context import SystemPromptGenerator, ChatHistory
 from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # API Key setup

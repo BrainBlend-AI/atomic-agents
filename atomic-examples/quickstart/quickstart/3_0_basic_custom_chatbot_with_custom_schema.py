@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.text import Text
 from typing import List
 from pydantic import Field
-from atomic_agents.components import SystemPromptGenerator, ChatHistory
+from atomic_agents.context import SystemPromptGenerator, ChatHistory
 from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
 
 # API Key setup
