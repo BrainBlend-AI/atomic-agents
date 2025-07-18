@@ -103,6 +103,14 @@ This upgrade introduces breaking changes. All projects must be updated to use th
 - **Breaking Changes**: This version is not backward compatible.
 - **Mandatory Migration**: You must update your import paths to continue using the library.
 
+## Additional Updates
+
+### YouTube API Update
+The YouTube API dependency has been updated to version 1.1.1 to resolve compatibility issues with lower versions.
+
+### Poetry Dependencies
+Examples and forge dependencies have been updated using `poetry update atomic-agents` to ensure compatibility with the new package structure.
+
 ## Version Information
 
 These import improvements are available starting from Atomic Agents v2.0.0.
