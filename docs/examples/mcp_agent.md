@@ -135,7 +135,7 @@ async def setup_tools():
 The example implements three distinct transport methods via the `MCPTransportType` enum, each with its own advantages:
 
 ```python
-from atomic_agents.lib.factories.tool_definition_service import MCPTransportType
+from atomic_agents.connectors.mcp.tool_definition_service import MCPTransportType
 
 # Available transport types
 MCPTransportType.STDIO       # Standard input/output transport  

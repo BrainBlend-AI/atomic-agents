@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Type, Tuple, Literal, cast
 
 from pydantic import Field, create_model
 
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.base.base_io_schema import BaseIOSchema
 
 logger = logging.getLogger(__name__)
 

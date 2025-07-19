@@ -2,7 +2,7 @@ from typing import Optional, Type, get_args
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.base.base_io_schema import BaseIOSchema
 
 
 class BaseToolConfig(BaseModel):

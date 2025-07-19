@@ -43,7 +43,7 @@ The components module contains essential building blocks:
   - Output instructions
   - Dynamic context through context providers
 
-- `SystemPromptContextProviderBase`: Base class for creating custom context providers that can inject dynamic information into system prompts
+- `BaseDynamicContextProvider`: Base class for creating custom context providers that can inject dynamic information into system prompts
 
 [Learn more about components](components.md)
 

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
 
-class SystemPromptContextProviderBase(ABC):
+class BaseDynamicContextProvider(ABC):
     def __init__(self, title: str):
         self.title = title
 
@@ -20,7 +20,7 @@ class SystemPromptGenerator:
         background: Optional[List[str]] = None,
         steps: Optional[List[str]] = None,
         output_instructions: Optional[List[str]] = None,
-        context_providers: Optional[Dict[str, SystemPromptContextProviderBase]] = None,
+        context_providers: Optional[Dict[str, BaseDynamicContextProvider]] = None,
     ):
         self.background = background or ["This is a conversation with a helpful and friendly AI assistant."]
         self.steps = steps or []

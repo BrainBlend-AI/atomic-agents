@@ -6,12 +6,12 @@ authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<4.0"
+python = ">=3.12,<3.14"
 atomic-agents = {path = "../..", develop = true}
 openai = ">=1.35.12,<2.0.0"
 pydantic = ">=2.10.3,<3.0.0"
 google-api-python-client = ">=2.101.0,<3.0.0"
-youtube-transcript-api = ">=0.1.9,<1.0.0"
+youtube-transcript-api = "^1.1.1"
 instructor = ">=1.5.2,<2.0.0"
 python-dotenv = ">=1.0.1,<2.0.0"
 

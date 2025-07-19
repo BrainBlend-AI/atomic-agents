@@ -1,12 +1,12 @@
 import instructor
 from pydantic import BaseModel, Field
 from typing import Optional, Type, Generator, AsyncGenerator, get_args
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.lib.components.system_prompt_generator import (
-    SystemPromptContextProviderBase,
+from atomic_agents.context.chat_history import ChatHistory
+from atomic_agents.context.system_prompt_generator import (
+    BaseDynamicContextProvider,
     SystemPromptGenerator,
 )
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.base.base_io_schema import BaseIOSchema
 
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
@@ -279,7 +279,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             full_response_content = self.output_schema(**last_response.model_dump())
             self.history.add_message("assistant", full_response_content)
 
-    def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
+    def get_context_provider(self, provider_name: str) -> Type[BaseDynamicContextProvider]:
         """
         Retrieves a context provider by name.
 
@@ -287,7 +287,7 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             provider_name (str): The name of the context provider.
 
         Returns:
-            SystemPromptContextProviderBase: The context provider if found.
+            BaseDynamicContextProvider: The context provider if found.
 
         Raises:
             KeyError: If the context provider is not found.
@@ -296,13 +296,13 @@ class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             raise KeyError(f"Context provider '{provider_name}' not found.")
         return self.system_prompt_generator.context_providers[provider_name]
 
-    def register_context_provider(self, provider_name: str, provider: SystemPromptContextProviderBase):
+    def register_context_provider(self, provider_name: str, provider: BaseDynamicContextProvider):
         """
         Registers a new context provider.
 
         Args:
             provider_name (str): The name of the context provider.
-            provider (SystemPromptContextProviderBase): The context provider instance.
+            provider (BaseDynamicContextProvider): The context provider instance.
         """
         self.system_prompt_generator.context_providers[provider_name] = provider
 

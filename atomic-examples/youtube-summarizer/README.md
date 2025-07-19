@@ -37,6 +37,11 @@ To get started with the YouTube Summarizer:
    ```bash
    poetry run python youtube_summarizer/main.py
    ```
+   or
+
+   ```bash
+   poetry run python -m youtube_summarizer.main
+   ```
 
 ## File Explanation
 

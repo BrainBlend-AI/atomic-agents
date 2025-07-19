@@ -5,8 +5,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # API Key setup
 API_KEY = ""

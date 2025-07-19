@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Type
 from instructor.multimodal import PDF, Image, Audio
 from pydantic import BaseModel, Field
 
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.base.base_io_schema import BaseIOSchema
 
 
 INSTRUCTOR_MULTIMODAL_TYPES = (Image, Audio, PDF)

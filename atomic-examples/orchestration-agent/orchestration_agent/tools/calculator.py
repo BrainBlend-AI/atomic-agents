@@ -1,8 +1,7 @@
 from pydantic import Field
 from sympy import sympify
 
-from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
+from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig
 
 
 ################

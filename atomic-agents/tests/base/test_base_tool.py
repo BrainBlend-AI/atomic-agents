@@ -1,6 +1,5 @@
 from pydantic import BaseModel
-from atomic_agents.lib.base.base_tool import BaseToolConfig, BaseTool
-from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents import BaseToolConfig, BaseTool, BaseIOSchema
 
 
 # Mock classes for testing

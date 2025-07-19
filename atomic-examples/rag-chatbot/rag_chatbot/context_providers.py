@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents.context import BaseDynamicContextProvider
 
 
 @dataclass
@@ -9,7 +9,7 @@ class ChunkItem:
     metadata: dict
 
 
-class RAGContextProvider(SystemPromptContextProviderBase):
+class RAGContextProvider(BaseDynamicContextProvider):
     def __init__(self, title: str):
         super().__init__(title=title)
         self.chunks: List[ChunkItem] = []
