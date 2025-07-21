@@ -59,7 +59,7 @@ When creating new tools:
 2. Implement the required interfaces:
    ```python
    from pydantic import BaseModel
-   from atomic_agents.lib.tools import BaseTool
+   from atomic_agents import BaseTool
 
    class MyToolInputs(BaseModel):
        # Define input schema

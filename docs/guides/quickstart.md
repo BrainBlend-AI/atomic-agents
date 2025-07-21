@@ -24,8 +24,8 @@ import os
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # Initialize console for pretty outputs
 console = Console()
@@ -80,8 +80,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 
 # Initialize console for pretty outputs
 console = Console()
@@ -151,10 +151,8 @@ import openai
 from rich.console import Console
 from typing import List
 from pydantic import Field
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.context import ChatHistory, SystemPromptGenerator
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
 
 # Initialize console for pretty outputs
 console = Console()
@@ -258,8 +256,8 @@ import os
 import instructor
 from rich.console import Console
 from rich.text import Text
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 from dotenv import load_dotenv
 
 load_dotenv()

@@ -1,14 +1,14 @@
 import pytest
 from pydantic import BaseModel
 import asyncio
-from atomic_agents.lib.factories.mcp_tool_factory import (
+from atomic_agents.connectors.mcp import (
     fetch_mcp_tools,
     create_mcp_orchestrator_schema,
     fetch_mcp_tools_with_schema,
     fetch_mcp_tools_async,
     MCPToolFactory,
 )
-from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition, ToolDefinitionService, MCPTransportType
+from atomic_agents.connectors.mcp import MCPToolDefinition, ToolDefinitionService, MCPTransportType
 
 
 class DummySession:
@@ -107,7 +107,7 @@ def test_fetch_mcp_tools_with_stdio_and_working_directory(monkeypatch):
 @pytest.mark.parametrize("transport_type", [MCPTransportType.HTTP_STREAM, MCPTransportType.STDIO])
 def test_run_tool(monkeypatch, transport_type):
     # Setup dummy transports and session
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     class DummyTransportCM:
         def __init__(self, ret):
@@ -160,7 +160,7 @@ def test_run_tool(monkeypatch, transport_type):
 
 
 def test_run_tool_with_persistent_session(monkeypatch):
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     # Setup persistent client
     class DummySessionPersistent:
@@ -190,8 +190,8 @@ def test_run_tool_with_persistent_session(monkeypatch):
 
 
 def test_fetch_tool_definitions_via_service(monkeypatch):
-    from atomic_agents.lib.factories.mcp_tool_factory import MCPToolFactory
-    from atomic_agents.lib.factories.tool_definition_service import MCPToolDefinition
+    from atomic_agents.connectors.mcp.mcp_tool_factory import MCPToolFactory
+    from atomic_agents.connectors.mcp.tool_definition_service import MCPToolDefinition
 
     defs = [MCPToolDefinition(name="X", description="d", input_schema={"type": "object", "properties": {}, "required": []})]
 
@@ -206,7 +206,7 @@ def test_fetch_tool_definitions_via_service(monkeypatch):
 
 
 def test_fetch_tool_definitions_propagates_error(monkeypatch):
-    from atomic_agents.lib.factories.mcp_tool_factory import MCPToolFactory
+    from atomic_agents.connectors.mcp.mcp_tool_factory import MCPToolFactory
 
     def fake_fetch(self):
         raise RuntimeError("nope")
@@ -218,7 +218,7 @@ def test_fetch_tool_definitions_propagates_error(monkeypatch):
 
 
 def test_run_tool_handles_special_result_types(monkeypatch):
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     class DummyTransportCM:
         def __init__(self, ret):
@@ -277,7 +277,7 @@ def test_run_tool_handles_special_result_types(monkeypatch):
 
 
 def test_run_invalid_stdio_command_raises(monkeypatch):
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     class DummyTransportCM:
         def __init__(self, ret):
@@ -335,7 +335,7 @@ def test_force_mark_unreachable_lines_for_coverage():
     Force execution marking of unreachable lines in mcp_tool_factory for coverage.
     """
     import inspect
-    from atomic_agents.lib.factories.mcp_tool_factory import MCPToolFactory
+    from atomic_agents.connectors.mcp.mcp_tool_factory import MCPToolFactory
 
     file_path = inspect.getsourcefile(MCPToolFactory)
     # Include additional unreachable lines for coverage
@@ -380,7 +380,7 @@ async def test_cover_line_195_async_test():
 
 def test_run_tool_with_persistent_session_no_event_loop(monkeypatch):
     """Covers AttributeError when no event loop is provided for persistent session."""
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     # Setup persistent client
     class DummySessionPersistent:
@@ -414,7 +414,7 @@ def test_run_tool_with_persistent_session_no_event_loop(monkeypatch):
 
 def test_http_stream_connection_error_handling(monkeypatch):
     """Test HTTP stream connection error handling in MCPToolFactory."""
-    from atomic_agents.lib.factories.tool_definition_service import ToolDefinitionService
+    from atomic_agents.connectors.mcp.tool_definition_service import ToolDefinitionService
 
     # Mock ToolDefinitionService.fetch_definitions to raise ConnectionError for HTTP_STREAM
     original_fetch = ToolDefinitionService.fetch_definitions
@@ -446,7 +446,7 @@ def test_http_stream_endpoint_formatting():
 @pytest.mark.asyncio
 async def test_fetch_mcp_tools_async_with_client_session(monkeypatch):
     """Test fetch_mcp_tools_async with pre-initialized client session."""
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     # Setup persistent client
     class DummySessionPersistent:
@@ -596,7 +596,7 @@ async def test_fetch_mcp_tools_async_with_working_directory(monkeypatch):
 @pytest.mark.asyncio
 async def test_fetch_mcp_tools_async_session_error_propagation(monkeypatch):
     """Test fetch_mcp_tools_async with client session error propagation."""
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     class DummySessionPersistent:
         async def call_tool(self, name, arguments):
@@ -707,7 +707,7 @@ def test_arun_attribute_exists_on_generated_tools(monkeypatch):
 @pytest.mark.asyncio
 async def test_arun_tool_async_execution(monkeypatch):
     """Test that arun method executes tool asynchronously."""
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     class DummyTransportCM:
         def __init__(self, ret):
@@ -761,7 +761,7 @@ async def test_arun_tool_async_execution(monkeypatch):
 @pytest.mark.asyncio
 async def test_arun_error_handling(monkeypatch):
     """Test that arun properly handles and wraps errors."""
-    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    import atomic_agents.connectors.mcp.mcp_tool_factory as mtf
 
     class DummyTransportCM:
         def __init__(self, ret):

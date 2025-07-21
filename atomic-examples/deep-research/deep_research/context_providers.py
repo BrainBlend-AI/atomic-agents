@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents.context import BaseDynamicContextProvider
 
 
 @dataclass
@@ -10,7 +10,7 @@ class ContentItem:
     url: str
 
 
-class ScrapedContentContextProvider(SystemPromptContextProviderBase):
+class ScrapedContentContextProvider(BaseDynamicContextProvider):
     def __init__(self, title: str):
         super().__init__(title=title)
         self.content_items: List[ContentItem] = []
@@ -24,7 +24,7 @@ class ScrapedContentContextProvider(SystemPromptContextProviderBase):
         )
 
 
-class CurrentDateContextProvider(SystemPromptContextProviderBase):
+class CurrentDateContextProvider(BaseDynamicContextProvider):
     def __init__(self, title: str, date_format: str = "%A %B %d, %Y"):
         super().__init__(title=title)
         self.date_format = date_format

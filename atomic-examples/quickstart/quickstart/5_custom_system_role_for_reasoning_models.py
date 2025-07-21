@@ -3,8 +3,8 @@ import instructor
 import openai
 from rich.console import Console
 from rich.text import Text
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import SystemPromptGenerator
 
 # API Key setup
 API_KEY = ""

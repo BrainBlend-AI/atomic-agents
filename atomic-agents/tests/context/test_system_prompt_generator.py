@@ -1,7 +1,7 @@
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
+from atomic_agents.context import SystemPromptGenerator, BaseDynamicContextProvider
 
 
-class MockContextProvider(SystemPromptContextProviderBase):
+class MockContextProvider(BaseDynamicContextProvider):
     def __init__(self, title: str, info: str):
         super().__init__(title)
         self._info = info

@@ -4,8 +4,8 @@ import pytest
 import json
 from typing import List, Dict
 from pydantic import Field
-from atomic_agents.lib.components.chat_history import ChatHistory, Message
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.context import ChatHistory, Message
+from atomic_agents import BaseIOSchema
 import instructor
 
 
@@ -180,7 +180,8 @@ def test_dump_and_load(history):
 
 def test_dump_and_load_multimodal_data(history):
     import os
-    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     test_image = instructor.Image.from_path(path=os.path.join(base_path, "files/image_sample.jpg"))
     test_pdf = instructor.multimodal.PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
     test_audio = instructor.multimodal.Audio.from_path(path=os.path.join(base_path, "files/audio_sample.mp3"))
@@ -232,7 +233,7 @@ def test_load_invalid_data(history):
 
 
 def test_get_class_from_string():
-    class_string = "tests.lib.components.test_chat_history.InputSchema"
+    class_string = "tests.context.test_chat_history.InputSchema"
     cls = ChatHistory._get_class_from_string(class_string)
     assert cls.__name__ == InputSchema.__name__
     assert cls.__module__.endswith("test_chat_history")
@@ -411,12 +412,10 @@ def test_get_history_with_multimodal_content(history):
     mock_audio = instructor.multimodal.Audio(source="test_audio_url", media_type="audio/mp3", detail="low")
 
     # Add a multimodal message
-    history.add_message("user", MockMultimodalSchema(
-        instruction_text="Analyze this image", 
-        images=[mock_image],
-        pdfs=[mock_pdf],
-        audio=mock_audio
-    ))
+    history.add_message(
+        "user",
+        MockMultimodalSchema(instruction_text="Analyze this image", images=[mock_image], pdfs=[mock_pdf], audio=mock_audio),
+    )
 
     # Get history and verify format
     history = history.get_history()

@@ -4,9 +4,8 @@ from rich.console import Console
 from rich.markdown import Markdown
 from pydantic import Field
 
-from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.components.chat_history import ChatHistory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents import BaseIOSchema
+from atomic_agents.context import ChatHistory, BaseDynamicContextProvider
 
 from web_search_agent.tools.searxng_search import (
     SearXNGSearchTool,
@@ -31,7 +30,7 @@ history = ChatHistory()
 search_tool = SearXNGSearchTool(config=SearXNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5))
 
 
-class SearchResultsProvider(SystemPromptContextProviderBase):
+class SearchResultsProvider(BaseDynamicContextProvider):
     def __init__(self, title: str, search_results: SearXNGSearchToolOutputSchema | Exception):
         super().__init__(title=title)
         self.search_results = search_results

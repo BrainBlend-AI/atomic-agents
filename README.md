@@ -137,10 +137,8 @@ Here's a quick snippet demonstrating how easy it is to create a powerful agent w
 from pydantic import Field
 from openai import OpenAI
 import instructor
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.chat_history import ChatHistory
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator, ChatHistory
 
 # Define a custom output schema
 class CustomOutputSchema(BaseIOSchema):
@@ -227,14 +225,14 @@ Atomic Agents allows you to enhance your agents with dynamic context using **Con
 
 ### Using Context Providers
 
-To use a Context Provider, create a class that inherits from `SystemPromptContextProviderBase` and implements the `get_info()` method, which returns the context string to be added to the system prompt.
+To use a Context Provider, create a class that inherits from `BaseDynamicContextProvider` and implements the `get_info()` method, which returns the context string to be added to the system prompt.
 
 Here's a simple example:
 
 ```python
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents.context import BaseDynamicContextProvider
 
-class SearchResultsProvider(SystemPromptContextProviderBase):
+class SearchResultsProvider(BaseDynamicContextProvider):
     def __init__(self, title: str, search_results: List[str]):
         super().__init__(title=title)
         self.search_results = search_results
@@ -272,8 +270,8 @@ Here's how you can achieve this:
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.context import SystemPromptGenerator
 
 # Import the search tool you want to use
 from web_search_agent.tools.searxng_search import SearXNGSearchTool
