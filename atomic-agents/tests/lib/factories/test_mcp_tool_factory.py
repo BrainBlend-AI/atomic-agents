@@ -24,6 +24,21 @@ def test_fetch_mcp_tools_event_loop_without_client_session_raises():
         fetch_mcp_tools(None, False, client_session=DummySession(), event_loop=None)
 
 
+def test_fetch_mcp_tools_multiple_transports_raises():
+    """Test that specifying multiple transport types raises an error."""
+    with pytest.raises(ValueError, match="Only one of.*can be True"):
+        fetch_mcp_tools("http://example.com", use_stdio=True, use_streamable_http=True)
+
+
+def test_fetch_mcp_tools_streamable_http_unavailable_raises(monkeypatch):
+    """Test that requesting streamable HTTP when unavailable raises an error."""
+    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    # Mock HAS_STREAMABLE_HTTP to False
+    monkeypatch.setattr(mtf, 'HAS_STREAMABLE_HTTP', False)
+    with pytest.raises(ValueError, match="StreamableHTTP transport requested but.*is not available"):
+        fetch_mcp_tools("http://example.com", use_streamable_http=True)
+
+
 def test_fetch_mcp_tools_empty_definitions(monkeypatch):
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: [])
     tools = fetch_mcp_tools("http://example.com", use_stdio=False)
@@ -40,12 +55,33 @@ def test_fetch_mcp_tools_with_definitions_http(monkeypatch):
     # verify class attributes
     assert tool_cls.mcp_endpoint == "http://example.com"
     assert tool_cls.use_stdio is False
+    assert tool_cls.use_streamable_http is False
     # input_schema has only tool_name field
     Model = tool_cls.input_schema
     assert "tool_name" in Model.model_fields
     # output_schema has result field
     OutModel = tool_cls.output_schema
     assert "result" in OutModel.model_fields
+
+
+def test_fetch_mcp_tools_with_definitions_streamable_http(monkeypatch):
+    """Test creating tools with streamable HTTP transport."""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    definitions = [MCPToolDefinition(name="ToolY", description="Streamable HTTP tool", input_schema=input_schema)]
+    monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
+    
+    # Mock HAS_STREAMABLE_HTTP to True
+    import atomic_agents.lib.factories.mcp_tool_factory as mtf
+    monkeypatch.setattr(mtf, 'HAS_STREAMABLE_HTTP', True)
+    
+    tools = fetch_mcp_tools("http://example.com", use_streamable_http=True, streamable_http_headers={"Authorization": "Bearer token"})
+    assert len(tools) == 1
+    tool_cls = tools[0]
+    # verify class attributes
+    assert tool_cls.mcp_endpoint == "http://example.com"
+    assert tool_cls.use_stdio is False
+    assert tool_cls.use_streamable_http is True
+    assert tool_cls.streamable_http_headers == {"Authorization": "Bearer token"}
 
 
 def test_create_mcp_orchestrator_schema_empty():
@@ -99,12 +135,13 @@ def test_fetch_mcp_tools_with_stdio_and_working_directory(monkeypatch):
     assert len(tools) == 1
     tool_cls = tools[0]
     assert tool_cls.use_stdio is True
+    assert tool_cls.use_streamable_http is False
     assert tool_cls.mcp_endpoint == "run me"
     assert tool_cls.working_directory == "/tmp"
 
 
-@pytest.mark.parametrize("use_stdio", [False, True])
-def test_run_tool(monkeypatch, use_stdio):
+@pytest.mark.parametrize("use_stdio,use_streamable_http", [(False, False), (True, False), (False, True)])
+def test_run_tool(monkeypatch, use_stdio, use_streamable_http):
     # Setup dummy transports and session
     import atomic_agents.lib.factories.mcp_tool_factory as mtf
 
@@ -122,6 +159,9 @@ def test_run_tool(monkeypatch, use_stdio):
         return DummyTransportCM((None, None))
 
     def dummy_stdio_client(params):
+        return DummyTransportCM((None, None))
+
+    def dummy_streamable_http_client(endpoint, headers=None):
         return DummyTransportCM((None, None))
 
     class DummySessionCM:
@@ -142,14 +182,31 @@ def test_run_tool(monkeypatch, use_stdio):
 
     monkeypatch.setattr(mtf, "sse_client", dummy_sse_client)
     monkeypatch.setattr(mtf, "stdio_client", dummy_stdio_client)
+    
+    # Mock streamable HTTP support
+    if use_streamable_http:
+        monkeypatch.setattr(mtf, 'HAS_STREAMABLE_HTTP', True)
+        monkeypatch.setattr(mtf, 'streamable_http_client', dummy_streamable_http_client)
+    
     monkeypatch.setattr(mtf, "ClientSession", DummySessionCM)
     # Prepare definitions
     input_schema = {"type": "object", "properties": {}, "required": []}
     definitions = [MCPToolDefinition(name="ToolA", description="desc", input_schema=input_schema)]
     monkeypatch.setattr(MCPToolFactory, "_fetch_tool_definitions", lambda self: definitions)
     # Run fetch and execute tool
-    endpoint = "cmd run" if use_stdio else "http://e"
-    tools = fetch_mcp_tools(endpoint, use_stdio, working_directory="wd" if use_stdio else None)
+    if use_stdio:
+        endpoint = "cmd run"
+        working_directory = "wd"
+    else:
+        endpoint = "http://e"
+        working_directory = None
+    
+    tools = fetch_mcp_tools(
+        endpoint, 
+        use_stdio, 
+        use_streamable_http, 
+        working_directory=working_directory
+    )
     tool_cls = tools[0]
     inst = tool_cls()
     result = inst.run(tool_cls.input_schema(tool_name="ToolA"))

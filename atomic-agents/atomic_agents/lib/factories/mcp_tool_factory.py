@@ -10,6 +10,19 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 
+# Try to import streamable_http_client - this may vary depending on the MCP library version
+try:
+    from mcp.client.streamable_http import streamable_http_client
+    HAS_STREAMABLE_HTTP = True
+except ImportError:
+    try:
+        # Alternative import path
+        from mcp.client.streamablehttp import streamable_http_client
+        HAS_STREAMABLE_HTTP = True
+    except ImportError:
+        HAS_STREAMABLE_HTTP = False
+        streamable_http_client = None
+
 from atomic_agents.lib.base.base_io_schema import BaseIOSchema
 from atomic_agents.lib.base.base_tool import BaseTool
 from atomic_agents.lib.factories.schema_transformer import SchemaTransformer
@@ -31,32 +44,51 @@ class MCPToolFactory:
         self,
         mcp_endpoint: Optional[str] = None,
         use_stdio: bool = False,
+        use_streamable_http: bool = False,
         client_session: Optional[ClientSession] = None,
         event_loop: Optional[asyncio.AbstractEventLoop] = None,
         working_directory: Optional[str] = None,
+        streamable_http_headers: Optional[dict] = None,
     ):
         """
         Initialize the factory.
 
         Args:
-            mcp_endpoint: URL of the MCP server (for SSE) or the full command to run the server (for STDIO)
+            mcp_endpoint: URL of the MCP server (for SSE/StreamableHTTP) or the full command to run the server (for STDIO)
             use_stdio: If True, use STDIO transport instead of SSE
+            use_streamable_http: If True, use StreamableHTTP transport instead of SSE
             client_session: Optional pre-initialized ClientSession for reuse
             event_loop: Optional event loop for running asynchronous operations
             working_directory: Optional working directory to use when running STDIO commands
+            streamable_http_headers: Optional headers to send with StreamableHTTP requests
         """
         self.mcp_endpoint = mcp_endpoint
         self.use_stdio = use_stdio
+        self.use_streamable_http = use_streamable_http
         self.client_session = client_session
         self.event_loop = event_loop
         self.schema_transformer = SchemaTransformer()
         self.working_directory = working_directory
+        self.streamable_http_headers = streamable_http_headers or {}
 
         # Validate configuration
         if client_session is not None and event_loop is None:
             raise ValueError("When `client_session` is provided an `event_loop` must also be supplied.")
         if not mcp_endpoint and client_session is None:
             raise ValueError("`mcp_endpoint` must be provided when no `client_session` is supplied.")
+        
+        # Ensure only one transport type is selected
+        transport_count = sum([use_stdio, use_streamable_http])
+        if transport_count > 1:
+            raise ValueError("Only one of `use_stdio` or `use_streamable_http` can be True.")
+        
+        # Check if streamable HTTP is available when requested
+        if use_streamable_http and not HAS_STREAMABLE_HTTP:
+            raise ValueError(
+                "StreamableHTTP transport requested but `mcp.client.streamable_http` or "
+                "`mcp.client.streamablehttp` is not available. Please ensure you have a compatible "
+                "version of the MCP library that supports StreamableHTTP transport."
+            )
 
     def create_tools(self) -> List[Type[BaseTool]]:
         """
@@ -86,7 +118,13 @@ class MCPToolFactory:
             return cast(asyncio.AbstractEventLoop, self.event_loop).run_until_complete(_gather_defs())  # pragma: no cover
         else:
             # Create new connection
-            service = ToolDefinitionService(self.mcp_endpoint, self.use_stdio, self.working_directory)
+            service = ToolDefinitionService(
+                self.mcp_endpoint, 
+                self.use_stdio, 
+                self.working_directory,
+                use_streamable_http=self.use_streamable_http,
+                streamable_http_headers=self.streamable_http_headers
+            )
             return asyncio.run(service.fetch_definitions())
 
     def _create_tool_classes(self, tool_definitions: List[MCPToolDefinition]) -> List[Type[BaseTool]]:
@@ -125,9 +163,11 @@ class MCPToolFactory:
                     bound_tool_name = self.mcp_tool_name
                     bound_mcp_endpoint = self.mcp_endpoint  # May be None when using external session
                     bound_use_stdio = self.use_stdio
+                    bound_use_streamable_http = self.use_streamable_http
                     persistent_session: Optional[ClientSession] = getattr(self, "_client_session", None)
                     loop: Optional[asyncio.AbstractEventLoop] = getattr(self, "_event_loop", None)
                     bound_working_directory = getattr(self, "working_directory", None)
+                    bound_streamable_http_headers = getattr(self, "streamable_http_headers", {})
 
                     # Get arguments, excluding tool_name
                     arguments = params.model_dump(exclude={"tool_name"}, exclude_none=True)
@@ -148,6 +188,12 @@ class MCPToolFactory:
                                 )
                                 stdio_transport = await stack.enter_async_context(stdio_client(server_params))
                                 read_stream, write_stream = stdio_transport
+                            elif bound_use_streamable_http:
+                                logger.debug(f"Executing tool '{bound_tool_name}' via StreamableHTTP: endpoint={bound_mcp_endpoint}")
+                                streamable_http_transport = await stack.enter_async_context(
+                                    streamable_http_client(bound_mcp_endpoint, headers=bound_streamable_http_headers)
+                                )
+                                read_stream, write_stream = streamable_http_transport
                             else:
                                 sse_endpoint = f"{bound_mcp_endpoint}/sse"
                                 logger.debug(f"Executing tool '{bound_tool_name}' via SSE: endpoint={sse_endpoint}")
@@ -205,9 +251,11 @@ class MCPToolFactory:
                         "mcp_tool_name": tool_name,
                         "mcp_endpoint": self.mcp_endpoint,
                         "use_stdio": self.use_stdio,
+                        "use_streamable_http": self.use_streamable_http,
                         "_client_session": self.client_session,
                         "_event_loop": self.event_loop,
                         "working_directory": self.working_directory,
+                        "streamable_http_headers": self.streamable_http_headers,
                     },
                 )
 
@@ -259,24 +307,36 @@ class MCPToolFactory:
 def fetch_mcp_tools(
     mcp_endpoint: Optional[str] = None,
     use_stdio: bool = False,
+    use_streamable_http: bool = False,
     *,
     client_session: Optional[ClientSession] = None,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
     working_directory: Optional[str] = None,
+    streamable_http_headers: Optional[dict] = None,
 ) -> List[Type[BaseTool]]:
     """
-    Connects to an MCP server via SSE or STDIO, discovers tool definitions, and dynamically generates
+    Connects to an MCP server via SSE, STDIO, or StreamableHTTP, discovers tool definitions, and dynamically generates
     synchronous Atomic Agents compatible BaseTool subclasses for each tool.
     Each generated tool will establish its own connection when its `run` method is called.
 
     Args:
-        mcp_endpoint: URL of the MCP server (for SSE) or the full command string to run the server (for STDIO).
+        mcp_endpoint: URL of the MCP server (for SSE/StreamableHTTP) or the full command string to run the server (for STDIO).
         use_stdio: If True, use STDIO transport instead of SSE.
+        use_streamable_http: If True, use StreamableHTTP transport instead of SSE.
         client_session: Optional pre-initialized ClientSession for reuse.
         event_loop: Optional event loop for running asynchronous operations.
         working_directory: Optional working directory to use when running STDIO commands.
+        streamable_http_headers: Optional headers to send with StreamableHTTP requests.
     """
-    factory = MCPToolFactory(mcp_endpoint, use_stdio, client_session, event_loop, working_directory)
+    factory = MCPToolFactory(
+        mcp_endpoint, 
+        use_stdio, 
+        use_streamable_http, 
+        client_session, 
+        event_loop, 
+        working_directory, 
+        streamable_http_headers
+    )
     return factory.create_tools()
 
 
@@ -298,27 +358,39 @@ def create_mcp_orchestrator_schema(tools: List[Type[BaseTool]]) -> Optional[Type
 def fetch_mcp_tools_with_schema(
     mcp_endpoint: Optional[str] = None,
     use_stdio: bool = False,
+    use_streamable_http: bool = False,
     *,
     client_session: Optional[ClientSession] = None,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
     working_directory: Optional[str] = None,
+    streamable_http_headers: Optional[dict] = None,
 ) -> Tuple[List[Type[BaseTool]], Optional[Type[BaseIOSchema]]]:
     """
     Fetches MCP tools and creates an orchestrator schema for them. Returns both as a tuple.
 
     Args:
-        mcp_endpoint: URL of the MCP server (for SSE) or the full command string to run the server (for STDIO).
+        mcp_endpoint: URL of the MCP server (for SSE/StreamableHTTP) or the full command string to run the server (for STDIO).
         use_stdio: If True, use STDIO transport instead of SSE.
+        use_streamable_http: If True, use StreamableHTTP transport instead of SSE.
         client_session: Optional pre-initialized ClientSession for reuse.
         event_loop: Optional event loop for running asynchronous operations.
         working_directory: Optional working directory to use when running STDIO commands.
+        streamable_http_headers: Optional headers to send with StreamableHTTP requests.
 
     Returns:
         A tuple containing:
         - List of dynamically generated tool classes
         - Orchestrator output schema with Union of tool input schemas, or None if no tools found.
     """
-    factory = MCPToolFactory(mcp_endpoint, use_stdio, client_session, event_loop, working_directory)
+    factory = MCPToolFactory(
+        mcp_endpoint, 
+        use_stdio, 
+        use_streamable_http, 
+        client_session, 
+        event_loop, 
+        working_directory, 
+        streamable_http_headers
+    )
     tools = factory.create_tools()
     if not tools:
         return [], None

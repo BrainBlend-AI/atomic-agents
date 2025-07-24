@@ -50,6 +50,19 @@ def mock_client_session():
 
 
 class TestToolDefinitionService:
+    def test_multiple_transports_raises_error(self):
+        """Test that specifying multiple transport types raises an error."""
+        with pytest.raises(ValueError, match="Only one of.*can be True"):
+            ToolDefinitionService("http://example.com", use_stdio=True, use_streamable_http=True)
+
+    def test_streamable_http_unavailable_raises_error(self, monkeypatch):
+        """Test that requesting streamable HTTP when unavailable raises an error."""
+        import atomic_agents.lib.factories.tool_definition_service as tds
+        # Mock HAS_STREAMABLE_HTTP to False
+        monkeypatch.setattr(tds, 'HAS_STREAMABLE_HTTP', False)
+        with pytest.raises(ValueError, match="StreamableHTTP transport requested but.*is not available"):
+            ToolDefinitionService("http://example.com", use_streamable_http=True)
+
     @pytest.mark.asyncio
     @patch("atomic_agents.lib.factories.tool_definition_service.sse_client")
     @patch("atomic_agents.lib.factories.tool_definition_service.ClientSession")
@@ -119,6 +132,49 @@ class TestToolDefinitionService:
                 # Verify
                 assert len(result) == 1
                 assert result[0].name == "MockTool"
+
+    @pytest.mark.asyncio
+    async def test_fetch_via_streamable_http(self, monkeypatch):
+        """Test fetching tool definitions via streamable HTTP transport."""
+        import atomic_agents.lib.factories.tool_definition_service as tds
+        
+        # Mock streamable HTTP support
+        monkeypatch.setattr(tds, 'HAS_STREAMABLE_HTTP', True)
+        
+        def mock_streamable_http_client(endpoint, headers=None):
+            return MockAsyncContextManager(return_value=(AsyncMock(), AsyncMock()))
+        
+        monkeypatch.setattr(tds, 'streamable_http_client', mock_streamable_http_client)
+        
+        # Create service with streamable HTTP
+        service = ToolDefinitionService(
+            "http://test-endpoint", 
+            use_streamable_http=True,
+            streamable_http_headers={"Authorization": "Bearer token"}
+        )
+
+        # Mock the fetch_definitions_from_session method
+        service.fetch_definitions_from_session = AsyncMock(
+            return_value=[
+                MCPToolDefinition(
+                    name="StreamableTool",
+                    description="Tool via streamable HTTP",
+                    input_schema={"type": "object", "properties": {"param": {"type": "string"}}},
+                )
+            ]
+        )
+
+        with patch("atomic_agents.lib.factories.tool_definition_service.ClientSession") as mock_session_cls:
+            mock_session = MockAsyncContextManager(return_value=AsyncMock())
+            mock_session_cls.return_value = mock_session
+
+            # Execute
+            result = await service.fetch_definitions()
+
+            # Verify
+            assert len(result) == 1
+            assert result[0].name == "StreamableTool"
+            assert result[0].description == "Tool via streamable HTTP"
 
     @pytest.mark.asyncio
     async def test_stdio_empty_command(self):
