@@ -7,7 +7,7 @@ from rich.text import Text
 from typing import List
 from pydantic import Field
 from atomic_agents.context import SystemPromptGenerator, ChatHistory
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BaseIOSchema
 
 # API Key setup
 API_KEY = ""
@@ -72,8 +72,8 @@ system_prompt_generator = SystemPromptGenerator(
 console.print(Panel(system_prompt_generator.generate_prompt(), width=console.width, style="bold cyan"), style="bold cyan")
 
 # Agent setup with specified configuration and custom output schema
-agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, CustomOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
@@ -101,7 +101,7 @@ while True:
         break
 
     # Process the user's input through the agent and get the response
-    response = agent.run(BaseAgentInputSchema(chat_message=user_input))
+    response = agent.run(BasicChatInputSchema(chat_message=user_input))
 
     # Display the agent's response
     agent_message = Text(response.chat_message, style="bold green")

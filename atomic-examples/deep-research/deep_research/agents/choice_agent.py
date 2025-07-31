@@ -1,7 +1,7 @@
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 from atomic_agents.context import SystemPromptGenerator
 
 from deep_research.config import ChatConfig
@@ -21,8 +21,8 @@ class ChoiceAgentOutputSchema(BaseIOSchema):
     decision: bool = Field(..., description="The final decision based on the analysis")
 
 
-choice_agent = BaseAgent[ChoiceAgentInputSchema, ChoiceAgentOutputSchema](
-    BaseAgentConfig(
+choice_agent = AtomicAgent[ChoiceAgentInputSchema, ChoiceAgentOutputSchema](
+    AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
         system_prompt_generator=SystemPromptGenerator(

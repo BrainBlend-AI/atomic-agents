@@ -1,6 +1,6 @@
 # pyright: reportInvalidTypeForm=false
 from atomic_agents.connectors.mcp import fetch_mcp_tools, MCPTransportType
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from rich.console import Console
 from rich.table import Table
@@ -53,7 +53,7 @@ if not tools:
     raise RuntimeError("No MCP tools found. Please ensure the MCP server is running and accessible.")
 
 # Build mapping from input_schema to ToolClass
-tool_schema_to_class_map: Dict[Type[BaseIOSchema], Type[BaseAgent]] = {
+tool_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
     ToolClass.input_schema: ToolClass for ToolClass in tools if hasattr(ToolClass, "input_schema")
 }
 # Collect all tool input schemas
@@ -140,8 +140,8 @@ def main():
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
         history = ChatHistory()
-        orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
-            BaseAgentConfig(
+        orchestrator_agent = AtomicAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
+            AgentConfig(
                 client=client,
                 model=config.openai_model,
                 history=history,
@@ -187,10 +187,10 @@ def main():
                     f"[dim]Debug - orchestrator_output type: {type(orchestrator_output)}, fields: {orchestrator_output.model_dump()}"
                 )
 
-                # The model is returning a BaseAgentOutputSchema instead of OrchestratorOutputSchema
+                # The model is returning a BasicChatOutputSchema instead of OrchestratorOutputSchema
                 # We need to handle this case by creating a FinalResponseSchema directly
                 if hasattr(orchestrator_output, "chat_message") and not hasattr(orchestrator_output, "action"):
-                    console.print("[yellow]Note: Converting BaseAgentOutputSchema to FinalResponseSchema[/yellow]")
+                    console.print("[yellow]Note: Converting BasicChatOutputSchema to FinalResponseSchema[/yellow]")
                     action_instance = FinalResponseSchema(response_text=orchestrator_output.chat_message)
                     reasoning = "Response generated directly from chat model"
                 # Handle the original expected format if it exists
@@ -393,7 +393,7 @@ def main():
 
                     # Handle different response formats
                     if hasattr(orchestrator_output, "chat_message") and not hasattr(orchestrator_output, "action"):
-                        console.print("[yellow]Note: Converting BaseAgentOutputSchema to FinalResponseSchema[/yellow]")
+                        console.print("[yellow]Note: Converting BasicChatOutputSchema to FinalResponseSchema[/yellow]")
                         action_instance = FinalResponseSchema(response_text=orchestrator_output.chat_message)
                         reasoning = "Response generated directly from chat model"
                     elif hasattr(orchestrator_output, "action"):
