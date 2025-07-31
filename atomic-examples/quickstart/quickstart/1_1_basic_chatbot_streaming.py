@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from atomic_agents.context import ChatHistory
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 
 # API Key setup
 API_KEY = ""
@@ -24,15 +24,15 @@ console = Console()
 history = ChatHistory()
 
 # Initialize history with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
+initial_message = BasicChatOutputSchema(chat_message="Hello! How can I assist you today?")
 history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library for synchronous operations
 client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
 
 # Agent setup with specified configuration
-agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         history=history,
@@ -52,7 +52,7 @@ console.print(Text(initial_message.chat_message, style="green"))
 def main():
     """
     Main function to handle the chat loop using synchronous streaming.
-    This demonstrates how to use BaseAgent.run_stream() instead of the async version.
+    This demonstrates how to use AtomicAgent.run_stream() instead of the async version.
     """
     # Start an infinite loop to handle user inputs and agent responses
     while True:
@@ -64,7 +64,7 @@ def main():
             break
 
         # Process the user's input through the agent
-        input_schema = BaseAgentInputSchema(chat_message=user_input)
+        input_schema = BasicChatInputSchema(chat_message=user_input)
         console.print()  # Add newline before response
         console.print(Text("Agent: ", style="bold green"), end="")
 

@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.table import Table
 from rich.text import Text
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig, BasicChatInputSchema
 from atomic_agents.context import SystemPromptGenerator
 
 # API Key setup
@@ -57,8 +57,8 @@ MAX_CONCURRENT = 3
 sem = asyncio.Semaphore(MAX_CONCURRENT)
 
 # Agent setup with specified configuration
-agent = BaseAgent[BaseAgentInputSchema, PersonSchema](
-    config=BaseAgentConfig(client=client, model="gpt-4o-mini", system_prompt_generator=system_prompt_generator)
+agent = AtomicAgent[BasicChatInputSchema, PersonSchema](
+    config=AgentConfig(client=client, model="gpt-4o-mini", system_prompt_generator=system_prompt_generator)
 )
 
 
@@ -66,7 +66,7 @@ async def exec_agent(message: str, idx: int, progress_dict: dict):
     """Execute the agent with the provided message and update progress in real-time."""
     # Acquire the semaphore to limit concurrent executions
     async with sem:
-        user_input = BaseAgentInputSchema(chat_message=message)
+        user_input = BasicChatInputSchema(chat_message=message)
         agent.reset_history()
 
         # Track streaming progress

@@ -3,7 +3,7 @@ import instructor
 import openai
 from rich.console import Console
 from rich.text import Text
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 from atomic_agents.context import SystemPromptGenerator
 
 # API Key setup
@@ -29,8 +29,8 @@ system_prompt_generator = SystemPromptGenerator(
     output_instructions=["Answer in plain English plus formulas."],
 )
 # Agent setup with specified configuration
-agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
         model="o3-mini",
         system_prompt_generator=system_prompt_generator,
@@ -46,7 +46,7 @@ console.print(Text("User:", style="bold green"), end=" ")
 console.print(user_input)
 
 # Process the user's input through the agent and get the response
-input_schema = BaseAgentInputSchema(chat_message=user_input)
+input_schema = BasicChatInputSchema(chat_message=user_input)
 response = agent.run(input_schema)
 
 agent_message = Text(response.chat_message, style="bold green")

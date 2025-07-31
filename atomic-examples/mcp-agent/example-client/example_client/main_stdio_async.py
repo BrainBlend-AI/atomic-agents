@@ -1,6 +1,6 @@
 # pyright: reportInvalidTypeForm=false
 from atomic_agents.connectors.mcp import fetch_mcp_tools_async, MCPToolOutputSchema, MCPTransportType
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
 from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from rich.console import Console
 from rich.table import Table
@@ -70,7 +70,7 @@ async def main():
             raise RuntimeError("No MCP tools found. Please ensure the MCP server is running and accessible.")
 
         # Build mapping from input_schema to ToolClass
-        tool_schema_to_class_map: Dict[Type[BaseIOSchema], Type[BaseAgent]] = {
+        tool_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
             ToolClass.input_schema: ToolClass for ToolClass in tools if hasattr(ToolClass, "input_schema")
         }
         # Collect all tool input schemas
@@ -117,8 +117,8 @@ async def main():
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
         history = ChatHistory()
-        orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
-            BaseAgentConfig(
+        orchestrator_agent = AtomicAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
+            AgentConfig(
                 client=client,
                 model=config.openai_model,
                 history=history,

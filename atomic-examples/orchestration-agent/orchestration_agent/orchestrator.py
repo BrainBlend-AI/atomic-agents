@@ -1,7 +1,7 @@
 from typing import Union
 import openai
 from pydantic import Field
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
 from atomic_agents.context import SystemPromptGenerator, BaseDynamicContextProvider
 
 from orchestration_agent.tools.searxng_search import (
@@ -48,7 +48,7 @@ class FinalAnswerSchema(BaseIOSchema):
 #######################
 # AGENT CONFIGURATION #
 #######################
-class OrchestratorAgentConfig(BaseAgentConfig):
+class OrchestratorAgentConfig(AgentConfig):
     """Configuration for the Orchestrator Agent."""
 
     searxng_config: SearXNGSearchToolConfig
@@ -70,7 +70,7 @@ class CurrentDateProvider(BaseDynamicContextProvider):
 ######################
 # ORCHESTRATOR AGENT #
 ######################
-orchestrator_agent_config = BaseAgentConfig(
+orchestrator_agent_config = AgentConfig(
     client=instructor.from_openai(openai.OpenAI()),
     model="gpt-4o-mini",
     system_prompt_generator=SystemPromptGenerator(
@@ -88,8 +88,8 @@ orchestrator_agent_config = BaseAgentConfig(
         ],
     ),
 )
-orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)
-orchestrator_agent_final = BaseAgent[OrchestratorInputSchema, FinalAnswerSchema](config=orchestrator_agent_config)
+orchestrator_agent = AtomicAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)
+orchestrator_agent_final = AtomicAgent[OrchestratorInputSchema, FinalAnswerSchema](config=orchestrator_agent_config)
 
 # Register the current date provider
 orchestrator_agent.register_context_provider("current_date", CurrentDateProvider("Current Date"))
@@ -178,4 +178,4 @@ if __name__ == "__main__":
         final_answer = orchestrator_agent.run(input_schema)
         console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
         # Reset the agent to the original
-        orchestrator_agent = BaseAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)
+        orchestrator_agent = AtomicAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)

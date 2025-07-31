@@ -1,7 +1,7 @@
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 from atomic_agents.context import SystemPromptGenerator
 
 from deep_research.config import ChatConfig
@@ -27,8 +27,8 @@ class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
     )
 
 
-question_answering_agent = BaseAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
-    BaseAgentConfig(
+question_answering_agent = AtomicAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
+    AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
         system_prompt_generator=SystemPromptGenerator(

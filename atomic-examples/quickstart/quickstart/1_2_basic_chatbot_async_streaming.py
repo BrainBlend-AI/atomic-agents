@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
 from atomic_agents.context import ChatHistory
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 
 # API Key setup
 API_KEY = ""
@@ -25,15 +25,15 @@ console = Console()
 history = ChatHistory()
 
 # Initialize history with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
+initial_message = BasicChatOutputSchema(chat_message="Hello! How can I assist you today?")
 history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library for async operations
 client = instructor.from_openai(openai.AsyncOpenAI(api_key=API_KEY))
 
 # Agent setup with specified configuration
-agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         history=history,
@@ -61,7 +61,7 @@ async def main():
             break
 
         # Process the user's input through the agent and get the streaming response
-        input_schema = BaseAgentInputSchema(chat_message=user_input)
+        input_schema = BasicChatInputSchema(chat_message=user_input)
         console.print()  # Add newline before response
 
         # Use Live display to show streaming response

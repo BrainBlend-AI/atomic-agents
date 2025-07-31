@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from atomic_agents.connectors.mcp import fetch_mcp_tools_async, MCPTransportType
 from atomic_agents.context import ChatHistory, SystemPromptGenerator
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 import openai
 import instructor
 
@@ -148,8 +148,8 @@ async def execute_with_orchestrator_async(query: str) -> tuple[str, list[str]]:
             reasoning: str
             action: ActionUnion
 
-        orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
-            BaseAgentConfig(
+        orchestrator_agent = AtomicAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
+            AgentConfig(
                 client=globals()["client"],
                 model=config.openai_model,
                 history=ChatHistory(),

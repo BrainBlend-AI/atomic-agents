@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from atomic_agents.context import SystemPromptGenerator, ChatHistory
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 
 # API Key setup
 API_KEY = ""
@@ -24,7 +24,7 @@ console = Console()
 history = ChatHistory()
 
 # Initialize history with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(
+initial_message = BasicChatOutputSchema(
     chat_message="How do you do? What can I do for you? Tell me, pray, what is your need today?"
 )
 history.add_message("assistant", initial_message)
@@ -49,8 +49,8 @@ system_prompt_generator = SystemPromptGenerator(
 console.print(Panel(system_prompt_generator.generate_prompt(), width=console.width, style="bold cyan"), style="bold cyan")
 
 # Agent setup with specified configuration
-agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,

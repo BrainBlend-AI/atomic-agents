@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from atomic_agents.context import ChatHistory
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,7 +16,7 @@ console = Console()
 history = ChatHistory()
 
 # Initialize history with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
+initial_message = BasicChatOutputSchema(chat_message="Hello! How can I assist you today?")
 history.add_message("assistant", initial_message)
 
 
@@ -85,8 +85,8 @@ provider = console.input(providers_str).lower()
 client, model = setup_client(provider)
 
 # Agent setup with specified configuration
-agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
-    config=BaseAgentConfig(client=client, model=model, history=history, model_api_parameters={"max_tokens": 2048})
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(client=client, model=model, history=history, model_api_parameters={"max_tokens": 2048})
 )
 
 # Generate the default system prompt for the agent
@@ -108,7 +108,7 @@ while True:
         break
 
     # Process the user's input through the agent and get the response
-    input_schema = BaseAgentInputSchema(chat_message=user_input)
+    input_schema = BasicChatInputSchema(chat_message=user_input)
     response = agent.run(input_schema)
 
     agent_message = Text(response.chat_message, style="bold green")

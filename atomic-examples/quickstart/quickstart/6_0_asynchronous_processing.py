@@ -3,7 +3,7 @@ import asyncio
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig, BaseAgentInputSchema
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig, BasicChatInputSchema
 from atomic_agents.context import SystemPromptGenerator
 
 # API Key setup
@@ -52,14 +52,14 @@ dataset = [
 sem = asyncio.Semaphore(2)
 
 # Agent setup with specified configuration
-agent = BaseAgent[BaseAgentInputSchema, PersonSchema](
-    config=BaseAgentConfig(client=client, model="gpt-4o-mini", sysyem_prompt_generator=sysyem_prompt_generator)
+agent = AtomicAgent[BasicChatInputSchema, PersonSchema](
+    config=AgentConfig(client=client, model="gpt-4o-mini", sysyem_prompt_generator=sysyem_prompt_generator)
 )
 
 
 async def exec_agent(message: str):
     """Execute the agent with the provided message."""
-    user_input = BaseAgentInputSchema(chat_message=message)
+    user_input = BasicChatInputSchema(chat_message=message)
     agent.reset_history()
     response = await agent.run_async(user_input)
     return response
