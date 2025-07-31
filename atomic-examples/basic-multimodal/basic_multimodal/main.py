@@ -1,4 +1,4 @@
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
 from atomic_agents.context import SystemPromptGenerator
 import instructor
 import openai
@@ -59,8 +59,8 @@ class NutritionAnalysisOutput(BaseIOSchema):
 
 
 # Configure the nutrition analysis system
-nutrition_analyzer = BaseAgent[NutritionAnalysisInput, NutritionAnalysisOutput](
-    config=BaseAgentConfig(
+nutrition_analyzer = AtomicAgent[NutritionAnalysisInput, NutritionAnalysisOutput](
+    config=AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=API_KEY)),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(

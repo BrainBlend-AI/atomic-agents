@@ -18,6 +18,9 @@
 - [Atomic Agents](#atomic-agents)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
+  - [🚀 Version 2.0 Released!](#-version-20-released)
+    - [Key Changes in v2.0:](#key-changes-in-v20)
+    - [⚠️ Upgrading from v1.x](#️-upgrading-from-v1x)
   - [Documentation](#documentation)
     - [Watch the Overview Video](#watch-the-overview-video)
     - [Watch the Quickstart Video](#watch-the-quickstart-video)
@@ -43,6 +46,20 @@ The Atomic Agents framework is designed around the concept of atomicity to be an
 All logic and control flows are written in Python, enabling developers to apply familiar best practices and workflows from traditional software development without compromising flexibility or clarity.
 
 **NEW: Join our community on Discord at [discord.gg/J3W9b5AZJR](https://discord.gg/J3W9b5AZJR) and our official subreddit at [/r/AtomicAgents](https://www.reddit.com/r/AtomicAgents/)!**
+
+## 🚀 Version 2.0 Released!
+
+**Atomic Agents v2.0 is here with major improvements!** This release includes breaking changes that significantly improve the developer experience:
+
+### Key Changes in v2.0:
+- **Cleaner imports**: Eliminated `.lib` from import paths
+- **Renamed classes**: `BaseAgent` → `AtomicAgent`, `BaseAgentConfig` → `AgentConfig`, and more
+- **Better type safety**: Generic type parameters for tools and agents
+- **Enhanced streaming**: New `run_stream()` and `run_async_stream()` methods
+- **Improved organization**: Better module structure with `context`, `connectors`, and more
+
+### ⚠️ Upgrading from v1.x
+If you're upgrading from v1.x, please read our comprehensive [**Upgrade Guide**](UPGRADE_DOC.md) for detailed migration instructions.
 
 ## Documentation
 
@@ -137,7 +154,7 @@ Here's a quick snippet demonstrating how easy it is to create a powerful agent w
 from pydantic import Field
 from openai import OpenAI
 import instructor
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BaseIOSchema
 from atomic_agents.context import SystemPromptGenerator, ChatHistory
 
 # Define a custom output schema
@@ -166,8 +183,8 @@ system_prompt_generator = SystemPromptGenerator(
 client = instructor.from_openai(OpenAI())
 
 # Initialize the agent
-agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, CustomOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
@@ -178,7 +195,7 @@ agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
 # Example usage
 if __name__ == "__main__":
     user_input = "Tell me about atomic agents framework"
-    response = agent.run(BaseAgentInputSchema(chat_message=user_input))
+    response = agent.run(BasicChatInputSchema(chat_message=user_input))
     print(f"Agent: {response.chat_message}")
     print("Suggested questions:")
     for question in response.suggested_questions:
@@ -270,7 +287,7 @@ Here's how you can achieve this:
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 from atomic_agents.context import SystemPromptGenerator
 
 # Import the search tool you want to use
@@ -283,8 +300,8 @@ class QueryAgentInputSchema(BaseIOSchema):
     num_queries: int = Field(..., description="Number of queries to generate.")
 
 # Initialize the query agent
-query_agent = BaseAgent[QueryAgentInputSchema, SearXNGSearchTool.input_schema](
-    config=BaseAgentConfig(
+query_agent = AtomicAgent[QueryAgentInputSchema, SearXNGSearchTool.input_schema](
+    config=AgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(

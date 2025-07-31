@@ -1,15 +1,15 @@
 """Agent implementations and configurations."""
 
 from .base_agent import (
-    BaseAgent,
-    BaseAgentConfig,
-    BaseAgentInputSchema,
-    BaseAgentOutputSchema,
+    AtomicAgent,
+    AgentConfig,
+    BasicChatInputSchema,
+    BasicChatOutputSchema,
 )
 
 __all__ = [
-    "BaseAgent",
-    "BaseAgentConfig",
-    "BaseAgentInputSchema",
-    "BaseAgentOutputSchema",
+    "AtomicAgent",
+    "AgentConfig",
+    "BasicChatInputSchema",
+    "BasicChatOutputSchema",
 ]

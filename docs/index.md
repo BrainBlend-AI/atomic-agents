@@ -62,7 +62,7 @@ Here's a glimpse of how easy it is to create an agent:
 import instructor
 import openai
 from atomic_agents.context import ChatHistory
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 
 
 # Set up your API key (either in environment or pass directly)
@@ -76,8 +76,8 @@ history = ChatHistory()
 client = instructor.from_openai(openai.OpenAI())  # Pass your API key here if not in environment
 
 # Create an agent
-agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",  # Use your provider's model
         history=history
@@ -89,7 +89,7 @@ response = agent.run(agent.input_schema(chat_message="Tell me about quantum comp
 
 # Or more explicitly:
 response = agent.run(
-    BaseAgentInputSchema(chat_message="Tell me about quantum computing")
+    BasicChatInputSchema(chat_message="Tell me about quantum computing")
 )
 
 print(response)

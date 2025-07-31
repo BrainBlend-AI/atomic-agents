@@ -2,7 +2,7 @@ import instructor
 import openai
 from pydantic import Field, HttpUrl
 from typing import List
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 from atomic_agents.context import SystemPromptGenerator
 
 
@@ -25,8 +25,8 @@ class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
 
 
 # Create the question answering agent
-question_answering_agent = BaseAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
-    BaseAgentConfig(
+question_answering_agent = AtomicAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
+    AgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(

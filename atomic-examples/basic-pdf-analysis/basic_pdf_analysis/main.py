@@ -1,7 +1,7 @@
 import os
 
 import instructor
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
 from atomic_agents.context import SystemPromptGenerator
 from dotenv import load_dotenv
 from google import genai
@@ -40,8 +40,8 @@ system_prompt_generator = SystemPromptGenerator(
 )
 
 # Define the agent
-agent = BaseAgent[InputSchema, ExtractionResult](
-    config=BaseAgentConfig(
+agent = AtomicAgent[InputSchema, ExtractionResult](
+    config=AgentConfig(
         client=client,
         model="gemini-2.0-flash",
         system_prompt_generator=system_prompt_generator,

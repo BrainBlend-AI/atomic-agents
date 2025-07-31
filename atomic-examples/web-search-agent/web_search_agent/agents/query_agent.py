@@ -2,7 +2,7 @@ import instructor
 import openai
 from pydantic import Field
 from typing import List
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 from atomic_agents.context import SystemPromptGenerator
 
 
@@ -19,8 +19,8 @@ class QueryAgentOutputSchema(BaseIOSchema):
     queries: List[str] = Field(..., description="A list of search queries.")
 
 
-query_agent = BaseAgent[QueryAgentInputSchema, QueryAgentOutputSchema](
-    BaseAgentConfig(
+query_agent = AtomicAgent[QueryAgentInputSchema, QueryAgentOutputSchema](
+    AgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(

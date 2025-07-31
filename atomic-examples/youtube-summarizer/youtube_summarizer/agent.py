@@ -3,7 +3,7 @@ import openai
 from pydantic import Field
 from typing import List, Optional
 
-from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
 from atomic_agents.context import BaseDynamicContextProvider, SystemPromptGenerator
 
 
@@ -68,8 +68,10 @@ class YouTubeKnowledgeExtractionOutputSchema(BaseIOSchema):
 
 transcript_provider = YtTranscriptProvider(title="YouTube Transcript")
 
-youtube_knowledge_extraction_agent = BaseAgent[YouTubeKnowledgeExtractionInputSchema, YouTubeKnowledgeExtractionOutputSchema](
-    config=BaseAgentConfig(
+youtube_knowledge_extraction_agent = AtomicAgent[
+    YouTubeKnowledgeExtractionInputSchema, YouTubeKnowledgeExtractionOutputSchema
+](
+    config=AgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(

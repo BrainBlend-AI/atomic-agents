@@ -5,7 +5,7 @@ Communicates with the server_http.py `/mcp` endpoint using HTTP GET/POST/DELETE 
 
 from atomic_agents.connectors.mcp import fetch_mcp_tools, MCPTransportType
 from atomic_agents.context import ChatHistory, SystemPromptGenerator
-from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 import sys
 from rich.console import Console
 from rich.table import Table
@@ -78,8 +78,8 @@ def main():
         action: ActionUnion
 
     history = ChatHistory()
-    orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
-        BaseAgentConfig(
+    orchestrator_agent = AtomicAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
+        AgentConfig(
             client=client,
             model=config.openai_model,
             history=history,
@@ -126,7 +126,7 @@ def main():
 
             # Handle the output similar to SSE version
             if hasattr(orchestrator_output, "chat_message") and not hasattr(orchestrator_output, "action"):
-                # Convert BaseAgentOutputSchema to FinalResponseSchema
+                # Convert BasicChatOutputSchema to FinalResponseSchema
                 action_instance = FinalResponseSchema(response_text=orchestrator_output.chat_message)
                 reasoning = "Response generated directly from chat model"
             elif hasattr(orchestrator_output, "action"):
