@@ -6,16 +6,15 @@ from concurrent.futures import ThreadPoolExecutor
 import aiohttp
 from pydantic import Field
 
-from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
+from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig
 
 
 ################
 # INPUT SCHEMA #
 ################
-class SearxNGSearchToolInputSchema(BaseIOSchema):
+class SearXNGSearchToolInputSchema(BaseIOSchema):
     """
-    Schema for input to a tool for searching for information, news, references, and other content using SearxNG.
+    Schema for input to a tool for searching for information, news, references, and other content using SearXNG.
     Returns a list of search results with a short description or content snippet and URLs for further exploration
     """
 
@@ -28,7 +27,7 @@ class SearxNGSearchToolInputSchema(BaseIOSchema):
 ####################
 # OUTPUT SCHEMA(S) #
 ####################
-class SearxNGSearchResultItemSchema(BaseIOSchema):
+class SearXNGSearchResultItemSchema(BaseIOSchema):
     """This schema represents a single search result item"""
 
     url: str = Field(..., description="The URL of the search result")
@@ -37,41 +36,38 @@ class SearxNGSearchResultItemSchema(BaseIOSchema):
     query: str = Field(..., description="The query used to obtain this search result")
 
 
-class SearxNGSearchToolOutputSchema(BaseIOSchema):
-    """This schema represents the output of the SearxNG search tool."""
+class SearXNGSearchToolOutputSchema(BaseIOSchema):
+    """This schema represents the output of the SearXNG search tool."""
 
-    results: List[SearxNGSearchResultItemSchema] = Field(..., description="List of search result items")
+    results: List[SearXNGSearchResultItemSchema] = Field(..., description="List of search result items")
     category: Optional[str] = Field(None, description="The category of the search results")
 
 
 ##############
 # TOOL LOGIC #
 ##############
-class SearxNGSearchToolConfig(BaseToolConfig):
+class SearXNGSearchToolConfig(BaseToolConfig):
     base_url: str = ""
     max_results: int = 10
 
 
-class SearxNGSearchTool(BaseTool):
+class SearXNGSearchTool(BaseTool[SearXNGSearchToolInputSchema, SearXNGSearchToolOutputSchema]):
     """
-    Tool for performing searches on SearxNG based on the provided queries and category.
+    Tool for performing searches on SearXNG based on the provided queries and category.
 
     Attributes:
-        input_schema (SearxNGSearchToolInputSchema): The schema for the input data.
-        output_schema (SearxNGSearchToolOutputSchema): The schema for the output data.
+        input_schema (SearXNGSearchToolInputSchema): The schema for the input data.
+        output_schema (SearXNGSearchToolOutputSchema): The schema for the output data.
         max_results (int): The maximum number of search results to return.
-        base_url (str): The base URL for the SearxNG instance to use.
+        base_url (str): The base URL for the SearXNG instance to use.
     """
 
-    input_schema = SearxNGSearchToolInputSchema
-    output_schema = SearxNGSearchToolOutputSchema
-
-    def __init__(self, config: SearxNGSearchToolConfig = SearxNGSearchToolConfig()):
+    def __init__(self, config: SearXNGSearchToolConfig = SearXNGSearchToolConfig()):
         """
-        Initializes the SearxNGTool.
+        Initializes the SearXNGTool.
 
         Args:
-            config (SearxNGSearchToolConfig):
+            config (SearXNGSearchToolConfig):
                 Configuration for the tool, including base URL, max results, and optional title and description overrides.
         """
         super().__init__(config)
@@ -91,7 +87,7 @@ class SearxNGSearchTool(BaseTool):
             List[dict]: A list of search result dictionaries.
 
         Raises:
-            Exception: If the request to SearxNG fails.
+            Exception: If the request to SearXNG fails.
         """
         query_params = {
             "q": query,
@@ -117,21 +113,21 @@ class SearxNGSearchTool(BaseTool):
             return results
 
     async def run_async(
-        self, params: SearxNGSearchToolInputSchema, max_results: Optional[int] = None
-    ) -> SearxNGSearchToolOutputSchema:
+        self, params: SearXNGSearchToolInputSchema, max_results: Optional[int] = None
+    ) -> SearXNGSearchToolOutputSchema:
         """
-        Runs the SearxNGTool asynchronously with the given parameters.
+        Runs the SearXNGTool asynchronously with the given parameters.
 
         Args:
-            params (SearxNGSearchToolInputSchema): The input parameters for the tool, adhering to the input schema.
+            params (SearXNGSearchToolInputSchema): The input parameters for the tool, adhering to the input schema.
             max_results (Optional[int]): The maximum number of search results to return.
 
         Returns:
-            SearxNGSearchToolOutputSchema: The output of the tool, adhering to the output schema.
+            SearXNGSearchToolOutputSchema: The output of the tool, adhering to the output schema.
 
         Raises:
             ValueError: If the base URL is not provided.
-            Exception: If the request to SearxNG fails.
+            Exception: If the request to SearXNG fails.
         """
         async with aiohttp.ClientSession() as session:
             tasks = [self._fetch_search_results(session, query, params.category) for query in params.queries]
@@ -164,9 +160,9 @@ class SearxNGSearchTool(BaseTool):
 
         filtered_results = filtered_results[: max_results or self.max_results]
 
-        return SearxNGSearchToolOutputSchema(
+        return SearXNGSearchToolOutputSchema(
             results=[
-                SearxNGSearchResultItemSchema(
+                SearXNGSearchResultItemSchema(
                     url=result["url"], title=result["title"], content=result.get("content"), query=result["query"]
                 )
                 for result in filtered_results
@@ -174,22 +170,22 @@ class SearxNGSearchTool(BaseTool):
             category=params.category,
         )
 
-    def run(self, params: SearxNGSearchToolInputSchema, max_results: Optional[int] = None) -> SearxNGSearchToolOutputSchema:
+    def run(self, params: SearXNGSearchToolInputSchema, max_results: Optional[int] = None) -> SearXNGSearchToolOutputSchema:
         """
-        Runs the SearxNGTool synchronously with the given parameters.
+        Runs the SearXNGTool synchronously with the given parameters.
 
         This method creates an event loop in a separate thread to run the asynchronous operations.
 
         Args:
-            params (SearxNGSearchToolInputSchema): The input parameters for the tool, adhering to the input schema.
+            params (SearXNGSearchToolInputSchema): The input parameters for the tool, adhering to the input schema.
             max_results (Optional[int]): The maximum number of search results to return.
 
         Returns:
-            SearxNGSearchToolOutputSchema: The output of the tool, adhering to the output schema.
+            SearXNGSearchToolOutputSchema: The output of the tool, adhering to the output schema.
 
         Raises:
             ValueError: If the base URL is not provided.
-            Exception: If the request to SearxNG fails.
+            Exception: If the request to SearXNG fails.
         """
         with ThreadPoolExecutor() as executor:
             return executor.submit(asyncio.run, self.run_async(params, max_results)).result()
@@ -205,11 +201,11 @@ if __name__ == "__main__":
     load_dotenv()
     rich_console = Console()
 
-    search_tool_instance = SearxNGSearchTool(
-        config=SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5)
+    search_tool_instance = SearXNGSearchTool(
+        config=SearXNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5)
     )
 
-    search_input = SearxNGSearchTool.input_schema(
+    search_input = SearXNGSearchToolInputSchema(
         queries=["Python programming", "Machine learning", "Artificial intelligence"],
         category="news",
     )

@@ -234,8 +234,8 @@ async def test_tavily_search_tool_include_answer(mock_aiohttp_session):
     assert result.results[1].title == "Result 2"
 
     # Validate that the answer is included in each result
-    assert result.results[0].answer == mock_answer
-    assert result.results[1].answer == mock_answer
+    assert result.results[0].answer == mock_answer, f"{result.results[0].answer}"
+    assert result.results[1].answer == mock_answer, f"{result.results[1].answer}"
 
 
 if __name__ == "__main__":

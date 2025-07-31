@@ -27,7 +27,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'  # or your preferred version
+          python-version: '3.12'  # ensure consistency with project requirement
           cache: 'pip'
 
       - name: Install dependencies

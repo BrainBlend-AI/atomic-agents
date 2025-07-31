@@ -5,7 +5,7 @@ This project demonstrates an intelligent web search agent built using the Atomic
 ## Features
 
 1. Query Generation: Automatically generates relevant search queries based on user input.
-2. Web Search: Utilizes SearxNG to perform web searches across multiple search engines.
+2. Web Search: Utilizes SearXNG to perform web searches across multiple search engines.
 3. Question Answering: Provides detailed answers to user questions based on search results.
 4. Follow-up Questions: Suggests related questions to encourage further exploration of the topic.
 
@@ -14,7 +14,7 @@ This project demonstrates an intelligent web search agent built using the Atomic
 The Web Search Agent consists of several key components:
 
 1. Query Agent (`query_agent.py`): Generates diverse and relevant search queries based on user input.
-2. SearxNG Search Tool (`searxng_search.py`): Performs web searches using the SearxNG meta-search engine.
+2. SearXNG Search Tool (`searxng_search.py`): Performs web searches using the SearXNG meta-search engine.
 3. Question Answering Agent (`question_answering_agent.py`): Analyzes search results and provides detailed answers to user questions.
 4. Main Script (`main.py`): Orchestrates the entire process, from query generation to final answer presentation.
 
@@ -22,33 +22,49 @@ The Web Search Agent consists of several key components:
 
 To run the Web Search Agent:
 
-1. Clone the Atomic Agents repository:
+1. Setting up SearXNG server if you haven't:
+
+Make sure to add these lines to `settings.tml`:
+
+   ```yaml
+   search:
+   formats:
+      - html
+      - json
    ```
+
+1. Clone the Atomic Agents repository:
+
+   ```bash
    git clone https://github.com/BrainBlend-AI/atomic-agents
    ```
 
-2. Navigate to the web-search-agent directory:
-   ```
+1. Navigate to the web-search-agent directory:
+
+   ```bash
    cd atomic-agents/atomic-examples/web-search-agent
    ```
 
-3. Install dependencies using Poetry:
-   ```
+1. Install dependencies using Poetry:
+
+   ```bash
    poetry install
    ```
 
-4. Set up environment variables:
+1. Set up environment variables:
    Create a `.env` file in the `web-search-agent` directory with the following content:
-   ```
+
+   ```bash
    OPENAI_API_KEY=your_openai_api_key
    SEARXNG_BASE_URL=your_searxng_instance_url
    ```
-   Replace `your_openai_api_key` with your actual OpenAI API key and `your_searxng_instance_url` with the URL of your SearxNG instance.  
+
+   Replace `your_openai_api_key` with your actual OpenAI API key and `your_searxng_instance_url` with the URL of your SearXNG instance.  
    If you do not have a SearxNG instance, see the instructions below to set up one locally with docker.
 
+2. Run the Web Search Agent:
 
-5. Run the Web Search Agent:
-   ```
+   ```bash
    poetry run python web_search_agent/main.py
    ```
 
@@ -56,7 +72,7 @@ To run the Web Search Agent:
 
 1. The user provides an initial question or topic for research.
 2. The Query Agent generates multiple relevant search queries based on the user's input.
-3. The SearxNG Search Tool performs web searches using the generated queries.
+3. The SearXNG Search Tool performs web searches using the generated queries.
 4. The Question Answering Agent analyzes the search results and formulates a detailed answer.
 5. The main script presents the answer, along with references and follow-up questions.
 

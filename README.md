@@ -18,7 +18,7 @@
 - [Atomic Agents](#atomic-agents)
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
-  - [Documentation](#-documentation)
+  - [Documentation](#documentation)
     - [Watch the Overview Video](#watch-the-overview-video)
     - [Watch the Quickstart Video](#watch-the-quickstart-video)
   - [Why Atomic Agents?](#why-atomic-agents)
@@ -49,17 +49,6 @@ All logic and control flows are written in Python, enabling developers to apply 
 [![Read the Docs](https://img.shields.io/badge/docs-read%20the%20docs-blue?logo=readthedocs&style=for-the-badge)](https://brainblend-ai.github.io/atomic-agents/)
 
 > 🚀 Ready to explore our documentation? Dive in below!
->
-> <img src="./.assets/docs.png" alt="Documentation Snapshot" width="350"/>
->
-> (we totally promise this is not really the case)
-
-**Key Documentation Resources**
-
-- **Getting Started**: Installation instructions and Quickstart tutorials
-- **Examples & Tutorials**: Real-world use-cases and step-by-step guides
-- **API Reference**: Detailed class and function documentation
-- **Developer Guide**: Contribution guidelines and advanced topics
 
 [Visit the Documentation Site »](https://brainblend-ai.github.io/atomic-agents/)
 
@@ -97,7 +86,7 @@ In Atomic Agents, an agent is composed of several key components:
 - **System Prompt:** Defines the agent's behavior and purpose.
 - **Input Schema:** Specifies the structure and validation rules for the agent's input.
 - **Output Schema:** Specifies the structure and validation rules for the agent's output.
-- **Memory:** Stores conversation history or other relevant data.
+- **History:** Stores conversation history or other relevant data.
 - **Context Providers:** Inject dynamic context into the agent's system prompt at runtime.
 
 Here's a high-level architecture diagram:
@@ -145,13 +134,19 @@ We strive to thoroughly document each example, but if something is unclear, plea
 Here's a quick snippet demonstrating how easy it is to create a powerful agent with Atomic Agents:
 
 ```python
+from pydantic import Field
+from openai import OpenAI
+import instructor
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator, ChatHistory
+
 # Define a custom output schema
 class CustomOutputSchema(BaseIOSchema):
     """
     docstring for the custom output schema
     """
     chat_message: str = Field(..., description="The chat message from the agent.")
-    suggested_questions: List[str] = Field(..., description="Suggested follow-up questions.")
+    suggested_questions: list[str] = Field(..., description="Suggested follow-up questions.")
 
 # Set up the system prompt
 system_prompt_generator = SystemPromptGenerator(
@@ -167,23 +162,27 @@ system_prompt_generator = SystemPromptGenerator(
     ]
 )
 
+# Initialize OpenAI client
+client = instructor.from_openai(OpenAI())
+
 # Initialize the agent
-agent = BaseAgent(
+agent = BaseAgent[BaseAgentInputSchema, CustomOutputSchema](
     config=BaseAgentConfig(
-        client=your_openai_client,  # Replace with your actual client
+        client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=AgentMemory(),
-        output_schema=CustomOutputSchema
+        history=ChatHistory(),
     )
 )
 
-# Use the agent
-response = agent.run(user_input)
-print(f"Agent: {response.chat_message}")
-print("Suggested questions:")
-for question in response.suggested_questions:
-    print(f"- {question}")
+# Example usage
+if __name__ == "__main__":
+    user_input = "Tell me about atomic agents framework"
+    response = agent.run(BaseAgentInputSchema(chat_message=user_input))
+    print(f"Agent: {response.chat_message}")
+    print("Suggested questions:")
+    for question in response.suggested_questions:
+        print(f"- {question}")
 ```
 
 This snippet showcases how to create a customizable agent that responds to user queries and suggests follow-up questions. For full, runnable examples, please refer to the following files in the `atomic-examples/quickstart/quickstart/` directory:
@@ -226,14 +225,14 @@ Atomic Agents allows you to enhance your agents with dynamic context using **Con
 
 ### Using Context Providers
 
-To use a Context Provider, create a class that inherits from `SystemPromptContextProviderBase` and implements the `get_info()` method, which returns the context string to be added to the system prompt.
+To use a Context Provider, create a class that inherits from `BaseDynamicContextProvider` and implements the `get_info()` method, which returns the context string to be added to the system prompt.
 
 Here's a simple example:
 
 ```python
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptContextProviderBase
+from atomic_agents.context import BaseDynamicContextProvider
 
-class SearchResultsProvider(SystemPromptContextProviderBase):
+class SearchResultsProvider(BaseDynamicContextProvider):
     def __init__(self, title: str, search_results: List[str]):
         super().__init__(title=title)
         self.search_results = search_results
@@ -271,11 +270,11 @@ Here's how you can achieve this:
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.context import SystemPromptGenerator
 
 # Import the search tool you want to use
-from web_search_agent.tools.searxng_search import SearxNGSearchTool
+from web_search_agent.tools.searxng_search import SearXNGSearchTool
 
 # Define the input schema for the query agent
 class QueryAgentInputSchema(BaseIOSchema):
@@ -284,8 +283,8 @@ class QueryAgentInputSchema(BaseIOSchema):
     num_queries: int = Field(..., description="Number of queries to generate.")
 
 # Initialize the query agent
-query_agent = BaseAgent(
-    BaseAgentConfig(
+query_agent = BaseAgent[QueryAgentInputSchema, SearXNGSearchTool.input_schema](
+    config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
         model="gpt-4o-mini",
         system_prompt_generator=SystemPromptGenerator(
@@ -302,15 +301,13 @@ query_agent = BaseAgent(
                 "Provide the queries in the expected schema."
             ],
         ),
-        input_schema=QueryAgentInputSchema,
-        output_schema=SearxNGSearchTool.input_schema,  # Align output schema
     )
 )
 ```
 
 In this example:
 
-- **Modularity**: By setting the `output_schema` of the `query_agent` to match the `input_schema` of `SearxNGSearchTool`, you can directly use the output of the agent as input to the tool.
+- **Modularity**: By setting the `output_schema` of the `query_agent` to match the `input_schema` of `SearXNGSearchTool`, you can directly use the output of the agent as input to the tool.
 - **Swapability**: If you decide to switch to a different search provider, you can import a different search tool and update the `output_schema` accordingly.
 
 For instance, to switch to another search service:
@@ -322,9 +319,11 @@ from web_search_agent.tools.another_search import AnotherSearchTool
 # Update the output schema
 query_agent.config.output_schema = AnotherSearchTool.input_schema
 ```
+
 This design pattern simplifies the process of chaining agents and tools, making your AI applications more adaptable and easier to maintain.
 
 ## Running the CLI
+
 To run the CLI, simply run the following command:
 
 ```bash
@@ -346,21 +345,23 @@ uv run atomic
 After running this command, you will be presented with a menu allowing you to download tools.
 
 Each tool's has its own:
+
 - Input schema
 - Output schema
 - Usage example
 - Dependencies
 - Installation instructions
 
-<img src="./.assets/atomic-cli-tool-menu.png" alt="Atomic CLI tool example" width="600"/>
+![Atomic CLI tool example](./.assets/atomic-cli-tool-menu.png)
 
 The `atomic-assembler` CLI gives you complete control over your tools, avoiding the clutter of unnecessary dependencies. It makes modifying tools straightforward additionally, each tool comes with its own set of tests for reliability.
 
 **But you're not limited to the CLI!** If you prefer, you can directly access the tool folders and manage them manually by simply copying and pasting as needed.
 
-<img src="./.assets/atomic-cli.png" alt="Atomic CLI menu" width="400"/>
+![Atomic CLI menu](./.assets/atomic-cli.png)
 
 ## Provider & Model Compatibility
+
 Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) package. This means that in all examples where OpenAI is used, any other API supported by Instructor can also be used—such as Ollama, Groq, Mistral, Cohere, Anthropic, Gemini, and more. For a complete list, please refer to the Instructor documentation on its [GitHub page](https://github.com/jxnl/instructor).
 
 ## Atomic Forge
@@ -368,7 +369,7 @@ Atomic Agents depends on the [Instructor](https://github.com/jxnl/instructor) pa
 Atomic Forge is a collection of tools that can be used with Atomic Agents to extend its functionality. Current tools include:
 
 - Calculator
-- SearxNG Search
+- SearXNG Search
 - YouTube Transcript Scraper
 
 For more information on using and creating tools, see the [Atomic Forge README](/atomic-forge/README.md).
@@ -390,6 +391,7 @@ We welcome contributions! Please see the [Contributing Guide](/docs/contributing
 For full development setup and guidelines, please refer to the [Developer Guide](/guides/DEV_GUIDE.md).
 
 ## License
+
 This project is licensed under the MIT License—see the [LICENSE](LICENSE) file for details.
 
 ## Star History

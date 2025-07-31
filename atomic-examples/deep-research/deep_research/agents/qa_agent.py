@@ -1,8 +1,8 @@
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.context import SystemPromptGenerator
 
 from deep_research.config import ChatConfig
 
@@ -27,7 +27,7 @@ class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
     )
 
 
-question_answering_agent = BaseAgent(
+question_answering_agent = BaseAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
@@ -57,7 +57,6 @@ question_answering_agent = BaseAgent(
                 "- What are the limitations of your search capabilities?",
             ],
         ),
-        input_schema=QuestionAnsweringAgentInputSchema,
-        output_schema=QuestionAnsweringAgentOutputSchema,
+        model_api_parameters={"temperature": 0.1},
     )
 )

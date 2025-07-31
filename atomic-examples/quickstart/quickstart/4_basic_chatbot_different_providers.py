@@ -3,8 +3,8 @@ import instructor
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,12 +12,12 @@ load_dotenv()
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
-# Initialize memory with an initial message from the assistant
+# Initialize history with an initial message from the assistant
 initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
-memory.add_message("assistant", initial_message)
+history.add_message("assistant", initial_message)
 
 
 # Function to set up the client based on the chosen provider
@@ -85,7 +85,9 @@ provider = console.input(providers_str).lower()
 client, model = setup_client(provider)
 
 # Agent setup with specified configuration
-agent = BaseAgent(config=BaseAgentConfig(client=client, model=model, memory=memory, model_api_parameters={"max_tokens": 2048}))
+agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](
+    config=BaseAgentConfig(client=client, model=model, history=history, model_api_parameters={"max_tokens": 2048})
+)
 
 # Generate the default system prompt for the agent
 default_system_prompt = agent.system_prompt_generator.generate_prompt()

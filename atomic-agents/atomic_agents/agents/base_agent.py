@@ -1,16 +1,15 @@
 import instructor
 from pydantic import BaseModel, Field
-from typing import Optional, Type
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.lib.components.system_prompt_generator import (
-    SystemPromptContextProviderBase,
+from typing import Optional, Type, Generator, AsyncGenerator, get_args
+from atomic_agents.context.chat_history import ChatHistory
+from atomic_agents.context.system_prompt_generator import (
+    BaseDynamicContextProvider,
     SystemPromptGenerator,
 )
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.base.base_io_schema import BaseIOSchema
 
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
-import warnings
 
 
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
@@ -61,52 +60,39 @@ class BaseAgentOutputSchema(BaseIOSchema):
 class BaseAgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field(default="gpt-4o-mini", description="The model to use for generating responses.")
-    memory: Optional[AgentMemory] = Field(default=None, description="Memory component for storing chat history.")
+    history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         default=None, description="Component for generating system prompts."
     )
     system_role: Optional[str] = Field(
         default="system", description="The role of the system in the conversation. None means no system prompt."
     )
-    input_schema: Optional[Type[BaseModel]] = Field(default=None, description="The schema for the input data.")
-    output_schema: Optional[Type[BaseModel]] = Field(default=None, description="The schema for the output data.")
     model_config = {"arbitrary_types_allowed": True}
-    temperature: Optional[float] = Field(
-        default=None,
-        description="Temperature for response generation, typically ranging from 0 to 1.",
-    )
-    max_tokens: Optional[int] = Field(
-        default=None,
-        description="Maximum number of token allowed in the response generation.",
-    )
-    model_api_parameters: Optional[dict] = Field(default=None, description="Additional parameters passed to the API provider.")
+    model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
 
 
-class BaseAgent:
+class BaseAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     """
     Base class for chat agents.
 
-    This class provides the core functionality for handling chat interactions, including managing memory,
+    This class provides the core functionality for handling chat interactions, including managing history,
     generating system prompts, and obtaining responses from a language model.
 
+    Type Parameters:
+        InputSchema: Schema for the user input, must be a subclass of BaseIOSchema.
+        OutputSchema: Schema for the agent's output, must be a subclass of BaseIOSchema.
+
     Attributes:
-        input_schema (Type[BaseIOSchema]): Schema for the input data.
-        output_schema (Type[BaseIOSchema]): Schema for the output data.
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
-        memory (AgentMemory): Memory component for storing chat history.
+        history (ChatHistory): History component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
-        initial_memory (AgentMemory): Initial state of the memory.
-        temperature (float): Temperature for response generation, typically ranging from 0 to 1.  For models such as
-            OpenAI o3-mini that do not support temperature, you must explicitly pass 'None'.
-            DEPRECATED: Include 'temperature' in model_api_parameters instead.
-        max_tokens (int): Maximum number of tokens allowed in the response.
-            DEPRECATED: Include 'max_tokens' in model_api_parameters instead.
+        system_role (Optional[str]): The role of the system in the conversation. None means no system prompt.
+        initial_history (ChatHistory): Initial state of the history.
+        current_user_input (Optional[InputSchema]): The current user input being processed.
         model_api_parameters (dict): Additional parameters passed to the API provider.
+            - Use this for parameters like 'temperature', 'max_tokens', etc.
     """
-
-    input_schema = BaseAgentInputSchema
-    output_schema = BaseAgentOutputSchema
 
     def __init__(self, config: BaseAgentConfig):
         """
@@ -115,50 +101,40 @@ class BaseAgent:
         Args:
             config (BaseAgentConfig): Configuration for the chat agent.
         """
-        self.input_schema = config.input_schema or self.input_schema
-        self.output_schema = config.output_schema or self.output_schema
         self.client = config.client
         self.model = config.model
-        self.memory = config.memory or AgentMemory()
+        self.history = config.history or ChatHistory()
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.system_role = config.system_role
-        self.initial_memory = self.memory.copy()
+        self.initial_history = self.history.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
-        if config.temperature is not None:
-            warnings.warn(
-                "'temperature' is deprecated and will soon be removed. Please use 'model_api_parameters' instead.",
-                DeprecationWarning,
-            )
-            if "temperature" not in self.model_api_parameters:
-                self.model_api_parameters["temperature"] = config.temperature
-        if config.max_tokens is not None:
-            warnings.warn(
-                "'max_tokens' is deprecated and will soon be removed. Please use 'model_api_parameters' instead.",
-                DeprecationWarning,
-            )
-            self.model_api_parameters["max_tokens"] = config.max_tokens
 
-    def reset_memory(self):
+    def reset_history(self):
         """
-        Resets the memory to its initial state.
+        Resets the history to its initial state.
         """
-        self.memory = self.initial_memory.copy()
+        self.history = self.initial_history.copy()
 
-    def get_response(self, response_model=None) -> Type[BaseModel]:
-        """
-        Obtains a response from the language model synchronously.
+    @property
+    def input_schema(self) -> Type[BaseIOSchema]:
+        if hasattr(self, "__orig_class__"):
+            TI, _ = get_args(self.__orig_class__)
+        else:
+            TI = BaseAgentInputSchema
 
-        Args:
-            response_model (Type[BaseModel], optional):
-                The schema for the response data. If not set, self.output_schema is used.
+        return TI
 
-        Returns:
-            Type[BaseModel]: The response from the language model.
-        """
-        if response_model is None:
-            response_model = self.output_schema
+    @property
+    def output_schema(self) -> Type[BaseIOSchema]:
+        if hasattr(self, "__orig_class__"):
+            _, TO = get_args(self.__orig_class__)
+        else:
+            TO = BaseAgentOutputSchema
 
+        return TO
+
+    def _prepare_messages(self):
         if self.system_role is None:
             self.messages = []
         else:
@@ -169,63 +145,59 @@ class BaseAgent:
                 }
             ]
 
-        self.messages += self.memory.get_history()
+        self.messages += self.history.get_history()
 
-        response = self.client.chat.completions.create(
-            messages=self.messages,
-            model=self.model,
-            response_model=response_model,
-            **self.model_api_parameters,
-        )
-
-        return response
-
-    def run(self, user_input: Optional[BaseIOSchema] = None) -> BaseIOSchema:
+    def run(self, user_input: Optional[InputSchema] = None) -> OutputSchema:
         """
         Runs the chat agent with the given user input synchronously.
 
         Args:
-            user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
 
         Returns:
-            BaseIOSchema: The response from the chat agent.
+            OutputSchema: The response from the chat agent.
         """
+        assert not isinstance(
+            self.client, instructor.client.AsyncInstructor
+        ), "The run method is not supported for async clients. Use run_async instead."
         if user_input:
-            self.memory.initialize_turn()
+            self.history.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            self.history.add_message("user", user_input)
 
-        response = self.get_response(response_model=self.output_schema)
-        self.memory.add_message("assistant", response)
+        self._prepare_messages()
+        response = self.client.chat.completions.create(
+            messages=self.messages,
+            model=self.model,
+            response_model=self.output_schema,
+            **self.model_api_parameters,
+        )
+        self.history.add_message("assistant", response)
 
         return response
 
-    async def run_async(self, user_input: Optional[BaseIOSchema] = None):
+    def run_stream(self, user_input: Optional[InputSchema] = None) -> Generator[OutputSchema, None, OutputSchema]:
         """
-        Runs the chat agent with the given user input, supporting streaming output asynchronously.
+        Runs the chat agent with the given user input, supporting streaming output.
 
         Args:
-            user_input (Optional[BaseIOSchema]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
 
         Yields:
-            BaseModel: Partial responses from the chat agent.
+            OutputSchema: Partial responses from the chat agent.
+
+        Returns:
+            OutputSchema: The final response from the chat agent.
         """
+        assert not isinstance(
+            self.client, instructor.client.AsyncInstructor
+        ), "The run_stream method is not supported for async clients. Use run_async instead."
         if user_input:
-            self.memory.initialize_turn()
+            self.history.initialize_turn()
             self.current_user_input = user_input
-            self.memory.add_message("user", user_input)
+            self.history.add_message("user", user_input)
 
-        if self.system_role is None:
-            self.messages = []
-        else:
-            self.messages = [
-                {
-                    "role": self.system_role,
-                    "content": self.system_prompt_generator.generate_prompt(),
-                }
-            ]
-
-        self.messages += self.memory.get_history()
+        self._prepare_messages()
 
         response_stream = self.client.chat.completions.create_partial(
             model=self.model,
@@ -235,31 +207,79 @@ class BaseAgent:
             stream=True,
         )
 
-        async for partial_response in response_stream:
+        for partial_response in response_stream:
             yield partial_response
 
         full_response_content = self.output_schema(**partial_response.model_dump())
-        self.memory.add_message("assistant", full_response_content)
+        self.history.add_message("assistant", full_response_content)
 
-    async def stream_response_async(self, user_input: Optional[Type[BaseIOSchema]] = None):
+        return full_response_content
+
+    async def run_async(self, user_input: Optional[InputSchema] = None) -> OutputSchema:
         """
-        Deprecated method for streaming responses asynchronously. Use run_async instead.
+        Runs the chat agent asynchronously with the given user input.
 
         Args:
-            user_input (Optional[Type[BaseIOSchema]]): The input from the user. If not provided, skips adding to memory.
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
+
+        Returns:
+            OutputSchema: The response from the chat agent.
+
+        Raises:
+            NotAsyncIterableError: If used as an async generator (in an async for loop).
+                                   Use run_async_stream() method instead for streaming responses.
+        """
+        assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
+        if user_input:
+            self.history.initialize_turn()
+            self.current_user_input = user_input
+            self.history.add_message("user", user_input)
+
+        self._prepare_messages()
+
+        response = await self.client.chat.completions.create(
+            model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
+        )
+
+        self.history.add_message("assistant", response)
+        return response
+
+    async def run_async_stream(self, user_input: Optional[InputSchema] = None) -> AsyncGenerator[OutputSchema, None]:
+        """
+        Runs the chat agent asynchronously with the given user input, supporting streaming output.
+
+        Args:
+            user_input (Optional[InputSchema]): The input from the user. If not provided, skips adding to history.
 
         Yields:
-            BaseModel: Partial responses from the chat agent.
+            OutputSchema: Partial responses from the chat agent.
         """
-        warnings.warn(
-            "stream_response_async is deprecated and will be removed in version 1.1. Use run_async instead which can be used in the exact same way.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        async for response in self.run_async(user_input):
-            yield response
+        assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
+        if user_input:
+            self.history.initialize_turn()
+            self.current_user_input = user_input
+            self.history.add_message("user", user_input)
 
-    def get_context_provider(self, provider_name: str) -> Type[SystemPromptContextProviderBase]:
+        self._prepare_messages()
+
+        response_stream = self.client.chat.completions.create_partial(
+            model=self.model,
+            messages=self.messages,
+            response_model=self.output_schema,
+            **self.model_api_parameters,
+            stream=True,
+        )
+
+        last_response = None
+        async for partial_response in response_stream:
+            last_response = partial_response
+            yield partial_response
+
+        if last_response:
+            full_response_content = self.output_schema(**last_response.model_dump())
+            self.history.add_message("assistant", full_response_content)
+
+    def get_context_provider(self, provider_name: str) -> Type[BaseDynamicContextProvider]:
         """
         Retrieves a context provider by name.
 
@@ -267,7 +287,7 @@ class BaseAgent:
             provider_name (str): The name of the context provider.
 
         Returns:
-            SystemPromptContextProviderBase: The context provider if found.
+            BaseDynamicContextProvider: The context provider if found.
 
         Raises:
             KeyError: If the context provider is not found.
@@ -276,13 +296,13 @@ class BaseAgent:
             raise KeyError(f"Context provider '{provider_name}' not found.")
         return self.system_prompt_generator.context_providers[provider_name]
 
-    def register_context_provider(self, provider_name: str, provider: SystemPromptContextProviderBase):
+    def register_context_provider(self, provider_name: str, provider: BaseDynamicContextProvider):
         """
         Registers a new context provider.
 
         Args:
             provider_name (str): The name of the context provider.
-            provider (SystemPromptContextProviderBase): The context provider instance.
+            provider (BaseDynamicContextProvider): The context provider instance.
         """
         self.system_prompt_generator.context_providers[provider_name] = provider
 
@@ -345,7 +365,7 @@ if __name__ == "__main__":
         info_table.add_column("Value", style="yellow")
 
         info_table.add_row("Model", agent.model)
-        info_table.add_row("Memory", str(type(agent.memory).__name__))
+        info_table.add_row("History", str(type(agent.history).__name__))
         info_table.add_row("System Prompt Generator", str(type(agent.system_prompt_generator).__name__))
 
         return info_table
@@ -393,11 +413,11 @@ if __name__ == "__main__":
         if streaming:
             client = instructor.from_openai(AsyncOpenAI())
             config = BaseAgentConfig(client=client, model="gpt-4o-mini")
-            agent = BaseAgent(config)
+            agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
         else:
             client = instructor.from_openai(OpenAI())
             config = BaseAgentConfig(client=client, model="gpt-4o-mini")
-            agent = BaseAgent(config)
+            agent = BaseAgent[BaseAgentInputSchema, BaseAgentOutputSchema](config)
 
         # Display agent information before starting the chat
         display_agent_info(agent)
@@ -425,7 +445,8 @@ if __name__ == "__main__":
             console.print("[bold blue]Assistant:[/bold blue]")
             if streaming:
                 with Live(console=console, refresh_per_second=4) as live:
-                    async for partial_response in agent.run_async(user_input):
+                    # Use run_async_stream instead of run_async for streaming responses
+                    async for partial_response in agent.run_async_stream(user_input):
                         response_json = partial_response.model_dump()
                         json_str = json.dumps(response_json, indent=2)
                         live.update(json_str)

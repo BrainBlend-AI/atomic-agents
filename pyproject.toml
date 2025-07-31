@@ -15,7 +15,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4.0"
+python = ">=3.12,<4.0"
 instructor = ">=1.9.0,<2.0.0"
 pydantic = ">=2.11.0,<3.0.0"
 rich = ">=13.7.1,<14.0.0"

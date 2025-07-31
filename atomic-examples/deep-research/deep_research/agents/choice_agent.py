@@ -1,8 +1,8 @@
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.context import SystemPromptGenerator
 
 from deep_research.config import ChatConfig
 
@@ -21,7 +21,7 @@ class ChoiceAgentOutputSchema(BaseIOSchema):
     decision: bool = Field(..., description="The final decision based on the analysis")
 
 
-choice_agent = BaseAgent(
+choice_agent = BaseAgent[ChoiceAgentInputSchema, ChoiceAgentOutputSchema](
     BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
@@ -45,8 +45,7 @@ choice_agent = BaseAgent(
                 "Your decision must match your reasoning - don't contradict yourself",
             ],
         ),
-        input_schema=ChoiceAgentInputSchema,
-        output_schema=ChoiceAgentOutputSchema,
+        model_api_parameters={"temperature": 0.1},
     )
 )
 

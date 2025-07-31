@@ -1,5 +1,7 @@
 # pyright: reportInvalidTypeForm=false
-from atomic_agents.lib.factories.mcp_tool_factory import fetch_mcp_tools
+from atomic_agents.connectors.mcp import fetch_mcp_tools, MCPTransportType
+from atomic_agents import BaseIOSchema, BaseAgent, BaseAgentConfig
+from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from rich.console import Console
 from rich.table import Table
 import openai
@@ -9,9 +11,6 @@ import asyncio
 import shlex
 from contextlib import AsyncExitStack
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
 from typing import Union, Type, Dict, Optional
 from dataclasses import dataclass
 from mcp import ClientSession, StdioServerParameters
@@ -77,7 +76,7 @@ stdio_session = stdio_loop.run_until_complete(_bootstrap_stdio())
 # Fetch tools and build ActionUnion statically
 tools = fetch_mcp_tools(
     mcp_endpoint=None,
-    use_stdio=True,
+    transport_type=MCPTransportType.STDIO,
     client_session=stdio_session,  # Pass persistent session
     event_loop=stdio_loop,  # Pass corresponding loop
 )
@@ -115,6 +114,8 @@ class OrchestratorOutputSchema(BaseIOSchema):
         ..., description="The chosen action: either a tool's input schema instance or a final response schema instance."
     )
 
+    model_config = {"arbitrary_types_allowed": True}
+
 
 # 3. Main logic and script entry point
 def main():
@@ -131,12 +132,12 @@ def main():
         console.print(table)
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
-        memory = AgentMemory()
-        orchestrator_agent = BaseAgent(
+        history = ChatHistory()
+        orchestrator_agent = BaseAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
             BaseAgentConfig(
                 client=client,
                 model=config.openai_model,
-                memory=memory,
+                history=history,
                 system_prompt_generator=SystemPromptGenerator(
                     background=[
                         "You are an MCP Orchestrator Agent, designed to chat with users and",
@@ -158,8 +159,6 @@ def main():
                         "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
                     ],
                 ),
-                input_schema=MCPOrchestratorInputSchema,
-                output_schema=OrchestratorOutputSchema,
             )
         )
         console.print("[green]Successfully created orchestrator agent.[/green]")
@@ -167,7 +166,7 @@ def main():
         console.print("[bold green]MCP Agent Interactive Chat (STDIO mode). Type 'exit' or 'quit' to leave.[/bold green]")
         while True:
             query = console.input("[bold yellow]You:[/bold yellow] ").strip()
-            if query.lower() in {"exit", "quit"}:
+            if query.lower() in {"/exit", "/quit"}:
                 console.print("[bold red]Exiting chat. Goodbye![/bold red]")
                 break
             if not query:
@@ -195,11 +194,11 @@ def main():
                     tool_output = tool_instance.run(action_instance)
                     console.print(f"[bold green]Result:[/bold green] {tool_output.result}")
 
-                    # Add tool result to agent memory
+                    # Add tool result to agent history
                     result_message = MCPOrchestratorInputSchema(
                         query=(f"Tool {tool_name} executed with result: " f"{tool_output.result}")
                     )
-                    orchestrator_agent.memory.add_message("system", result_message)
+                    orchestrator_agent.history.add_message("system", result_message)
 
                     # Run the agent again without parameters to continue the flow
                     orchestrator_output = orchestrator_agent.run()

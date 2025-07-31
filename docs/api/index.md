@@ -30,12 +30,12 @@ The agents module provides the base classes for creating AI agents:
 
 The components module contains essential building blocks:
 
-- `AgentMemory`: Manages conversation history and state with support for:
+- `ChatHistory`: Manages conversation history and state with support for:
   - Message history with role-based messages
   - Turn-based conversation tracking
   - Multimodal content
   - Serialization and persistence
-  - Memory size management
+  - History size management
 
 - `SystemPromptGenerator`: Creates structured system prompts with:
   - Background information
@@ -43,7 +43,7 @@ The components module contains essential building blocks:
   - Output instructions
   - Dynamic context through context providers
 
-- `SystemPromptContextProviderBase`: Base class for creating custom context providers that can inject dynamic information into system prompts
+- `BaseDynamicContextProvider`: Base class for creating custom context providers that can inject dynamic information into system prompts
 
 [Learn more about components](components.md)
 

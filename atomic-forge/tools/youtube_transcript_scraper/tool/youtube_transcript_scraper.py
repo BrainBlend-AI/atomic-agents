@@ -10,8 +10,7 @@ from youtube_transcript_api import (
     YouTubeTranscriptApi,
 )
 
-from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
+from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig
 
 
 ################
@@ -63,7 +62,7 @@ class YouTubeTranscriptToolConfig(BaseToolConfig):
 #####################
 # MAIN TOOL & LOGIC #
 #####################
-class YouTubeTranscriptTool(BaseTool):
+class YouTubeTranscriptTool(BaseTool[YouTubeTranscriptToolInputSchema, YouTubeTranscriptToolOutputSchema]):
     """
     Tool for fetching the transcript of a YouTube video using the YouTube Transcript API.
 

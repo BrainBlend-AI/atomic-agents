@@ -11,6 +11,7 @@ This project is an MCP (Model Context Protocol) server that provides tools and r
 │   ├── server.py                # Unified server entry point with mode selection
 │   ├── server_stdio.py          # Implementation for stdio transport
 │   ├── server_sse.py            # Implementation for SSE transport (HTTP)
+│   ├── server_http.py           # Implementation for HTTP Stream transport
 │   ├── interfaces/              # Base classes/interfaces for tools and resources
 │   │   ├── __init__.py
 │   │   ├── resource.py
@@ -44,7 +45,7 @@ This project is an MCP (Model Context Protocol) server that provides tools and r
 
 ## Running the Server
 
-The server can run in two modes: `stdio` (standard input/output) or `sse` (HTTP Server-Sent Events). You must specify the desired mode using the `--mode` parameter.
+The server can run in three modes: `stdio` (standard input/output), `sse` (HTTP Server-Sent Events), or `http` (HTTP Stream Transport). You must specify the desired mode using the `--mode` parameter.
 
 ### Using the Command Line Script
 
@@ -62,6 +63,15 @@ poetry run example-mcp-server --mode=sse --host 127.0.0.1 --port 8000
 
 # Run in SSE mode with auto-reload for development
 poetry run example-mcp-server --mode=sse --reload
+
+# Run in HTTP Stream mode (default http://0.0.0.0:6969/mcp)
+poetry run example-mcp-server --mode=http_stream
+
+# Run in HTTP Stream mode with custom host/port
+poetry run example-mcp-server --mode=http_stream --host 127.0.0.1 --port 8000
+
+# Run in HTTP Stream mode with auto-reload
+poetry run example-mcp-server --mode=http_stream --reload
 ```
 
 ### Using Python Module
@@ -72,10 +82,12 @@ Alternatively, you can run the server as a Python module:
 # Using the unified server script
 poetry run python -m example_mcp_server.server --mode=stdio
 poetry run python -m example_mcp_server.server --mode=sse
+poetry run python -m example_mcp_server.server --mode=http_stream
 
 # Or call the specific implementations directly
 poetry run python -m example_mcp_server.server_stdio
 poetry run python -m example_mcp_server.server_sse
+poetry run python -m example_mcp_server.server_http
 ```
 
 ## Client Integration
@@ -84,6 +96,7 @@ This server is designed to work with the companion MCP client in the `example-cl
 
 1. **STDIO Transport**: The client launches this server as a subprocess and communicates through standard input/output
 2. **SSE Transport**: The client connects to this server running as an HTTP service
+3. **HTTP Stream Transport**: The client connects to the `/mcp` endpoint for a streaming RPC-like interface
 
 ### STDIO Mode Connection
 
@@ -104,6 +117,16 @@ mcp_server_url: str = "http://localhost:6969"
 ```
 
 This mode is better for production deployments, sharing tools across multiple clients, or when the server needs to run on a different machine.
+
+### HTTP Stream Mode Connection
+
+In HTTP Stream mode, the client connects to the server's `/mcp` endpoint:
+
+```python
+mcp_server_url: str = "http://localhost:6969/mcp"
+```
+
+This mode supports a streaming RPC-like interaction over HTTP, where the client can negotiate a session, send JSON-RPC calls, and terminate the session.
 
 ## Developing Your Server
 

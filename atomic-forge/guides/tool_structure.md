@@ -27,7 +27,7 @@ An **Atomic Tool** should always be self-contained and modular. This means it sh
 
 Each tool should be placed in its own folder with the following structure:
 
-```
+```PlainText
 tool_name/
 │   .coveragerc
 │   pyproject.toml
@@ -181,8 +181,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from atomic_agents.agents.base_agent import BaseIOSchema
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
+from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig 
 ```
 
 ### 2. Input Schema
@@ -326,16 +325,10 @@ This is the core of your tool, where you implement the main functionality. Your 
 # Main Tool & Logic #
 #####################
 
-class PizzaOrderingTool(BaseTool):
+class PizzaOrderingTool(BaseTool[PizzaOrderInputSchema, OrderConfirmationSchema]):
     """
     Tool for placing pizza orders through the Pizza Orders API.
     """
-
-    input_schema = PizzaOrderInputSchema
-    output_schemas = {
-        "confirmation": OrderConfirmationSchema,
-        "payment": PaymentDetailsSchema
-    }
 
     def __init__(self, config: PizzaOrderingToolConfig = PizzaOrderingToolConfig()):
         """
@@ -429,7 +422,7 @@ class PizzaOrderingTool(BaseTool):
 
 **Explanation:**
 
-- **Inheritance:** The tool class inherits from `BaseTool`.
+- **Inheritance:** The tool class inherits from `BaseTool` with generic type parameters.
 - **Run Method:** The `run` method is mandatory and serves as the entry point for your tool.
 - **Title and Description Overrides:** Uses the configuration's `title` and `description`.
 - **Helper Methods:** Break down complex logic into smaller methods for clarity and maintainability.

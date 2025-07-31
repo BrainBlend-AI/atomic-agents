@@ -23,11 +23,15 @@ This directory contains the Deep Research Agent example for the Atomic Agents pr
    Create a `.env` file in the `deep-research` directory with:
    ```env
    OPENAI_API_KEY=your_openai_api_key
+   SEARXNG_BASE_URL=http://localhost:8080
+   SEARXNG_API_KEY=your_searxng_secret_key
    ```
+   
+   **Important**: To find your SearXNG secret key, check the `secret_key` value in your SearXNG `settings.yml` file, typically located at `/etc/searxng/settings.yml` or in the SearXNG installation directory.
 
-5. **Set up SearxNG:**
-   - Install SearxNG from the [official repository](https://github.com/searxng/searxng)
-   - Default configuration expects SearxNG at `http://localhost:8080`
+5. **Set up SearXNG:**
+   - Install SearXNG from the [official repository](https://github.com/searxng/searxng)
+   - Default configuration expects SearXNG at `http://localhost:8080`
 
 6. **Run the Deep Research Agent:**
    ```bash
@@ -44,7 +48,7 @@ This directory contains the Deep Research Agent example for the Atomic Agents pr
 
 ### 2. Tools (`tools/`)
 
-- **SearxNG Search** (`searxng_search.py`): Performs web searches across multiple engines
+- **SearXNG Search** (`searxng_search.py`): Performs web searches across multiple engines
 - **Webpage Scraper** (`webpage_scraper.py`): Extracts and processes web content
 
 ### 3. Main (`main.py`)

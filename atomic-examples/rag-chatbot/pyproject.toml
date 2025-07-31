@@ -6,14 +6,16 @@ authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<4.0"
+python = ">=3.12,<4.0"
 atomic-agents = {path = "../..", develop = true}
 chromadb = "^0.4.24"
+numpy = ">=1.22.5,<2.0"
 python-dotenv = ">=1.0.1,<2.0.0"
 openai = ">=1.35.12,<2.0.0"
+pulsar-client = ">=3.6.1,<4.0.0" 
 rich = ">=13.7.0,<14.0.0"
 wget = ">=3.2,<4.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

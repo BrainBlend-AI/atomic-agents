@@ -1,6 +1,5 @@
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseAgent, BaseAgentConfig, BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator
 import instructor
 import openai
 from pydantic import Field
@@ -60,7 +59,7 @@ class NutritionAnalysisOutput(BaseIOSchema):
 
 
 # Configure the nutrition analysis system
-nutrition_analyzer = BaseAgent(
+nutrition_analyzer = BaseAgent[NutritionAnalysisInput, NutritionAnalysisOutput](
     config=BaseAgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=API_KEY)),
         model="gpt-4o-mini",
@@ -86,8 +85,6 @@ nutrition_analyzer = BaseAgent(
                 "4. Include all extracted labels in the final result",
             ],
         ),
-        input_schema=NutritionAnalysisInput,
-        output_schema=NutritionAnalysisOutput,
     )
 )
 
