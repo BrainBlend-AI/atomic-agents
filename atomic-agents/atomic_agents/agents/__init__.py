@@ -1,6 +1,6 @@
 """Agent implementations and configurations."""
 
-from .base_agent import (
+from .atomic_agent import (
     AtomicAgent,
     AgentConfig,
     BasicChatInputSchema,
