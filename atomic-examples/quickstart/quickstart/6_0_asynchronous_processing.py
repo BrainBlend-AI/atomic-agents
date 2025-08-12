@@ -34,7 +34,7 @@ class PersonSchema(BaseIOSchema):
 
 
 # System prompt generator setup
-sysyem_prompt_generator = SystemPromptGenerator(
+system_prompt_generator = SystemPromptGenerator(
     background=["You parse a sentence and extract elements."],
     steps=[],
     output_instructions=[],
@@ -53,7 +53,7 @@ sem = asyncio.Semaphore(2)
 
 # Agent setup with specified configuration
 agent = AtomicAgent[BasicChatInputSchema, PersonSchema](
-    config=AgentConfig(client=client, model="gpt-4o-mini", sysyem_prompt_generator=sysyem_prompt_generator)
+    config=AgentConfig(client=client, model="gpt-4o-mini", system_prompt_generator=system_prompt_generator)
 )
 
 
