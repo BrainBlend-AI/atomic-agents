@@ -15,7 +15,7 @@
 
 ## What is Atomic Agents?
 
-The Atomic Agents framework is designed around the concept of atomicity to be an extremely lightweight and modular framework for building Agentic AI pipelines and applications without sacrificing developer experience and maintainability. 
+The Atomic Agents framework is designed around the concept of atomicity to be an extremely lightweight and modular framework for building Agentic AI pipelines and applications without sacrificing developer experience and maintainability.
 
 Think of it like building AI applications with LEGO blocks - each component (agent, tool, context provider) is:
 - **Single-purpose**: Does one thing well
@@ -29,29 +29,31 @@ Built on [Instructor](https://github.com/jxnl/instructor) and [Pydantic](https:/
 
 ## Table of Contents
 
-- [What is Atomic Agents?](#what-is-atomic-agents)
-- [Getting Started](#getting-started)
-  - [Installation](#installation)
-  - [Quick Example](#quick-example)
-- [Why Atomic Agents?](#why-atomic-agents)
-- [Core Concepts](#core-concepts)
-  - [Anatomy of an Agent](#anatomy-of-an-agent)
-  - [Context Providers](#context-providers)
-  - [Chaining Schemas and Agents](#chaining-schemas-and-agents)
-- [Examples & Documentation](#examples--documentation)
-  - [Quickstart Examples](#quickstart-examples)
-  - [Complete Examples](#complete-examples)
-- [🚀 Version 2.0 Released!](#-version-20-released)
-  - [Key Changes in v2.0:](#key-changes-in-v20)
-  - [⚠️ Upgrading from v1.x](#️-upgrading-from-v1x)
-- [Atomic Forge & CLI](#atomic-forge--cli)
-  - [Running the CLI](#running-the-cli)
-- [Project Structure](#project-structure)
-- [Provider \& Model Compatibility](#provider--model-compatibility)
-- [Contributing](#contributing)
-- [License](#license)
-- [Additional Resources](#additional-resources)
-- [Star History](#star-history)
+- [Atomic Agents](#atomic-agents)
+  - [What is Atomic Agents?](#what-is-atomic-agents)
+  - [Table of Contents](#table-of-contents)
+  - [Getting Started](#getting-started)
+    - [Installation](#installation)
+    - [Quick Example](#quick-example)
+  - [Why Atomic Agents?](#why-atomic-agents)
+  - [Core Concepts](#core-concepts)
+    - [Anatomy of an Agent](#anatomy-of-an-agent)
+    - [Context Providers](#context-providers)
+    - [Chaining Schemas and Agents](#chaining-schemas-and-agents)
+  - [Examples \& Documentation](#examples--documentation)
+    - [Quickstart Examples](#quickstart-examples)
+    - [Complete Examples](#complete-examples)
+  - [🚀 Version 2.0 Released!](#-version-20-released)
+    - [Key Changes in v2.0:](#key-changes-in-v20)
+    - [⚠️ Upgrading from v1.x](#️-upgrading-from-v1x)
+  - [Atomic Forge \& CLI](#atomic-forge--cli)
+    - [Running the CLI](#running-the-cli)
+  - [Project Structure](#project-structure)
+  - [Provider \& Model Compatibility](#provider--model-compatibility)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Additional Resources](#additional-resources)
+  - [Star History](#star-history)
 
 ## Getting Started
 
@@ -132,7 +134,7 @@ While existing frameworks for agentic AI focus on building autonomous multi-agen
 Atomic Agents addresses this need by providing:
 
 - **Modularity:** Build AI applications by combining small, reusable components.
-- **Predictability:** Define clear input and output schemas to ensure consistent behavior.  
+- **Predictability:** Define clear input and output schemas to ensure consistent behavior.
 - **Extensibility:** Easily swap out components or integrate new ones without disrupting the entire system.
 - **Control:** Fine-tune each part of the system individually, from system prompts to tool integrations.
 
@@ -265,9 +267,9 @@ A complete list of examples can be found in the [examples](./atomic-examples/) d
 
 For full, runnable examples, please refer to the following files in the `atomic-examples/quickstart/quickstart/` directory:
 
-- [Basic Chatbot](/atomic-examples/quickstart/quickstart/1_basic_chatbot.py) - A minimal chatbot example to get you started.
+- [Basic Chatbot](/atomic-examples/quickstart/quickstart/1_0_basic_chatbot.py) - A minimal chatbot example to get you started.
 - [Custom Chatbot](/atomic-examples/quickstart/quickstart/2_basic_custom_chatbot.py) - A more advanced example with a custom system prompt.
-- [Custom Chatbot with Schema](/atomic-examples/quickstart/quickstart/3_basic_custom_chatbot_with_custom_schema.py) - An advanced example featuring a custom output schema.
+- [Custom Chatbot with Schema](/atomic-examples/quickstart/quickstart/3_0_basic_custom_chatbot_with_custom_schema.py) - An advanced example featuring a custom output schema.
 - [Multi-Provider Chatbot](/atomic-examples/quickstart/quickstart/4_basic_chatbot_different_providers.py) - Demonstrates how to use different providers such as Ollama or Groq.
 
 ### Complete Examples
