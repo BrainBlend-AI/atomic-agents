@@ -1,5 +1,6 @@
 import logging
 import argparse
+from importlib.metadata import version, PackageNotFoundError
 from atomic_assembler.app import AtomicAssembler
 
 
@@ -20,8 +21,18 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Atomic Assembler")
+    try:
+        pkg_version = version("atomic-agents")
+    except PackageNotFoundError:
+        pkg_version = "unknown"
+    
+    parser = argparse.ArgumentParser(
+        description="Atomic Assembler",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"Version: {pkg_version}"
+    )
     parser.add_argument("--enable-logging", action="store_true", help="Enable logging")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {pkg_version}")
     args = parser.parse_args()
 
     setup_logging(args.enable_logging)

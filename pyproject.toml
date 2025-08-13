@@ -21,7 +21,7 @@ pydantic = ">=2.11.0,<3.0.0"
 rich = ">=13.7.1,<14.0.0"
 gitpython = ">=3.1.43,<4.0.0"
 pyfiglet = ">=1.0.2,<2.0.0"
-textual = ">=0.82.0,<1.0.0"
+textual = ">=5.3.0,<6.0.0"
 pyyaml = ">=6.0.2,<7.0.0"
 requests = ">=2.32.3,<3.0.0"
 mcp = {extras = ["cli"], version = "^1.6.0"}
