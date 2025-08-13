@@ -1,0 +1,11 @@
+This PR introduces the Atomic Scraper Tool, a next-generation intelligent web scraping tool, to the Atomic Agents ecosystem.
+
+Key changes and features:
+- **Refactored Project Structure**: The project has been restructured into a standard Python package, resolving import issues and improving maintainability.
+- **Atomic Scraper Tool**: Integration of the core scraping tool, designed for AI-powered strategy generation and structured data extraction.
+- **Dedicated Tool Documentation**: A comprehensive `README.md` has been added for the `AtomicScraperTool`, detailing its features, usage, configuration, and error handling.
+- **Import Fixes**: All relative import statements have been converted to absolute imports, ensuring proper module resolution.
+- **Atomic Agents Compatibility**: The tool is now fully compliant with the `atomic-agents` contribution guidelines, including proper `BaseTool` inheritance, Pydantic schemas, and class-level `name`/`description` attributes.
+- **Beyond a Simple Tool**: The Atomic Scraper Tool is more than just a basic scraper; it includes a sophisticated planning agent and other helper components for advanced web data extraction.
+
+This contribution aims to provide a powerful and versatile web scraping solution that seamlessly integrates with the Atomic Agents framework, enabling complex data acquisition workflows.
