@@ -228,20 +228,21 @@ Type your scraping requests naturally, like:
     def _handle_scraping_request(self):
         """Handle a new scraping request from the user."""
         self.console.print("\n[bold green]🔍 New Scraping Request[/bold green]")
-        self.console.print("Describe what you want to scrape in natural language:")
-        self.console.print("[dim]Example: 'Scrape farmers markets in Cape Town with locations and operating hours'[/dim]\n")
-
-        # Get user request
-        request = Prompt.ask("[cyan]Your request[/cyan]")
-        if not request.strip():
-            self.console.print("[yellow]Request cannot be empty.[/yellow]")
-            return
-
-        # Get target URL
+        
+        # Get target URL first
+        self.console.print("First, let's specify the website you want to scrape:")
         self.console.print("[dim]Enter the full URL including https:// (e.g., https://example.com/products)[/dim]")
         target_url = Prompt.ask("[cyan]Target website URL[/cyan]")
         if not target_url.strip():
             self.console.print("[yellow]URL cannot be empty.[/yellow]")
+            return
+
+        # Get user request second
+        self.console.print("\nNow, describe what you want to scrape in natural language:")
+        self.console.print("[dim]Example: 'Scrape farmers markets in Cape Town with locations and operating hours'[/dim]\n")
+        request = Prompt.ask("[cyan]Your scraping request[/cyan]")
+        if not request.strip():
+            self.console.print("[yellow]Request cannot be empty.[/yellow]")
             return
 
         # Auto-add https:// if missing
