@@ -440,7 +440,7 @@ class SchemaRecipeGenerator:
             lengths = [len(val) for val in sample_values]
             if lengths:
                 avg_length = sum(lengths) / len(lengths)
-                length_variance = sum((l - avg_length) ** 2 for l in lengths) / len(lengths)
+                length_variance = sum((length - avg_length) ** 2 for length in lengths) / len(lengths)
                 if length_variance < avg_length * 0.5:  # Low variance
                     base_confidence += 0.2
 

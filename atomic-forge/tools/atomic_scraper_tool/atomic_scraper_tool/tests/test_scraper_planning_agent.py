@@ -363,8 +363,8 @@ class TestRequestParsingAndStrategyCoordination:
         assert schema_recipe.name == "saturday_markets_schema"
         assert "title" in schema_recipe.fields
         assert "location" in schema_recipe.fields
-        assert schema_recipe.fields["title"].required == True
-        assert schema_recipe.fields["location"].required == False
+        assert schema_recipe.fields["title"].required is True
+        assert schema_recipe.fields["location"].required is False
 
     def test_create_basic_schema_recipe_products(self):
         """Test creating schema recipe for products."""

@@ -89,7 +89,7 @@ class RobotsParser:
             self._cache[domain] = robots_info
             return robots_info
 
-        except Exception as e:
+        except Exception:
             # If robots.txt is not accessible, create a permissive default
             robots_info = RobotsTxtInfo(url=robots_url, content="", is_accessible=False, last_fetched=time.time())
             self._cache[domain] = robots_info
@@ -134,7 +134,7 @@ class RobotsParser:
             finally:
                 os.unlink(temp_file)
 
-        except Exception as e:
+        except Exception:
             # If there's any error, err on the side of caution
             return False
 
