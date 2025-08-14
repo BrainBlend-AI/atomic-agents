@@ -12,17 +12,17 @@ from atomic_scraper_tool.compliance.privacy_compliance import (
     PrivacyComplianceConfig,
     DataCategory,
     RetentionPolicy,
-    DataCollectionRule
+    DataCollectionRule,
 )
 
 __all__ = [
-    'RobotsParser',
-    'RateLimiter',
-    'RateLimitConfig',
-    'RespectfulCrawler',
-    'PrivacyComplianceChecker',
-    'PrivacyComplianceConfig',
-    'DataCategory',
-    'RetentionPolicy',
-    'DataCollectionRule'
+    "RobotsParser",
+    "RateLimiter",
+    "RateLimitConfig",
+    "RespectfulCrawler",
+    "PrivacyComplianceChecker",
+    "PrivacyComplianceConfig",
+    "DataCategory",
+    "RetentionPolicy",
+    "DataCollectionRule",
 ]

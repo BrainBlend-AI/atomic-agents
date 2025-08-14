@@ -9,12 +9,11 @@ from typing import Optional, Dict, Any
 
 class ScrapingError(Exception):
     """Base exception for all scraping-related errors."""
-    
-    def __init__(self, message: str, error_type: str, url: Optional[str] = None, 
-                 context: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, message: str, error_type: str, url: Optional[str] = None, context: Optional[Dict[str, Any]] = None):
         """
         Initialize scraping error.
-        
+
         Args:
             message: Error message
             error_type: Type of error (e.g., 'network', 'parsing', 'validation')
@@ -26,7 +25,7 @@ class ScrapingError(Exception):
         self.url = url
         self.context = context or {}
         super().__init__(message)
-    
+
     def __str__(self) -> str:
         """Return string representation of the error."""
         error_str = f"[{self.error_type.upper()}] {self.message}"
@@ -37,12 +36,17 @@ class ScrapingError(Exception):
 
 class NetworkError(ScrapingError):
     """Exception for network-related errors."""
-    
-    def __init__(self, message: str, url: Optional[str] = None, 
-                 status_code: Optional[int] = None, context: Optional[Dict[str, Any]] = None):
+
+    def __init__(
+        self,
+        message: str,
+        url: Optional[str] = None,
+        status_code: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize network error.
-        
+
         Args:
             message: Error message
             url: URL where error occurred
@@ -55,12 +59,13 @@ class NetworkError(ScrapingError):
 
 class ParsingError(ScrapingError):
     """Exception for HTML parsing and content extraction errors."""
-    
-    def __init__(self, message: str, url: Optional[str] = None, 
-                 selector: Optional[str] = None, context: Optional[Dict[str, Any]] = None):
+
+    def __init__(
+        self, message: str, url: Optional[str] = None, selector: Optional[str] = None, context: Optional[Dict[str, Any]] = None
+    ):
         """
         Initialize parsing error.
-        
+
         Args:
             message: Error message
             url: URL where error occurred
@@ -73,12 +78,17 @@ class ParsingError(ScrapingError):
 
 class ValidationError(ScrapingError):
     """Exception for data validation errors."""
-    
-    def __init__(self, message: str, field_name: Optional[str] = None, 
-                 field_value: Optional[Any] = None, context: Optional[Dict[str, Any]] = None):
+
+    def __init__(
+        self,
+        message: str,
+        field_name: Optional[str] = None,
+        field_value: Optional[Any] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize validation error.
-        
+
         Args:
             message: Error message
             field_name: Name of field that failed validation
@@ -92,12 +102,11 @@ class ValidationError(ScrapingError):
 
 class ConfigurationError(ScrapingError):
     """Exception for configuration-related errors."""
-    
-    def __init__(self, message: str, config_key: Optional[str] = None, 
-                 context: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, message: str, config_key: Optional[str] = None, context: Optional[Dict[str, Any]] = None):
         """
         Initialize configuration error.
-        
+
         Args:
             message: Error message
             config_key: Configuration key that caused the error
@@ -109,12 +118,17 @@ class ConfigurationError(ScrapingError):
 
 class RateLimitError(ScrapingError):
     """Exception for rate limiting errors."""
-    
-    def __init__(self, message: str, url: Optional[str] = None, 
-                 retry_after: Optional[int] = None, context: Optional[Dict[str, Any]] = None):
+
+    def __init__(
+        self,
+        message: str,
+        url: Optional[str] = None,
+        retry_after: Optional[int] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize rate limit error.
-        
+
         Args:
             message: Error message
             url: URL where rate limit was hit
@@ -127,12 +141,11 @@ class RateLimitError(ScrapingError):
 
 class QualityError(ScrapingError):
     """Exception for data quality threshold errors."""
-    
-    def __init__(self, message: str, quality_score: float, 
-                 threshold: float, context: Optional[Dict[str, Any]] = None):
+
+    def __init__(self, message: str, quality_score: float, threshold: float, context: Optional[Dict[str, Any]] = None):
         """
         Initialize quality error.
-        
+
         Args:
             message: Error message
             quality_score: Actual quality score achieved

@@ -10,10 +10,10 @@ from atomic_scraper_tool.models.extraction_models import ExtractedContent, Extra
 
 __all__ = [
     "ScrapedItem",
-    "ScrapingResult", 
+    "ScrapingResult",
     "ScrapingStrategy",
     "SchemaRecipe",
     "FieldDefinition",
     "ExtractedContent",
-    "ExtractionRule"
+    "ExtractionRule",
 ]
