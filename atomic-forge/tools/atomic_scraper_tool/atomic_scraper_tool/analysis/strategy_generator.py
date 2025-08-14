@@ -4,15 +4,11 @@ Scraping strategy generator for the atomic scraper tool.
 Creates ScrapingStrategy objects based on website analysis and user criteria.
 """
 
-import re
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from atomic_scraper_tool.models.base_models import ScrapingStrategy
 from atomic_scraper_tool.analysis.website_analyzer import (
     WebsiteStructureAnalysis,
-    ContentPattern,
-    NavigationInfo,
-    PaginationInfo,
 )
 
 

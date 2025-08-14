@@ -6,13 +6,9 @@ for testing various scraping scenarios without relying on external websites.
 """
 
 import random
-import string
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Tuple
-from urllib.parse import urljoin, urlparse
-
-from pydantic import BaseModel, Field
+from typing import Dict, List
+from pydantic import BaseModel
 
 
 class WebsiteType(str, Enum):

@@ -5,11 +5,11 @@ Creates JSON schemas from website analysis and identifies data patterns and type
 """
 
 import re
-from typing import Dict, List, Optional, Set, Tuple, Any, Union
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from bs4 import BeautifulSoup, Tag
 from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
-from atomic_scraper_tool.analysis.website_analyzer import WebsiteStructureAnalysis, ContentPattern
+from atomic_scraper_tool.analysis.website_analyzer import WebsiteStructureAnalysis
 
 
 @dataclass
