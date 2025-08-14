@@ -7,11 +7,10 @@ consistency scoring with configurable thresholds and filtering logic.
 
 import re
 import statistics
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
-from urllib.parse import urlparse
 from atomic_scraper_tool.models.extraction_models import ExtractedContent, ContentQualityMetrics
-from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
+from atomic_scraper_tool.models.schema_models import SchemaRecipe
 
 
 @dataclass

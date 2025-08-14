@@ -273,8 +273,6 @@ class PrivacyComplianceChecker:
         # Check for prohibited patterns
         data_str = json.dumps(data, default=str)
         for pattern in self.config.collection_rules.prohibited_patterns:
-            import re
-
             if re.search(pattern, data_str, re.IGNORECASE):
                 issues.append(f"Prohibited pattern found: {pattern}")
 

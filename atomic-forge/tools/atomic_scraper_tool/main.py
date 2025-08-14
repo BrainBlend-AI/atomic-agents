@@ -1218,7 +1218,7 @@ Items below the quality threshold are filtered out automatically.
             old_model = self.config["agent"]["model"]
             self.config["agent"]["model"] = new_model
 
-            self.console.print(f"[green]✅ Updated AI model[/green]")
+            self.console.print("[green]✅ Updated AI model[/green]")
             self.console.print(f"[dim]  Old model: {old_model}[/dim]")
             self.console.print(f"[dim]  New model: {new_model}[/dim]")
 
@@ -1267,7 +1267,7 @@ Items below the quality threshold are filtered out automatically.
             old_temp = self.config["agent"]["temperature"]
             self.config["agent"]["temperature"] = new_temp
 
-            self.console.print(f"[green]✅ Updated temperature[/green]")
+            self.console.print("[green]✅ Updated temperature[/green]")
             self.console.print(f"[dim]  Old temperature: {old_temp}[/dim]")
             self.console.print(f"[dim]  New temperature: {new_temp}[/dim]")
 
@@ -1307,7 +1307,7 @@ Items below the quality threshold are filtered out automatically.
             old_tokens = self.config["agent"]["max_tokens"]
             self.config["agent"]["max_tokens"] = new_tokens
 
-            self.console.print(f"[green]✅ Updated max tokens[/green]")
+            self.console.print("[green]✅ Updated max tokens[/green]")
             self.console.print(f"[dim]  Old max tokens: {old_tokens}[/dim]")
             self.console.print(f"[dim]  New max tokens: {new_tokens}[/dim]")
 
@@ -1503,11 +1503,11 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
                 # Validate ranges
                 if key == "minimum_overall":
                     if not 0 <= new_value <= 100:
-                        self.console.print(f"[red]Overall quality score must be between 0 and 100[/red]")
+                        self.console.print("[red]Overall quality score must be between 0 and 100[/red]")
                         continue
                 else:
                     if not 0.0 <= new_value <= 1.0:
-                        self.console.print(f"[red]Ratio values must be between 0.0 and 1.0[/red]")
+                        self.console.print("[red]Ratio values must be between 0.0 and 1.0[/red]")
                         continue
 
                 thresholds[key] = new_value

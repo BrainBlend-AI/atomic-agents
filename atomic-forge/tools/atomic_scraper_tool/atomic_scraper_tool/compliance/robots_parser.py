@@ -5,9 +5,8 @@ This module provides functionality to fetch, parse, and respect robots.txt files
 according to the Robots Exclusion Protocol.
 """
 
-import re
 import time
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 from urllib.robotparser import RobotFileParser
 

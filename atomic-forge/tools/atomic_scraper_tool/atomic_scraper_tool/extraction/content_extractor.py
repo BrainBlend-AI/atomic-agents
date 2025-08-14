@@ -7,12 +7,11 @@ for HTML parsing and supports various extraction patterns.
 
 import re
 import logging
-from typing import Dict, List, Optional, Any, Union, Tuple
-from urllib.parse import urljoin, urlparse
-from bs4 import BeautifulSoup, Tag, NavigableString
-from lxml import etree, html
-from atomic_scraper_tool.models.extraction_models import ExtractionRule, ExtractedContent, ContentQualityMetrics
-from atomic_scraper_tool.models.base_models import ScrapedItem
+from typing import Dict, List, Optional, Any, Union
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup, Tag
+from lxml import etree
+from atomic_scraper_tool.models.extraction_models import ExtractionRule, ExtractedContent
 
 
 logger = logging.getLogger(__name__)

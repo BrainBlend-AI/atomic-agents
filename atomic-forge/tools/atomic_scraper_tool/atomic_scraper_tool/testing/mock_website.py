@@ -105,7 +105,7 @@ class MockWebsite:
 
     def _generate_listing_page(self, page_num: int) -> str:
         """Generate a listing page with multiple items."""
-        generator = self.generators[self.config.website_type]
+        _generator = self.generators[self.config.website_type]
 
         # Generate items for this page
         items_html = []

@@ -6,10 +6,10 @@ pagination, navigation, and content organization.
 """
 
 import re
-from typing import Dict, List, Optional, Set, Tuple, Any
-from urllib.parse import urljoin, urlparse
+from typing import Dict, List, Optional, Set, Any
+from urllib.parse import urlparse
 from dataclasses import dataclass
-from bs4 import BeautifulSoup, Tag, NavigableString
+from bs4 import BeautifulSoup, Tag
 from pydantic import BaseModel, Field
 
 

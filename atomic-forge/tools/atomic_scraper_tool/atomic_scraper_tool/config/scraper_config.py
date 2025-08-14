@@ -6,10 +6,9 @@ for the next-generation intelligent web scraping tool.
 """
 
 import json
-import os
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from typing import Dict, List, Any, Optional
+from pydantic import Field, field_validator
 from atomic_agents.lib.base.base_tool import BaseToolConfig
 
 from atomic_scraper_tool.models.schema_models import SchemaRecipe
