@@ -122,7 +122,9 @@ Sitemap: https://example.com/sitemap2.xml
     def test_get_robots_info_caching(self, mock_fetch):
         """Test caching behavior of get_robots_info."""
         mock_robots_info = RobotsTxtInfo(
-            url="https://example.com/robots.txt", content="User-agent: *\nDisallow: /", last_fetched=time.time()
+            url="https://example.com/robots.txt",
+            content="User-agent: *\nDisallow: /",
+            last_fetched=time.time(),
         )
         mock_fetch.return_value = mock_robots_info
 
@@ -144,7 +146,9 @@ Sitemap: https://example.com/sitemap2.xml
         """Test can_fetch method for allowed URLs."""
         # Mock robots info with content that allows /public/
         mock_robots_info = RobotsTxtInfo(
-            url="https://example.com/robots.txt", content="User-agent: *\nAllow: /public/", is_accessible=True
+            url="https://example.com/robots.txt",
+            content="User-agent: *\nAllow: /public/",
+            is_accessible=True,
         )
         mock_get_robots.return_value = mock_robots_info
 
@@ -157,7 +161,9 @@ Sitemap: https://example.com/sitemap2.xml
         """Test can_fetch method for disallowed URLs."""
         # Mock robots info with content that disallows /private/
         mock_robots_info = RobotsTxtInfo(
-            url="https://example.com/robots.txt", content="User-agent: *\nDisallow: /private/", is_accessible=True
+            url="https://example.com/robots.txt",
+            content="User-agent: *\nDisallow: /private/",
+            is_accessible=True,
         )
         mock_get_robots.return_value = mock_robots_info
 
@@ -168,7 +174,9 @@ Sitemap: https://example.com/sitemap2.xml
     @patch.object(RobotsParser, "get_robots_info")
     def test_can_fetch_no_robots_txt(self, mock_get_robots):
         """Test can_fetch when robots.txt is not accessible."""
-        mock_robots_info = RobotsTxtInfo(url="https://example.com/robots.txt", content="", is_accessible=False)
+        mock_robots_info = RobotsTxtInfo(
+            url="https://example.com/robots.txt", content="", is_accessible=False
+        )
         mock_get_robots.return_value = mock_robots_info
 
         result = self.parser.can_fetch("https://example.com/any/page")
@@ -200,7 +208,9 @@ Sitemap: https://example.com/sitemap2.xml
     @patch.object(RobotsParser, "get_robots_info")
     def test_get_request_rate(self, mock_get_robots):
         """Test request rate extraction."""
-        mock_robots_info = RobotsTxtInfo(url="https://example.com/robots.txt", content="", request_rate="1/5s")
+        mock_robots_info = RobotsTxtInfo(
+            url="https://example.com/robots.txt", content="", request_rate="1/5s"
+        )
         mock_get_robots.return_value = mock_robots_info
 
         rate = self.parser.get_request_rate("https://example.com/test")
@@ -212,7 +222,10 @@ Sitemap: https://example.com/sitemap2.xml
         mock_robots_info = RobotsTxtInfo(
             url="https://example.com/robots.txt",
             content="",
-            sitemap_urls=["https://example.com/sitemap.xml", "https://example.com/sitemap-news.xml"],
+            sitemap_urls=[
+                "https://example.com/sitemap.xml",
+                "https://example.com/sitemap-news.xml",
+            ],
         )
         mock_get_robots.return_value = mock_robots_info
 

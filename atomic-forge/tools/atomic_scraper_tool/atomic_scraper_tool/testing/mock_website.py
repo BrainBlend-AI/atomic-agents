@@ -100,7 +100,9 @@ class MockWebsite:
         content = generator("homepage")
 
         return self._wrap_in_html_template(
-            title=f"Homepage - {self.config.website_type.title()} Site", content=content, include_navigation=True
+            title=f"Homepage - {self.config.website_type.title()} Site",
+            content=content,
+            include_navigation=True,
         )
 
     def _generate_listing_page(self, page_num: int) -> str:
@@ -123,7 +125,9 @@ class MockWebsite:
                 items_html.append(self._generate_generic_card(item_id))
 
         # Generate pagination
-        pagination_html = self._generate_pagination(page_num) if self.config.include_pagination else ""
+        pagination_html = (
+            self._generate_pagination(page_num) if self.config.include_pagination else ""
+        )
 
         content = f"""
         <div class="listing-page">
@@ -136,7 +140,9 @@ class MockWebsite:
         """
 
         return self._wrap_in_html_template(
-            title=f"Page {page_num} - {self.config.website_type.title()} Site", content=content, include_navigation=True
+            title=f"Page {page_num} - {self.config.website_type.title()} Site",
+            content=content,
+            include_navigation=True,
         )
 
     def _generate_item_page(self, item_id: str) -> str:
@@ -151,7 +157,9 @@ class MockWebsite:
             content = self._generate_generic_detail(item_id)
 
         return self._wrap_in_html_template(
-            title=f"Item {item_id} - {self.config.website_type.title()} Site", content=content, include_navigation=True
+            title=f"Item {item_id} - {self.config.website_type.title()} Site",
+            content=content,
+            include_navigation=True,
         )
 
     def _generate_category_page(self, category: str) -> str:
@@ -169,7 +177,9 @@ class MockWebsite:
         """
 
         return self._wrap_in_html_template(
-            title=f"{category.title()} - {self.config.website_type.title()} Site", content=content, include_navigation=True
+            title=f"{category.title()} - {self.config.website_type.title()} Site",
+            content=content,
+            include_navigation=True,
         )
 
     def _generate_generic_page(self, path: str) -> str:
@@ -182,7 +192,9 @@ class MockWebsite:
         """
 
         return self._wrap_in_html_template(
-            title=f"Page {path} - {self.config.website_type.title()} Site", content=content, include_navigation=True
+            title=f"Page {path} - {self.config.website_type.title()} Site",
+            content=content,
+            include_navigation=True,
         )
 
     def _generate_ecommerce_content(self, page_type: str, **kwargs) -> str:
@@ -402,7 +414,9 @@ class MockWebsite:
             pagination_html.append(f'<a href="/page/{current_page - 1}" class="prev">Previous</a>')
 
         # Page numbers
-        for page in range(max(1, current_page - 2), min(self.config.num_pages + 1, current_page + 3)):
+        for page in range(
+            max(1, current_page - 2), min(self.config.num_pages + 1, current_page + 3)
+        ):
             if page == current_page:
                 pagination_html.append(f'<span class="current">{page}</span>')
             else:
@@ -415,7 +429,9 @@ class MockWebsite:
         pagination_html.append("</div>")
         return "".join(pagination_html)
 
-    def _wrap_in_html_template(self, title: str, content: str, include_navigation: bool = True) -> str:
+    def _wrap_in_html_template(
+        self, title: str, content: str, include_navigation: bool = True
+    ) -> str:
         """Wrap content in a complete HTML template."""
         navigation_html = ""
         if include_navigation and self.config.include_navigation:

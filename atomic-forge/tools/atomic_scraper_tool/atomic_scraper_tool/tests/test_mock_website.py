@@ -5,7 +5,12 @@ Unit tests for mock website generator functionality.
 import pytest
 from bs4 import BeautifulSoup
 
-from atomic_scraper_tool.testing.mock_website import MockWebsite, MockWebsiteGenerator, MockWebsiteConfig, WebsiteType
+from atomic_scraper_tool.testing.mock_website import (
+    MockWebsite,
+    MockWebsiteGenerator,
+    MockWebsiteConfig,
+    WebsiteType,
+)
 
 
 class TestMockWebsiteConfig:
@@ -55,7 +60,11 @@ class TestMockWebsite:
     def setup_method(self):
         """Set up test fixtures."""
         self.config = MockWebsiteConfig(
-            website_type=WebsiteType.ECOMMERCE, num_pages=3, items_per_page=5, include_pagination=True, include_navigation=True
+            website_type=WebsiteType.ECOMMERCE,
+            num_pages=3,
+            items_per_page=5,
+            include_pagination=True,
+            include_navigation=True,
         )
         self.mock_website = MockWebsite(self.config)
 
@@ -196,14 +205,20 @@ class TestMockWebsite:
     def test_error_simulation(self):
         """Test error simulation functionality."""
         config = MockWebsiteConfig(
-            website_type=WebsiteType.ECOMMERCE, include_errors=True, error_rate=1.0  # Always generate errors
+            website_type=WebsiteType.ECOMMERCE,
+            include_errors=True,
+            error_rate=1.0,  # Always generate errors
         )
         mock_site = MockWebsite(config)
 
         html = mock_site.generate_page("/")
 
         # Should contain error indicators
-        assert "500 Internal Server Error" in html or "Connection timed out" in html or len(html) < 1000  # Partial content
+        assert (
+            "500 Internal Server Error" in html
+            or "Connection timed out" in html
+            or len(html) < 1000
+        )  # Partial content
 
     def test_malformed_html_simulation(self):
         """Test malformed HTML simulation."""
@@ -233,10 +248,10 @@ class TestMockWebsite:
 
         # Check total number of URLs
         expected_urls = (
-            1 +  # Homepage
-            self.config.num_pages +  # Pagination pages
-            min(self.config.items_per_page, 5) +  # Product pages (limited to 5 in get_all_urls)
-            2  # Category pages (electronics, clothing)
+            1  # Homepage
+            + self.config.num_pages  # Pagination pages
+            + min(self.config.items_per_page, 5)  # Product pages (limited to 5 in get_all_urls)
+            + 2  # Category pages (electronics, clothing)
         )
         assert len(urls) == expected_urls
 

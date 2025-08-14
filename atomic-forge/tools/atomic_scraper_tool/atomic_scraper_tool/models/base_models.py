@@ -15,11 +15,15 @@ from urllib.parse import urlparse
 class ScrapingStrategy(BaseModel):
     """Strategy configuration for scraping operations."""
 
-    scrape_type: str = Field(..., description="Type of scraping: 'list', 'detail', 'search', 'sitemap'")
+    scrape_type: str = Field(
+        ..., description="Type of scraping: 'list', 'detail', 'search', 'sitemap'"
+    )
     target_selectors: List[str] = Field(..., description="CSS selectors for target content")
     pagination_strategy: Optional[str] = Field(None, description="Pagination handling strategy")
     content_filters: List[str] = Field(default_factory=list, description="Content filtering rules")
-    extraction_rules: Dict[str, str] = Field(default_factory=dict, description="Field extraction rules")
+    extraction_rules: Dict[str, str] = Field(
+        default_factory=dict, description="Field extraction rules"
+    )
     max_pages: int = Field(10, ge=1, description="Maximum pages to scrape")
     request_delay: float = Field(1.0, ge=0.1, description="Delay between requests")
 
@@ -54,7 +58,9 @@ class ScrapingStrategy(BaseModel):
         if v is not None:
             allowed_strategies = {"next_link", "page_numbers", "infinite_scroll", "load_more"}
             if v not in allowed_strategies:
-                raise ValueError(f"pagination_strategy must be one of {allowed_strategies}, got '{v}'")
+                raise ValueError(
+                    f"pagination_strategy must be one of {allowed_strategies}, got '{v}'"
+                )
         return v
 
     @field_validator("extraction_rules")
@@ -68,7 +74,9 @@ class ScrapingStrategy(BaseModel):
                 raise ValueError(f"extraction_rules selector for '{field_name}' cannot be empty")
             # Basic CSS selector validation
             if not re.match(r"^[a-zA-Z0-9\s\.\#\[\]\:\-\>\+\~\*\(\)\"\'=,_]+$", selector):
-                raise ValueError(f"Invalid CSS selector in extraction_rules for '{field_name}': '{selector}'")
+                raise ValueError(
+                    f"Invalid CSS selector in extraction_rules for '{field_name}': '{selector}'"
+                )
         return v
 
 
@@ -77,10 +85,14 @@ class ScrapedItem(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique item identifier")
     source_url: str = Field(..., description="URL where item was scraped from")
-    scraped_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when scraped")
+    scraped_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Timestamp when scraped"
+    )
     data: Dict[str, Any] = Field(..., description="Extracted data fields")
     quality_score: float = Field(..., ge=0.0, le=100.0, description="Quality score (0-100)")
-    extraction_issues: List[str] = Field(default_factory=list, description="Issues encountered during extraction")
+    extraction_issues: List[str] = Field(
+        default_factory=list, description="Issues encountered during extraction"
+    )
     schema_version: str = Field("1.0", description="Schema version used for extraction")
 
     @field_validator("source_url")
@@ -145,7 +157,9 @@ class ScrapingResult(BaseModel):
     average_quality_score: float = Field(..., ge=0.0, le=100.0, description="Average quality score")
     scraping_summary: str = Field(..., description="Human-readable summary of results")
     strategy_used: ScrapingStrategy = Field(..., description="Strategy used for scraping")
-    errors: List[str] = Field(default_factory=list, description="Errors encountered during scraping")
+    errors: List[str] = Field(
+        default_factory=list, description="Errors encountered during scraping"
+    )
     execution_time: float = Field(..., ge=0.0, description="Total execution time in seconds")
 
     @field_validator("total_items_scraped")
@@ -161,10 +175,14 @@ class ScrapingResult(BaseModel):
     def validate_average_quality(cls, v, info):
         """Validate average quality score matches items if present."""
         if info.data and "items" in info.data and info.data["items"]:
-            calculated_avg = sum(item.quality_score for item in info.data["items"]) / len(info.data["items"])
+            calculated_avg = sum(item.quality_score for item in info.data["items"]) / len(
+                info.data["items"]
+            )
             # Allow small floating point differences
             if abs(v - calculated_avg) > 0.01:
-                raise ValueError(f"average_quality_score ({v}) doesn't match calculated average ({calculated_avg:.2f})")
+                raise ValueError(
+                    f"average_quality_score ({v}) doesn't match calculated average ({calculated_avg:.2f})"
+                )
         return v
 
     @model_validator(mode="after")

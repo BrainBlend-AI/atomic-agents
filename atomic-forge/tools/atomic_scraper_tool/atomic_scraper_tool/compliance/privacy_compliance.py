@@ -511,7 +511,9 @@ class PrivacyComplianceChecker:
                         timestamp_str = entry["timestamp"]
                         if "T" in timestamp_str:
                             # ISO format
-                            entry_date = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+                            entry_date = datetime.fromisoformat(
+                                timestamp_str.replace("Z", "+00:00")
+                            )
                         else:
                             # Try other formats
                             entry_date = datetime.fromisoformat(timestamp_str)
@@ -528,7 +530,9 @@ class PrivacyComplianceChecker:
 
                                 # Count issues
                                 for issue in entry["issues"]:
-                                    stats["common_issues"][issue] = stats["common_issues"].get(issue, 0) + 1
+                                    stats["common_issues"][issue] = (
+                                        stats["common_issues"].get(issue, 0) + 1
+                                    )
 
                     except (json.JSONDecodeError, KeyError, ValueError, IndexError):
                         continue
@@ -546,7 +550,9 @@ class PrivacyComplianceChecker:
 
         return stats
 
-    def validate_data_collection(self, url: str, data: Dict[str, Any], user_agent: str = "") -> bool:
+    def validate_data_collection(
+        self, url: str, data: Dict[str, Any], user_agent: str = ""
+    ) -> bool:
         """
         Validate data collection and log the activity.
 

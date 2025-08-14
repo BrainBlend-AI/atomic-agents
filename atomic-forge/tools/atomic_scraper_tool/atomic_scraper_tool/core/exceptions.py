@@ -10,7 +10,13 @@ from typing import Optional, Dict, Any
 class ScrapingError(Exception):
     """Base exception for all scraping-related errors."""
 
-    def __init__(self, message: str, error_type: str, url: Optional[str] = None, context: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        error_type: str,
+        url: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize scraping error.
 
@@ -61,7 +67,11 @@ class ParsingError(ScrapingError):
     """Exception for HTML parsing and content extraction errors."""
 
     def __init__(
-        self, message: str, url: Optional[str] = None, selector: Optional[str] = None, context: Optional[Dict[str, Any]] = None
+        self,
+        message: str,
+        url: Optional[str] = None,
+        selector: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize parsing error.
@@ -103,7 +113,12 @@ class ValidationError(ScrapingError):
 class ConfigurationError(ScrapingError):
     """Exception for configuration-related errors."""
 
-    def __init__(self, message: str, config_key: Optional[str] = None, context: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        config_key: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize configuration error.
 
@@ -142,7 +157,13 @@ class RateLimitError(ScrapingError):
 class QualityError(ScrapingError):
     """Exception for data quality threshold errors."""
 
-    def __init__(self, message: str, quality_score: float, threshold: float, context: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        message: str,
+        quality_score: float,
+        threshold: float,
+        context: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initialize quality error.
 

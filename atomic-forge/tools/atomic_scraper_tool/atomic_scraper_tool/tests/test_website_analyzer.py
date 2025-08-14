@@ -438,7 +438,9 @@ class TestNavigationInfo:
     def test_navigation_info_creation(self):
         """Test creating NavigationInfo."""
         nav_info = NavigationInfo(
-            main_nav_selector="nav.main", breadcrumb_selector="div.breadcrumb", menu_items=["Home", "About", "Contact"]
+            main_nav_selector="nav.main",
+            breadcrumb_selector="div.breadcrumb",
+            menu_items=["Home", "About", "Contact"],
         )
 
         assert nav_info.main_nav_selector == "nav.main"
@@ -458,7 +460,10 @@ class TestPaginationInfo:
     def test_pagination_info_creation(self):
         """Test creating PaginationInfo."""
         pagination_info = PaginationInfo(
-            pagination_type="numbered", pagination_selector="div.pagination", total_pages=10, current_page=3
+            pagination_type="numbered",
+            pagination_selector="div.pagination",
+            total_pages=10,
+            current_page=3,
         )
 
         assert pagination_info.pagination_type == "numbered"

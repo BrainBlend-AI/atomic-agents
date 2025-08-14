@@ -120,7 +120,12 @@ class TestConfigurationManagement:
             "name": "new_test_recipe",
             "description": "New test recipe",
             "fields": {
-                "title": {"field_type": "string", "description": "Title field", "extraction_selector": "h1", "required": True},
+                "title": {
+                    "field_type": "string",
+                    "description": "Title field",
+                    "extraction_selector": "h1",
+                    "required": True,
+                },
                 "content": {
                     "field_type": "string",
                     "description": "Content field",
@@ -202,7 +207,12 @@ class TestConfigurationManagement:
             "name": "valid_recipe",
             "description": "Valid test recipe",
             "fields": {
-                "title": {"field_type": "string", "description": "Title field", "extraction_selector": "h1", "required": True}
+                "title": {
+                    "field_type": "string",
+                    "description": "Title field",
+                    "extraction_selector": "h1",
+                    "required": True,
+                }
             },
             "validation_rules": [],
             "quality_weights": {"completeness": 0.4, "accuracy": 0.4, "consistency": 0.2},
@@ -242,7 +252,12 @@ class TestConfigurationManagement:
             "name": "export_test_recipe",
             "description": "Recipe for export testing",
             "fields": {
-                "title": {"field_type": "string", "description": "Title field", "extraction_selector": "h1", "required": True}
+                "title": {
+                    "field_type": "string",
+                    "description": "Title field",
+                    "extraction_selector": "h1",
+                    "required": True,
+                }
             },
         }
 
@@ -356,7 +371,13 @@ class TestConfigurationManagement:
             assert setting in app.config["scraper"]
 
         # Verify interface section has required settings
-        interface_settings = ["show_reasoning", "show_confidence", "auto_execute", "save_results", "results_format"]
+        interface_settings = [
+            "show_reasoning",
+            "show_confidence",
+            "auto_execute",
+            "save_results",
+            "results_format",
+        ]
         for setting in interface_settings:
             assert setting in app.config["interface"]
 

@@ -10,7 +10,13 @@ import time
 from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, Any
 
-from atomic_scraper_tool.core.error_handler import ErrorHandler, ErrorContext, RetryConfig, RetryStrategy, ErrorSeverity
+from atomic_scraper_tool.core.error_handler import (
+    ErrorHandler,
+    ErrorContext,
+    RetryConfig,
+    RetryStrategy,
+    ErrorSeverity,
+)
 from atomic_scraper_tool.core.exceptions import (
     ScrapingError,
     NetworkError,
@@ -40,7 +46,10 @@ class TestRetryConfig:
     def test_custom_config(self):
         """Test custom retry configuration."""
         config = RetryConfig(
-            max_attempts=5, base_delay=2.0, strategy=RetryStrategy.FIXED_DELAY, retryable_errors=[NetworkError]
+            max_attempts=5,
+            base_delay=2.0,
+            strategy=RetryStrategy.FIXED_DELAY,
+            retryable_errors=[NetworkError],
         )
 
         assert config.max_attempts == 5
@@ -66,7 +75,13 @@ class TestErrorContext:
     def test_custom_context(self):
         """Test custom error context."""
         metadata = {"key": "value"}
-        context = ErrorContext(operation="custom_op", url="https://example.com", attempt=2, max_attempts=5, metadata=metadata)
+        context = ErrorContext(
+            operation="custom_op",
+            url="https://example.com",
+            attempt=2,
+            max_attempts=5,
+            metadata=metadata,
+        )
 
         assert context.operation == "custom_op"
         assert context.url == "https://example.com"
@@ -300,7 +315,9 @@ class TestErrorHandler:
 
     def test_calculate_delay_exponential(self):
         """Test delay calculation with exponential backoff."""
-        config = RetryConfig(strategy=RetryStrategy.EXPONENTIAL_BACKOFF, base_delay=1.0, backoff_multiplier=2.0)
+        config = RetryConfig(
+            strategy=RetryStrategy.EXPONENTIAL_BACKOFF, base_delay=1.0, backoff_multiplier=2.0
+        )
         handler = ErrorHandler(config)
 
         assert handler._calculate_delay(1) == 1.0
@@ -310,7 +327,10 @@ class TestErrorHandler:
     def test_calculate_delay_max_limit(self):
         """Test delay calculation respects max limit."""
         config = RetryConfig(
-            strategy=RetryStrategy.EXPONENTIAL_BACKOFF, base_delay=10.0, max_delay=15.0, backoff_multiplier=2.0
+            strategy=RetryStrategy.EXPONENTIAL_BACKOFF,
+            base_delay=10.0,
+            max_delay=15.0,
+            backoff_multiplier=2.0,
         )
         handler = ErrorHandler(config)
 

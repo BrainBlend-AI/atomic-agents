@@ -134,7 +134,11 @@ class ScenarioGenerator:
 
         else:
             mock_site = MockWebsiteGenerator.create_blog_site(num_posts=10)
-            expected_results = {"post_count": 10, "required_fields": ["title", "content", "date"], "page_count": 1}
+            expected_results = {
+                "post_count": 10,
+                "required_fields": ["title", "content", "date"],
+                "page_count": 1,
+            }
             validation_rules = [lambda results: len(str(results)) > 100]
             test_urls = ["/", "/page/1"]
 
@@ -161,7 +165,8 @@ class ScenarioGenerator:
 
         validation_rules = [
             lambda results: "error" in str(results).lower() or len(str(results)) > 0,
-            lambda results: not str(results).startswith("<!DOCTYPE html>") or "error" in str(results).lower(),
+            lambda results: not str(results).startswith("<!DOCTYPE html>")
+            or "error" in str(results).lower(),
         ]
 
         test_urls = ["/", "/page/1", "/page/2", "/product/1", "/product/2"]
@@ -182,7 +187,9 @@ class ScenarioGenerator:
         num_pages = kwargs.get("num_pages", 5)
         items_per_page = kwargs.get("items_per_page", 10)
 
-        mock_site = MockWebsiteGenerator.create_ecommerce_site(num_products=num_pages * items_per_page)
+        mock_site = MockWebsiteGenerator.create_ecommerce_site(
+            num_products=num_pages * items_per_page
+        )
 
         expected_results = {
             "total_pages": num_pages,
@@ -257,7 +264,9 @@ class ScenarioGenerator:
         ]
 
         # Generate many test URLs for performance testing
-        test_urls = ["/"] + [f"/page/{i}" for i in range(1, 6)] + [f"/product/{i}" for i in range(1, 21)]
+        test_urls = (
+            ["/"] + [f"/page/{i}" for i in range(1, 6)] + [f"/product/{i}" for i in range(1, 21)]
+        )
 
         return ScrapingTestScenario(
             name="Performance Testing",
@@ -331,7 +340,12 @@ class ScenarioGenerator:
         )
 
     def create_custom_scenario(
-        self, name: str, description: str, website_type: WebsiteType, scenario_type: ScenarioType, **kwargs
+        self,
+        name: str,
+        description: str,
+        website_type: WebsiteType,
+        scenario_type: ScenarioType,
+        **kwargs,
     ) -> ScrapingTestScenario:
         """
         Create a custom test scenario.
@@ -349,19 +363,23 @@ class ScenarioGenerator:
         # Create appropriate mock website
         if website_type == WebsiteType.ECOMMERCE:
             mock_site = MockWebsiteGenerator.create_ecommerce_site(
-                num_products=kwargs.get("num_items", 20), include_errors=kwargs.get("include_errors", False)
+                num_products=kwargs.get("num_items", 20),
+                include_errors=kwargs.get("include_errors", False),
             )
         elif website_type == WebsiteType.NEWS:
             mock_site = MockWebsiteGenerator.create_news_site(
-                num_articles=kwargs.get("num_items", 15), include_errors=kwargs.get("include_errors", False)
+                num_articles=kwargs.get("num_items", 15),
+                include_errors=kwargs.get("include_errors", False),
             )
         elif website_type == WebsiteType.BLOG:
             mock_site = MockWebsiteGenerator.create_blog_site(
-                num_posts=kwargs.get("num_items", 10), include_errors=kwargs.get("include_errors", False)
+                num_posts=kwargs.get("num_items", 10),
+                include_errors=kwargs.get("include_errors", False),
             )
         else:
             mock_site = MockWebsiteGenerator.create_directory_site(
-                num_entries=kwargs.get("num_items", 50), include_errors=kwargs.get("include_errors", False)
+                num_entries=kwargs.get("num_items", 50),
+                include_errors=kwargs.get("include_errors", False),
             )
 
         expected_results = kwargs.get("expected_results", {})

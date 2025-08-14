@@ -8,7 +8,10 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, Any
 
-from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperPlanningAgent, AtomicScraperAgentInputSchema
+from atomic_scraper_tool.agents.scraper_planning_agent import (
+    AtomicScraperPlanningAgent,
+    AtomicScraperAgentInputSchema,
+)
 from atomic_scraper_tool.models.base_models import ScrapingStrategy
 from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
 from atomic_agents.agents.base_agent import BaseAgentConfig
@@ -89,13 +92,19 @@ class TestReasoningGeneration:
         self.mock_analysis = Mock()
         self.mock_analysis.url = "https://example.com"
         self.mock_analysis.title = "Test Website"
-        self.mock_analysis.content_patterns = [{"type": "list", "confidence": 0.8}, {"type": "article", "confidence": 0.6}]
+        self.mock_analysis.content_patterns = [
+            {"type": "list", "confidence": 0.8},
+            {"type": "article", "confidence": 0.6},
+        ]
         self.mock_analysis.metadata = {}
 
     def test_generate_reasoning_comprehensive(self):
         """Test comprehensive reasoning generation."""
         reasoning = self.agent._generate_reasoning(
-            self.mock_analysis, self.test_strategy, self.test_schema_recipe, self.test_parsed_request
+            self.mock_analysis,
+            self.test_strategy,
+            self.test_schema_recipe,
+            self.test_parsed_request,
         )
 
         # Check that all major sections are present
@@ -133,7 +142,9 @@ class TestReasoningGeneration:
 
     def test_get_strategy_reasoning_list(self):
         """Test strategy reasoning for list scraping."""
-        reasons = self.agent._get_strategy_reasoning(self.test_strategy, self.test_parsed_request, self.mock_analysis)
+        reasons = self.agent._get_strategy_reasoning(
+            self.test_strategy, self.test_parsed_request, self.mock_analysis
+        )
 
         assert len(reasons) > 0
         assert any("multiple items need to be extracted" in reason for reason in reasons)
@@ -142,12 +153,16 @@ class TestReasoningGeneration:
 
     def test_get_strategy_reasoning_detail(self):
         """Test strategy reasoning for detail scraping."""
-        detail_strategy = ScrapingStrategy(scrape_type="detail", target_selectors=["article", ".content"])
+        detail_strategy = ScrapingStrategy(
+            scrape_type="detail", target_selectors=["article", ".content"]
+        )
 
         detail_request = self.test_parsed_request.copy()
         detail_request["content_type"] = "detail"
 
-        reasons = self.agent._get_strategy_reasoning(detail_strategy, detail_request, self.mock_analysis)
+        reasons = self.agent._get_strategy_reasoning(
+            detail_strategy, detail_request, self.mock_analysis
+        )
 
         assert any("detailed information extraction" in reason for reason in reasons)
         assert any("comprehensive data capture" in reason for reason in reasons)
@@ -165,7 +180,9 @@ class TestReasoningGeneration:
 
     def test_get_schema_reasoning(self):
         """Test schema reasoning generation."""
-        reasons = self.agent._get_schema_reasoning(self.test_schema_recipe, self.test_parsed_request)
+        reasons = self.agent._get_schema_reasoning(
+            self.test_schema_recipe, self.test_parsed_request
+        )
 
         assert len(reasons) > 0
         assert any("3 fields with 1 required fields" in reason for reason in reasons)
@@ -178,8 +195,12 @@ class TestReasoningGeneration:
         reasons = self.agent._get_quality_reasoning(self.test_schema_recipe, self.test_strategy)
 
         assert len(reasons) > 0
-        assert any("Required fields ensure minimum data completeness" in reason for reason in reasons)
-        assert any("Quality weights prioritize critical information" in reason for reason in reasons)
+        assert any(
+            "Required fields ensure minimum data completeness" in reason for reason in reasons
+        )
+        assert any(
+            "Quality weights prioritize critical information" in reason for reason in reasons
+        )
         assert any("Post-processing steps clean and normalize" in reason for reason in reasons)
 
     def test_explain_selector(self):
@@ -201,7 +222,9 @@ class TestReasoningGeneration:
 
     def test_assess_risks(self):
         """Test risk assessment functionality."""
-        risks = self.agent._assess_risks(self.mock_analysis, self.test_strategy, self.test_schema_recipe)
+        risks = self.agent._assess_risks(
+            self.mock_analysis, self.test_strategy, self.test_schema_recipe
+        )
 
         # Should be a list (may be empty for good configurations)
         assert isinstance(risks, list)
@@ -210,7 +233,9 @@ class TestReasoningGeneration:
         """Test risk assessment with problematic configuration."""
         # Create problematic strategy
         bad_strategy = ScrapingStrategy(
-            scrape_type="list", target_selectors=["div", "span"], max_pages=1  # Generic selectors  # No pagination
+            scrape_type="list",
+            target_selectors=["div", "span"],
+            max_pages=1,  # Generic selectors  # No pagination
         )
 
         # Create schema with no required fields
@@ -219,7 +244,11 @@ class TestReasoningGeneration:
             description="Bad schema",
             fields={
                 "field1": FieldDefinition(
-                    field_type="string", description="Field 1", extraction_selector="div", required=False, quality_weight=0.1
+                    field_type="string",
+                    description="Field 1",
+                    extraction_selector="div",
+                    required=False,
+                    quality_weight=0.1,
                 )
             },
         )
@@ -238,7 +267,10 @@ class TestReasoningGeneration:
     def test_generate_recommendations(self):
         """Test recommendation generation."""
         recommendations = self.agent._generate_recommendations(
-            self.mock_analysis, self.test_strategy, self.test_schema_recipe, self.test_parsed_request
+            self.mock_analysis,
+            self.test_strategy,
+            self.test_schema_recipe,
+            self.test_parsed_request,
         )
 
         assert len(recommendations) > 0
@@ -248,7 +280,9 @@ class TestReasoningGeneration:
 
     def test_calculate_confidence_comprehensive(self):
         """Test comprehensive confidence calculation."""
-        confidence = self.agent._calculate_confidence(self.mock_analysis, self.test_strategy, self.test_schema_recipe)
+        confidence = self.agent._calculate_confidence(
+            self.mock_analysis, self.test_strategy, self.test_schema_recipe
+        )
 
         assert 0.0 <= confidence <= 1.0
         assert confidence > 0.5  # Should be reasonably confident with good inputs
@@ -289,7 +323,9 @@ class TestReasoningGeneration:
         """Test confidence calculation with high-risk scenario."""
         # Create high-risk configuration
         risky_strategy = ScrapingStrategy(
-            scrape_type="list", target_selectors=["div"], max_pages=20  # Very generic  # Too many pages
+            scrape_type="list",
+            target_selectors=["div"],
+            max_pages=20,  # Very generic  # Too many pages
         )
 
         large_schema = SchemaRecipe(
@@ -317,7 +353,10 @@ class TestReasoningGeneration:
     def test_reasoning_sections_completeness(self):
         """Test that all reasoning sections contain meaningful content."""
         reasoning = self.agent._generate_reasoning(
-            self.mock_analysis, self.test_strategy, self.test_schema_recipe, self.test_parsed_request
+            self.mock_analysis,
+            self.test_strategy,
+            self.test_schema_recipe,
+            self.test_parsed_request,
         )
 
         # Split into sections
@@ -344,11 +383,18 @@ class TestReasoningGeneration:
             name="minimal_schema",
             description="Minimal schema",
             fields={
-                "title": FieldDefinition(field_type="string", description="Title", extraction_selector="h1", required=True)
+                "title": FieldDefinition(
+                    field_type="string",
+                    description="Title",
+                    extraction_selector="h1",
+                    required=True,
+                )
             },
         )
 
-        reasoning = self.agent._generate_reasoning(self.mock_analysis, minimal_strategy, minimal_schema, minimal_request)
+        reasoning = self.agent._generate_reasoning(
+            self.mock_analysis, minimal_strategy, minimal_schema, minimal_request
+        )
 
         # Should still generate comprehensive reasoning
         assert len(reasoning) > 500  # Should be substantial
@@ -416,7 +462,9 @@ class TestConfidenceScoring:
             },
         )
 
-        confidence = self.agent._calculate_confidence(perfect_analysis, perfect_strategy, perfect_schema)
+        confidence = self.agent._calculate_confidence(
+            perfect_analysis, perfect_strategy, perfect_schema
+        )
 
         assert confidence > 0.8  # Should be very confident
 
@@ -426,7 +474,9 @@ class TestConfidenceScoring:
         bad_analysis.metadata = {"error": "Complete failure"}
 
         bad_strategy = ScrapingStrategy(
-            scrape_type="list", target_selectors=["div"], max_pages=50  # Generic selector  # Too many pages
+            scrape_type="list",
+            target_selectors=["div"],
+            max_pages=50,  # Generic selector  # Too many pages
         )
 
         bad_schema = SchemaRecipe(
@@ -434,7 +484,11 @@ class TestConfidenceScoring:
             description="Bad schema",
             fields={
                 "field1": FieldDefinition(
-                    field_type="string", description="Bad field", extraction_selector="div", required=False, quality_weight=0.1
+                    field_type="string",
+                    description="Bad field",
+                    extraction_selector="div",
+                    required=False,
+                    quality_weight=0.1,
                 )
             },
         )

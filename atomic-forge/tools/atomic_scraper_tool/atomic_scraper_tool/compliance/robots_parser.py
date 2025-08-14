@@ -90,7 +90,9 @@ class RobotsParser:
 
         except Exception:
             # If robots.txt is not accessible, create a permissive default
-            robots_info = RobotsTxtInfo(url=robots_url, content="", is_accessible=False, last_fetched=time.time())
+            robots_info = RobotsTxtInfo(
+                url=robots_url, content="", is_accessible=False, last_fetched=time.time()
+            )
             self._cache[domain] = robots_info
             return robots_info
 
@@ -256,7 +258,9 @@ class RobotsParser:
 
             if response.status_code == 404:
                 # No robots.txt file - assume everything is allowed
-                return RobotsTxtInfo(url=robots_url, content="", is_accessible=False, last_fetched=time.time())
+                return RobotsTxtInfo(
+                    url=robots_url, content="", is_accessible=False, last_fetched=time.time()
+                )
 
             response.raise_for_status()
             content = response.text
@@ -265,7 +269,11 @@ class RobotsParser:
             return self._parse_robots_content(robots_url, content)
 
         except requests.RequestException as e:
-            raise ScrapingError(f"Failed to fetch robots.txt from {robots_url}: {str(e)}", "network_error", robots_url)
+            raise ScrapingError(
+                f"Failed to fetch robots.txt from {robots_url}: {str(e)}",
+                "network_error",
+                robots_url,
+            )
 
     def _parse_robots_content(self, robots_url: str, content: str) -> RobotsTxtInfo:
         """
@@ -304,11 +312,19 @@ class RobotsParser:
             if directive == "user-agent":
                 current_user_agent = value
             elif directive in ["allow", "disallow"]:
-                rules.append(RobotsTxtRule(user_agent=current_user_agent, directive=directive.title(), path=value))
+                rules.append(
+                    RobotsTxtRule(
+                        user_agent=current_user_agent, directive=directive.title(), path=value
+                    )
+                )
             elif directive == "crawl-delay":
                 try:
                     # Store crawl-delay as a rule for user-agent specific handling
-                    rules.append(RobotsTxtRule(user_agent=current_user_agent, directive="Crawl-delay", path=value))
+                    rules.append(
+                        RobotsTxtRule(
+                            user_agent=current_user_agent, directive="Crawl-delay", path=value
+                        )
+                    )
                     # Also set the general crawl_delay (last one wins)
                     crawl_delay = float(value)
                 except ValueError:

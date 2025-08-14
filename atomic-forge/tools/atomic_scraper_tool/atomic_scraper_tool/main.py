@@ -18,8 +18,14 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.markdown import Markdown
 from rich import box
 
-from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperPlanningAgent, AtomicScraperAgentInputSchema
-from atomic_scraper_tool.tools.atomic_scraper_tool import AtomicScraperTool, AtomicScraperInputSchema
+from atomic_scraper_tool.agents.scraper_planning_agent import (
+    AtomicScraperPlanningAgent,
+    AtomicScraperAgentInputSchema,
+)
+from atomic_scraper_tool.tools.atomic_scraper_tool import (
+    AtomicScraperTool,
+    AtomicScraperInputSchema,
+)
 from atomic_scraper_tool.config.scraper_config import AtomicScraperConfig
 from atomic_scraper_tool.core.exceptions import ConfigurationError
 
@@ -32,7 +38,12 @@ class AtomicScraperApp:
     generation and natural language interface for effortless data extraction.
     """
 
-    def __init__(self, config_path: Optional[str] = None, client: Optional[Any] = None, demo_mode: bool = False):
+    def __init__(
+        self,
+        config_path: Optional[str] = None,
+        client: Optional[Any] = None,
+        demo_mode: bool = False,
+    ):
         """
         Initialize the atomic scraper application.
 
@@ -105,7 +116,9 @@ class AtomicScraperApp:
                         else:
                             default_config[section] = settings
             except Exception as e:
-                self.console.print(f"[yellow]Warning: Could not load config from {self.config_path}: {e}[/yellow]")
+                self.console.print(
+                    f"[yellow]Warning: Could not load config from {self.config_path}: {e}[/yellow]"
+                )
 
         return default_config
 
@@ -120,16 +133,22 @@ class AtomicScraperApp:
             if self.demo_mode:
                 # Demo mode: Always use mock responses
                 self.planning_agent = None
-                self.console.print("[yellow]🎭 Demo mode: Planning agent disabled. Using mock responses.[/yellow]")
+                self.console.print(
+                    "[yellow]🎭 Demo mode: Planning agent disabled. Using mock responses.[/yellow]"
+                )
             elif self.injected_client:
                 # Orchestration mode: Use injected client
                 self._initialize_planning_agent_with_client(self.injected_client)
-                self.console.print("[green]✓ Planning agent initialized with injected client (orchestration mode)[/green]")
+                self.console.print(
+                    "[green]✓ Planning agent initialized with injected client (orchestration mode)[/green]"
+                )
             else:
                 # Standalone mode: Check for API key and initialize if available
                 if self._has_model_provider_config():
                     self._initialize_planning_agent_standalone()
-                    self.console.print("[green]✓ Planning agent initialized in standalone mode[/green]")
+                    self.console.print(
+                        "[green]✓ Planning agent initialized in standalone mode[/green]"
+                    )
                 else:
                     self.planning_agent = None
                     self._show_model_provider_setup_help()
@@ -179,7 +198,12 @@ Type your scraping requests naturally, like:
 - "Extract article titles and dates from this news website"
         """
 
-        panel = Panel(Markdown(welcome_text), title="�  Atomic Scraper Tool v1.0", border_style="blue", padding=(1, 2))
+        panel = Panel(
+            Markdown(welcome_text),
+            title="�  Atomic Scraper Tool v1.0",
+            border_style="blue",
+            padding=(1, 2),
+        )
 
         self.console.print(panel)
         self.console.print()
@@ -205,7 +229,9 @@ Type your scraping requests naturally, like:
     def _get_user_choice(self) -> str:
         """Get user menu choice."""
         return Prompt.ask(
-            "\n[bold cyan]Choose an option[/bold cyan]", choices=["1", "2", "3", "4", "5", "6", "7"], default="1"
+            "\n[bold cyan]Choose an option[/bold cyan]",
+            choices=["1", "2", "3", "4", "5", "6", "7"],
+            default="1",
         )
 
     def _handle_menu_choice(self, choice: str):
@@ -228,10 +254,12 @@ Type your scraping requests naturally, like:
     def _handle_scraping_request(self):
         """Handle a new scraping request from the user."""
         self.console.print("\n[bold green]🔍 New Scraping Request[/bold green]")
-        
+
         # Get target URL first
         self.console.print("First, let's specify the website you want to scrape:")
-        self.console.print("[dim]Enter the full URL including https:// (e.g., https://example.com/products)[/dim]")
+        self.console.print(
+            "[dim]Enter the full URL including https:// (e.g., https://example.com/products)[/dim]"
+        )
         target_url = Prompt.ask("[cyan]Target website URL[/cyan]")
         if not target_url.strip():
             self.console.print("[yellow]URL cannot be empty.[/yellow]")
@@ -239,7 +267,9 @@ Type your scraping requests naturally, like:
 
         # Get user request second
         self.console.print("\nNow, describe what you want to scrape in natural language:")
-        self.console.print("[dim]Example: 'Scrape farmers markets in Cape Town with locations and operating hours'[/dim]\n")
+        self.console.print(
+            "[dim]Example: 'Scrape farmers markets in Cape Town with locations and operating hours'[/dim]\n"
+        )
         request = Prompt.ask("[cyan]Your scraping request[/cyan]")
         if not request.strip():
             self.console.print("[yellow]Request cannot be empty.[/yellow]")
@@ -260,13 +290,18 @@ Type your scraping requests naturally, like:
                 return
             self.console.print("[green]✓[/green] [dim]Valid URL format detected[/dim]")
         except Exception:
-            self.console.print("[yellow]Warning: URL format may be invalid, but proceeding anyway.[/yellow]")
+            self.console.print(
+                "[yellow]Warning: URL format may be invalid, but proceeding anyway.[/yellow]"
+            )
 
         # Get optional parameters
-        max_results = Prompt.ask("[cyan]Maximum results[/cyan]", default=str(self.config["scraper"]["max_results"]))
+        max_results = Prompt.ask(
+            "[cyan]Maximum results[/cyan]", default=str(self.config["scraper"]["max_results"])
+        )
 
         quality_threshold = Prompt.ask(
-            "[cyan]Quality threshold (0-100)[/cyan]", default=str(self.config["scraper"]["min_quality_score"])
+            "[cyan]Quality threshold (0-100)[/cyan]",
+            default=str(self.config["scraper"]["min_quality_score"]),
         )
 
         try:
@@ -279,16 +314,23 @@ Type your scraping requests naturally, like:
         # Process the request
         self._process_scraping_request(request, target_url, max_results, quality_threshold)
 
-    def _process_scraping_request(self, request: str, target_url: str, max_results: int, quality_threshold: float):
+    def _process_scraping_request(
+        self, request: str, target_url: str, max_results: int, quality_threshold: float
+    ):
         """Process a scraping request through the planning agent and scraper tool."""
 
         # Create input for planning agent
         agent_input = AtomicScraperAgentInputSchema(
-            request=request, target_url=target_url, max_results=max_results, quality_threshold=quality_threshold
+            request=request,
+            target_url=target_url,
+            max_results=max_results,
+            quality_threshold=quality_threshold,
         )
 
         with Progress(
-            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=self.console
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=self.console,
         ) as progress:
 
             # Step 1: Generate scraping plan
@@ -305,7 +347,9 @@ Type your scraping requests naturally, like:
 
                 # Ask user if they want to proceed
                 if not self.config["interface"]["auto_execute"]:
-                    proceed = Confirm.ask("\n[cyan]Execute this scraping plan?[/cyan]", default=True)
+                    proceed = Confirm.ask(
+                        "\n[cyan]Execute this scraping plan?[/cyan]", default=True
+                    )
                     if not proceed:
                         self.console.print("[yellow]Scraping cancelled.[/yellow]")
                         return
@@ -335,7 +379,9 @@ Type your scraping requests naturally, like:
                 if self.debug_mode:
                     self.console.print_exception()
 
-    def _mock_planning_agent_response(self, agent_input: AtomicScraperAgentInputSchema) -> Dict[str, Any]:
+    def _mock_planning_agent_response(
+        self, agent_input: AtomicScraperAgentInputSchema
+    ) -> Dict[str, Any]:
         """Mock planning agent response for demonstration."""
         # This would normally call self.planning_agent.run(agent_input)
         return {
@@ -374,19 +420,28 @@ Type your scraping requests naturally, like:
         self.console.print("\n[bold green]📋 Generated Scraping Plan[/bold green]")
 
         # Show plan summary
-        plan_panel = Panel(planning_result["scraping_plan"], title="Scraping Plan", border_style="blue")
+        plan_panel = Panel(
+            planning_result["scraping_plan"], title="Scraping Plan", border_style="blue"
+        )
         self.console.print(plan_panel)
 
         # Show confidence if enabled
         if self.config["interface"]["show_confidence"]:
             confidence = planning_result["confidence"]
-            confidence_color = "green" if confidence > 0.8 else "yellow" if confidence > 0.6 else "red"
-            self.console.print(f"\n[bold]Confidence Score:[/bold] [{confidence_color}]{confidence:.1%}[/{confidence_color}]")
+            confidence_color = (
+                "green" if confidence > 0.8 else "yellow" if confidence > 0.6 else "red"
+            )
+            self.console.print(
+                f"\n[bold]Confidence Score:[/bold] [{confidence_color}]{confidence:.1%}[/{confidence_color}]"
+            )
 
         # Show reasoning if enabled
         if self.config["interface"]["show_reasoning"]:
             reasoning_panel = Panel(
-                Markdown(planning_result["reasoning"]), title="🧠 Agent Reasoning", border_style="cyan", expand=False
+                Markdown(planning_result["reasoning"]),
+                title="🧠 Agent Reasoning",
+                border_style="cyan",
+                expand=False,
             )
             self.console.print(reasoning_panel)
 
@@ -432,7 +487,9 @@ Type your scraping requests naturally, like:
 
             # Ask if user wants to see all results or export
             if len(results["items"]) > 3:
-                show_all = Confirm.ask(f"\n[cyan]Show all {len(results['items'])} results?[/cyan]", default=False)
+                show_all = Confirm.ask(
+                    f"\n[cyan]Show all {len(results['items'])} results?[/cyan]", default=False
+                )
                 if show_all:
                     self._display_sample_items(results["items"])
 
@@ -466,7 +523,11 @@ Type your scraping requests naturally, like:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"scraping_results_{timestamp}.json"
 
-        export_data = {"request": request, "timestamp": datetime.now().isoformat(), "results": results}
+        export_data = {
+            "request": request,
+            "timestamp": datetime.now().isoformat(),
+            "results": results,
+        }
 
         try:
             with open(filename, "w") as f:
@@ -565,7 +626,9 @@ Type your scraping requests naturally, like:
             from atomic_agents.agents.base_agent import BaseAgentConfig
 
             # Create agent config with injected client
-            agent_config = BaseAgentConfig(client=client, model=self.config.get("agent", {}).get("model", "gpt-3.5-turbo"))
+            agent_config = BaseAgentConfig(
+                client=client, model=self.config.get("agent", {}).get("model", "gpt-3.5-turbo")
+            )
 
             self.planning_agent = AtomicScraperPlanningAgent(agent_config)
 
@@ -573,7 +636,9 @@ Type your scraping requests naturally, like:
             self.console.print(f"[yellow]Warning: Could not import planning agent: {e}[/yellow]")
             self.planning_agent = None
         except Exception as e:
-            self.console.print(f"[red]Error initializing planning agent with injected client: {e}[/red]")
+            self.console.print(
+                f"[red]Error initializing planning agent with injected client: {e}[/red]"
+            )
             self.planning_agent = None
 
     def _initialize_planning_agent_standalone(self):
@@ -601,7 +666,11 @@ Type your scraping requests naturally, like:
             # Try Anthropic if OpenAI failed
             if not client:
                 anthropic_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
-                if anthropic_key and anthropic_key.startswith("sk-ant-") and len(anthropic_key) > 20:
+                if (
+                    anthropic_key
+                    and anthropic_key.startswith("sk-ant-")
+                    and len(anthropic_key) > 20
+                ):
                     try:
                         import anthropic
 
@@ -619,12 +688,18 @@ Type your scraping requests naturally, like:
                     try:
                         from openai import AzureOpenAI
 
-                        azure_client = AzureOpenAI(api_key=azure_key, azure_endpoint=azure_endpoint, api_version="2024-02-01")
+                        azure_client = AzureOpenAI(
+                            api_key=azure_key,
+                            azure_endpoint=azure_endpoint,
+                            api_version="2024-02-01",
+                        )
                         client = instructor.from_openai(azure_client)
                         provider_used = "Azure OpenAI"
                     except Exception as e:
                         if self.debug_mode:
-                            self.console.print(f"[dim]Azure OpenAI initialization failed: {e}[/dim]")
+                            self.console.print(
+                                f"[dim]Azure OpenAI initialization failed: {e}[/dim]"
+                            )
 
             if client:
                 # Initialize with successfully created client
@@ -636,17 +711,25 @@ Type your scraping requests naturally, like:
                 raise Exception("No valid model provider could be initialized")
 
         except ImportError as e:
-            self.console.print(f"[yellow]Warning: Model provider libraries not available: {e}[/yellow]")
+            self.console.print(
+                f"[yellow]Warning: Model provider libraries not available: {e}[/yellow]"
+            )
             self.planning_agent = None
         except Exception as e:
             if self.debug_mode:
-                self.console.print(f"[yellow]Warning: Could not initialize standalone planning agent: {e}[/yellow]")
+                self.console.print(
+                    f"[yellow]Warning: Could not initialize standalone planning agent: {e}[/yellow]"
+                )
             self.planning_agent = None
 
     def _show_model_provider_setup_help(self):
         """Show helpful guidance for setting up model providers."""
-        self.console.print("[yellow]⚠️  Planning agent disabled - no model provider configured[/yellow]")
-        self.console.print("\n[bold cyan]To enable AI-powered planning, set up a model provider:[/bold cyan]")
+        self.console.print(
+            "[yellow]⚠️  Planning agent disabled - no model provider configured[/yellow]"
+        )
+        self.console.print(
+            "\n[bold cyan]To enable AI-powered planning, set up a model provider:[/bold cyan]"
+        )
 
         # Create a helpful table
         from rich.table import Table
@@ -658,12 +741,18 @@ Type your scraping requests naturally, like:
 
         setup_table.add_row("OpenAI", "OPENAI_API_KEY", "export OPENAI_API_KEY=sk-...")
         setup_table.add_row("Anthropic", "ANTHROPIC_API_KEY", "export ANTHROPIC_API_KEY=sk-ant-...")
-        setup_table.add_row("Azure OpenAI", "AZURE_OPENAI_API_KEY", "export AZURE_OPENAI_API_KEY=...")
+        setup_table.add_row(
+            "Azure OpenAI", "AZURE_OPENAI_API_KEY", "export AZURE_OPENAI_API_KEY=..."
+        )
         setup_table.add_row("Google", "GOOGLE_API_KEY", "export GOOGLE_API_KEY=...")
 
         self.console.print(setup_table)
-        self.console.print("\n[dim]💡 Tip: You can also use the Configuration menu (option 3) to set up AI settings[/dim]")
-        self.console.print("[dim]🎭 Or use --demo flag to run in demo mode with mock responses[/dim]")
+        self.console.print(
+            "\n[dim]💡 Tip: You can also use the Configuration menu (option 3) to set up AI settings[/dim]"
+        )
+        self.console.print(
+            "[dim]🎭 Or use --demo flag to run in demo mode with mock responses[/dim]"
+        )
 
     def _show_session_history(self):
         """Display session history."""
@@ -683,7 +772,9 @@ Type your scraping requests naturally, like:
 
         for i, entry in enumerate(self.session_history, 1):
             timestamp = entry["timestamp"][:19].replace("T", " ")
-            request = entry["request"][:37] + "..." if len(entry["request"]) > 40 else entry["request"]
+            request = (
+                entry["request"][:37] + "..." if len(entry["request"]) > 40 else entry["request"]
+            )
             url = entry["url"][:27] + "..." if len(entry["url"]) > 30 else entry["url"]
             items = str(entry["items_scraped"])
 
@@ -704,7 +795,9 @@ Type your scraping requests naturally, like:
         self.console.print("3. Clear session history")
         self.console.print("4. Back to main menu")
 
-        choice = Prompt.ask("\n[cyan]Choose an option[/cyan]", choices=["1", "2", "3", "4"], default="4")
+        choice = Prompt.ask(
+            "\n[cyan]Choose an option[/cyan]", choices=["1", "2", "3", "4"], default="4"
+        )
 
         if choice == "1":
             self._view_history_details()
@@ -775,7 +868,8 @@ Type your scraping requests naturally, like:
             return
 
         confirm = Confirm.ask(
-            f"[red]Are you sure you want to clear {len(self.session_history)} history entries?[/red]", default=False
+            f"[red]Are you sure you want to clear {len(self.session_history)} history entries?[/red]",
+            default=False,
         )
 
         if confirm:
@@ -818,7 +912,9 @@ Type your scraping requests naturally, like:
         self.console.print(config_menu)
 
         choice = Prompt.ask(
-            "\n[bold cyan]Choose an option[/bold cyan]", choices=["1", "2", "3", "4", "5", "6", "7"], default="7"
+            "\n[bold cyan]Choose an option[/bold cyan]",
+            choices=["1", "2", "3", "4", "5", "6", "7"],
+            default="7",
         )
 
         if choice == "1":
@@ -854,7 +950,9 @@ Type your scraping requests naturally, like:
 
             info_table.add_row("Name", tool_info.get("name", "Atomic Scraper Tool"))
             info_table.add_row("Version", tool_info.get("version", "1.0.0"))
-            info_table.add_row("Description", tool_info.get("description", "AI-powered web scraping tool"))
+            info_table.add_row(
+                "Description", tool_info.get("description", "AI-powered web scraping tool")
+            )
 
             self.console.print(info_table)
 
@@ -874,8 +972,12 @@ Type your scraping requests naturally, like:
             features_table.add_column("Feature", style="cyan")
             features_table.add_column("Options", style="white")
 
-            strategies = tool_info.get("supported_strategies", ["list", "detail", "search", "sitemap"])
-            extraction_types = tool_info.get("supported_extraction_types", ["text", "links", "images", "tables"])
+            strategies = tool_info.get(
+                "supported_strategies", ["list", "detail", "search", "sitemap"]
+            )
+            extraction_types = tool_info.get(
+                "supported_extraction_types", ["text", "links", "images", "tables"]
+            )
 
             features_table.add_row("Strategies", ", ".join(strategies))
             features_table.add_row("Extraction Types", ", ".join(extraction_types))
@@ -940,7 +1042,9 @@ Type your scraping requests naturally, like:
             self.console.print("• Additional diagnostic information")
             self.console.print("• Request/response details")
         else:
-            self.console.print("\n[dim]Debug mode disabled - errors will show simplified messages[/dim]")
+            self.console.print(
+                "\n[dim]Debug mode disabled - errors will show simplified messages[/dim]"
+            )
 
         input("\nPress Enter to continue...")
 
@@ -997,7 +1101,9 @@ The tool automatically scores extracted data based on:
 Items below the quality threshold are filtered out automatically.
         """
 
-        help_panel = Panel(Markdown(help_text), title="Help & Examples", border_style="blue", padding=(1, 2))
+        help_panel = Panel(
+            Markdown(help_text), title="Help & Examples", border_style="blue", padding=(1, 2)
+        )
 
         self.console.print(help_panel)
 
@@ -1066,7 +1172,9 @@ Items below the quality threshold are filtered out automatically.
         self.console.print(settings_table)
 
         choice = Prompt.ask(
-            "\n[cyan]Which setting would you like to modify?[/cyan]", choices=[str(i) for i in range(1, 10)], default="9"
+            "\n[cyan]Which setting would you like to modify?[/cyan]",
+            choices=[str(i) for i in range(1, 10)],
+            default="9",
         )
 
         if choice == "9":
@@ -1082,23 +1190,31 @@ Items below the quality threshold are filtered out automatically.
 
         # Get new value based on setting type
         if setting_key in ["respect_robots_txt", "enable_rate_limiting"]:
-            new_value = Confirm.ask(f"[cyan]New value for {setting_key}[/cyan]", default=current_value)
+            new_value = Confirm.ask(
+                f"[cyan]New value for {setting_key}[/cyan]", default=current_value
+            )
         elif setting_key in ["request_delay", "timeout", "min_quality_score"]:
-            new_value_str = Prompt.ask(f"[cyan]New value for {setting_key}[/cyan]", default=str(current_value))
+            new_value_str = Prompt.ask(
+                f"[cyan]New value for {setting_key}[/cyan]", default=str(current_value)
+            )
             try:
                 new_value = float(new_value_str)
             except ValueError:
                 self.console.print("[red]Invalid numeric value.[/red]")
                 return
         elif setting_key in ["max_pages", "max_results"]:
-            new_value_str = Prompt.ask(f"[cyan]New value for {setting_key}[/cyan]", default=str(current_value))
+            new_value_str = Prompt.ask(
+                f"[cyan]New value for {setting_key}[/cyan]", default=str(current_value)
+            )
             try:
                 new_value = int(new_value_str)
             except ValueError:
                 self.console.print("[red]Invalid integer value.[/red]")
                 return
         else:  # String values like user_agent
-            new_value = Prompt.ask(f"[cyan]New value for {setting_key}[/cyan]", default=str(current_value))
+            new_value = Prompt.ask(
+                f"[cyan]New value for {setting_key}[/cyan]", default=str(current_value)
+            )
 
         # Update the configuration
         old_value = self.config["scraper"][setting_key]
@@ -1192,7 +1308,9 @@ Items below the quality threshold are filtered out automatically.
 
         self.console.print(options_table)
 
-        choice = Prompt.ask("\n[cyan]Choose an option[/cyan]", choices=["1", "2", "3", "4", "5", "6"], default="6")
+        choice = Prompt.ask(
+            "\n[cyan]Choose an option[/cyan]", choices=["1", "2", "3", "4", "5", "6"], default="6"
+        )
 
         if choice == "1":
             self._change_ai_model()
@@ -1215,7 +1333,8 @@ Items below the quality threshold are filtered out automatically.
 
         # Get new model
         new_model = Prompt.ask(
-            "[cyan]Enter new model name[/cyan] (e.g., gpt-4, claude-3-opus, ollama/llama2)", default=current_model
+            "[cyan]Enter new model name[/cyan] (e.g., gpt-4, claude-3-opus, ollama/llama2)",
+            default=current_model,
         )
 
         if new_model != current_model:
@@ -1228,13 +1347,17 @@ Items below the quality threshold are filtered out automatically.
 
             # Note about API keys
             if "gpt" in new_model.lower():
-                self.console.print("\n[yellow]💡 Note: OpenAI models require OPENAI_API_KEY environment variable[/yellow]")
+                self.console.print(
+                    "\n[yellow]💡 Note: OpenAI models require OPENAI_API_KEY environment variable[/yellow]"
+                )
             elif "claude" in new_model.lower():
                 self.console.print(
                     "\n[yellow]💡 Note: Anthropic models require ANTHROPIC_API_KEY environment variable[/yellow]"
                 )
             elif "ollama" in new_model.lower():
-                self.console.print("\n[yellow]💡 Note: Ollama models require local Ollama installation[/yellow]")
+                self.console.print(
+                    "\n[yellow]💡 Note: Ollama models require local Ollama installation[/yellow]"
+                )
         else:
             self.console.print("[yellow]No changes made.[/yellow]")
 
@@ -1253,14 +1376,20 @@ Items below the quality threshold are filtered out automatically.
         temp_guide.add_column("Behavior", style="white")
         temp_guide.add_column("Best For", style="dim")
 
-        temp_guide.add_row("0.0 - 0.3", "Very focused, deterministic", "Factual extraction, consistent results")
-        temp_guide.add_row("0.4 - 0.7", "Balanced creativity", "General scraping, strategy planning")
+        temp_guide.add_row(
+            "0.0 - 0.3", "Very focused, deterministic", "Factual extraction, consistent results"
+        )
+        temp_guide.add_row(
+            "0.4 - 0.7", "Balanced creativity", "General scraping, strategy planning"
+        )
         temp_guide.add_row("0.8 - 1.2", "More creative", "Complex analysis, varied approaches")
         temp_guide.add_row("1.3 - 2.0", "Very creative", "Experimental, diverse solutions")
 
         self.console.print(temp_guide)
 
-        new_temp_str = Prompt.ask("[cyan]Enter new temperature (0.0-2.0)[/cyan]", default=str(current_temp))
+        new_temp_str = Prompt.ask(
+            "[cyan]Enter new temperature (0.0-2.0)[/cyan]", default=str(current_temp)
+        )
 
         try:
             new_temp = float(new_temp_str)
@@ -1300,7 +1429,9 @@ Items below the quality threshold are filtered out automatically.
 
         self.console.print(token_guide)
 
-        new_tokens_str = Prompt.ask("[cyan]Enter max tokens (100-8000)[/cyan]", default=str(current_tokens))
+        new_tokens_str = Prompt.ask(
+            "[cyan]Enter max tokens (100-8000)[/cyan]", default=str(current_tokens)
+        )
 
         try:
             new_tokens = int(new_tokens_str)
@@ -1396,7 +1527,9 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
                 self.console.print("[yellow]Set ANTHROPIC_API_KEY environment variable[/yellow]")
         elif "ollama" in model.lower():
             self.console.print("[yellow]⚠️ Ollama connection test not implemented[/yellow]")
-            self.console.print("[dim]Ensure Ollama is running locally with the specified model[/dim]")
+            self.console.print(
+                "[dim]Ensure Ollama is running locally with the specified model[/dim]"
+            )
         else:
             self.console.print("[yellow]⚠️ Unknown model type - connection test skipped[/yellow]")
 
@@ -1442,7 +1575,9 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
         self.console.print(schema_menu)
 
-        choice = Prompt.ask("\n[cyan]Choose an option[/cyan]", choices=["1", "2", "3", "4", "5", "6"], default="6")
+        choice = Prompt.ask(
+            "\n[cyan]Choose an option[/cyan]", choices=["1", "2", "3", "4", "5", "6"], default="6"
+        )
 
         if choice == "1":
             self._create_schema_recipe()
@@ -1498,7 +1633,8 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
         for key, current_value in thresholds.items():
             description = threshold_descriptions.get(key, key)
             new_value_str = Prompt.ask(
-                f"[cyan]{key.replace('_', ' ').title()}[/cyan] ({description})", default=str(current_value)
+                f"[cyan]{key.replace('_', ' ').title()}[/cyan] ({description})",
+                default=str(current_value),
             )
 
             try:
@@ -1507,7 +1643,9 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
                 # Validate ranges
                 if key == "minimum_overall":
                     if not 0 <= new_value <= 100:
-                        self.console.print("[red]Overall quality score must be between 0 and 100[/red]")
+                        self.console.print(
+                            "[red]Overall quality score must be between 0 and 100[/red]"
+                        )
                         continue
                 else:
                     if not 0.0 <= new_value <= 1.0:
@@ -1558,7 +1696,10 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
         """Reset configuration to default values."""
         self.console.print("\n[bold red]🔄 Reset to Defaults[/bold red]")
 
-        confirm = Confirm.ask("[yellow]This will reset ALL settings to defaults. Are you sure?[/yellow]", default=False)
+        confirm = Confirm.ask(
+            "[yellow]This will reset ALL settings to defaults. Are you sure?[/yellow]",
+            default=False,
+        )
 
         if not confirm:
             self.console.print("[cyan]Reset cancelled.[/cyan]")
@@ -1636,11 +1777,17 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
                 continue
 
             field_type = Prompt.ask(
-                "[cyan]Field type[/cyan]", choices=["string", "number", "array", "object", "boolean"], default="string"
+                "[cyan]Field type[/cyan]",
+                choices=["string", "number", "array", "object", "boolean"],
+                default="string",
             )
 
-            field_desc = Prompt.ask(f"[cyan]Description for {field_name}[/cyan]", default=f"{field_name} field")
-            selector = Prompt.ask(f"[cyan]CSS selector for {field_name}[/cyan]", default=f".{field_name}")
+            field_desc = Prompt.ask(
+                f"[cyan]Description for {field_name}[/cyan]", default=f"{field_name} field"
+            )
+            selector = Prompt.ask(
+                f"[cyan]CSS selector for {field_name}[/cyan]", default=f".{field_name}"
+            )
             required = Confirm.ask(f"[cyan]Is {field_name} required?[/cyan]", default=False)
 
             recipe["fields"][field_name] = {
@@ -1670,7 +1817,9 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
         recipes = list(self.config["schema_recipes"].keys())
         recipe_name = Prompt.ask(
-            "[cyan]Which recipe would you like to view?[/cyan]", choices=recipes + ["cancel"], default="cancel"
+            "[cyan]Which recipe would you like to view?[/cyan]",
+            choices=recipes + ["cancel"],
+            default="cancel",
         )
 
         if recipe_name == "cancel":
@@ -1680,7 +1829,9 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
         # Display recipe details
         self.console.print(f"\n[bold green]Schema Recipe: {recipe_name}[/bold green]")
-        self.console.print(f"[dim]Description: {recipe.get('description', 'No description')}[/dim]\n")
+        self.console.print(
+            f"[dim]Description: {recipe.get('description', 'No description')}[/dim]\n"
+        )
 
         # Display fields
         fields_table = Table(title="Fields", box=box.ROUNDED)
@@ -1692,7 +1843,10 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
         for field_name, field_def in recipe.get("fields", {}).items():
             required = "Yes" if field_def.get("required", False) else "No"
             fields_table.add_row(
-                field_name, field_def.get("field_type", "string"), field_def.get("extraction_selector", ""), required
+                field_name,
+                field_def.get("field_type", "string"),
+                field_def.get("extraction_selector", ""),
+                required,
             )
 
         self.console.print(fields_table)
@@ -1705,7 +1859,9 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
         recipes = list(self.config["schema_recipes"].keys())
         recipe_name = Prompt.ask(
-            "[cyan]Which recipe would you like to delete?[/cyan]", choices=recipes + ["cancel"], default="cancel"
+            "[cyan]Which recipe would you like to delete?[/cyan]",
+            choices=recipes + ["cancel"],
+            default="cancel",
         )
 
         if recipe_name == "cancel":
@@ -1724,7 +1880,9 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
         recipes = list(self.config["schema_recipes"].keys())
         recipe_name = Prompt.ask(
-            "[cyan]Which recipe would you like to export?[/cyan]", choices=recipes + ["cancel"], default="cancel"
+            "[cyan]Which recipe would you like to export?[/cyan]",
+            choices=recipes + ["cancel"],
+            default="cancel",
         )
 
         if recipe_name == "cancel":
@@ -1758,7 +1916,10 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
             recipe_name = recipe["name"]
             if recipe_name in self.config["schema_recipes"]:
-                overwrite = Confirm.ask(f"[yellow]Recipe '{recipe_name}' already exists. Overwrite?[/yellow]", default=False)
+                overwrite = Confirm.ask(
+                    f"[yellow]Recipe '{recipe_name}' already exists. Overwrite?[/yellow]",
+                    default=False,
+                )
                 if not overwrite:
                     return
 
@@ -1774,7 +1935,11 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 
     def _validate_model_provider(self) -> None:
         """Validate that a model provider is configured."""
-        if self.injected_client is None and not self.demo_mode and not self._has_model_provider_config():
+        if (
+            self.injected_client is None
+            and not self.demo_mode
+            and not self._has_model_provider_config()
+        ):
             error_msg = """
 [bold red]Error: No AI model provider configured![/bold red]
 
@@ -1800,7 +1965,9 @@ For more information, see the documentation or run:
   atomic-scraper --help
 """
             self.console.print(error_msg)
-            raise ConfigurationError("No AI model provider configured. Please set API keys or use --demo-mode.")
+            raise ConfigurationError(
+                "No AI model provider configured. Please set API keys or use --demo-mode."
+            )
 
     def _has_model_provider_config(self) -> bool:
         """Check if model provider is configured via environment variables or config."""
@@ -1833,11 +2000,15 @@ def main():
     """Main entry point for the application."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Atomic Scraper Tool - Intelligent web scraping with natural language")
+    parser = argparse.ArgumentParser(
+        description="Atomic Scraper Tool - Intelligent web scraping with natural language"
+    )
     parser.add_argument("--config", "-c", help="Path to configuration file")
     parser.add_argument("--debug", "-d", action="store_true", help="Enable debug mode")
     parser.add_argument("--demo", action="store_true", help="Run in demo mode with mock responses")
-    parser.add_argument("--orchestrated", action="store_true", help="Run in orchestrated mode (for testing)")
+    parser.add_argument(
+        "--orchestrated", action="store_true", help="Run in orchestrated mode (for testing)"
+    )
 
     args = parser.parse_args()
 

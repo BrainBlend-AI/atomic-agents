@@ -71,7 +71,11 @@ class TestScrapingStrategy:
     def test_invalid_pagination_strategy(self):
         """Test validation of invalid pagination strategy."""
         with pytest.raises(ValidationError) as exc_info:
-            ScrapingStrategy(scrape_type="list", target_selectors=[".item"], pagination_strategy="invalid_strategy")
+            ScrapingStrategy(
+                scrape_type="list",
+                target_selectors=[".item"],
+                pagination_strategy="invalid_strategy",
+            )
 
         assert "pagination_strategy must be one of" in str(exc_info.value)
 
@@ -80,18 +84,24 @@ class TestScrapingStrategy:
         valid_strategies = ["next_link", "page_numbers", "infinite_scroll", "load_more"]
 
         for strategy in valid_strategies:
-            scraping_strategy = ScrapingStrategy(scrape_type="list", target_selectors=[".item"], pagination_strategy=strategy)
+            scraping_strategy = ScrapingStrategy(
+                scrape_type="list", target_selectors=[".item"], pagination_strategy=strategy
+            )
             assert scraping_strategy.pagination_strategy == strategy
 
     def test_invalid_extraction_rules(self):
         """Test validation of invalid extraction rules."""
         with pytest.raises(ValidationError) as exc_info:
-            ScrapingStrategy(scrape_type="list", target_selectors=[".item"], extraction_rules={"": "h1"})  # Empty field name
+            ScrapingStrategy(
+                scrape_type="list", target_selectors=[".item"], extraction_rules={"": "h1"}
+            )  # Empty field name
 
         assert "extraction_rules field names cannot be empty" in str(exc_info.value)
 
         with pytest.raises(ValidationError) as exc_info:
-            ScrapingStrategy(scrape_type="list", target_selectors=[".item"], extraction_rules={"title": ""})  # Empty selector
+            ScrapingStrategy(
+                scrape_type="list", target_selectors=[".item"], extraction_rules={"title": ""}
+            )  # Empty selector
 
         assert "extraction_rules selector for 'title' cannot be empty" in str(exc_info.value)
 
@@ -112,7 +122,9 @@ class TestScrapedItem:
     def test_valid_item_creation(self):
         """Test creating a valid scraped item."""
         item = ScrapedItem(
-            source_url="https://example.com/page1", data={"title": "Test Title", "price": 29.99}, quality_score=85.5
+            source_url="https://example.com/page1",
+            data={"title": "Test Title", "price": 29.99},
+            quality_score=85.5,
         )
 
         assert item.source_url == "https://example.com/page1"
@@ -124,7 +136,9 @@ class TestScrapedItem:
 
     def test_auto_generated_fields(self):
         """Test auto-generated fields."""
-        item = ScrapedItem(source_url="https://example.com/page1", data={"title": "Test"}, quality_score=75.0)
+        item = ScrapedItem(
+            source_url="https://example.com/page1", data={"title": "Test"}, quality_score=75.0
+        )
 
         # Test UUID format
         uuid.UUID(item.id)  # Should not raise exception
@@ -199,23 +213,36 @@ class TestScrapedItem:
         """Test quality score bounds validation."""
         # Below minimum
         with pytest.raises(ValidationError):
-            ScrapedItem(source_url="https://example.com", data={"title": "Test"}, quality_score=-1.0)
+            ScrapedItem(
+                source_url="https://example.com", data={"title": "Test"}, quality_score=-1.0
+            )
 
         # Above maximum
         with pytest.raises(ValidationError):
-            ScrapedItem(source_url="https://example.com", data={"title": "Test"}, quality_score=101.0)
+            ScrapedItem(
+                source_url="https://example.com", data={"title": "Test"}, quality_score=101.0
+            )
 
         # Valid bounds
-        item_min = ScrapedItem(source_url="https://example.com", data={"title": "Test"}, quality_score=0.0)
+        item_min = ScrapedItem(
+            source_url="https://example.com", data={"title": "Test"}, quality_score=0.0
+        )
         assert item_min.quality_score == 0.0
 
-        item_max = ScrapedItem(source_url="https://example.com", data={"title": "Test"}, quality_score=100.0)
+        item_max = ScrapedItem(
+            source_url="https://example.com", data={"title": "Test"}, quality_score=100.0
+        )
         assert item_max.quality_score == 100.0
 
     def test_invalid_schema_version(self):
         """Test validation of invalid schema version."""
         with pytest.raises(ValidationError) as exc_info:
-            ScrapedItem(source_url="https://example.com", data={"title": "Test"}, quality_score=75.0, schema_version="invalid")
+            ScrapedItem(
+                source_url="https://example.com",
+                data={"title": "Test"},
+                quality_score=75.0,
+                schema_version="invalid",
+            )
 
         assert "schema_version must be in format 'X.Y'" in str(exc_info.value)
 

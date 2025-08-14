@@ -80,7 +80,9 @@ class DataProcessor:
             "integer": r"^\d+$",
         }
 
-    def process_data(self, data: Dict[str, Any], processing_config: Dict[str, List[str]]) -> Dict[str, Any]:
+    def process_data(
+        self, data: Dict[str, Any], processing_config: Dict[str, List[str]]
+    ) -> Dict[str, Any]:
         """
         Process data using field-specific processing pipelines.
 
@@ -135,7 +137,9 @@ class DataProcessor:
                     pattern_name = step.replace("validate_", "")
                     if pattern_name in self.validation_patterns:
                         if not self._validate_pattern(processed_value, pattern_name):
-                            logger.warning(f"Validation failed for {pattern_name}: {processed_value}")
+                            logger.warning(
+                                f"Validation failed for {pattern_name}: {processed_value}"
+                            )
                             processed_value = None
                     else:
                         logger.warning(f"Unknown validation pattern: {pattern_name}")

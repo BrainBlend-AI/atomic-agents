@@ -27,7 +27,10 @@ class TestAtomicScraperInputSchema:
         input_data = AtomicScraperInputSchema(
             target_url="https://example.com",
             strategy={"scrape_type": "list", "target_selectors": [".item"]},
-            schema_recipe={"name": "test_recipe", "fields": {"title": {"field_type": "string", "extraction_selector": "h1"}}},
+            schema_recipe={
+                "name": "test_recipe",
+                "fields": {"title": {"field_type": "string", "extraction_selector": "h1"}},
+            },
             max_results=20,
         )
 
@@ -71,7 +74,9 @@ class TestAtomicScraperTool:
 
     def test_tool_initialization_with_config(self):
         """Test tool initialization with provided config."""
-        config = AtomicScraperConfig(base_url="https://test.com", request_delay=2.0, timeout=60, min_quality_score=70.0)
+        config = AtomicScraperConfig(
+            base_url="https://test.com", request_delay=2.0, timeout=60, min_quality_score=70.0
+        )
 
         tool = AtomicScraperTool(config=config)
 
@@ -102,7 +107,9 @@ class TestAtomicScraperTool:
         input_data = AtomicScraperInputSchema(
             target_url="https://example.com",
             strategy={"scrape_type": "list", "target_selectors": [".item", ".product"]},
-            schema_recipe={"fields": {"title": {"field_type": "string", "extraction_selector": "h1"}}},
+            schema_recipe={
+                "fields": {"title": {"field_type": "string", "extraction_selector": "h1"}}
+            },
             max_results=10,
         )
 
@@ -114,7 +121,10 @@ class TestAtomicScraperTool:
         tool = AtomicScraperTool()
 
         input_data = AtomicScraperInputSchema(
-            target_url="https://example.com", strategy={}, schema_recipe={"fields": {}}, max_results=10
+            target_url="https://example.com",
+            strategy={},
+            schema_recipe={"fields": {}},
+            max_results=10,
         )
 
         with pytest.raises(ValueError, match="Strategy cannot be empty"):
@@ -189,7 +199,10 @@ class TestAtomicScraperTool:
         """Test creating scraping strategy from invalid dictionary."""
         tool = AtomicScraperTool()
 
-        strategy_dict = {"scrape_type": "invalid_type", "target_selectors": []}  # Invalid scrape type  # Empty selectors
+        strategy_dict = {
+            "scrape_type": "invalid_type",
+            "target_selectors": [],
+        }  # Invalid scrape type  # Empty selectors
 
         with pytest.raises(ValueError, match="Invalid strategy configuration"):
             tool._create_scraping_strategy(strategy_dict)
@@ -236,7 +249,11 @@ class TestAtomicScraperTool:
         # Create a schema recipe with field definitions
         fields = {
             "title": FieldDefinition(
-                field_type="string", description="Item title", extraction_selector="h1", required=True, quality_weight=2.0
+                field_type="string",
+                description="Item title",
+                extraction_selector="h1",
+                required=True,
+                quality_weight=2.0,
             ),
             "description": FieldDefinition(
                 field_type="string",
@@ -264,7 +281,9 @@ class TestAtomicScraperTool:
         title_rule = extraction_rules["title"]
         assert title_rule.field_name == "title"
         assert title_rule.selector == "h1"
-        assert title_rule.extraction_type == "text"  # Field type 'string' maps to extraction type 'text'
+        assert (
+            title_rule.extraction_type == "text"
+        )  # Field type 'string' maps to extraction type 'text'
 
     @patch("atomic_scraper_tool.tools.atomic_scraper_tool.requests.Session.get")
     def test_fetch_page_content_success(self, mock_get):
@@ -280,7 +299,9 @@ class TestAtomicScraperTool:
         content = tool._fetch_page_content("https://example.com")
 
         assert content == "<html><body>Test content</body></html>"
-        mock_get.assert_called_once_with("https://example.com", timeout=tool.request_timeout, allow_redirects=True)
+        mock_get.assert_called_once_with(
+            "https://example.com", timeout=tool.request_timeout, allow_redirects=True
+        )
 
     @patch("atomic_scraper_tool.tools.atomic_scraper_tool.requests.Session.get")
     def test_fetch_page_content_network_error(self, mock_get):
@@ -307,7 +328,11 @@ class TestAtomicScraperTool:
 
     def test_generate_summary(self):
         """Test summary generation from scraping result."""
-        from atomic_scraper_tool.models.base_models import ScrapingResult, ScrapingStrategy, ScrapedItem
+        from atomic_scraper_tool.models.base_models import (
+            ScrapingResult,
+            ScrapingStrategy,
+            ScrapedItem,
+        )
 
         tool = AtomicScraperTool()
 
@@ -316,7 +341,9 @@ class TestAtomicScraperTool:
         # Create mock scraped items to match total_items_scraped
         mock_items = []
         for i in range(12):
-            mock_item = ScrapedItem(source_url="https://example.com", data={"title": f"Item {i+1}"}, quality_score=85.5)
+            mock_item = ScrapedItem(
+                source_url="https://example.com", data={"title": f"Item {i+1}"}, quality_score=85.5
+            )
             mock_items.append(mock_item)
 
         scraping_result = ScrapingResult(
@@ -339,7 +366,11 @@ class TestAtomicScraperTool:
 
     def test_extract_quality_metrics(self):
         """Test quality metrics extraction from scraping result."""
-        from atomic_scraper_tool.models.base_models import ScrapingResult, ScrapingStrategy, ScrapedItem
+        from atomic_scraper_tool.models.base_models import (
+            ScrapingResult,
+            ScrapingStrategy,
+            ScrapedItem,
+        )
 
         tool = AtomicScraperTool()
 
@@ -348,7 +379,9 @@ class TestAtomicScraperTool:
         # Create mock scraped items to match total_items_scraped
         mock_items = []
         for i in range(18):
-            mock_item = ScrapedItem(source_url="https://example.com", data={"title": f"Item {i+1}"}, quality_score=92.3)
+            mock_item = ScrapedItem(
+                source_url="https://example.com", data={"title": f"Item {i+1}"}, quality_score=92.3
+            )
             mock_items.append(mock_item)
 
         scraping_result = ScrapingResult(
@@ -373,7 +406,12 @@ class TestAtomicScraperTool:
     def test_get_tool_info(self):
         """Test getting tool information."""
         config = AtomicScraperConfig(
-            base_url="https://test.com", request_delay=1.5, timeout=45, max_pages=8, max_results=150, min_quality_score=75.0
+            base_url="https://test.com",
+            request_delay=1.5,
+            timeout=45,
+            max_pages=8,
+            max_results=150,
+            min_quality_score=75.0,
         )
         tool = AtomicScraperTool(config=config)
 
@@ -433,7 +471,9 @@ class TestAtomicScraperTool:
         tool.reset_stats()
 
     @patch("atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._fetch_page_content")
-    @patch("atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._extract_items_from_page")
+    @patch(
+        "atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._extract_items_from_page"
+    )
     def test_run_list_scraping_success(self, mock_extract_items, mock_fetch_content):
         """Test successful list scraping execution."""
         from atomic_scraper_tool.models.base_models import ScrapedItem
@@ -445,13 +485,20 @@ class TestAtomicScraperTool:
 
         # Mock extracted items
         mock_item = ScrapedItem(
-            source_url="https://example.com", data={"title": "Item 1", "description": "Test item"}, quality_score=85.0
+            source_url="https://example.com",
+            data={"title": "Item 1", "description": "Test item"},
+            quality_score=85.0,
         )
         mock_extract_items.return_value = [mock_item]
 
         input_data = AtomicScraperInputSchema(
             target_url="https://example.com",
-            strategy={"scrape_type": "list", "target_selectors": [".item"], "max_pages": 1, "request_delay": 0.1},
+            strategy={
+                "scrape_type": "list",
+                "target_selectors": [".item"],
+                "max_pages": 1,
+                "request_delay": 0.1,
+            },
             schema_recipe={
                 "name": "test_recipe",
                 "description": "Test schema recipe for list scraping",
@@ -477,7 +524,9 @@ class TestAtomicScraperTool:
         assert result.quality_metrics["average_quality_score"] == 85.0
 
     @patch("atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._fetch_page_content")
-    @patch("atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._extract_items_from_page")
+    @patch(
+        "atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._extract_items_from_page"
+    )
     def test_run_detail_scraping_success(self, mock_extract_items, mock_fetch_content):
         """Test successful detail page scraping execution."""
         from atomic_scraper_tool.models.base_models import ScrapedItem
@@ -497,7 +546,12 @@ class TestAtomicScraperTool:
 
         input_data = AtomicScraperInputSchema(
             target_url="https://example.com/detail",
-            strategy={"scrape_type": "detail", "target_selectors": ["body"], "max_pages": 1, "request_delay": 0.1},
+            strategy={
+                "scrape_type": "detail",
+                "target_selectors": ["body"],
+                "max_pages": 1,
+                "request_delay": 0.1,
+            },
             schema_recipe={
                 "name": "detail_recipe",
                 "description": "Test schema recipe for detail scraping",
@@ -528,15 +582,28 @@ class TestAtomicScraperTool:
         tool = AtomicScraperTool()
 
         # Mock network error
-        mock_fetch_content.side_effect = NetworkError("Connection failed", url="https://example.com")
+        mock_fetch_content.side_effect = NetworkError(
+            "Connection failed", url="https://example.com"
+        )
 
         input_data = AtomicScraperInputSchema(
             target_url="https://example.com",
-            strategy={"scrape_type": "list", "target_selectors": [".item"], "max_pages": 1, "request_delay": 0.1},
+            strategy={
+                "scrape_type": "list",
+                "target_selectors": [".item"],
+                "max_pages": 1,
+                "request_delay": 0.1,
+            },
             schema_recipe={
                 "name": "test_recipe",
                 "description": "Test schema recipe",
-                "fields": {"title": {"field_type": "string", "description": "Item title", "extraction_selector": "h1"}},
+                "fields": {
+                    "title": {
+                        "field_type": "string",
+                        "description": "Item title",
+                        "extraction_selector": "h1",
+                    }
+                },
             },
             max_results=10,
         )
@@ -560,7 +627,13 @@ class TestAtomicScraperTool:
             schema_recipe={
                 "name": "test_recipe",
                 "description": "Test schema recipe",
-                "fields": {"title": {"field_type": "string", "description": "Item title", "extraction_selector": "h1"}},
+                "fields": {
+                    "title": {
+                        "field_type": "string",
+                        "description": "Item title",
+                        "extraction_selector": "h1",
+                    }
+                },
             },
             max_results=10,
         )
@@ -573,9 +646,13 @@ class TestAtomicScraperTool:
         assert "Scraping failed" in result.summary
 
     @patch("atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._fetch_page_content")
-    @patch("atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._extract_items_from_page")
+    @patch(
+        "atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._extract_items_from_page"
+    )
     @patch("atomic_scraper_tool.tools.atomic_scraper_tool.AtomicScraperTool._find_next_page_url")
-    def test_run_list_scraping_with_pagination(self, mock_find_next, mock_extract_items, mock_fetch_content):
+    def test_run_list_scraping_with_pagination(
+        self, mock_find_next, mock_extract_items, mock_fetch_content
+    ):
         """Test list scraping with pagination support."""
         from atomic_scraper_tool.models.base_models import ScrapedItem
 
@@ -588,8 +665,12 @@ class TestAtomicScraperTool:
         ]
 
         # Mock extracted items for each page
-        mock_item1 = ScrapedItem(source_url="https://example.com", data={"title": "Item 1"}, quality_score=85.0)
-        mock_item2 = ScrapedItem(source_url="https://example.com/page/2", data={"title": "Item 2"}, quality_score=90.0)
+        mock_item1 = ScrapedItem(
+            source_url="https://example.com", data={"title": "Item 1"}, quality_score=85.0
+        )
+        mock_item2 = ScrapedItem(
+            source_url="https://example.com/page/2", data={"title": "Item 2"}, quality_score=90.0
+        )
         mock_extract_items.side_effect = [[mock_item1], [mock_item2]]
 
         # Mock pagination - first call returns next page, second returns None
@@ -607,7 +688,13 @@ class TestAtomicScraperTool:
             schema_recipe={
                 "name": "test_recipe",
                 "description": "Test schema recipe",
-                "fields": {"title": {"field_type": "string", "description": "Item title", "extraction_selector": "h1"}},
+                "fields": {
+                    "title": {
+                        "field_type": "string",
+                        "description": "Item title",
+                        "extraction_selector": "h1",
+                    }
+                },
             },
             max_results=10,
         )
@@ -638,7 +725,9 @@ class TestAtomicScraperTool:
 
         extraction_rules = {
             "title": ExtractionRule(field_name="title", selector="h1", extraction_type="text"),
-            "description": ExtractionRule(field_name="description", selector="p", extraction_type="text"),
+            "description": ExtractionRule(
+                field_name="description", selector="p", extraction_type="text"
+            ),
         }
 
         items = tool._extract_items_from_page(html_content, source_url, strategy, extraction_rules)

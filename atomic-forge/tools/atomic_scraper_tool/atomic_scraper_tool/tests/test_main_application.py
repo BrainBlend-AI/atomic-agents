@@ -32,7 +32,12 @@ class TestAtomicScraperApp:
                 "min_quality_score": 50.0,
             },
             "agent": {"model": "test-model", "temperature": 0.5},
-            "interface": {"show_reasoning": True, "show_confidence": True, "auto_execute": False, "save_results": False},
+            "interface": {
+                "show_reasoning": True,
+                "show_confidence": True,
+                "auto_execute": False,
+                "save_results": False,
+            },
         }
 
         # Create temporary config file
@@ -122,7 +127,10 @@ class TestAtomicScraperApp:
         from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperAgentInputSchema
 
         agent_input = AtomicScraperAgentInputSchema(
-            request="Test scraping request", target_url="https://example.com", max_results=10, quality_threshold=60.0
+            request="Test scraping request",
+            target_url="https://example.com",
+            max_results=10,
+            quality_threshold=60.0,
         )
 
         response = app._mock_planning_agent_response(agent_input)
@@ -148,7 +156,9 @@ class TestAtomicScraperApp:
     @patch("atomic_scraper_tool.main.AtomicScraperApp._display_planning_results")
     @patch("atomic_scraper_tool.main.AtomicScraperApp._display_scraping_results")
     @patch("atomic_scraper_tool.main.Confirm.ask")
-    def test_process_scraping_request_success(self, mock_confirm, mock_display_results, mock_display_planning):
+    def test_process_scraping_request_success(
+        self, mock_confirm, mock_display_results, mock_display_planning
+    ):
         """Test successful scraping request processing."""
         app = AtomicScraperApp(config_path=self.config_file.name)
 
@@ -157,7 +167,10 @@ class TestAtomicScraperApp:
 
         # Mock scraper tool response
         mock_scraping_result = Mock(spec=AtomicScraperOutputSchema)
-        mock_scraping_result.results = {"items": [{"data": {"title": "Test Item"}, "quality_score": 85.0}], "total_scraped": 1}
+        mock_scraping_result.results = {
+            "items": [{"data": {"title": "Test Item"}, "quality_score": 85.0}],
+            "total_scraped": 1,
+        }
         mock_scraping_result.summary = "Successfully scraped 1 item"
         mock_scraping_result.quality_metrics = {
             "average_quality_score": 85.0,
@@ -209,13 +222,19 @@ class TestAtomicScraperApp:
         """Test saving requests to session history."""
         app = AtomicScraperApp(config_path=self.config_file.name)
 
-        planning_result = {"scraping_plan": "Test plan", "strategy": {"scrape_type": "list"}, "confidence": 0.8}
+        planning_result = {
+            "scraping_plan": "Test plan",
+            "strategy": {"scrape_type": "list"},
+            "confidence": 0.8,
+        }
 
         scraping_result = Mock()
         scraping_result.summary = "Test summary"
         scraping_result.results = {"total_scraped": 5}
 
-        app._save_to_history("Test request", "https://example.com", planning_result, scraping_result)
+        app._save_to_history(
+            "Test request", "https://example.com", planning_result, scraping_result
+        )
 
         assert len(app.session_history) == 1
         entry = app.session_history[0]
@@ -234,7 +253,10 @@ class TestAtomicScraperApp:
         app = AtomicScraperApp(config_path=self.config_file.name)
         app.console = Mock()
 
-        results = {"items": [{"data": {"title": "Test"}, "quality_score": 85.0}], "total_scraped": 1}
+        results = {
+            "items": [{"data": {"title": "Test"}, "quality_score": 85.0}],
+            "total_scraped": 1,
+        }
 
         app._export_results(results, "Test request")
 
@@ -284,7 +306,9 @@ class TestAtomicScraperApp:
 
         long_description = "A" * 150  # Longer than 100 characters
 
-        items = [{"data": {"title": "Item 1", "description": long_description}, "quality_score": 85.0}]
+        items = [
+            {"data": {"title": "Item 1", "description": long_description}, "quality_score": 85.0}
+        ]
 
         app._display_sample_items(items)
 
@@ -300,7 +324,12 @@ class TestAtomicScraperApp:
 
         # Add some history entries
         app.session_history = [
-            {"timestamp": "2023-01-01T12:00:00", "request": "Test request", "url": "https://example.com", "items_scraped": 5}
+            {
+                "timestamp": "2023-01-01T12:00:00",
+                "request": "Test request",
+                "url": "https://example.com",
+                "items_scraped": 5,
+            }
         ]
 
         app._save_session_history()
@@ -354,7 +383,11 @@ class TestMainApplicationIntegration:
             "7",  # Exit
         ]
 
-        mock_confirm.side_effect = [True, False, False]  # Execute plan  # Don't export results  # Don't save history on exit
+        mock_confirm.side_effect = [
+            True,
+            False,
+            False,
+        ]  # Execute plan  # Don't export results  # Don't save history on exit
 
         # Create app with mocked components
         app = AtomicScraperApp()
@@ -363,7 +396,12 @@ class TestMainApplicationIntegration:
         # Mock scraper tool response
         mock_scraping_result = Mock(spec=AtomicScraperOutputSchema)
         mock_scraping_result.results = {
-            "items": [{"data": {"title": "Farmers Market 1", "location": "Cape Town"}, "quality_score": 85.0}],
+            "items": [
+                {
+                    "data": {"title": "Farmers Market 1", "location": "Cape Town"},
+                    "quality_score": 85.0,
+                }
+            ],
             "total_scraped": 1,
         }
         mock_scraping_result.summary = "Successfully scraped 1 farmers market"
@@ -405,7 +443,12 @@ class TestMainApplicationIntegration:
 
         # Add some mock history
         app.session_history = [
-            {"timestamp": "2023-01-01T12:00:00", "request": "Test request", "url": "https://example.com", "items_scraped": 5}
+            {
+                "timestamp": "2023-01-01T12:00:00",
+                "request": "Test request",
+                "url": "https://example.com",
+                "items_scraped": 5,
+            }
         ]
 
         with patch("atomic_scraper_tool.main.Confirm.ask", return_value=False):
@@ -511,7 +554,12 @@ class TestConfigurationManagement:
             "name": "new_test_recipe",
             "description": "New test recipe",
             "fields": {
-                "title": {"field_type": "string", "description": "Title field", "extraction_selector": "h1", "required": True},
+                "title": {
+                    "field_type": "string",
+                    "description": "Title field",
+                    "extraction_selector": "h1",
+                    "required": True,
+                },
                 "content": {
                     "field_type": "string",
                     "description": "Content field",
@@ -609,7 +657,12 @@ class TestConfigurationManagement:
             "name": "export_test_recipe",
             "description": "Recipe for export testing",
             "fields": {
-                "title": {"field_type": "string", "description": "Title field", "extraction_selector": "h1", "required": True}
+                "title": {
+                    "field_type": "string",
+                    "description": "Title field",
+                    "extraction_selector": "h1",
+                    "required": True,
+                }
             },
         }
 
@@ -726,7 +779,9 @@ class TestMainFunction:
         main()
 
         # Verify app was created with config path
-        mock_app_class.assert_called_once_with(config_path="test.json", client=None, demo_mode=False)
+        mock_app_class.assert_called_once_with(
+            config_path="test.json", client=None, demo_mode=False
+        )
 
         # Verify debug mode was enabled
         assert mock_app.debug_mode is True

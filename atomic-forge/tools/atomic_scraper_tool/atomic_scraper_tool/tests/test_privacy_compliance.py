@@ -39,7 +39,10 @@ class TestRetentionPolicy:
     def test_retention_policy_creation(self):
         """Test retention policy creation."""
         policy = RetentionPolicy(
-            category=DataCategory.PERSONAL_INFO, retention_days=30, auto_delete=True, description="Personal data policy"
+            category=DataCategory.PERSONAL_INFO,
+            retention_days=30,
+            auto_delete=True,
+            description="Personal data policy",
         )
 
         assert policy.category == DataCategory.PERSONAL_INFO
@@ -134,7 +137,8 @@ class TestPrivacyComplianceChecker:
         self.audit_log_path = os.path.join(self.temp_dir, "test_audit.log")
 
         self.config = PrivacyComplianceConfig(
-            audit_log_path=self.audit_log_path, auto_cleanup_interval_hours=1  # Short interval for testing
+            audit_log_path=self.audit_log_path,
+            auto_cleanup_interval_hours=1,  # Short interval for testing
         )
         self.checker = PrivacyComplianceChecker(self.config)
 
@@ -158,14 +162,22 @@ class TestPrivacyComplianceChecker:
 
     def test_classify_data_public_content(self):
         """Test data classification for public content."""
-        data = {"title": "Product Information", "description": "This is a great product", "price": "$19.99"}
+        data = {
+            "title": "Product Information",
+            "description": "This is a great product",
+            "price": "$19.99",
+        }
 
         categories = self.checker.classify_data(data)
         assert DataCategory.PUBLIC_CONTENT in categories
 
     def test_classify_data_contact_info(self):
         """Test data classification for contact information."""
-        data = {"email": "contact@example.com", "phone": "555-123-4567", "contact_form": "Contact us"}
+        data = {
+            "email": "contact@example.com",
+            "phone": "555-123-4567",
+            "contact_form": "Contact us",
+        }
 
         categories = self.checker.classify_data(data)
         assert DataCategory.CONTACT_INFO in categories
@@ -179,7 +191,11 @@ class TestPrivacyComplianceChecker:
 
     def test_classify_data_sensitive_info(self):
         """Test data classification for sensitive information."""
-        data = {"password": "secret123", "credit_card": "4111-1111-1111-1111", "medical_info": "Patient has diabetes"}
+        data = {
+            "password": "secret123",
+            "credit_card": "4111-1111-1111-1111",
+            "medical_info": "Patient has diabetes",
+        }
 
         categories = self.checker.classify_data(data)
         assert DataCategory.SENSITIVE_INFO in categories
@@ -213,11 +229,16 @@ class TestPrivacyComplianceChecker:
     def test_check_collection_compliance_allowed(self):
         """Test compliance checking for allowed data."""
         # Configure to allow public content
-        self.checker.config.collection_rules.allowed_categories = {DataCategory.PUBLIC_CONTENT, DataCategory.BUSINESS_INFO}
+        self.checker.config.collection_rules.allowed_categories = {
+            DataCategory.PUBLIC_CONTENT,
+            DataCategory.BUSINESS_INFO,
+        }
 
         data = {"title": "Product Info", "business_hours": "9-5"}
 
-        is_compliant, issues = self.checker.check_collection_compliance("https://example.com/test", data)
+        is_compliant, issues = self.checker.check_collection_compliance(
+            "https://example.com/test", data
+        )
 
         assert is_compliant is True
         assert len(issues) == 0
@@ -229,7 +250,9 @@ class TestPrivacyComplianceChecker:
 
         data = {"email": "contact@example.com", "phone": "555-1234"}
 
-        is_compliant, issues = self.checker.check_collection_compliance("https://example.com/test", data)
+        is_compliant, issues = self.checker.check_collection_compliance(
+            "https://example.com/test", data
+        )
 
         assert is_compliant is False
         assert len(issues) > 0
@@ -238,11 +261,16 @@ class TestPrivacyComplianceChecker:
     def test_check_collection_compliance_prohibited_patterns(self):
         """Test compliance checking for prohibited patterns."""
         self.checker.config.collection_rules.prohibited_patterns = [r"password", r"ssn"]
-        self.checker.config.collection_rules.allowed_categories = {DataCategory.PUBLIC_CONTENT, DataCategory.SENSITIVE_INFO}
+        self.checker.config.collection_rules.allowed_categories = {
+            DataCategory.PUBLIC_CONTENT,
+            DataCategory.SENSITIVE_INFO,
+        }
 
         data = {"user_password": "secret123", "description": "Public content"}
 
-        is_compliant, issues = self.checker.check_collection_compliance("https://example.com/test", data)
+        is_compliant, issues = self.checker.check_collection_compliance(
+            "https://example.com/test", data
+        )
 
         assert is_compliant is False
         assert any("Prohibited pattern found" in issue for issue in issues)
@@ -253,7 +281,9 @@ class TestPrivacyComplianceChecker:
 
         data = {"password": "secret123"}
 
-        is_compliant, issues = self.checker.check_collection_compliance("https://example.com/test", data)
+        is_compliant, issues = self.checker.check_collection_compliance(
+            "https://example.com/test", data
+        )
 
         assert is_compliant is True
         assert len(issues) == 0
@@ -432,7 +462,9 @@ class TestPrivacyComplianceChecker:
 
         data = {"title": "Public content"}
 
-        is_valid = self.checker.validate_data_collection("https://example.com/test", data, "TestBot/1.0")
+        is_valid = self.checker.validate_data_collection(
+            "https://example.com/test", data, "TestBot/1.0"
+        )
 
         assert is_valid is True
 
@@ -442,7 +474,9 @@ class TestPrivacyComplianceChecker:
 
         data = {"email": "contact@example.com"}
 
-        is_valid = self.checker.validate_data_collection("https://example.com/test", data, "TestBot/1.0")
+        is_valid = self.checker.validate_data_collection(
+            "https://example.com/test", data, "TestBot/1.0"
+        )
 
         assert is_valid is False
 
@@ -452,7 +486,9 @@ class TestPrivacyComplianceChecker:
 
         data = {"password": "secret123"}
 
-        is_valid = self.checker.validate_data_collection("https://example.com/test", data, "TestBot/1.0")
+        is_valid = self.checker.validate_data_collection(
+            "https://example.com/test", data, "TestBot/1.0"
+        )
 
         assert is_valid is True
 
@@ -522,7 +558,9 @@ class TestPrivacyComplianceIntegration:
         }
 
         # Validate data collection
-        is_valid = self.checker.validate_data_collection("https://example.com/business", data, "TestBot/1.0")
+        is_valid = self.checker.validate_data_collection(
+            "https://example.com/business", data, "TestBot/1.0"
+        )
 
         assert is_valid is True
 
@@ -545,7 +583,9 @@ class TestPrivacyComplianceIntegration:
         }
 
         # Validate data collection
-        is_valid = self.checker.validate_data_collection("https://example.com/user", data, "TestBot/1.0")
+        is_valid = self.checker.validate_data_collection(
+            "https://example.com/user", data, "TestBot/1.0"
+        )
 
         assert is_valid is False
 

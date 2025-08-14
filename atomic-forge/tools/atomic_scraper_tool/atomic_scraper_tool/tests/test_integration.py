@@ -79,7 +79,10 @@ class TestEndToEndWorkflows:
         planning_agent = AtomicScraperPlanningAgent()
 
         # Test agent planning
-        request = {"url": "https://example.com", "description": "Scrape product information from e-commerce site"}
+        request = {
+            "url": "https://example.com",
+            "description": "Scrape product information from e-commerce site",
+        }
 
         # This would normally use LLM, so we'll mock the response
         with patch.object(planning_agent, "run") as mock_run:
@@ -119,7 +122,10 @@ class TestEndToEndWorkflows:
             scraper_tool = AtomicScraperTool()
 
             result = scraper_tool.run(
-                {"url": "https://example.com", "schema_recipe": {"fields": {"title": {"selector": "h1", "type": "text"}}}}
+                {
+                    "url": "https://example.com",
+                    "schema_recipe": {"fields": {"title": {"selector": "h1", "type": "text"}}},
+                }
             )
 
             # Should handle errors gracefully
@@ -184,7 +190,9 @@ class TestScenarioBasedIntegration:
 
     def test_pagination_scenario(self):
         """Test pagination scenario integration."""
-        scenario = self.scenario_generator.generate_scenario(ScenarioType.PAGINATION, num_pages=3, items_per_page=5)
+        scenario = self.scenario_generator.generate_scenario(
+            ScenarioType.PAGINATION, num_pages=3, items_per_page=5
+        )
 
         assert scenario is not None
         assert len(scenario.test_urls) >= 3  # Should have multiple page URLs
@@ -197,7 +205,9 @@ class TestScenarioBasedIntegration:
 
     def test_performance_scenario(self):
         """Test performance scenario integration."""
-        scenario = self.scenario_generator.generate_scenario(ScenarioType.PERFORMANCE, num_products=50)
+        scenario = self.scenario_generator.generate_scenario(
+            ScenarioType.PERFORMANCE, num_products=50
+        )
 
         assert scenario is not None
         assert len(scenario.test_urls) > 10  # Should have many URLs for performance testing
@@ -291,7 +301,11 @@ class TestConcurrentOperations:
 
         # Create multiple threads
         threads = []
-        urls = ["https://example.com/page/1", "https://example.com/page/2", "https://example.com/page/3"]
+        urls = [
+            "https://example.com/page/1",
+            "https://example.com/page/2",
+            "https://example.com/page/3",
+        ]
 
         for url in urls:
             thread = threading.Thread(target=make_request, args=(url,))
@@ -336,7 +350,10 @@ class TestDataQualityIntegration:
         # Simulate scraped data
         scraped_data = {
             "title": "Welcome to Our Store",
-            "products": [{"name": "Product 1", "price": "$19.99"}, {"name": "Product 2", "price": "$29.99"}],
+            "products": [
+                {"name": "Product 1", "price": "$19.99"},
+                {"name": "Product 2", "price": "$29.99"},
+            ],
         }
 
         # Test data processing

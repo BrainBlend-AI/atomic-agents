@@ -7,7 +7,12 @@ import threading
 from unittest.mock import Mock, patch
 import pytest
 
-from atomic_scraper_tool.compliance.rate_limiter import RateLimiter, RateLimitConfig, DomainStats, RespectfulCrawler
+from atomic_scraper_tool.compliance.rate_limiter import (
+    RateLimiter,
+    RateLimitConfig,
+    DomainStats,
+    RespectfulCrawler,
+)
 from atomic_scraper_tool.core.exceptions import ScrapingError
 
 
@@ -30,7 +35,11 @@ class TestRateLimitConfig:
     def test_custom_config(self):
         """Test custom configuration values."""
         config = RateLimitConfig(
-            default_delay=2.0, max_concurrent_requests=10, adaptive_delay_enabled=False, min_delay=0.5, max_delay=60.0
+            default_delay=2.0,
+            max_concurrent_requests=10,
+            adaptive_delay_enabled=False,
+            min_delay=0.5,
+            max_delay=60.0,
         )
 
         assert config.default_delay == 2.0
@@ -65,7 +74,10 @@ class TestRateLimiter:
     def setup_method(self):
         """Set up test fixtures."""
         self.config = RateLimitConfig(
-            default_delay=0.1, max_concurrent_requests=2, min_delay=0.05, max_delay=1.0  # Short delay for testing
+            default_delay=0.1,
+            max_concurrent_requests=2,
+            min_delay=0.05,
+            max_delay=1.0,  # Short delay for testing
         )
         self.rate_limiter = RateLimiter(self.config)
 
@@ -83,7 +95,9 @@ class TestRateLimiter:
     def test_get_domain(self):
         """Test domain extraction from URLs."""
         assert self.rate_limiter.get_domain("https://example.com/path") == "example.com"
-        assert self.rate_limiter.get_domain("http://subdomain.example.com") == "subdomain.example.com"
+        assert (
+            self.rate_limiter.get_domain("http://subdomain.example.com") == "subdomain.example.com"
+        )
         assert self.rate_limiter.get_domain("https://EXAMPLE.COM/PATH") == "example.com"
 
     def test_get_domain_stats(self):
@@ -484,7 +498,9 @@ class TestRateLimiterIntegration:
 
     def test_concurrent_requests_limiting(self):
         """Test that concurrent requests are properly limited."""
-        config = RateLimitConfig(max_concurrent_requests=2, default_delay=0.01)  # Very short delay for testing
+        config = RateLimitConfig(
+            max_concurrent_requests=2, default_delay=0.01
+        )  # Very short delay for testing
         rate_limiter = RateLimiter(config)
         url = "https://example.com/test"
 
@@ -503,7 +519,9 @@ class TestRateLimiterIntegration:
 
     def test_adaptive_delay_behavior(self):
         """Test adaptive delay behavior with real timing."""
-        config = RateLimitConfig(default_delay=0.1, adaptive_delay_enabled=True, min_delay=0.05, max_delay=1.0)
+        config = RateLimitConfig(
+            default_delay=0.1, adaptive_delay_enabled=True, min_delay=0.05, max_delay=1.0
+        )
         rate_limiter = RateLimiter(config)
         domain = "example.com"
 
