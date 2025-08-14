@@ -143,22 +143,16 @@ class AtomicScraperPlanningAgent(BaseAgent):
             website_analysis = self._analyze_target_website(input_data.target_url)
 
             # Generate scraping strategy
-            strategy = self._generate_scraping_strategy(
-                website_analysis, parsed_request, input_data
-            )
+            strategy = self._generate_scraping_strategy(website_analysis, parsed_request, input_data)
 
             # Generate schema recipe
-            schema_recipe = self._generate_schema_recipe(
-                website_analysis, parsed_request, input_data
-            )
+            schema_recipe = self._generate_schema_recipe(website_analysis, parsed_request, input_data)
 
             # Generate human-readable plan
             scraping_plan = self._generate_scraping_plan(strategy, schema_recipe, parsed_request)
 
             # Generate reasoning explanation
-            reasoning = self._generate_reasoning(
-                website_analysis, strategy, schema_recipe, parsed_request
-            )
+            reasoning = self._generate_reasoning(website_analysis, strategy, schema_recipe, parsed_request)
 
             # Calculate confidence score
             confidence = self._calculate_confidence(website_analysis, strategy, schema_recipe)
@@ -274,9 +268,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
             # Create a minimal analysis if website fetch fails
             from atomic_scraper_tool.analysis.website_analyzer import WebsiteStructureAnalysis
 
-            return WebsiteStructureAnalysis(
-                url=url, title="Unknown Website", content_patterns=[], metadata={"error": str(e)}
-            )
+            return WebsiteStructureAnalysis(url=url, title="Unknown Website", content_patterns=[], metadata={"error": str(e)})
 
     def _generate_scraping_strategy(
         self,
@@ -469,15 +461,11 @@ class AtomicScraperPlanningAgent(BaseAgent):
         # Extraction approach
         plan_parts.append("### Extraction Approach")
         plan_parts.append("1. Navigate to the target website")
-        plan_parts.append(
-            f"2. Identify content using selectors: {', '.join(strategy.target_selectors[:2])}"
-        )
+        plan_parts.append(f"2. Identify content using selectors: {', '.join(strategy.target_selectors[:2])}")
         plan_parts.append("3. Extract data fields using CSS selectors")
         if strategy.pagination_strategy:
             plan_parts.append(f"4. Handle pagination using {strategy.pagination_strategy} strategy")
-        plan_parts.append(
-            f"5. Apply quality filtering (minimum score: {strategy.extraction_rules.get('min_quality', 'N/A')})"
-        )
+        plan_parts.append(f"5. Apply quality filtering (minimum score: {strategy.extraction_rules.get('min_quality', 'N/A')})")
         plan_parts.append("")
 
         # Quality measures
@@ -513,13 +501,9 @@ class AtomicScraperPlanningAgent(BaseAgent):
         )
 
         if parsed_request["temporal_filters"]:
-            reasoning_parts.append(
-                f"- Temporal filters detected: {', '.join(parsed_request['temporal_filters'])}"
-            )
+            reasoning_parts.append(f"- Temporal filters detected: {', '.join(parsed_request['temporal_filters'])}")
         if parsed_request["location_filters"]:
-            reasoning_parts.append(
-                f"- Location filters detected: {', '.join(parsed_request['location_filters'])}"
-            )
+            reasoning_parts.append(f"- Location filters detected: {', '.join(parsed_request['location_filters'])}")
 
         reasoning_parts.append("")
 
@@ -530,21 +514,13 @@ class AtomicScraperPlanningAgent(BaseAgent):
             reasoning_parts.append(f"- Successfully analyzed website: {analysis.url}")
             reasoning_parts.append(f"- Page title: {getattr(analysis, 'title', 'Unknown')}")
             if hasattr(analysis, "content_patterns") and analysis.content_patterns:
-                reasoning_parts.append(
-                    f"- Content patterns identified: {len(analysis.content_patterns)} patterns"
-                )
+                reasoning_parts.append(f"- Content patterns identified: {len(analysis.content_patterns)} patterns")
                 for i, pattern in enumerate(analysis.content_patterns[:3]):
-                    reasoning_parts.append(
-                        f"  - Pattern {i+1}: {pattern.get('type', 'unknown')} content"
-                    )
+                    reasoning_parts.append(f"  - Pattern {i+1}: {pattern.get('type', 'unknown')} content")
             else:
-                reasoning_parts.append(
-                    "- Limited content patterns detected, using generic approach"
-                )
+                reasoning_parts.append("- Limited content patterns detected, using generic approach")
         else:
-            reasoning_parts.append(
-                f"- Website analysis failed: {analysis.metadata.get('error', 'Unknown error')}"
-            )
+            reasoning_parts.append(f"- Website analysis failed: {analysis.metadata.get('error', 'Unknown error')}")
             reasoning_parts.append("- Falling back to common web patterns and best practices")
 
         reasoning_parts.append("")
@@ -559,15 +535,11 @@ class AtomicScraperPlanningAgent(BaseAgent):
 
         reasoning_parts.append("")
         reasoning_parts.append("**Configuration Details:**")
-        reasoning_parts.append(
-            f"- Max pages: {strategy.max_pages} (balances thoroughness with efficiency)"
-        )
+        reasoning_parts.append(f"- Max pages: {strategy.max_pages} (balances thoroughness with efficiency)")
         reasoning_parts.append(f"- Request delay: {strategy.request_delay}s (respectful crawling)")
 
         if strategy.pagination_strategy:
-            reasoning_parts.append(
-                f"- Pagination: {strategy.pagination_strategy} (handles multi-page content)"
-            )
+            reasoning_parts.append(f"- Pagination: {strategy.pagination_strategy} (handles multi-page content)")
 
         reasoning_parts.append("")
 
@@ -581,9 +553,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
         reasoning_parts.append("")
         reasoning_parts.append("**Selector Details:**")
         for i, selector in enumerate(strategy.target_selectors[:3]):
-            reasoning_parts.append(
-                f"- Selector {i+1}: `{selector}` - {self._explain_selector(selector)}"
-            )
+            reasoning_parts.append(f"- Selector {i+1}: `{selector}` - {self._explain_selector(selector)}")
 
         reasoning_parts.append("")
 
@@ -597,14 +567,8 @@ class AtomicScraperPlanningAgent(BaseAgent):
         reasoning_parts.append("")
         reasoning_parts.append("**Field Details:**")
         for field_name, field_def in list(schema_recipe.fields.items())[:5]:  # Show first 5 fields
-            priority = (
-                "High"
-                if field_def.required
-                else "Medium" if field_def.quality_weight > 0.7 else "Low"
-            )
-            reasoning_parts.append(
-                f"- **{field_name}** ({priority} priority): {field_def.description}"
-            )
+            priority = "High" if field_def.required else "Medium" if field_def.quality_weight > 0.7 else "Low"
+            reasoning_parts.append(f"- **{field_name}** ({priority} priority): {field_def.description}")
             reasoning_parts.append(f"  - Selector: `{field_def.extraction_selector}`")
             reasoning_parts.append(f"  - Quality weight: {field_def.quality_weight}")
 
@@ -633,9 +597,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
 
         # Recommendations
         reasoning_parts.append("### Recommendations")
-        recommendations = self._generate_recommendations(
-            analysis, strategy, schema_recipe, parsed_request
-        )
+        recommendations = self._generate_recommendations(analysis, strategy, schema_recipe, parsed_request)
         for rec in recommendations:
             reasoning_parts.append(f"- {rec}")
 
@@ -676,9 +638,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
 
         return reasons
 
-    def _get_selector_reasoning(
-        self, strategy: ScrapingStrategy, parsed_request: Dict[str, Any]
-    ) -> List[str]:
+    def _get_selector_reasoning(self, strategy: ScrapingStrategy, parsed_request: Dict[str, Any]) -> List[str]:
         """Get reasoning for selector choices."""
         reasons = []
 
@@ -687,33 +647,25 @@ class AtomicScraperPlanningAgent(BaseAgent):
         reasons.append("CSS classes commonly used for content organization")
 
         if parsed_request["target_data"]:
-            reasons.append(
-                f"Selectors optimized for {', '.join(parsed_request['target_data'])} content"
-            )
+            reasons.append(f"Selectors optimized for {', '.join(parsed_request['target_data'])} content")
 
         reasons.append("Fallback selectors included for robustness")
         reasons.append("Progressive specificity from generic to specific selectors")
 
         return reasons
 
-    def _get_schema_reasoning(
-        self, schema_recipe: "SchemaRecipe", parsed_request: Dict[str, Any]
-    ) -> List[str]:
+    def _get_schema_reasoning(self, schema_recipe: "SchemaRecipe", parsed_request: Dict[str, Any]) -> List[str]:
         """Get reasoning for schema design choices."""
         reasons = []
 
         required_count = sum(1 for field in schema_recipe.fields.values() if field.required)
         total_count = len(schema_recipe.fields)
 
-        reasons.append(
-            f"Schema includes {total_count} fields with {required_count} required fields"
-        )
+        reasons.append(f"Schema includes {total_count} fields with {required_count} required fields")
         reasons.append("Field selection based on user criteria and content type analysis")
 
         if parsed_request["target_data"]:
-            reasons.append(
-                f"Specialized fields added for: {', '.join(parsed_request['target_data'])}"
-            )
+            reasons.append(f"Specialized fields added for: {', '.join(parsed_request['target_data'])}")
 
         reasons.append("Quality weights assigned based on field importance and reliability")
         reasons.append("Post-processing steps included for data cleaning and validation")
@@ -721,9 +673,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
 
         return reasons
 
-    def _get_quality_reasoning(
-        self, schema_recipe: "SchemaRecipe", strategy: ScrapingStrategy
-    ) -> List[str]:
+    def _get_quality_reasoning(self, schema_recipe: "SchemaRecipe", strategy: ScrapingStrategy) -> List[str]:
         """Get reasoning for quality assurance measures."""
         reasons = []
 
@@ -821,9 +771,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
             recommendations.append("Adjust max_pages based on content volume requirements")
 
         # Quality recommendations
-        avg_quality_weight = sum(
-            field.quality_weight for field in schema_recipe.fields.values()
-        ) / len(schema_recipe.fields)
+        avg_quality_weight = sum(field.quality_weight for field in schema_recipe.fields.values()) / len(schema_recipe.fields)
         if avg_quality_weight < 0.6:
             recommendations.append("Consider increasing quality weights for critical fields")
 
@@ -832,15 +780,11 @@ class AtomicScraperPlanningAgent(BaseAgent):
             recommendations.append("Consider increasing request delay for more respectful crawling")
 
         if len(strategy.target_selectors) > 5:
-            recommendations.append(
-                "Consider reducing number of target selectors for better performance"
-            )
+            recommendations.append("Consider reducing number of target selectors for better performance")
 
         # Data recommendations
         if parsed_request["target_data"]:
-            recommendations.append(
-                f"Validate extracted {', '.join(parsed_request['target_data'])} data for accuracy"
-            )
+            recommendations.append(f"Validate extracted {', '.join(parsed_request['target_data'])} data for accuracy")
 
         recommendations.append("Review extracted samples to refine selectors if needed")
         recommendations.append("Consider adding fallback selectors for improved reliability")
@@ -877,15 +821,10 @@ class AtomicScraperPlanningAgent(BaseAgent):
         # Calculate weighted confidence score
         weights = {"website_analysis": 0.25, "strategy": 0.30, "schema": 0.25, "selectors": 0.20}
 
-        weighted_confidence = sum(
-            confidence_components[component] * weights[component]
-            for component in confidence_components
-        )
+        weighted_confidence = sum(confidence_components[component] * weights[component] for component in confidence_components)
 
         # Apply confidence modifiers
-        final_confidence = self._apply_confidence_modifiers(
-            weighted_confidence, analysis, strategy, schema_recipe
-        )
+        final_confidence = self._apply_confidence_modifiers(weighted_confidence, analysis, strategy, schema_recipe)
 
         return min(1.0, max(0.0, final_confidence))
 
@@ -926,18 +865,14 @@ class AtomicScraperPlanningAgent(BaseAgent):
             score += 0.2
 
         # Quality weights distribution
-        avg_quality_weight = sum(
-            field.quality_weight for field in schema_recipe.fields.values()
-        ) / len(schema_recipe.fields)
+        avg_quality_weight = sum(field.quality_weight for field in schema_recipe.fields.values()) / len(schema_recipe.fields)
         if avg_quality_weight > 0.7:
             score += 0.15
         elif avg_quality_weight > 0.5:
             score += 0.1
 
         # Post-processing coverage
-        fields_with_processing = sum(
-            1 for field in schema_recipe.fields.values() if field.post_processing
-        )
+        fields_with_processing = sum(1 for field in schema_recipe.fields.values() if field.post_processing)
         if fields_with_processing > 0:
             score += 0.05
 
@@ -951,9 +886,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
             return score
 
         # Selector specificity
-        specific_selectors = sum(
-            1 for sel in strategy.target_selectors if any(char in sel for char in [".", "#", "["])
-        )
+        specific_selectors = sum(1 for sel in strategy.target_selectors if any(char in sel for char in [".", "#", "["]))
         if specific_selectors > 0:
             score += 0.3
 
@@ -963,17 +896,13 @@ class AtomicScraperPlanningAgent(BaseAgent):
 
         # Semantic selectors
         semantic_selectors = sum(
-            1
-            for sel in strategy.target_selectors
-            if any(tag in sel for tag in ["article", "section", "main", "header"])
+            1 for sel in strategy.target_selectors if any(tag in sel for tag in ["article", "section", "main", "header"])
         )
         if semantic_selectors > 0:
             score += 0.15
 
         # Fallback selectors
-        generic_selectors = sum(
-            1 for sel in strategy.target_selectors if sel in ["div", "span", "p"]
-        )
+        generic_selectors = sum(1 for sel in strategy.target_selectors if sel in ["div", "span", "p"])
         if generic_selectors > 0 and len(strategy.target_selectors) > generic_selectors:
             score += 0.15  # Has both specific and generic selectors
 
@@ -1002,17 +931,13 @@ class AtomicScraperPlanningAgent(BaseAgent):
             confidence -= 0.03  # Many pages increase failure risk
 
         # Quality modifiers
-        high_quality_fields = sum(
-            1 for field in schema_recipe.fields.values() if field.quality_weight > 0.8
-        )
+        high_quality_fields = sum(1 for field in schema_recipe.fields.values() if field.quality_weight > 0.8)
         if high_quality_fields > 0:
             confidence += 0.05  # High-quality fields increase confidence
 
         return confidence
 
-    def _handle_error(
-        self, error_message: str, input_data: AtomicScraperAgentInputSchema
-    ) -> AtomicScraperAgentOutputSchema:
+    def _handle_error(self, error_message: str, input_data: AtomicScraperAgentInputSchema) -> AtomicScraperAgentOutputSchema:
         """Handle errors gracefully by returning a basic response."""
         return AtomicScraperAgentOutputSchema(
             scraping_plan=f"Error occurred while generating scraping plan: {error_message}",

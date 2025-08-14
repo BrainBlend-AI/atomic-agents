@@ -21,9 +21,7 @@ class AtomicScraperConfig(BaseToolConfig):
 
     # Network settings
     base_url: str = Field(..., description="Base URL for scraping")
-    request_delay: float = Field(
-        1.0, ge=0.1, le=10.0, description="Delay between requests in seconds"
-    )
+    request_delay: float = Field(1.0, ge=0.1, le=10.0, description="Delay between requests in seconds")
     timeout: int = Field(30, ge=5, le=300, description="Request timeout in seconds")
     user_agent: str = Field(
         "AtomicScraperTool/1.0 (+https://github.com/atomic-agents/atomic-scraper-tool)",
@@ -31,9 +29,7 @@ class AtomicScraperConfig(BaseToolConfig):
     )
 
     # Quality and limits
-    min_quality_score: float = Field(
-        50.0, ge=0.0, le=100.0, description="Minimum quality score for results"
-    )
+    min_quality_score: float = Field(50.0, ge=0.0, le=100.0, description="Minimum quality score for results")
     max_pages: int = Field(10, ge=1, le=100, description="Maximum pages to scrape")
     max_results: int = Field(100, ge=1, le=1000, description="Maximum results to return")
 
@@ -108,9 +104,7 @@ class ScraperConfiguration:
 
     def _load_schema_recipes(self) -> Dict[str, SchemaRecipe]:
         """Load predefined schema recipes from files."""
-        recipes_dir = Path(
-            self._config_data.get("schema_recipes_dir", self.config_dir / "schema_recipes")
-        )
+        recipes_dir = Path(self._config_data.get("schema_recipes_dir", self.config_dir / "schema_recipes"))
         recipes_dir.mkdir(parents=True, exist_ok=True)
 
         recipes = {}
@@ -133,9 +127,7 @@ class ScraperConfiguration:
 
     def _load_extraction_rules(self) -> Dict[str, ExtractionRule]:
         """Load custom extraction rules from files."""
-        rules_dir = Path(
-            self._config_data.get("extraction_rules_dir", self.config_dir / "extraction_rules")
-        )
+        rules_dir = Path(self._config_data.get("extraction_rules_dir", self.config_dir / "extraction_rules"))
         rules_dir.mkdir(parents=True, exist_ok=True)
 
         rules = {}
@@ -231,9 +223,7 @@ class ScraperConfiguration:
 
     def save_schema_recipe(self, recipe: SchemaRecipe) -> None:
         """Save a schema recipe to file."""
-        recipes_dir = Path(
-            self._config_data.get("schema_recipes_dir", self.config_dir / "schema_recipes")
-        )
+        recipes_dir = Path(self._config_data.get("schema_recipes_dir", self.config_dir / "schema_recipes"))
         recipe_file = recipes_dir / f"{recipe.name}.json"
 
         try:
@@ -245,9 +235,7 @@ class ScraperConfiguration:
 
     def save_extraction_rule(self, rule: ExtractionRule) -> None:
         """Save an extraction rule to file."""
-        rules_dir = Path(
-            self._config_data.get("extraction_rules_dir", self.config_dir / "extraction_rules")
-        )
+        rules_dir = Path(self._config_data.get("extraction_rules_dir", self.config_dir / "extraction_rules"))
         rule_file = rules_dir / f"{rule.field_name}.json"
 
         try:
@@ -283,9 +271,7 @@ class ScraperConfiguration:
                 # Validate field definitions
                 for field_name, field_def in recipe.fields.items():
                     if not field_def.extraction_selector:
-                        issues.append(
-                            f"Field '{field_name}' in recipe '{name}' has no extraction selector"
-                        )
+                        issues.append(f"Field '{field_name}' in recipe '{name}' has no extraction selector")
             except Exception as e:
                 issues.append(f"Invalid schema recipe '{name}': {e}")
 

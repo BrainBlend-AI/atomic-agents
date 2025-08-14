@@ -109,9 +109,7 @@ class SchemaRecipeGenerator:
             "status": 0.65,
         }
 
-    def generate_schema_recipe(
-        self, analysis: WebsiteStructureAnalysis, context: SchemaGenerationContext
-    ) -> SchemaRecipe:
+    def generate_schema_recipe(self, analysis: WebsiteStructureAnalysis, context: SchemaGenerationContext) -> SchemaRecipe:
         """
         Generate a dynamic schema recipe based on website analysis.
 
@@ -150,9 +148,7 @@ class SchemaRecipeGenerator:
             version="1.0",
         )
 
-    def _detect_field_patterns(
-        self, html_content: str, analysis: WebsiteStructureAnalysis
-    ) -> List[FieldPattern]:
+    def _detect_field_patterns(self, html_content: str, analysis: WebsiteStructureAnalysis) -> List[FieldPattern]:
         """Detect field patterns in the HTML content."""
         soup = BeautifulSoup(html_content, "html.parser")
         patterns = []
@@ -169,9 +165,7 @@ class SchemaRecipeGenerator:
 
         return merged_patterns
 
-    def _find_content_containers(
-        self, soup: BeautifulSoup, analysis: WebsiteStructureAnalysis
-    ) -> List[Tag]:
+    def _find_content_containers(self, soup: BeautifulSoup, analysis: WebsiteStructureAnalysis) -> List[Tag]:
         """Find containers that likely contain structured content."""
         containers = []
 
@@ -201,11 +195,7 @@ class SchemaRecipeGenerator:
 
         # Find all text-containing elements
         text_elements = container.find_all(text=True)
-        text_elements = [
-            elem.parent
-            for elem in text_elements
-            if elem.parent and elem.strip() and len(elem.strip()) > 2
-        ]
+        text_elements = [elem.parent for elem in text_elements if elem.parent and elem.strip() and len(elem.strip()) > 2]
 
         # Group elements by tag and class patterns
         element_groups = self._group_similar_elements(text_elements)
@@ -232,9 +222,7 @@ class SchemaRecipeGenerator:
             tag = element.name
 
             # Consider parent context for better grouping
-            parent_classes = (
-                tuple(sorted(element.parent.get("class", []))) if element.parent else ()
-            )
+            parent_classes = tuple(sorted(element.parent.get("class", []))) if element.parent else ()
 
             key = (tag, classes, parent_classes)
 
@@ -275,9 +263,7 @@ class SchemaRecipeGenerator:
         confidence = self._calculate_pattern_confidence(elements, sample_values)
 
         # Calculate importance score
-        importance_score = self._calculate_importance_score(
-            field_name, first_element, sample_values
-        )
+        importance_score = self._calculate_importance_score(field_name, first_element, sample_values)
 
         # Detect data pattern for validation
         data_pattern = self._detect_data_pattern(sample_values, field_type)
@@ -454,9 +440,7 @@ class SchemaRecipeGenerator:
             lengths = [len(val) for val in sample_values]
             if lengths:
                 avg_length = sum(lengths) / len(lengths)
-                length_variance = sum((length - avg_length) ** 2 for length in lengths) / len(
-                    lengths
-                )
+                length_variance = sum((length - avg_length) ** 2 for length in lengths) / len(lengths)
                 if length_variance < avg_length * 0.5:  # Low variance
                     base_confidence += 0.2
 
@@ -474,9 +458,7 @@ class SchemaRecipeGenerator:
 
         return min(1.0, base_confidence)
 
-    def _calculate_importance_score(
-        self, field_name: str, element: Tag, sample_values: List[str]
-    ) -> float:
+    def _calculate_importance_score(self, field_name: str, element: Tag, sample_values: List[str]) -> float:
         """Calculate importance score for a field."""
         # Base importance from field type
         base_importance = self.quality_weights.get(field_name, 0.5)
@@ -556,9 +538,7 @@ class SchemaRecipeGenerator:
 
         return list(merged.values())
 
-    def _filter_relevant_patterns(
-        self, patterns: List[FieldPattern], context: SchemaGenerationContext
-    ) -> List[FieldPattern]:
+    def _filter_relevant_patterns(self, patterns: List[FieldPattern], context: SchemaGenerationContext) -> List[FieldPattern]:
         """Filter patterns based on context and relevance."""
         if not patterns:
             return patterns
@@ -634,9 +614,7 @@ class SchemaRecipeGenerator:
             "status": "Status or availability information",
         }
 
-        base_desc = base_descriptions.get(
-            pattern.field_name, f"{pattern.field_name.title()} information"
-        )
+        base_desc = base_descriptions.get(pattern.field_name, f"{pattern.field_name.title()} information")
 
         # Add type information
         if pattern.field_type != "string":
@@ -684,9 +662,7 @@ class SchemaRecipeGenerator:
         rules.append("normalize_whitespace")
 
         # Add rules based on required fields
-        required_fields = [
-            name for name, field_def in field_definitions.items() if field_def.required
-        ]
+        required_fields = [name for name, field_def in field_definitions.items() if field_def.required]
         if required_fields:
             rules.append("require_all_fields")
         else:
@@ -751,9 +727,7 @@ class SchemaRecipeGenerator:
 
         return description
 
-    def optimize_schema_recipe(
-        self, recipe: SchemaRecipe, analysis: WebsiteStructureAnalysis
-    ) -> SchemaRecipe:
+    def optimize_schema_recipe(self, recipe: SchemaRecipe, analysis: WebsiteStructureAnalysis) -> SchemaRecipe:
         """Optimize an existing schema recipe based on analysis."""
         # Create optimized field definitions
         optimized_fields = {}
@@ -806,9 +780,7 @@ class SchemaRecipeGenerator:
                 issues.append(f"Field '{field_name}' has no extraction selector")
 
             if field_def.quality_weight < 0 or field_def.quality_weight > 1:
-                issues.append(
-                    f"Field '{field_name}' has invalid quality weight: {field_def.quality_weight}"
-                )
+                issues.append(f"Field '{field_name}' has invalid quality weight: {field_def.quality_weight}")
 
         # Check quality weights sum
         total_weight = sum(recipe.quality_weights.values())
