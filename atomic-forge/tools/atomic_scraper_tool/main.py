@@ -5,7 +5,6 @@ Next-generation intelligent web scraping with AI-powered strategy generation
 and natural language interface for effortless data extraction.
 """
 
-import asyncio
 import json
 import sys
 from typing import Dict, Any, Optional
@@ -14,16 +13,10 @@ from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 from rich.prompt import Prompt, Confirm
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.layout import Layout
-from rich.live import Live
 from rich.markdown import Markdown
 from rich import box
-
-from atomic_agents.agents.base_agent import BaseAgentConfig
-from atomic_agents.lib.components.agent_memory import AgentMemory
 
 from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperPlanningAgent, AtomicScraperAgentInputSchema
 from atomic_scraper_tool.tools.atomic_scraper_tool import AtomicScraperTool, AtomicScraperInputSchema
@@ -164,8 +157,8 @@ class AtomicScraperApp:
         welcome_text = """
 # � Atomic Scraper Tool
 
-Welcome to the next-generation intelligent web scraper! This AI-powered tool uses advanced 
-natural language processing to understand your scraping requests and automatically generates 
+Welcome to the next-generation intelligent web scraper! This AI-powered tool uses advanced
+natural language processing to understand your scraping requests and automatically generates
 optimal scraping strategies with dynamic schema recipes.
 
 ## Features:
@@ -260,7 +253,7 @@ Type your scraping requests naturally, like:
             if not parsed.netloc:
                 self.console.print("[red]Invalid URL format. Please include a domain name.[/red]")
                 return
-            self.console.print(f"[green]✓[/green] [dim]Valid URL format detected[/dim]")
+            self.console.print("[green]✓[/green] [dim]Valid URL format detected[/dim]")
         except Exception:
             self.console.print("[yellow]Warning: URL format may be invalid, but proceeding anyway.[/yellow]")
 
