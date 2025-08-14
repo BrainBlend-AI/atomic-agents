@@ -31,10 +31,13 @@ def test_youtube_transcript_tool():
         "publishedAt": "2009-10-25T06:57:33Z",
     }
 
-    with patch(
-        "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
-        return_value=mock_transcript,
-    ), patch("tool.youtube_transcript_scraper.build") as mock_build:
+    with (
+        patch(
+            "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
+            return_value=mock_transcript,
+        ),
+        patch("tool.youtube_transcript_scraper.build") as mock_build,
+    ):
         mock_youtube = MagicMock()
         mock_build.return_value = mock_youtube
         mock_youtube.videos().list().execute.return_value = {"items": [{"snippet": mock_metadata}]}
@@ -68,10 +71,13 @@ def test_youtube_transcript_tool_with_language():
         "publishedAt": "2009-10-25T06:57:33Z",
     }
 
-    with patch(
-        "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
-        return_value=mock_transcript,
-    ), patch("tool.youtube_transcript_scraper.build") as mock_build:
+    with (
+        patch(
+            "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
+            return_value=mock_transcript,
+        ),
+        patch("tool.youtube_transcript_scraper.build") as mock_build,
+    ):
         mock_youtube = MagicMock()
         mock_build.return_value = mock_youtube
         mock_youtube.videos().list().execute.return_value = {"items": [{"snippet": mock_metadata}]}

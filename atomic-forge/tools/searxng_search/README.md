@@ -1,7 +1,7 @@
-# SearxNG Search Tool
+# SearXNG Search Tool
 
 ## Overview
-The SearxNG Search Tool is a powerful utility within the Atomic Agents ecosystem that allows you to perform searches using SearxNG, a privacy-respecting metasearch engine. This tool enables you to fetch search results from multiple sources while maintaining user privacy.
+The SearXNG Search Tool is a powerful utility within the Atomic Agents ecosystem that allows you to perform searches using SearXNG, a privacy-respecting metasearch engine. This tool enables you to fetch search results from multiple sources while maintaining user privacy.
 
 ## Prerequisites and Dependencies
 - Python 3.9 or later
@@ -19,13 +19,13 @@ You can install the tool using any of the following options:
 
 ### Parameters
 
-- `base_url` (str): The base URL of the SearxNG instance. This should include the protocol (e.g., `https://`) and the domain or IP address where SearxNG is hosted.
+- `base_url` (str): The base URL of the SearXNG instance. This should include the protocol (e.g., `https://`) and the domain or IP address where SearXNG is hosted.
 - `max_results` (int, optional): The maximum number of search results to return. Defaults to `10`.
 
 ### Example
 
 ```python
-config = SearxNGSearchToolConfig(
+config = SearXNGSearchToolConfig(
     base_url="https://searxng.example.com",
     max_results=5
 )
@@ -38,10 +38,10 @@ config = SearxNGSearchToolConfig(
 - `category` (Optional[Literal["general", "news", "social_media"]]): Category of the search queries. Defaults to "general".
 
 ### Output Schema
-- `results` (List[SearxNGSearchResultItemSchema]): List of search result items.
+- `results` (List[SearXNGSearchResultItemSchema]): List of search result items.
 - `category` (Optional[str]): The category of the search results.
 
-Each `SearxNGSearchResultItemSchema` contains:
+Each `SearXNGSearchResultItemSchema` contains:
 - `url` (str): The URL of the search result.
 - `title` (str): The title of the search result.
 - `content` (Optional[str]): The content snippet of the search result.
@@ -49,19 +49,19 @@ Each `SearxNGSearchResultItemSchema` contains:
 
 ## Usage
 
-Here's an example of how to use the SearxNG Search Tool:
+Here's an example of how to use the SearXNG Search Tool:
 
 
 ```python
 import os
-from tool.searxng_search import SearxNGTool, SearxNGSearchToolConfig
+from tool.searxng_search import SearXNGTool, SearXNGSearchToolConfig
 
-# Initialize the tool with your SearxNG instance URL
-config = SearxNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5)
-search_tool = SearxNGTool(config=config)
+# Initialize the tool with your SearXNG instance URL
+config = SearXNGSearchToolConfig(base_url=os.getenv("SEARXNG_BASE_URL"), max_results=5)
+search_tool = SearXNGTool(config=config)
 
 # Define input data
-input_data = SearxNGTool.input_schema(
+input_data = SearXNGTool.input_schema(
     queries=["Python programming", "Machine learning", "Artificial intelligence"],
     category="news"
 )

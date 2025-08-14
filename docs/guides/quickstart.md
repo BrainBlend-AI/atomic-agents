@@ -24,28 +24,29 @@ import os
 import instructor
 import openai
 from rich.console import Console
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 
 # Initialize console for pretty outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
-# Initialize memory with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
-memory.add_message("assistant", initial_message)
+# Initialize history with an initial message from the assistant
+initial_message = BasicChatOutputSchema(chat_message="Hello! How can I assist you today?")
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library
 client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
 
-# Agent setup with specified configuration
-agent = BaseAgent(
-    config=BaseAgentConfig(
+# Create agent with type parameters
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
-        model="gpt-4o-mini",  # Using gpt-4o-mini model
-        memory=memory,
+        model="gpt-4o-mini",  # Using the latest model
+        history=history,
+        model_api_parameters={"max_tokens": 2048}
     )
 )
 
@@ -59,7 +60,7 @@ while True:
         break
 
     # Process the user's input through the agent and get the response
-    input_schema = BaseAgentInputSchema(chat_message=user_input)
+    input_schema = BasicChatInputSchema(chat_message=user_input)
     response = agent.run(input_schema)
 
     # Display the agent's response
@@ -79,28 +80,28 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.live import Live
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 
 # Initialize console for pretty outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
-# Initialize memory with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
-memory.add_message("assistant", initial_message)
+# Initialize history with an initial message from the assistant
+initial_message = BasicChatOutputSchema(chat_message="Hello! How can I assist you today?")
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library for async operations
 client = instructor.from_openai(openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY")))
 
 # Agent setup with specified configuration
-agent = BaseAgent(
-    config=BaseAgentConfig(
+agent = AtomicAgent(
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
-        memory=memory,
+        history=history,
     )
 )
 
@@ -119,7 +120,7 @@ async def main():
             break
 
         # Process the user's input through the agent and get the streaming response
-        input_schema = BaseAgentInputSchema(chat_message=user_input)
+        input_schema = BasicChatInputSchema(chat_message=user_input)
         console.print()  # Add newline before response
 
         # Use Live display to show streaming response
@@ -150,16 +151,14 @@ import openai
 from rich.console import Console
 from typing import List
 from pydantic import Field
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.context import ChatHistory, SystemPromptGenerator
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BaseIOSchema
 
 # Initialize console for pretty outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
 # Custom output schema
 class CustomOutputSchema(BaseIOSchema):
@@ -174,12 +173,12 @@ class CustomOutputSchema(BaseIOSchema):
         description="A list of suggested follow-up questions the user could ask the agent.",
     )
 
-# Initialize memory with an initial message from the assistant
+# Initialize history with an initial message from the assistant
 initial_message = CustomOutputSchema(
     chat_message="Hello! How can I assist you today?",
     suggested_user_questions=["What can you do?", "Tell me a joke", "Tell me about how you were made"],
 )
-memory.add_message("assistant", initial_message)
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library
 client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
@@ -203,13 +202,12 @@ system_prompt_generator = SystemPromptGenerator(
 )
 
 # Agent setup with specified configuration and custom output schema
-agent = BaseAgent(
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, CustomOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=memory,
-        output_schema=CustomOutputSchema,
+        history=history,
     )
 )
 
@@ -223,7 +221,7 @@ while True:
         break
 
     # Process the user's input through the agent
-    input_schema = BaseAgentInputSchema(chat_message=user_input)
+    input_schema = BasicChatInputSchema(chat_message=user_input)
     response = agent.run(input_schema)
 
     # Display the agent's response
@@ -234,6 +232,7 @@ while True:
     for i, question in enumerate(response.suggested_user_questions, 1):
         console.print(f"[cyan]{i}. {question}[/cyan]")
     console.print()  # Add an empty line for better readability
+```
 
 ## Multiple AI Providers Support
 
@@ -257,8 +256,8 @@ import os
 import instructor
 from rich.console import Console
 from rich.text import Text
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema, BaseAgentOutputSchema
+from atomic_agents.context import ChatHistory
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -266,12 +265,12 @@ load_dotenv()
 # Initialize console for pretty outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
-# Initialize memory with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(chat_message="Hello! How can I assist you today?")
-memory.add_message("assistant", initial_message)
+# Initialize history with an initial message from the assistant
+initial_message = BasicChatOutputSchema(chat_message="Hello! How can I assist you today?")
+history.add_message("assistant", initial_message)
 
 # Function to set up the client based on the chosen provider
 def setup_client(provider):
@@ -342,11 +341,11 @@ provider = console.input("Choose a provider (openai/anthropic/groq/ollama/gemini
 client, model = setup_client(provider)
 
 # Create agent with chosen provider
-agent = BaseAgent(
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
         model=model,
-        memory=memory,
+        history=history,
         model_api_parameters={"max_tokens": 2048}
     )
 )
@@ -405,4 +404,4 @@ After trying these examples, you can:
 
 ## Explore More Examples
 
-For more advanced usage and examples, please check out the [Atomic Agents examples on GitHub](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples). These examples demonstrate various capabilities of the framework including custom schemas, advanced memory usage, tool integration, and more.
+For more advanced usage and examples, please check out the [Atomic Agents examples on GitHub](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples). These examples demonstrate various capabilities of the framework including custom schemas, advanced history usage, tool integration, and more.

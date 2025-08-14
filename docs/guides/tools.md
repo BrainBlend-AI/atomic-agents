@@ -15,7 +15,7 @@ The Atomic Forge approach provides several key benefits:
 The Atomic Forge includes several pre-built tools:
 
 - **Calculator**: Perform mathematical calculations
-- **SearxNG Search**: Search the web using SearxNG
+- **SearXNG Search**: Search the web using SearXNG
 - **Tavily Search**: AI-powered web search
 - **YouTube Transcript Scraper**: Extract transcripts from YouTube videos
 - **Webpage Scraper**: Extract content from web pages
@@ -89,8 +89,7 @@ You can create your own tools by following these guidelines:
 ### 1. Basic Structure
 
 ```python
-from atomic_agents.lib.base.base_tool import BaseTool, BaseToolConfig
-from atomic_agents.agents.base_agent import BaseIOSchema
+from atomic_agents import BaseTool, BaseToolConfig, BaseIOSchema
 
 ################
 # Input Schema #
@@ -123,7 +122,7 @@ class MyToolConfig(BaseToolConfig):
 # Main Tool & Logic #
 #####################
 
-class MyTool(BaseTool):
+class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
     """Main tool implementation"""
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema

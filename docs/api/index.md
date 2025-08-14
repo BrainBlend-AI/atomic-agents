@@ -7,7 +7,7 @@ This section contains the API reference for all public modules and classes in At
 :caption: API Reference
 
 agents
-components
+context
 utils
 ```
 
@@ -19,23 +19,23 @@ The Atomic Agents framework is built around several core components that work to
 
 The agents module provides the base classes for creating AI agents:
 
-- `BaseAgent`: The foundational agent class that handles interactions with LLMs
-- `BaseAgentConfig`: Configuration class for customizing agent behavior
-- `BaseAgentInputSchema`: Standard input schema for agent interactions
-- `BaseAgentOutputSchema`: Standard output schema for agent responses
+- `AtomicAgent`: The foundational agent class that handles interactions with LLMs
+- `AgentConfig`: Configuration class for customizing agent behavior
+- `BasicChatInputSchema`: Standard input schema for agent interactions
+- `BasicChatOutputSchema`: Standard output schema for agent responses
 
 [Learn more about agents](agents.md)
 
-### Components
+### Context Components
 
-The components module contains essential building blocks:
+The context module contains essential building blocks:
 
-- `AgentMemory`: Manages conversation history and state with support for:
+- `ChatHistory`: Manages conversation history and state with support for:
   - Message history with role-based messages
   - Turn-based conversation tracking
   - Multimodal content
   - Serialization and persistence
-  - Memory size management
+  - History size management
 
 - `SystemPromptGenerator`: Creates structured system prompts with:
   - Background information
@@ -43,9 +43,9 @@ The components module contains essential building blocks:
   - Output instructions
   - Dynamic context through context providers
 
-- `SystemPromptContextProviderBase`: Base class for creating custom context providers that can inject dynamic information into system prompts
+- `BaseDynamicContextProvider`: Base class for creating custom context providers that can inject dynamic information into system prompts
 
-[Learn more about components](components.md)
+[Learn more about context components](context.md)
 
 ### Utils
 

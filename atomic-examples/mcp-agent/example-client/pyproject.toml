@@ -5,13 +5,14 @@ description = "Example: Choosing the right MCP tool for a user query using the M
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
+python = ">=3.12,<4.0"
 atomic-agents = { path = "../../../", develop = true }
 example-mcp-server = { path = "../example-mcp-server", develop = true }
-python = ">=3.10,<3.13"
 pydantic = ">=2.10.3,<3.0.0"
 rich = ">=13.0.0"
 openai = ">=1.0.0"
-mcp = {extras = ["cli"], version = "^1.6.0"}
+mcp = {extras = ["cli"], version = "^1.9.4"}
+fastapi = "^0.115.14"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -9,18 +9,27 @@ This example consists of two main components:
 ### 1. Example Client (`example-client/`)
 
 An interactive agent that:
-- Connects to MCP servers using either STDIO or SSE transport
+
+- Connects to MCP servers using multiple transport methods (STDIO, SSE, HTTP Stream)
 - Dynamically discovers available tools
 - Processes natural language queries
 - Selects appropriate tools based on user intent
-- Executes tools with extracted parameters
+- Executes tools with extracted parameters (sync and async)
 - Provides responses in a conversational format
+
+The client features a universal launcher that supports multiple implementations:
+- **stdio**: Blocking STDIO CLI client (default)
+- **stdio_async**: Async STDIO client
+- **sse**: SSE CLI client
+- **http_stream**: HTTP Stream CLI client
+- **fastapi**: FastAPI HTTP API server
 
 [View Example Client README](example-client/README.md)
 
 ### 2. Example MCP Server (`example-mcp-server/`)
 
 A server that:
+
 - Provides MCP tools and resources
 - Supports both STDIO and SSE (HTTP) transport methods
 - Includes example tools for demonstration
@@ -47,20 +56,28 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 - Multiple clients can connect to one server
 - Better for production deployments
 
+### HTTP Stream Transport
+
+- The server exposes a single `/mcp` HTTP endpoint for session negotiation, JSON-RPC calls, and termination
+- Supports GET (stream/session ID), POST (JSON-RPC payloads), and DELETE (session cancel)
+- Useful for HTTP clients that prefer a single transport endpoint
+
 ## Getting Started
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/BrainBlend-AI/atomic-agents
    cd atomic-agents/atomic-examples/mcp-agent
    ```
 
 2. Set up the server:
+
    ```bash
    cd example-mcp-server
    poetry install
    ```
-
+   
 3. Set up the client:
    ```bash
    cd ../example-client
@@ -70,21 +87,59 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 4. Run the example:
 
    **Using STDIO transport (default):**
+
    ```bash
    cd example-client
+   poetry run python -m example_client.main --client stdio
+   # or simply:
    poetry run python -m example_client.main
    ```
+   
+   **Using async STDIO transport:**
 
-   **Using SSE transport:**
+   ```bash
+   cd example-client
+   poetry run python -m example_client.main --client stdio_async
+   ```
+   
+   **Using SSE transport (Deprecated):**
+
    ```bash
    # First terminal: Start the server
    cd example-mcp-server
-   poetry run example-mcp-server --mode=sse
+   poetry run -m example_mcp_server.server --mode=sse
 
-   # Second terminal: Run the client
+   # Second terminal: Run the client with SSE transport
    cd example-client
-   poetry run python -m example_client.main --transport sse
+   poetry run python -m example_client.main --client sse
    ```
+   
+   **Using HTTP Stream transport:**
+
+   ```bash
+   # First terminal: Start the server
+   cd example-mcp-server
+   poetry run python -m example_mcp_server.server --mode=http_stream
+
+   # Second terminal: Run the client with HTTP Stream transport
+   cd example-client
+   poetry run python -m example_client.main --client http_stream
+   ```
+
+   **Using FastAPI client:**
+
+   ```bash
+   # First terminal: Start the MCP server
+   cd example-mcp-server
+   poetry run python -m example_mcp_server.server --mode=http_stream
+
+   # Second terminal: Run the FastAPI client
+   cd example-client
+   poetry run python -m example_client.main --client fastapi
+   # Then visit http://localhost:8000 for the API interface
+   ```
+
+**Note:** When using SSE, FastAPI or HTTP Stream transport, make sure the server is running before starting the client. The server runs on port 6969 by default.
 
 ## Example Queries
 
@@ -122,6 +177,7 @@ For more complex expressions like `((4**3)-10)/100)**2`, the agent:
 5. Uses `MultiplyNumbers` again for the final squaring operation
 
 Each step in the conversation shows:
+
 - The tool being executed
 - The parameters being used
 - The intermediate result

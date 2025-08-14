@@ -4,9 +4,8 @@ import openai
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentOutputSchema
+from atomic_agents.context import SystemPromptGenerator, ChatHistory
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BasicChatOutputSchema
 
 # API Key setup
 API_KEY = ""
@@ -21,14 +20,14 @@ if not API_KEY:
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
-# Initialize memory with an initial message from the assistant
-initial_message = BaseAgentOutputSchema(
+# Initialize history with an initial message from the assistant
+initial_message = BasicChatOutputSchema(
     chat_message="How do you do? What can I do for you? Tell me, pray, what is your need today?"
 )
-memory.add_message("assistant", initial_message)
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library
 # Note, you can also set up a client using any other LLM provider, such as Anthropic, Cohere, etc.
@@ -50,12 +49,12 @@ system_prompt_generator = SystemPromptGenerator(
 console.print(Panel(system_prompt_generator.generate_prompt(), width=console.width, style="bold cyan"), style="bold cyan")
 
 # Agent setup with specified configuration
-agent = BaseAgent(
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=memory,
+        history=history,
     )
 )
 

@@ -6,7 +6,7 @@ This section contains detailed examples of using Atomic Agents in various scenar
 
 Simple examples to get started with the framework:
 
-- Basic chatbot with memory
+- Basic chatbot with history
 - Custom chatbot with personality
 - Streaming responses
 - Custom input/output schemas

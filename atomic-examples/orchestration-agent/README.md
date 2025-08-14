@@ -32,7 +32,7 @@ This example demonstrates how to create an Orchestrator Agent that intelligently
    OPENAI_API_KEY=your_openai_api_key
    ```
 
-5. Install SearxNG (See: https://github.com/searxng/searxng)
+5. Install SearXNG (See: https://github.com/searxng/searxng)
 
 6. Run the example:
    ```bash
@@ -50,7 +50,7 @@ This example demonstrates how to create an Orchestrator Agent that intelligently
 ### Tools
 These tools were installed using the Atomic Assembler CLI (See the main README [here](../../README.md) for more info)
 The agent orchestrates between two tools:
-- **SearxNG Search Tool**: For queries requiring factual information
+- **SearXNG Search Tool**: For queries requiring factual information
 - **Calculator Tool**: For mathematical calculations
 
 ### Context Providers

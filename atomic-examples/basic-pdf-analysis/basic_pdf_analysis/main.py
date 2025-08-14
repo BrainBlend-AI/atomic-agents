@@ -1,9 +1,8 @@
 import os
 
 import instructor
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator
 from dotenv import load_dotenv
 from google import genai
 from instructor.multimodal import PDF
@@ -35,13 +34,14 @@ system_prompt_generator = SystemPromptGenerator(
     background=["You are a helpful assistant that extracts information from PDF files."],
     steps=[
         "Analyze the PDF, extract its title and count the number of pages.",
+        "Create a brief summary of the document content.",
     ],
-    output_instructions=["Return pdf_title and page_count."],
+    output_instructions=["Return pdf_title, page_count, and summary."],
 )
 
 # Define the agent
-agent = BaseAgent(
-    config=BaseAgentConfig(
+agent = AtomicAgent[InputSchema, ExtractionResult](
+    config=AgentConfig(
         client=client,
         model="gemini-2.0-flash",
         system_prompt_generator=system_prompt_generator,

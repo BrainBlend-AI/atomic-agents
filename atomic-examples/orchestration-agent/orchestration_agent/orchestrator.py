@@ -1,16 +1,14 @@
 from typing import Union
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator, SystemPromptContextProviderBase
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator, BaseDynamicContextProvider
 
 from orchestration_agent.tools.searxng_search import (
-    SearxNGSearchTool,
-    SearxNGSearchToolConfig,
-    SearxNGSearchToolInputSchema,
-    SearxNGSearchToolOutputSchema,
+    SearXNGSearchTool,
+    SearXNGSearchToolConfig,
+    SearXNGSearchToolInputSchema,
+    SearXNGSearchToolOutputSchema,
 )
 from orchestration_agent.tools.calculator import (
     CalculatorTool,
@@ -36,7 +34,7 @@ class OrchestratorOutputSchema(BaseIOSchema):
     """Combined output schema for the Orchestrator Agent. Contains the tool to use and its parameters."""
 
     tool: str = Field(..., description="The tool to use: 'search' or 'calculator'")
-    tool_parameters: Union[SearxNGSearchToolInputSchema, CalculatorToolInputSchema] = Field(
+    tool_parameters: Union[SearXNGSearchToolInputSchema, CalculatorToolInputSchema] = Field(
         ..., description="The parameters for the selected tool"
     )
 
@@ -50,17 +48,17 @@ class FinalAnswerSchema(BaseIOSchema):
 #######################
 # AGENT CONFIGURATION #
 #######################
-class OrchestratorAgentConfig(BaseAgentConfig):
+class OrchestratorAgentConfig(AgentConfig):
     """Configuration for the Orchestrator Agent."""
 
-    searxng_config: SearxNGSearchToolConfig
+    searxng_config: SearXNGSearchToolConfig
     calculator_config: CalculatorToolConfig
 
 
 #####################
 # CONTEXT PROVIDERS #
 #####################
-class CurrentDateProvider(SystemPromptContextProviderBase):
+class CurrentDateProvider(BaseDynamicContextProvider):
     def __init__(self, title):
         super().__init__(title)
         self.date = datetime.now().strftime("%Y-%m-%d")
@@ -72,36 +70,35 @@ class CurrentDateProvider(SystemPromptContextProviderBase):
 ######################
 # ORCHESTRATOR AGENT #
 ######################
-orchestrator_agent = BaseAgent(
-    BaseAgentConfig(
-        client=instructor.from_openai(openai.OpenAI()),
-        model="gpt-4o-mini",
-        system_prompt_generator=SystemPromptGenerator(
-            background=[
-                "You are an Orchestrator Agent that decides between using a search tool or a calculator tool based on user input.",
-                "Use the search tool for queries requiring factual information, current events, or specific data.",
-                "Use the calculator tool for mathematical calculations and expressions.",
-            ],
-            output_instructions=[
-                "Analyze the input to determine whether it requires a web search or a calculation.",
-                "For search queries, use the 'search' tool and provide 1-3 relevant search queries.",
-                "For calculations, use the 'calculator' tool and provide the mathematical expression to evaluate.",
-                "When uncertain, prefer using the search tool.",
-                "Format the output using the appropriate schema.",
-            ],
-        ),
-        input_schema=OrchestratorInputSchema,
-        output_schema=OrchestratorOutputSchema,
-    )
+orchestrator_agent_config = AgentConfig(
+    client=instructor.from_openai(openai.OpenAI()),
+    model="gpt-4o-mini",
+    system_prompt_generator=SystemPromptGenerator(
+        background=[
+            "You are an Orchestrator Agent that decides between using a search tool or a calculator tool based on user input.",
+            "Use the search tool for queries requiring factual information, current events, or specific data.",
+            "Use the calculator tool for mathematical calculations and expressions.",
+        ],
+        output_instructions=[
+            "Analyze the input to determine whether it requires a web search or a calculation.",
+            "For search queries, use the 'search' tool and provide 1-3 relevant search queries.",
+            "For calculations, use the 'calculator' tool and provide the mathematical expression to evaluate.",
+            "When uncertain, prefer using the search tool.",
+            "Format the output using the appropriate schema.",
+        ],
+    ),
 )
+orchestrator_agent = AtomicAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)
+orchestrator_agent_final = AtomicAgent[OrchestratorInputSchema, FinalAnswerSchema](config=orchestrator_agent_config)
 
 # Register the current date provider
 orchestrator_agent.register_context_provider("current_date", CurrentDateProvider("Current Date"))
+orchestrator_agent_final.register_context_provider("current_date", CurrentDateProvider("Current Date"))
 
 
 def execute_tool(
-    searxng_tool: SearxNGSearchTool, calculator_tool: CalculatorTool, orchestrator_output: OrchestratorOutputSchema
-) -> Union[SearxNGSearchToolOutputSchema, CalculatorToolOutputSchema]:
+    searxng_tool: SearXNGSearchTool, calculator_tool: CalculatorTool, orchestrator_output: OrchestratorOutputSchema
+) -> Union[SearXNGSearchToolOutputSchema, CalculatorToolOutputSchema]:
     if orchestrator_output.tool == "search":
         return searxng_tool.run(orchestrator_output.tool_parameters)
     elif orchestrator_output.tool == "calculator":
@@ -126,7 +123,7 @@ if __name__ == "__main__":
     client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
 
     # Initialize the tools
-    searxng_tool = SearxNGSearchTool(SearxNGSearchToolConfig(base_url="http://localhost:8080", max_results=5))
+    searxng_tool = SearXNGSearchTool(SearXNGSearchToolConfig(base_url="http://localhost:8080", max_results=5))
     calculator_tool = CalculatorTool(CalculatorToolConfig())
 
     # Initialize Rich console
@@ -173,11 +170,12 @@ if __name__ == "__main__":
 
         console.print("\n" + "-" * 80 + "\n")
 
-        orchestrator_agent.output_schema = FinalAnswerSchema
-        orchestrator_agent.memory.add_message("system", response)
+        # Switch agent
+        history = orchestrator_agent.history
+        orchestrator_agent = orchestrator_agent_final
+        orchestrator_agent.history = history
+        orchestrator_agent.history.add_message("system", response)
         final_answer = orchestrator_agent.run(input_schema)
         console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
-        orchestrator_agent.output_schema = OrchestratorOutputSchema
-
-        # Reset the memory after each response
-        orchestrator_agent.memory = AgentMemory()
+        # Reset the agent to the original
+        orchestrator_agent = AtomicAgent[OrchestratorInputSchema, OrchestratorOutputSchema](config=orchestrator_agent_config)

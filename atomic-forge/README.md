@@ -14,7 +14,7 @@ Please use the [Atomic Assembler CLI](../README.md) as mentioned in the main [RE
 The Atomic Forge project includes the following tools:
 
 - [Calculator](/atomic-forge/tools/calculator/README.md)
-- [SearxNG Search](/atomic-forge/tools/searxng_search/README.md)
+- [SearXNG Search](/atomic-forge/tools/searxng_search/README.md)
 - [Tavily Search](/atomic-forge/tools/tavily_search/README.md)
 - [YouTube Transcript Scraper](/atomic-forge/tools/youtube_transcript_scraper/README.md)
 - [Webpage Scraper](/atomic-forge/tools/webpage_scraper/README.md)

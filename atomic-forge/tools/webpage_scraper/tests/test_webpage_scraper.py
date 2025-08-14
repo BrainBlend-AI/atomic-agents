@@ -1,188 +1,345 @@
-import os
+import unittest
+from unittest.mock import patch, Mock
+import requests
 import sys
-import pytest
-from unittest.mock import patch, MagicMock
+import os
+from bs4 import BeautifulSoup
+from readability import Document
 
+# Add the parent directory to sys.path to find the tool module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tool.webpage_scraper import (  # noqa: E402
     WebpageScraperTool,
+    WebpageScraperToolConfig,
     WebpageScraperToolInputSchema,
     WebpageScraperToolOutputSchema,
-    WebpageScraperToolConfig,
+    WebpageMetadata,
 )
 
 
-@pytest.fixture
-def mock_requests_get():
-    with patch("tool.webpage_scraper.requests.get") as mock_get:
-        # Create mock response
-        mock_response = MagicMock()
-        mock_response.text = """
+class TestWebpageScraperTool(unittest.TestCase):
+    """Test cases for the WebpageScraperTool."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.config = WebpageScraperToolConfig(
+            user_agent="Test User Agent",
+            timeout=10,
+            max_content_length=500000,
+        )
+        self.tool = WebpageScraperTool(config=self.config)
+
+        # Sample HTML content for testing
+        self.sample_html = """<!DOCTYPE html>
         <html>
-            <head>
-                <title>Test Page</title>
-                <meta name="author" content="Test Author">
-                <meta name="description" content="Test Description">
-                <meta property="og:site_name" content="Test Site">
-            </head>
-            <body>
-                <main>
-                    <h1>Test Heading</h1>
-                    <p>Test paragraph with <a href="https://example.com">link</a>.</p>
-                </main>
-            </body>
+        <head>
+            <title>Test Page</title>
+            <meta name="author" content="Test Author">
+            <meta name="description" content="Test Description">
+            <meta property="og:site_name" content="Test Site">
+        </head>
+        <body>
+            <header>
+                <nav>Navigation</nav>
+            </header>
+            <main>
+                <h1>Main Content</h1>
+                <p>This is a test paragraph with a <a href="https://example.com">link</a>.</p>
+                <ul>
+                    <li>Item 1</li>
+                    <li>Item 2</li>
+                </ul>
+            </main>
+            <footer>Footer content</footer>
+            <script>console.log('test');</script>
+        </body>
         </html>
         """
-        mock_response.content = mock_response.text.encode("utf-8")
-        mock_response.status_code = 200
-        mock_response.raise_for_status = MagicMock()
+        self.mock_url = "https://example.com/test"
 
+    @patch("requests.get")
+    def test_fetch_webpage(self, mock_get):
+        """Test fetching a webpage."""
         # Configure the mock
+        mock_response = Mock()
+        mock_response.text = self.sample_html
+        mock_response.content = self.sample_html.encode("utf-8")
         mock_get.return_value = mock_response
-        yield mock_get
 
+        # Test the method
+        result = self.tool._fetch_webpage(self.mock_url)
 
-def test_webpage_scraper_tool_basic(mock_requests_get):
-    # Initialize the tool
-    scraper_tool = WebpageScraperTool(WebpageScraperToolConfig())
-    input_schema = WebpageScraperToolInputSchema(url="https://example.com")
+        # Assertions
+        mock_get.assert_called_once()
+        self.assertEqual(result, self.sample_html)
 
-    # Run the tool
-    result = scraper_tool.run(input_schema)
+        # Check headers
+        call_args = mock_get.call_args
+        headers = call_args[1]["headers"]
+        self.assertEqual(headers["User-Agent"], "Test User Agent")
 
-    # Assertions
-    assert isinstance(result, WebpageScraperToolOutputSchema)
-    assert "Test Heading" in result.content
-    assert "Test paragraph" in result.content
-    assert "link" in result.content
-    assert result.metadata.title == "Test Page"
-    assert result.metadata.author == "Test Author"
-    assert result.metadata.description == "Test Description"
-    assert result.metadata.site_name == "Test Site"
-    assert result.metadata.domain == "example.com"
-    assert result.error is None
+    @patch("requests.get")
+    def test_fetch_webpage_content_too_large(self, mock_get):
+        """Test handling of content that exceeds max length."""
+        # Configure the mock
+        mock_response = Mock()
+        mock_response.text = "X" * (self.config.max_content_length + 1)
+        mock_response.content = ("X" * (self.config.max_content_length + 1)).encode("utf-8")
+        mock_get.return_value = mock_response
 
+        # Test the method
+        with self.assertRaises(ValueError) as context:
+            self.tool._fetch_webpage(self.mock_url)
 
-def test_webpage_scraper_tool_without_links(mock_requests_get):
-    # Initialize the tool
-    scraper_tool = WebpageScraperTool(WebpageScraperToolConfig())
-    input_schema = WebpageScraperToolInputSchema(url="https://example.com", include_links=False)
+        self.assertIn("Content length exceeds maximum", str(context.exception))
 
-    # Run the tool
-    result = scraper_tool.run(input_schema)
+    def test_extract_metadata(self):
+        """Test extracting metadata from a webpage."""
+        # Create BeautifulSoup and Document objects
+        soup = BeautifulSoup(self.sample_html, "html.parser")
+        doc = Document(self.sample_html)
 
-    # Assertions
-    assert isinstance(result, WebpageScraperToolOutputSchema)
-    assert "Test paragraph with link" in result.content
-    assert "https://example.com" not in result.content  # Link URL should not be included
+        # Test the method
+        metadata = self.tool._extract_metadata(soup, doc, self.mock_url)
 
+        # Assertions
+        self.assertIsInstance(metadata, WebpageMetadata)
+        self.assertEqual(metadata.title, "Test Page")
+        self.assertEqual(metadata.author, "Test Author")
+        self.assertEqual(metadata.description, "Test Description")
+        self.assertEqual(metadata.site_name, "Test Site")
+        self.assertEqual(metadata.domain, "example.com")
 
-def test_webpage_scraper_tool_http_error(mock_requests_get):
-    # Configure mock to raise an exception
-    mock_requests_get.return_value.raise_for_status.side_effect = Exception("404 Client Error")
+    def test_clean_markdown(self):
+        """Test cleaning up markdown content."""
+        markdown = """# Title
 
-    # Initialize the tool
-    scraper_tool = WebpageScraperTool(WebpageScraperToolConfig())
-    input_schema = WebpageScraperToolInputSchema(url="https://example.com/not-found")
+        
 
-    # Run the tool
-    result = scraper_tool.run(input_schema)
+        Some content
+          with weird spacing
+        
+        
+        
+        More content
+        """
 
-    # Assertions
-    assert isinstance(result, WebpageScraperToolOutputSchema)
-    assert result.content == ""  # Content should be empty
-    assert result.metadata.title == "Error retrieving page"
-    assert result.metadata.domain == "example.com"
-    assert "404 Client Error" in result.error
+        expected = "# Title\n\nSome content\n  with weird spacing\n\nMore content\n"
 
+        # Test the method
+        result = self.tool._clean_markdown(markdown)
 
-def test_webpage_scraper_tool_content_too_large(mock_requests_get):
-    # Configure mock content to exceed max length
-    max_length = 1_000_000
-    mock_requests_get.return_value.content = b"a" * (max_length + 1)
+        # Assertions
+        self.assertEqual(result, expected)
 
-    # Initialize the tool
-    scraper_tool = WebpageScraperTool(WebpageScraperToolConfig(max_content_length=max_length))
-    input_schema = WebpageScraperToolInputSchema(url="https://example.com/large-page")
+    def test_clean_markdown_triple_newlines(self):
+        """Test cleaning up markdown content with triple newlines."""
+        # Make sure we're not hitting the special case by using different content
+        markdown = "Test\n\n\nMultiple\n\n\nNewlines"
 
-    # Run the tool
-    result = scraper_tool.run(input_schema)
+        # Test the method
+        result = self.tool._clean_markdown(markdown)
 
-    # Assertions
-    assert isinstance(result, WebpageScraperToolOutputSchema)
-    assert "exceeds maximum" in result.error
+        # Verify that triple newlines are replaced with double newlines
+        self.assertEqual(result, "Test\n\nMultiple\n\nNewlines\n")
+        self.assertNotIn("\n\n\n", result)
 
+        # Test another case to ensure the function works with other content patterns
+        complex_markdown = """Regular content
 
-def test_webpage_scraper_tool_extract_metadata():
-    # Initialize the tool
-    scraper_tool = WebpageScraperTool(WebpageScraperToolConfig())
+          
 
-    # Create a minimal soup object with metadata
-    soup = MagicMock()
+        with triple newlines above"""
 
-    # Create individual mock tags with get methods
-    author_tag = MagicMock()
-    author_tag.get.return_value = "Author Name"
+        complex_result = self.tool._clean_markdown(complex_markdown)
+        self.assertNotIn("\n\n\n", complex_result)
 
-    description_tag = MagicMock()
-    description_tag.get.return_value = "Page Description"
+    def test_extract_main_content(self):
+        """Test extracting main content from HTML."""
+        soup = BeautifulSoup(self.sample_html, "html.parser")
 
-    site_name_tag = MagicMock()
-    site_name_tag.get.return_value = "Site Name"
+        # Test the method
+        result = self.tool._extract_main_content(soup)
 
-    # Configure find method to return the right mock based on arguments
-    def mock_find(tag, attrs=None):
-        if tag == "meta" and attrs == {"name": "author"}:
-            return author_tag
-        elif tag == "meta" and attrs == {"name": "description"}:
-            return description_tag
-        elif tag == "meta" and attrs == {"property": "og:site_name"}:
-            return site_name_tag
-        return None
+        # Assertions
+        # The result should contain the main content but not header/footer/scripts
+        self.assertIn("Main Content", result)
+        self.assertIn("test paragraph", result)
+        self.assertIn("Item 1", result)
+        self.assertNotIn("Navigation", result)
+        self.assertNotIn("Footer content", result)
+        self.assertNotIn("console.log", result)
 
-    soup.find.side_effect = mock_find
+    def test_extract_main_content_fallbacks(self):
+        """Test extracting main content with various fallback mechanisms."""
+        # Test with HTML that has no main tag but has content/main in id
+        html_with_id = """
+        <html><body>
+            <div id="content"><p>Content in div with ID</p></div>
+        </body></html>
+        """
+        soup = BeautifulSoup(html_with_id, "html.parser")
+        result = self.tool._extract_main_content(soup)
+        self.assertIn("Content in div with ID", result)
 
-    doc = MagicMock()
-    doc.title.return_value = "Page Title"
+        # Test with HTML that has no main or ID but has content in class
+        html_with_class = """
+        <html><body>
+            <div class="main-content"><p>Content in div with class</p></div>
+        </body></html>
+        """
+        soup = BeautifulSoup(html_with_class, "html.parser")
+        result = self.tool._extract_main_content(soup)
+        self.assertIn("Content in div with class", result)
 
-    # Call the method directly
-    metadata = scraper_tool._extract_metadata(soup, doc, "https://example.org/page")
+        # Test with HTML that has article
+        html_with_article = """
+        <html><body>
+            <article><p>Content in article</p></article>
+        </body></html>
+        """
+        soup = BeautifulSoup(html_with_article, "html.parser")
+        result = self.tool._extract_main_content(soup)
+        self.assertIn("Content in article", result)
 
-    # Assertions
-    assert metadata.title == "Page Title"
-    assert metadata.author == "Author Name"
-    assert metadata.description == "Page Description"
-    assert metadata.site_name == "Site Name"
-    assert metadata.domain == "example.org"
+        # Test with HTML that has none of the above, should fallback to body
+        html_with_body_only = """
+        <html><body>
+            <p>Content in body</p>
+        </body></html>
+        """
+        soup = BeautifulSoup(html_with_body_only, "html.parser")
+        result = self.tool._extract_main_content(soup)
+        self.assertIn("Content in body", result)
 
+        # Test with completely empty HTML
+        empty_html = "<html></html>"
+        soup = BeautifulSoup(empty_html, "html.parser")
+        result = self.tool._extract_main_content(soup)
+        self.assertEqual(result, str(soup))
 
-def test_webpage_scraper_tool_clean_markdown():
-    # Initialize the tool
-    scraper_tool = WebpageScraperTool(WebpageScraperToolConfig())
+    @patch.object(WebpageScraperTool, "_fetch_webpage")
+    def test_run_with_links(self, mock_fetch):
+        """Test running the tool with links included."""
+        # Configure the mock
+        mock_fetch.return_value = self.sample_html
 
-    # Input markdown with excess whitespace
-    dirty_markdown = """
-    # Title
+        # Create input parameters
+        params = WebpageScraperToolInputSchema(
+            url=self.mock_url,
+            include_links=True,
+        )
 
+        # Test the method
+        result = self.tool.run(params)
 
+        # Assertions
+        self.assertIsInstance(result, WebpageScraperToolOutputSchema)
+        self.assertIn("Main Content", result.content)
+        self.assertIn("link", result.content)
+        self.assertIn("https://example.com", result.content)
+        self.assertEqual(result.metadata.title, "Test Page")
 
-    Paragraph with trailing spaces
+    @patch.object(WebpageScraperTool, "_fetch_webpage")
+    def test_run_without_links(self, mock_fetch):
+        """Test running the tool with links excluded."""
+        # Configure the mock
+        mock_fetch.return_value = self.sample_html
 
-    * List item 1
-    * List item 2
+        # Create input parameters
+        params = WebpageScraperToolInputSchema(
+            url=self.mock_url,
+            include_links=False,
+        )
 
+        # Test the method
+        result = self.tool.run(params)
 
-    """
+        # Assertions
+        self.assertIsInstance(result, WebpageScraperToolOutputSchema)
+        self.assertIn("Main Content", result.content)
+        self.assertIn("link", result.content)  # The text "link" should still be there
+        self.assertNotIn("https://example.com", result.content)  # But the URL should be gone
+        self.assertEqual(result.metadata.title, "Test Page")
 
-    # Clean the markdown
-    cleaned = scraper_tool._clean_markdown(dirty_markdown)
+    @patch("requests.get")
+    def test_http_errors(self, mock_get):
+        """Test handling of HTTP errors."""
+        # Configure the mock to raise an exception
+        mock_get.side_effect = requests.exceptions.HTTPError("404 Client Error")
 
-    # Assertions
-    assert cleaned.count("\n\n\n") == 0  # No triple newlines
-    assert "spaces    \n" not in cleaned  # No trailing spaces
-    assert cleaned.endswith("\n")  # Ends with newline
+        # Create input parameters
+        params = WebpageScraperToolInputSchema(
+            url=self.mock_url,
+            include_links=True,
+        )
+
+        # Test the method
+        result = self.tool.run(params)
+
+        # Check that the error is captured in the result
+        self.assertIsNotNone(result.error)
+        self.assertIn("404 Client Error", result.error)
+
+    @patch("requests.get")
+    def test_connection_timeout(self, mock_get):
+        """Test handling of connection timeouts."""
+        # Configure the mock to raise a timeout exception
+        mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
+
+        # Create input parameters
+        params = WebpageScraperToolInputSchema(
+            url=self.mock_url,
+            include_links=True,
+        )
+
+        # Test the method
+        result = self.tool.run(params)
+
+        # Check that the error is captured in the result
+        self.assertIsNotNone(result.error)
+        self.assertIn("Connection timed out", result.error)
+
+    def test_tool_config(self):
+        """Test tool configuration."""
+        # Test default config
+        default_config = WebpageScraperToolConfig()
+        self.assertEqual(default_config.timeout, 30)
+        self.assertIn("Mozilla", default_config.user_agent)
+        self.assertEqual(default_config.max_content_length, 1_000_000)
+
+        # Test custom config
+        custom_config = WebpageScraperToolConfig(
+            user_agent="Custom Agent",
+            timeout=45,
+            max_content_length=2_000_000,
+        )
+        self.assertEqual(custom_config.timeout, 45)
+        self.assertEqual(custom_config.user_agent, "Custom Agent")
+        self.assertEqual(custom_config.max_content_length, 2_000_000)
+
+    def test_clean_markdown_empty_content(self):
+        """Test cleaning up empty markdown content."""
+        # Test with empty string
+        result = self.tool._clean_markdown("")
+        self.assertEqual(result, "\n")
+
+        # Test with whitespace only
+        result = self.tool._clean_markdown("   \n\n   \n   ")
+        self.assertEqual(result, "\n")
+
+    def test_clean_markdown_with_triple_newlines(self):
+        """Test cleaning up markdown content with forced triple newlines."""
+        # Create input with triple newlines specifically for regex coverage
+        markdown = "Line1\n\n\nLine2"
+
+        # Call the method directly to ensure coverage
+        result = self.tool._clean_markdown(markdown)
+
+        # Verify it collapsed triple newlines to double
+        self.assertEqual(result, "Line1\n\nLine2\n")
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    unittest.main()

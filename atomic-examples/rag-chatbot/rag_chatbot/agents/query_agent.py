@@ -1,8 +1,8 @@
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
+from atomic_agents.context import SystemPromptGenerator
 
 from rag_chatbot.config import ChatConfig
 
@@ -20,8 +20,8 @@ class RAGQueryAgentOutputSchema(BaseIOSchema):
     query: str = Field(..., description="The semantic search query to use for retrieving relevant chunks")
 
 
-query_agent = BaseAgent(
-    BaseAgentConfig(
+query_agent = AtomicAgent[RAGQueryAgentInputSchema, RAGQueryAgentOutputSchema](
+    AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
         system_prompt_generator=SystemPromptGenerator(
@@ -42,7 +42,5 @@ query_agent = BaseAgent(
                 "Explain your reasoning for the query formulation",
             ],
         ),
-        input_schema=RAGQueryAgentInputSchema,
-        output_schema=RAGQueryAgentOutputSchema,
     )
 )

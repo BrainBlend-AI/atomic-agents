@@ -7,11 +7,11 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.12,<4"
+python = ">=3.12,<3.14"
 atomic-agents = {path = "../../../", develop = true}
 pydantic = ">=2.10.3,<3.0.0"
 google-api-python-client = ">=2.118.0,<3"
-youtube-transcript-api = ">=0.6.2,<1"
+youtube-transcript-api = "^1.1.1"
 
 [tool.poetry.group.dev.dependencies]
 coverage = ">=7.6.1,<8.0.0"
@@ -21,5 +21,5 @@ python-dotenv = ">=1.0.0,<2.0.0"
 rich = ">=13.7.0,<14.0.0"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

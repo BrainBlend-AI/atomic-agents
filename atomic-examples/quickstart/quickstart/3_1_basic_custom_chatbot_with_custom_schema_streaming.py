@@ -7,10 +7,8 @@ from rich.text import Text
 from rich.live import Live
 from typing import List
 from pydantic import Field
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
-from atomic_agents.lib.components.agent_memory import AgentMemory
-from atomic_agents.agents.base_agent import BaseAgent, BaseAgentConfig, BaseAgentInputSchema
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator, ChatHistory
+from atomic_agents import AtomicAgent, AgentConfig, BasicChatInputSchema, BaseIOSchema
 
 # API Key setup
 API_KEY = ""
@@ -25,8 +23,8 @@ if not API_KEY:
 # Initialize a Rich Console for pretty console outputs
 console = Console()
 
-# Memory setup
-memory = AgentMemory()
+# History setup
+history = ChatHistory()
 
 
 # Custom output schema
@@ -43,12 +41,12 @@ class CustomOutputSchema(BaseIOSchema):
     )
 
 
-# Initialize memory with an initial message from the assistant
+# Initialize history with an initial message from the assistant
 initial_message = CustomOutputSchema(
     chat_message="Hello! How can I assist you today?",
     suggested_user_questions=["What can you do?", "Tell me a joke", "Tell me about how you were made"],
 )
-memory.add_message("assistant", initial_message)
+history.add_message("assistant", initial_message)
 
 # OpenAI client setup using the Instructor library for async operations
 client = instructor.from_openai(openai.AsyncOpenAI(api_key=API_KEY))
@@ -63,6 +61,9 @@ system_prompt_generator = SystemPromptGenerator(
         "Analyze the user's input to understand the context and intent.",
         "Formulate a relevant and informative response based on the assistant's knowledge.",
         "Generate 3 suggested follow-up questions for the user to explore the topic further.",
+        "When you get a simple number from the user,"
+        "choose the corresponding question from the last list of suggested questions and answer it."
+        "Note that the first question is 1, the second is 2, and so on.",
     ],
     output_instructions=[
         "Provide clear, concise, and accurate information in response to user queries.",
@@ -73,13 +74,12 @@ system_prompt_generator = SystemPromptGenerator(
 console.print(Panel(system_prompt_generator.generate_prompt(), width=console.width, style="bold cyan"), style="bold cyan")
 
 # Agent setup with specified configuration and custom output schema
-agent = BaseAgent(
-    config=BaseAgentConfig(
+agent = AtomicAgent[BasicChatInputSchema, CustomOutputSchema](
+    config=AgentConfig(
         client=client,
         model="gpt-4o-mini",
         system_prompt_generator=system_prompt_generator,
-        memory=memory,
-        output_schema=CustomOutputSchema,
+        history=history,
     )
 )
 
@@ -105,7 +105,7 @@ async def main():
             break
 
         # Process the user's input through the agent and get the streaming response
-        input_schema = BaseAgentInputSchema(chat_message=user_input)
+        input_schema = BasicChatInputSchema(chat_message=user_input)
         console.print()  # Add newline before response
 
         # Use Live display to show streaming response
@@ -113,7 +113,7 @@ async def main():
             current_response = ""
             current_questions: List[str] = []
 
-            async for partial_response in agent.run_async(input_schema):
+            async for partial_response in agent.run_async_stream(input_schema):
                 if hasattr(partial_response, "chat_message") and partial_response.chat_message:
                     # Update the message part
                     if partial_response.chat_message != current_response:

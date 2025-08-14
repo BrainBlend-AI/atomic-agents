@@ -1,8 +1,8 @@
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents.agents.base_agent import BaseIOSchema, BaseAgent, BaseAgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
+from atomic_agents.context import SystemPromptGenerator
 
 from rag_chatbot.config import ChatConfig
 
@@ -20,8 +20,8 @@ class RAGQuestionAnsweringAgentOutputSchema(BaseIOSchema):
     answer: str = Field(..., description="The answer to the user's question based on the retrieved context")
 
 
-qa_agent = BaseAgent(
-    BaseAgentConfig(
+qa_agent = AtomicAgent[RAGQuestionAnsweringAgentInputSchema, RAGQuestionAnsweringAgentOutputSchema](
+    AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
         system_prompt_generator=SystemPromptGenerator(
@@ -44,7 +44,5 @@ qa_agent = BaseAgent(
                 "Focus on being accurate and concise",
             ],
         ),
-        input_schema=RAGQuestionAnsweringAgentInputSchema,
-        output_schema=RAGQuestionAnsweringAgentOutputSchema,
     )
 )
