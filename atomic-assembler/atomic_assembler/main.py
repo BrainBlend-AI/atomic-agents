@@ -25,11 +25,9 @@ def main():
         pkg_version = version("atomic-agents")
     except PackageNotFoundError:
         pkg_version = "unknown"
-    
+
     parser = argparse.ArgumentParser(
-        description="Atomic Assembler",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=f"Version: {pkg_version}"
+        description="Atomic Assembler", formatter_class=argparse.RawDescriptionHelpFormatter, epilog=f"Version: {pkg_version}"
     )
     parser.add_argument("--enable-logging", action="store_true", help="Enable logging")
     parser.add_argument("--version", action="version", version=f"%(prog)s {pkg_version}")
