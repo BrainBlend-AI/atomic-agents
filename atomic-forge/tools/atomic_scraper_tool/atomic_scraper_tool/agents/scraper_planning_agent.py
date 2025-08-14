@@ -246,7 +246,6 @@ class AtomicScraperPlanningAgent(BaseAgent):
         """Analyze the target website structure."""
         from atomic_scraper_tool.analysis.website_analyzer import WebsiteAnalyzer
         import requests
-        from bs4 import BeautifulSoup
 
         try:
             # Fetch the website content
@@ -297,7 +296,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
         from atomic_scraper_tool.analysis.schema_recipe_generator import SchemaRecipeGenerator, SchemaGenerationContext
 
         # Create schema generation context
-        context = SchemaGenerationContext(
+        _context = SchemaGenerationContext(
             user_criteria=input_data.request,
             target_content_type=parsed_request["content_type"],
             sample_html="",  # Would be populated with actual HTML in real implementation
@@ -306,7 +305,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
         )
 
         # Generate schema recipe
-        generator = SchemaRecipeGenerator()
+        _generator = SchemaRecipeGenerator()
 
         # For now, create a basic schema recipe since we don't have HTML content
         # In a real implementation, this would use the actual website HTML
@@ -443,9 +442,9 @@ class AtomicScraperPlanningAgent(BaseAgent):
 
         # Extraction approach
         plan_parts.append("### Extraction Approach")
-        plan_parts.append(f"1. Navigate to the target website")
+        plan_parts.append("1. Navigate to the target website")
         plan_parts.append(f"2. Identify content using selectors: {', '.join(strategy.target_selectors[:2])}")
-        plan_parts.append(f"3. Extract data fields using CSS selectors")
+        plan_parts.append("3. Extract data fields using CSS selectors")
         if strategy.pagination_strategy:
             plan_parts.append(f"4. Handle pagination using {strategy.pagination_strategy} strategy")
         plan_parts.append(f"5. Apply quality filtering (minimum score: {strategy.extraction_rules.get('min_quality', 'N/A')})")

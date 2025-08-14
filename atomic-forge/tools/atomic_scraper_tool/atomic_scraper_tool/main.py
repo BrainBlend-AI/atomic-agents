@@ -161,8 +161,8 @@ class AtomicScraperApp:
         welcome_text = """
 # � Atomic Scraper Tool
 
-Welcome to the next-generation intelligent web scraper! This AI-powered tool uses advanced 
-natural language processing to understand your scraping requests and automatically generates 
+Welcome to the next-generation intelligent web scraper! This AI-powered tool uses advanced
+natural language processing to understand your scraping requests and automatically generates
 optimal scraping strategies with dynamic schema recipes.
 
 ## Features:
@@ -257,7 +257,7 @@ Type your scraping requests naturally, like:
             if not parsed.netloc:
                 self.console.print("[red]Invalid URL format. Please include a domain name.[/red]")
                 return
-            self.console.print(f"[green]✓[/green] [dim]Valid URL format detected[/dim]")
+            self.console.print("[green]✓[/green] [dim]Valid URL format detected[/dim]")
         except Exception:
             self.console.print("[yellow]Warning: URL format may be invalid, but proceeding anyway.[/yellow]")
 
@@ -560,8 +560,7 @@ Type your scraping requests naturally, like:
     def _initialize_planning_agent_with_client(self, client):
         """Initialize planning agent with injected client (orchestration mode)."""
         try:
-            # Import planning agent components
-            from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperPlanningAgent
+            # Import base agent config
             from atomic_agents.agents.base_agent import BaseAgentConfig
 
             # Create agent config with injected client
