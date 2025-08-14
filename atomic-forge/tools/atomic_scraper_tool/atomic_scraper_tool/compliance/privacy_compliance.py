@@ -13,12 +13,10 @@ import time
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Any
+from typing import Dict, List, Set, Any
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field
-
-from atomic_scraper_tool.core.exceptions import ScrapingError
 
 
 class DataCategory(str, Enum):

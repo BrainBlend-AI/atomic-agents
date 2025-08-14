@@ -334,12 +334,10 @@ class QualityAnalyzer:
         else:
             weights = {"completeness": 0.3, "accuracy": 0.3, "consistency": 0.2, "relevance": 0.2}
 
-        overall_score = (
-            completeness * weights.get("completeness", 0.3)
-            + accuracy * weights.get("accuracy", 0.3)
-            + consistency * weights.get("consistency", 0.2)
-            + relevance * weights.get("relevance", 0.2)
-        )
+        overall_score = completeness * weights.get("completeness", 0.3) + \
+            accuracy * weights.get("accuracy", 0.3) + \
+            consistency * weights.get("consistency", 0.2) + \
+            relevance * weights.get("relevance", 0.2)
 
         return min(100.0, max(0.0, overall_score))
 
@@ -603,12 +601,10 @@ class QualityAnalyzer:
         self, overall_score: float, completeness: float, accuracy: float, consistency: float
     ) -> bool:
         """Check if quality scores meet the configured thresholds."""
-        return (
-            overall_score >= self.thresholds.minimum_overall
-            and completeness >= self.thresholds.minimum_completeness
-            and accuracy >= self.thresholds.minimum_accuracy
-            and consistency >= self.thresholds.minimum_consistency
-        )
+        return overall_score >= self.thresholds.minimum_overall and \
+            completeness >= self.thresholds.minimum_completeness and \
+            accuracy >= self.thresholds.minimum_accuracy and \
+            consistency >= self.thresholds.minimum_consistency
 
     def _calculate_item_quality(self, item: ExtractedContent, schema_recipe: Optional[SchemaRecipe] = None) -> float:
         """Calculate quality score for a single item."""

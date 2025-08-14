@@ -351,11 +351,9 @@ class StrategyGenerator:
             base_delay *= 2.0
 
         # Adjust based on page complexity
-        total_elements = (
-            analysis.metadata.get("total_links", 0)
-            + analysis.metadata.get("total_images", 0)
-            + analysis.metadata.get("total_forms", 0)
-        )
+        total_elements = analysis.metadata.get("total_links", 0) + \
+            analysis.metadata.get("total_images", 0) + \
+            analysis.metadata.get("total_forms", 0)
 
         if total_elements > 100:
             base_delay *= 1.5

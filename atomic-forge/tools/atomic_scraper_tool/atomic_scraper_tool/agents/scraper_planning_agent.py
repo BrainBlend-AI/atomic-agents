@@ -47,7 +47,8 @@ class AtomicScrapingContextProvider(SystemPromptContextProviderBase):
 
     def get_info(self) -> str:
         """Provide context about scraping capabilities and strategies."""
-        return """You are an expert website scraping planning agent. Your role is to analyze user requests and target websites to generate optimal scraping strategies.
+        return """You are an expert website scraping planning agent. Your role is to analyze user requests and target websites
+to generate optimal scraping strategies.
 
 ### Scraping Types Available:
 - **list**: Extract multiple items from list pages (e.g., product listings, article lists)
@@ -311,7 +312,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
         )
 
         # Create schema generation context
-        _context = SchemaGenerationContext(
+        SchemaGenerationContext(
             user_criteria=input_data.request,
             target_content_type=parsed_request["content_type"],
             sample_html="",  # Would be populated with actual HTML in real implementation
@@ -320,7 +321,7 @@ class AtomicScraperPlanningAgent(BaseAgent):
         )
 
         # Generate schema recipe
-        _generator = SchemaRecipeGenerator()
+        SchemaRecipeGenerator()
 
         # For now, create a basic schema recipe since we don't have HTML content
         # In a real implementation, this would use the actual website HTML

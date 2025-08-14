@@ -8,12 +8,11 @@ retry logic for recoverable errors, and graceful degradation strategies.
 import asyncio
 import logging
 import time
-from typing import Optional, Dict, Any, List, Callable, Union, Type
+from typing import Optional, Dict, Any, List, Callable, Type
 from dataclasses import dataclass
 from enum import Enum
 
 from atomic_scraper_tool.core.exceptions import (
-    ScrapingError,
     NetworkError,
     ParsingError,
     ValidationError,

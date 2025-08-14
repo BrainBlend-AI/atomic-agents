@@ -5,7 +5,6 @@ This module provides predefined test scenarios that combine mock websites
 with specific testing objectives to validate scraping functionality.
 """
 
-import random
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass

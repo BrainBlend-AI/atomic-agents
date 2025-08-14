@@ -5,7 +5,6 @@ This module provides rate limiting functionality to ensure respectful crawling
 by implementing configurable delays, request throttling, and adaptive rate limiting.
 """
 
-import asyncio
 import time
 import threading
 from collections import defaultdict, deque
