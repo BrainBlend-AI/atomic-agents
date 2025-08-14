@@ -369,9 +369,8 @@ class TestMemoryAndPerformance:
     def test_memory_usage_with_large_sites(self):
         """Test memory usage with large mock websites."""
         import psutil
-        import os
 
-        process = psutil.Process(os.getpid())
+        process = psutil.Process()
         initial_memory = process.memory_info().rss
 
         # Create large mock site

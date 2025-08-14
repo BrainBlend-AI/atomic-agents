@@ -233,10 +233,10 @@ class TestMockWebsite:
 
         # Check total number of URLs
         expected_urls = (
-            1  # Homepage
-            + self.config.num_pages  # Pagination pages
-            + min(self.config.items_per_page, 5)  # Product pages (limited to 5 in get_all_urls)
-            + 2  # Category pages (electronics, clothing)
+            1 +  # Homepage
+            self.config.num_pages +  # Pagination pages
+            min(self.config.items_per_page, 5) +  # Product pages (limited to 5 in get_all_urls)
+            2  # Category pages (electronics, clothing)
         )
         assert len(urls) == expected_urls
 

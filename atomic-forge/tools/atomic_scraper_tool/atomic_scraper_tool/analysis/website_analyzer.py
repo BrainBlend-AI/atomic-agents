@@ -391,9 +391,9 @@ class WebsiteAnalyzer:
 
         # Look for pagination container
         pagination_container = (
-            soup.find("div", class_=re.compile(r"pagination", re.I))
-            or soup.find("nav", class_=re.compile(r"pagination", re.I))
-            or soup.find("div", class_=re.compile(r"pager", re.I))
+            soup.find("div", class_=re.compile(r"pagination", re.I)) or
+            soup.find("nav", class_=re.compile(r"pagination", re.I)) or
+            soup.find("div", class_=re.compile(r"pager", re.I))
         )
 
         if pagination_container:

@@ -556,8 +556,7 @@ Type your scraping requests naturally, like:
     def _initialize_planning_agent_with_client(self, client):
         """Initialize planning agent with injected client (orchestration mode)."""
         try:
-            # Import planning agent components
-            from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperPlanningAgent
+            # Import base agent config
             from atomic_agents.agents.base_agent import BaseAgentConfig
 
             # Create agent config with injected client
