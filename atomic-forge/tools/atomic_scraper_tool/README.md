@@ -1,6 +1,8 @@
 # Atomic Scraper Tool
 
-Next-generation intelligent web scraping tool built with the Atomic Agents framework. This AI-powered tool provides advanced natural language processing, dynamic strategy generation, and ethical data extraction capabilities with unprecedented intelligence and ease of use.
+Next-generation intelligent web scraping tool built with the **Atomic Agents v2.0** framework. This AI-powered tool provides advanced natural language processing, dynamic strategy generation, and ethical data extraction capabilities with unprecedented intelligence and ease of use.
+
+> **⚡ Requirements**: This tool requires **atomic-agents >=2.0.0** and **Python >=3.12**. See [atomic-agents v2.0 upgrade guide](https://github.com/BrainBlend-AI/atomic-agents/blob/main/UPGRADE_DOC.md) for migration details.
 
 > **🎯 Maximum Versatility**: Works perfectly as a **standalone CLI application**, **Python library**, or **orchestrated component** in multi-agent systems like atomic-cli and intelligent-web-scraper. Features innovative **model provider injection** for seamless integration across any execution context.
 
@@ -47,12 +49,19 @@ Next-generation intelligent web scraping tool built with the Atomic Agents frame
 
 ### Installation
 
+**Prerequisites:**
+- Python 3.12 or higher
+- atomic-agents 2.0.0 or higher
+
 ```bash
 # Using Poetry (recommended)
 poetry install
 
 # Or using pip
 pip install -r requirements.txt
+
+# Verify atomic-agents version
+python -c "import atomic_agents; print(f'atomic-agents version: {atomic_agents.__version__}')"
 ```
 
 ### Versatile Usage Patterns
@@ -252,12 +261,22 @@ Supports all major AI providers through automatic detection:
 
 ### 1. Scraper Planning Agent
 
-The `AtomicScraperPlanningAgent` interprets natural language requests and generates scraping strategies:
+The `AtomicScraperPlanningAgent` interprets natural language requests and generates scraping strategies.
+
+> **Note**: In atomic-agents v2.0, all agents require an `AgentConfig` with a client parameter. The agent uses generic type parameters for better type safety.
 
 ```python
 from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperPlanningAgent
+from atomic_agents import AgentConfig
+import instructor
+from openai import OpenAI
 
-agent = AtomicScraperPlanningAgent()
+# Create client and config (required in v2.0)
+client = instructor.from_openai(OpenAI())
+config = AgentConfig(client=client, model="gpt-4o-mini")
+
+# Initialize agent with config
+agent = AtomicScraperPlanningAgent(config)
 
 request = {
     'url': 'https://example.com',
