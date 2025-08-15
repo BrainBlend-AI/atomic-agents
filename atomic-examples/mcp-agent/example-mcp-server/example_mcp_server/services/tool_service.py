@@ -42,7 +42,6 @@ class ToolService:
         """
         tool = self.get_tool(tool_name)
 
-
         # Use model_validate to handle complex nested objects properly
         input_model = tool.input_model.model_validate(input_data)
 
