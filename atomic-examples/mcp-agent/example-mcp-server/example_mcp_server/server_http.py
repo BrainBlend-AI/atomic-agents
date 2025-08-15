@@ -17,6 +17,7 @@ from example_mcp_server.tools import (
     SubtractNumbersTool,
     MultiplyNumbersTool,
     DivideNumbersTool,
+    BatchCalculatorTool,
 )
 
 
@@ -27,6 +28,7 @@ def get_available_tools() -> List[Tool]:
         SubtractNumbersTool(),
         MultiplyNumbersTool(),
         DivideNumbersTool(),
+        BatchCalculatorTool(),
     ]
 
 
