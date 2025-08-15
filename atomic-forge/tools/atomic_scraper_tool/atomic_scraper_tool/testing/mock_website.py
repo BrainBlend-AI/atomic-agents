@@ -107,7 +107,7 @@ class MockWebsite:
 
     def _generate_listing_page(self, page_num: int) -> str:
         """Generate a listing page with multiple items."""
-        self.generators[self.config.website_type]
+        _generator = self.generators[self.config.website_type]
 
         # Generate items for this page
         items_html = []
@@ -125,7 +125,9 @@ class MockWebsite:
                 items_html.append(self._generate_generic_card(item_id))
 
         # Generate pagination
-        pagination_html = self._generate_pagination(page_num) if self.config.include_pagination else ""
+        pagination_html = (
+            self._generate_pagination(page_num) if self.config.include_pagination else ""
+        )
 
         content = f"""
         <div class="listing-page">
@@ -412,7 +414,9 @@ class MockWebsite:
             pagination_html.append(f'<a href="/page/{current_page - 1}" class="prev">Previous</a>')
 
         # Page numbers
-        for page in range(max(1, current_page - 2), min(self.config.num_pages + 1, current_page + 3)):
+        for page in range(
+            max(1, current_page - 2), min(self.config.num_pages + 1, current_page + 3)
+        ):
             if page == current_page:
                 pagination_html.append(f'<span class="current">{page}</span>')
             else:
@@ -425,7 +429,9 @@ class MockWebsite:
         pagination_html.append("</div>")
         return "".join(pagination_html)
 
-    def _wrap_in_html_template(self, title: str, content: str, include_navigation: bool = True) -> str:
+    def _wrap_in_html_template(
+        self, title: str, content: str, include_navigation: bool = True
+    ) -> str:
         """Wrap content in a complete HTML template."""
         navigation_html = ""
         if include_navigation and self.config.include_navigation:

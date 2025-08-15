@@ -57,14 +57,26 @@ class WebsiteStructureAnalysis(BaseModel):
 
     url: str = Field(..., description="URL that was analyzed")
     title: str = Field(..., description="Page title")
-    content_patterns: List[ContentPattern] = Field(default_factory=list, description="Detected content patterns")
-    navigation_info: NavigationInfo = Field(default_factory=NavigationInfo, description="Navigation structure")
-    pagination_info: PaginationInfo = Field(default_factory=PaginationInfo, description="Pagination information")
+    content_patterns: List[ContentPattern] = Field(
+        default_factory=list, description="Detected content patterns"
+    )
+    navigation_info: NavigationInfo = Field(
+        default_factory=NavigationInfo, description="Navigation structure"
+    )
+    pagination_info: PaginationInfo = Field(
+        default_factory=PaginationInfo, description="Pagination information"
+    )
     content_types: Set[str] = Field(default_factory=set, description="Detected content types")
     main_content_selector: Optional[str] = Field(None, description="Selector for main content area")
-    list_containers: List[str] = Field(default_factory=list, description="Selectors for list containers")
-    item_selectors: List[str] = Field(default_factory=list, description="Selectors for individual items")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional analysis metadata")
+    list_containers: List[str] = Field(
+        default_factory=list, description="Selectors for list containers"
+    )
+    item_selectors: List[str] = Field(
+        default_factory=list, description="Selectors for individual items"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional analysis metadata"
+    )
 
     class Config:
         arbitrary_types_allowed = True
@@ -203,7 +215,10 @@ class WebsiteAnalyzer:
                 selector = self._generate_selector(list_tag)
                 confidence = min(1.0, len(items) / 10.0)  # Higher confidence for more items
 
-                sample_elements = [str(item)[:200] + "..." if len(str(item)) > 200 else str(item) for item in items[:3]]
+                sample_elements = [
+                    str(item)[:200] + "..." if len(str(item)) > 200 else str(item)
+                    for item in items[:3]
+                ]
 
                 patterns.append(
                     ContentPattern(
@@ -216,14 +231,19 @@ class WebsiteAnalyzer:
                 )
 
         # Look for div-based lists
-        potential_containers = soup.find_all("div", class_=re.compile(r"(list|items|grid|container)", re.I))
+        potential_containers = soup.find_all(
+            "div", class_=re.compile(r"(list|items|grid|container)", re.I)
+        )
         for container in potential_containers:
             items = self._find_repeated_elements(container)
             if len(items) >= 3:
                 selector = self._generate_selector(container)
                 confidence = min(0.8, len(items) / 15.0)  # Slightly lower confidence for div lists
 
-                sample_elements = [str(item)[:200] + "..." if len(str(item)) > 200 else str(item) for item in items[:3]]
+                sample_elements = [
+                    str(item)[:200] + "..." if len(str(item)) > 200 else str(item)
+                    for item in items[:3]
+                ]
 
                 patterns.append(
                     ContentPattern(
@@ -292,7 +312,8 @@ class WebsiteAnalyzer:
                         confidence = min(0.8, len(group) / 10.0)
 
                         sample_elements = [
-                            str(elem)[:200] + "..." if len(str(elem)) > 200 else str(elem) for elem in group[:3]
+                            str(elem)[:200] + "..." if len(str(elem)) > 200 else str(elem)
+                            for elem in group[:3]
                         ]
 
                         patterns.append(
@@ -378,7 +399,9 @@ class WebsiteAnalyzer:
         nav_info = NavigationInfo()
 
         # Find main navigation
-        main_nav = soup.find("nav") or soup.find("div", class_=re.compile(r"(main.*nav|nav.*main)", re.I))
+        main_nav = soup.find("nav") or soup.find(
+            "div", class_=re.compile(r"(main.*nav|nav.*main)", re.I)
+        )
         if main_nav:
             nav_info.main_nav_selector = self._generate_selector(main_nav)
 
@@ -402,7 +425,9 @@ class WebsiteAnalyzer:
         # Extract menu items
         if main_nav:
             links = main_nav.find_all("a")
-            nav_info.menu_items = [link.get_text().strip() for link in links if link.get_text().strip()]
+            nav_info.menu_items = [
+                link.get_text().strip() for link in links if link.get_text().strip()
+            ]
 
         return nav_info
 
@@ -411,9 +436,11 @@ class WebsiteAnalyzer:
         pagination_info = PaginationInfo()
 
         # Look for pagination container
-        pagination_container = soup.find("div", class_=re.compile(r"pagination", re.I)) or \
-            soup.find("nav", class_=re.compile(r"pagination", re.I)) or \
-            soup.find("div", class_=re.compile(r"pager", re.I))
+        pagination_container = (
+            soup.find("div", class_=re.compile(r"pagination", re.I))
+            or soup.find("nav", class_=re.compile(r"pagination", re.I))
+            or soup.find("div", class_=re.compile(r"pager", re.I))
+        )
 
         if pagination_container:
             pagination_info.pagination_selector = self._generate_selector(pagination_container)
@@ -437,7 +464,9 @@ class WebsiteAnalyzer:
                 pagination_info.page_number_selector = self._generate_common_selector(number_links)
 
                 # Try to determine total pages
-                numbers = [int(link.get_text()) for link in number_links if link.get_text().isdigit()]
+                numbers = [
+                    int(link.get_text()) for link in number_links if link.get_text().isdigit()
+                ]
                 if numbers:
                     pagination_info.total_pages = max(numbers)
 
@@ -455,7 +484,9 @@ class WebsiteAnalyzer:
         if soup.find_all(["ul", "ol"]) or soup.find_all(attrs={"class": re.compile(r"list", re.I)}):
             content_types.add("list")
 
-        if soup.find_all("article") or soup.find_all(attrs={"class": re.compile(r"(article|post|blog)", re.I)}):
+        if soup.find_all("article") or soup.find_all(
+            attrs={"class": re.compile(r"(article|post|blog)", re.I)}
+        ):
             content_types.add("article")
 
         if soup.find_all(attrs={"class": re.compile(r"(product|price|buy|cart)", re.I)}):

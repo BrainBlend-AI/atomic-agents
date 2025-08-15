@@ -190,7 +190,9 @@ class TestScenarioBasedIntegration:
 
     def test_pagination_scenario(self):
         """Test pagination scenario integration."""
-        scenario = self.scenario_generator.generate_scenario(ScenarioType.PAGINATION, num_pages=3, items_per_page=5)
+        scenario = self.scenario_generator.generate_scenario(
+            ScenarioType.PAGINATION, num_pages=3, items_per_page=5
+        )
 
         assert scenario is not None
         assert len(scenario.test_urls) >= 3  # Should have multiple page URLs
@@ -203,7 +205,9 @@ class TestScenarioBasedIntegration:
 
     def test_performance_scenario(self):
         """Test performance scenario integration."""
-        scenario = self.scenario_generator.generate_scenario(ScenarioType.PERFORMANCE, num_products=50)
+        scenario = self.scenario_generator.generate_scenario(
+            ScenarioType.PERFORMANCE, num_products=50
+        )
 
         assert scenario is not None
         assert len(scenario.test_urls) > 10  # Should have many URLs for performance testing

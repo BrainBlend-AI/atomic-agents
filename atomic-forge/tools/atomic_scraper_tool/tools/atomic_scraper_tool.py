@@ -12,8 +12,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from atomic_agents.lib.base.base_tool import BaseTool
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
+from atomic_agents import BaseTool, BaseIOSchema
 from pydantic import Field, field_validator
 
 from ..config.scraper_config import AtomicScraperConfig
@@ -24,7 +23,7 @@ from ..extraction.content_extractor import ContentExtractor
 from ..extraction.data_processor import DataProcessor
 from ..extraction.quality_analyzer import QualityAnalyzer, QualityThresholds
 from ..core.error_handler import ErrorHandler, ErrorContext, RetryConfig
-from ..core.exceptions import NetworkError
+from ..core.exceptions import ScrapingError, NetworkError, ParsingError, QualityError
 
 
 logger = logging.getLogger(__name__)
@@ -60,10 +59,12 @@ class AtomicScraperOutputSchema(BaseIOSchema):
 
     results: Dict[str, Any] = Field(..., description="Scraping results with extracted data")
     summary: str = Field(..., description="Human-readable summary of results")
-    quality_metrics: Dict[str, float] = Field(..., description="Quality metrics for the scraping operation")
+    quality_metrics: Dict[str, float] = Field(
+        ..., description="Quality metrics for the scraping operation"
+    )
 
 
-class AtomicScraperTool(BaseTool):
+class AtomicScraperTool(BaseTool[AtomicScraperInputSchema, AtomicScraperOutputSchema]):
     """
     Next-Generation Intelligent Web Scraping Tool built on the atomic agents framework.
 
@@ -73,9 +74,9 @@ class AtomicScraperTool(BaseTool):
     """
 
     name = "Atomic Scraper Tool"
-    description = "Next-generation intelligent web scraping tool with AI-powered strategy generation"
-    input_schema = AtomicScraperInputSchema
-    output_schema = AtomicScraperOutputSchema
+    description = (
+        "Next-generation intelligent web scraping tool with AI-powered strategy generation"
+    )
 
     def __init__(self, config: Optional[AtomicScraperConfig] = None):
         """
@@ -89,8 +90,9 @@ class AtomicScraperTool(BaseTool):
             config = AtomicScraperConfig(base_url="https://example.com")
 
         # Store the scraper config separately from the base tool config
-        self.config = config
+        self.scraper_config = config
 
+        # Initialize parent with base tool config
         super().__init__()
 
         # Initialize components
@@ -107,7 +109,9 @@ class AtomicScraperTool(BaseTool):
         self.quality_analyzer = QualityAnalyzer(quality_thresholds)
 
         # Initialize error handler with retry configuration
-        retry_config = RetryConfig(max_attempts=config.max_retries, base_delay=config.retry_delay, max_delay=30.0)
+        retry_config = RetryConfig(
+            max_attempts=config.max_retries, base_delay=config.retry_delay, max_delay=30.0
+        )
         self.error_handler = ErrorHandler(retry_config)
 
         # Initialize HTTP session with configuration
@@ -151,7 +155,9 @@ class AtomicScraperTool(BaseTool):
                     input_data.target_url, strategy, extraction_rules, input_data.max_results
                 )
             elif strategy.scrape_type == "detail":
-                scraping_result = self._scrape_detail_content(input_data.target_url, strategy, extraction_rules)
+                scraping_result = self._scrape_detail_content(
+                    input_data.target_url, strategy, extraction_rules
+                )
             elif strategy.scrape_type == "search":
                 scraping_result = self._scrape_search_results(
                     input_data.target_url, strategy, extraction_rules, input_data.max_results
@@ -327,7 +333,9 @@ class AtomicScraperTool(BaseTool):
         Raises:
             NetworkError: If request fails
         """
-        context = ErrorContext(operation="fetch_page", url=url, max_attempts=self.config.max_retries)
+        context = ErrorContext(
+            operation="fetch_page", url=url, max_attempts=self.scraper_config.max_retries
+        )
 
         def fetch_operation():
             try:
@@ -341,8 +349,8 @@ class AtomicScraperTool(BaseTool):
 
     def _apply_rate_limiting(self) -> None:
         """Apply rate limiting delay between requests."""
-        if hasattr(self.config, "request_delay") and self.config.request_delay > 0:
-            time.sleep(self.config.request_delay)
+        if hasattr(self.config, "request_delay") and self.scraper_config.request_delay > 0:
+            time.sleep(self.scraper_config.request_delay)
 
     def _generate_summary(self, scraping_result: ScrapingResult) -> str:
         """
@@ -397,14 +405,14 @@ class AtomicScraperTool(BaseTool):
             "version": "1.0.0",
             "description": self.description,
             "config": {
-                "base_url": self.config.base_url,
-                "request_delay": self.config.request_delay,
-                "timeout": self.config.timeout,
-                "max_pages": self.config.max_pages,
-                "max_results": self.config.max_results,
-                "min_quality_score": self.config.min_quality_score,
-                "respect_robots_txt": self.config.respect_robots_txt,
-                "enable_rate_limiting": self.config.enable_rate_limiting,
+                "base_url": self.scraper_config.base_url,
+                "request_delay": self.scraper_config.request_delay,
+                "timeout": self.scraper_config.timeout,
+                "max_pages": self.scraper_config.max_pages,
+                "max_results": self.scraper_config.max_results,
+                "min_quality_score": self.scraper_config.min_quality_score,
+                "respect_robots_txt": self.scraper_config.respect_robots_txt,
+                "enable_rate_limiting": self.scraper_config.enable_rate_limiting,
             },
             "supported_strategies": ["list", "detail", "search", "sitemap"],
             "supported_extraction_types": ["text", "attribute", "html", "href", "src"],
@@ -495,20 +503,26 @@ class AtomicScraperTool(BaseTool):
                 html_content = self._fetch_page_content(current_url)
 
                 # Extract items from this page
-                page_items = self._extract_items_from_page(html_content, current_url, strategy, extraction_rules)
+                page_items = self._extract_items_from_page(
+                    html_content, current_url, strategy, extraction_rules
+                )
 
                 # Filter items that meet quality threshold
                 quality_items = []
                 for item in page_items:
-                    if item.quality_score >= self.config.min_quality_score:
+                    if item.quality_score >= self.scraper_config.min_quality_score:
                         quality_items.append(item)
                     else:
-                        errors.append(f"Item from {current_url} below quality threshold: {item.quality_score:.1f}%")
+                        errors.append(
+                            f"Item from {current_url} below quality threshold: {item.quality_score:.1f}%"
+                        )
 
                 all_items.extend(quality_items)
                 pages_scraped += 1
 
-                logger.info(f"Page {pages_scraped}: Found {len(page_items)} items, {len(quality_items)} passed quality check")
+                logger.info(
+                    f"Page {pages_scraped}: Found {len(page_items)} items, {len(quality_items)} passed quality check"
+                )
 
                 # Check if we have enough results
                 if len(all_items) >= max_results:
@@ -517,7 +531,9 @@ class AtomicScraperTool(BaseTool):
 
                 # Find next page URL if pagination is enabled
                 if strategy.pagination_strategy:
-                    current_url = self._find_next_page_url(html_content, current_url, strategy.pagination_strategy)
+                    current_url = self._find_next_page_url(
+                        html_content, current_url, strategy.pagination_strategy
+                    )
                 else:
                     break
 
@@ -529,7 +545,9 @@ class AtomicScraperTool(BaseTool):
 
         # Calculate metrics
         total_found = len(all_items) + len([e for e in errors if "below quality threshold" in e])
-        avg_quality = sum(item.quality_score for item in all_items) / len(all_items) if all_items else 0.0
+        avg_quality = (
+            sum(item.quality_score for item in all_items) / len(all_items) if all_items else 0.0
+        )
 
         return ScrapingResult(
             items=all_items,
@@ -582,8 +600,10 @@ class AtomicScraperTool(BaseTool):
             item = items[0]
 
             # Check quality threshold
-            if item.quality_score < self.config.min_quality_score:
-                errors.append(f"Detail page content below quality threshold: {item.quality_score:.1f}%")
+            if item.quality_score < self.scraper_config.min_quality_score:
+                errors.append(
+                    f"Detail page content below quality threshold: {item.quality_score:.1f}%"
+                )
                 return ScrapingResult(
                     items=[],
                     total_items_found=1,
@@ -687,7 +707,9 @@ class AtomicScraperTool(BaseTool):
                 )
 
             # Limit URLs to process
-            urls_to_process = sitemap_urls[: min(len(sitemap_urls), max_results, strategy.max_pages)]
+            urls_to_process = sitemap_urls[
+                : min(len(sitemap_urls), max_results, strategy.max_pages)
+            ]
 
             # Scrape each URL from sitemap
             for i, sitemap_url in enumerate(urls_to_process):
@@ -698,11 +720,13 @@ class AtomicScraperTool(BaseTool):
 
                     # Fetch and extract from this URL
                     html_content = self._fetch_page_content(sitemap_url)
-                    page_items = self._extract_items_from_page(html_content, sitemap_url, strategy, extraction_rules)
+                    page_items = self._extract_items_from_page(
+                        html_content, sitemap_url, strategy, extraction_rules
+                    )
 
                     # Filter by quality
                     for item in page_items:
-                        if item.quality_score >= self.config.min_quality_score:
+                        if item.quality_score >= self.scraper_config.min_quality_score:
                             all_items.append(item)
                             if len(all_items) >= max_results:
                                 break
@@ -719,7 +743,9 @@ class AtomicScraperTool(BaseTool):
                     continue
 
             # Calculate metrics
-            avg_quality = sum(item.quality_score for item in all_items) / len(all_items) if all_items else 0.0
+            avg_quality = (
+                sum(item.quality_score for item in all_items) / len(all_items) if all_items else 0.0
+            )
 
             return ScrapingResult(
                 items=all_items,
@@ -807,7 +833,9 @@ class AtomicScraperTool(BaseTool):
 
         return items
 
-    def _find_next_page_url(self, html_content: str, current_url: str, pagination_strategy: str) -> Optional[str]:
+    def _find_next_page_url(
+        self, html_content: str, current_url: str, pagination_strategy: str
+    ) -> Optional[str]:
         """
         Find the next page URL based on pagination strategy.
 
@@ -838,9 +866,13 @@ class AtomicScraperTool(BaseTool):
                         if ":contains(" in selector:
                             # Handle text-based selectors differently
                             if "Next" in selector:
-                                next_links = soup.find_all("a", string=lambda text: text and "Next" in text)
+                                next_links = soup.find_all(
+                                    "a", string=lambda text: text and "Next" in text
+                                )
                             elif ">" in selector:
-                                next_links = soup.find_all("a", string=lambda text: text and ">" in text)
+                                next_links = soup.find_all(
+                                    "a", string=lambda text: text and ">" in text
+                                )
                             else:
                                 continue
 
@@ -866,7 +898,9 @@ class AtomicScraperTool(BaseTool):
                 for link in page_links:
                     href = link.get("href")
                     if href:
-                        link_page_num = self._extract_page_number_from_url(urljoin(current_url, href))
+                        link_page_num = self._extract_page_number_from_url(
+                            urljoin(current_url, href)
+                        )
                         if link_page_num == current_page_num + 1:
                             return urljoin(current_url, href)
 
@@ -883,9 +917,13 @@ class AtomicScraperTool(BaseTool):
                     try:
                         if ":contains(" in selector:
                             if "Load More" in selector:
-                                elements = soup.find_all("a", string=lambda text: text and "Load More" in text)
+                                elements = soup.find_all(
+                                    "a", string=lambda text: text and "Load More" in text
+                                )
                             elif "Show More" in selector:
-                                elements = soup.find_all("a", string=lambda text: text and "Show More" in text)
+                                elements = soup.find_all(
+                                    "a", string=lambda text: text and "Show More" in text
+                                )
                             else:
                                 continue
 

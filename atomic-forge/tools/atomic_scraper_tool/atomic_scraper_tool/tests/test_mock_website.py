@@ -214,7 +214,11 @@ class TestMockWebsite:
         html = mock_site.generate_page("/")
 
         # Should contain error indicators
-        assert "500 Internal Server Error" in html or "Connection timed out" in html or len(html) < 1000  # Partial content
+        assert (
+            "500 Internal Server Error" in html
+            or "Connection timed out" in html
+            or len(html) < 1000
+        )  # Partial content
 
     def test_malformed_html_simulation(self):
         """Test malformed HTML simulation."""

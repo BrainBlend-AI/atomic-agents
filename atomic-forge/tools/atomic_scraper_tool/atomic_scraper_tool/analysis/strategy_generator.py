@@ -58,7 +58,9 @@ class StrategyGenerator:
             "contact": [".contact", ".phone", ".email", ".tel"],
         }
 
-    def generate_strategy(self, analysis: WebsiteStructureAnalysis, context: StrategyContext) -> ScrapingStrategy:
+    def generate_strategy(
+        self, analysis: WebsiteStructureAnalysis, context: StrategyContext
+    ) -> ScrapingStrategy:
         """
         Generate an optimal scraping strategy based on analysis and context.
 
@@ -100,7 +102,9 @@ class StrategyGenerator:
             request_delay=request_delay,
         )
 
-    def _determine_scrape_type(self, analysis: WebsiteStructureAnalysis, context: StrategyContext) -> str:
+    def _determine_scrape_type(
+        self, analysis: WebsiteStructureAnalysis, context: StrategyContext
+    ) -> str:
         """Determine the optimal scrape type."""
         # If user specified a target content type, use that
         if context.target_content_type in ["list", "detail", "search", "sitemap"]:
@@ -149,7 +153,9 @@ class StrategyGenerator:
                 selectors.extend(analysis.item_selectors)
 
             # Add pattern-based selectors
-            list_patterns = [p for p in analysis.content_patterns if p.pattern_type in ["list", "product"]]
+            list_patterns = [
+                p for p in analysis.content_patterns if p.pattern_type in ["list", "product"]
+            ]
             for pattern in sorted(list_patterns, key=lambda x: x.confidence, reverse=True):
                 if pattern.selector not in selectors:
                     selectors.append(pattern.selector)
@@ -184,7 +190,9 @@ class StrategyGenerator:
 
         return selectors[:5]  # Limit to top 5 selectors
 
-    def _generate_fallback_selectors(self, analysis: WebsiteStructureAnalysis, scrape_type: str) -> List[str]:
+    def _generate_fallback_selectors(
+        self, analysis: WebsiteStructureAnalysis, scrape_type: str
+    ) -> List[str]:
         """Generate fallback selectors when primary detection fails."""
         fallback_selectors = []
 
@@ -227,7 +235,9 @@ class StrategyGenerator:
 
         return fallback_selectors
 
-    def _determine_pagination_strategy(self, analysis: WebsiteStructureAnalysis, context: StrategyContext) -> Optional[str]:
+    def _determine_pagination_strategy(
+        self, analysis: WebsiteStructureAnalysis, context: StrategyContext
+    ) -> Optional[str]:
         """Determine the optimal pagination strategy."""
         if not context.include_pagination:
             return None
@@ -245,7 +255,9 @@ class StrategyGenerator:
             return type_mapping.get(pagination_info.pagination_type, "next_link")
 
         # Look for pagination indicators in patterns
-        pagination_patterns = [p for p in analysis.content_patterns if p.pattern_type == "pagination"]
+        pagination_patterns = [
+            p for p in analysis.content_patterns if p.pattern_type == "pagination"
+        ]
         if pagination_patterns:
             # Analyze the pagination pattern to determine type
             best_pattern = max(pagination_patterns, key=lambda x: x.confidence)
@@ -260,7 +272,9 @@ class StrategyGenerator:
 
         return None
 
-    def _generate_content_filters(self, analysis: WebsiteStructureAnalysis, context: StrategyContext) -> List[str]:
+    def _generate_content_filters(
+        self, analysis: WebsiteStructureAnalysis, context: StrategyContext
+    ) -> List[str]:
         """Generate content filtering rules."""
         filters = []
 
@@ -292,7 +306,9 @@ class StrategyGenerator:
 
         return filters
 
-    def _generate_extraction_rules(self, analysis: WebsiteStructureAnalysis, context: StrategyContext) -> Dict[str, str]:
+    def _generate_extraction_rules(
+        self, analysis: WebsiteStructureAnalysis, context: StrategyContext
+    ) -> Dict[str, str]:
         """Generate field extraction rules."""
         rules = {}
 
@@ -323,7 +339,9 @@ class StrategyGenerator:
 
         return rules
 
-    def _find_best_selector_for_field(self, field_name: str, analysis: WebsiteStructureAnalysis) -> str:
+    def _find_best_selector_for_field(
+        self, field_name: str, analysis: WebsiteStructureAnalysis
+    ) -> str:
         """Find the best selector for a specific field."""
         if field_name not in self.extraction_patterns:
             return ""
@@ -351,9 +369,11 @@ class StrategyGenerator:
             base_delay *= 2.0
 
         # Adjust based on page complexity
-        total_elements = analysis.metadata.get("total_links", 0) + \
-            analysis.metadata.get("total_images", 0) + \
-            analysis.metadata.get("total_forms", 0)
+        total_elements = (
+            analysis.metadata.get("total_links", 0)
+            + analysis.metadata.get("total_images", 0)
+            + analysis.metadata.get("total_forms", 0)
+        )
 
         if total_elements > 100:
             base_delay *= 1.5
@@ -362,7 +382,9 @@ class StrategyGenerator:
 
         return min(base_delay, 5.0)  # Cap at 5 seconds
 
-    def _determine_max_pages(self, analysis: WebsiteStructureAnalysis, context: StrategyContext) -> int:
+    def _determine_max_pages(
+        self, analysis: WebsiteStructureAnalysis, context: StrategyContext
+    ) -> int:
         """Determine maximum pages to scrape."""
         # Start with context max_results
         if context.max_results <= 10:
@@ -374,7 +396,9 @@ class StrategyGenerator:
         else:
             return 20
 
-    def recommend_selectors(self, analysis: WebsiteStructureAnalysis, field_name: str) -> List[SelectorRecommendation]:
+    def recommend_selectors(
+        self, analysis: WebsiteStructureAnalysis, field_name: str
+    ) -> List[SelectorRecommendation]:
         """Recommend selectors for a specific field with confidence scores."""
         recommendations = []
 
@@ -397,7 +421,9 @@ class StrategyGenerator:
 
         return recommendations
 
-    def optimize_strategy(self, strategy: ScrapingStrategy, analysis: WebsiteStructureAnalysis) -> ScrapingStrategy:
+    def optimize_strategy(
+        self, strategy: ScrapingStrategy, analysis: WebsiteStructureAnalysis
+    ) -> ScrapingStrategy:
         """Optimize an existing strategy based on analysis."""
         # Create a copy to modify
         optimized = ScrapingStrategy(

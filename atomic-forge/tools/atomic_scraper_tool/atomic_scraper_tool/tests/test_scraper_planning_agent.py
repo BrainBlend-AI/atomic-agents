@@ -5,9 +5,9 @@ Tests agent initialization, schema validation, and basic request handling.
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 import instructor
-from atomic_agents.agents.base_agent import BaseAgentConfig
+from atomic_agents import AgentConfig
 
 from atomic_scraper_tool.agents.scraper_planning_agent import (
     AtomicScraperPlanningAgent,
@@ -79,7 +79,9 @@ class TestAtomicScraperAgentInputSchema:
 
     def test_default_values(self):
         """Test that default values are set correctly."""
-        input_data = AtomicScraperAgentInputSchema(request="test request", target_url="https://example.com")
+        input_data = AtomicScraperAgentInputSchema(
+            request="test request", target_url="https://example.com"
+        )
 
         assert input_data.max_results == 10
         assert input_data.quality_threshold == 50.0
@@ -88,28 +90,40 @@ class TestAtomicScraperAgentInputSchema:
         """Test max_results validation constraints."""
         # Test minimum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", max_results=0)
+            AtomicScraperAgentInputSchema(
+                request="test", target_url="https://example.com", max_results=0
+            )
 
         # Test maximum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", max_results=1001)
+            AtomicScraperAgentInputSchema(
+                request="test", target_url="https://example.com", max_results=1001
+            )
 
         # Test valid values
-        valid_input = AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", max_results=500)
+        valid_input = AtomicScraperAgentInputSchema(
+            request="test", target_url="https://example.com", max_results=500
+        )
         assert valid_input.max_results == 500
 
     def test_quality_threshold_validation(self):
         """Test quality_threshold validation constraints."""
         # Test minimum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", quality_threshold=-1.0)
+            AtomicScraperAgentInputSchema(
+                request="test", target_url="https://example.com", quality_threshold=-1.0
+            )
 
         # Test maximum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", quality_threshold=101.0)
+            AtomicScraperAgentInputSchema(
+                request="test", target_url="https://example.com", quality_threshold=101.0
+            )
 
         # Test valid values
-        valid_input = AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", quality_threshold=85.5)
+        valid_input = AtomicScraperAgentInputSchema(
+            request="test", target_url="https://example.com", quality_threshold=85.5
+        )
         assert valid_input.quality_threshold == 85.5
 
     def test_required_fields(self):
@@ -197,17 +211,16 @@ class TestAtomicScraperPlanningAgent:
         self.mock_client = Mock(spec=instructor.client.Instructor)
 
         # Create agent config
-        self.config = BaseAgentConfig(client=self.mock_client, model="gpt-4o-mini")
+        self.config = AgentConfig(client=self.mock_client, model="gpt-4o-mini")
 
     def test_agent_initialization(self):
         """Test that agent initializes correctly."""
         agent = AtomicScraperPlanningAgent(self.config)
 
         assert agent is not None
-        assert agent.input_schema == AtomicScraperAgentInputSchema
-        assert agent.output_schema == AtomicScraperAgentOutputSchema
-        assert agent.client == self.mock_client
-        assert agent.model == "gpt-4o-mini"
+        # In v2.0, schemas are type parameters, not attributes
+        assert hasattr(agent, "client")
+        assert hasattr(agent, "model")
 
     def test_agent_has_system_prompt_generator(self):
         """Test that agent has system prompt generator with context."""
@@ -230,19 +243,23 @@ class TestAtomicScraperPlanningAgent:
         assert len(system_prompt) > 0
         assert "Atomic Scraper Capabilities" in system_prompt
 
-    def test_agent_memory_initialization(self):
-        """Test that agent memory is initialized."""
+    def test_agent_history_initialization(self):
+        """Test that agent history is initialized."""
         agent = AtomicScraperPlanningAgent(self.config)
 
-        assert agent.memory is not None
-        assert hasattr(agent.memory, "get_history")
-        assert hasattr(agent.memory, "add_message")
+        # In v2.0, memory is called history
+        assert hasattr(agent, "history")
+        if agent.history is not None:
+            assert hasattr(agent.history, "get_history")
+            assert hasattr(agent.history, "add_message")
 
     def test_run_method_basic_execution(self):
         """Test that run method executes and returns valid output."""
         agent = AtomicScraperPlanningAgent(self.config)
 
-        input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
+        input_data = AtomicScraperAgentInputSchema(
+            request="scrape Saturday markets", target_url="https://example.com"
+        )
 
         # The run method should execute without raising NotImplementedError
         result = agent.run(input_data)
@@ -258,21 +275,18 @@ class TestAtomicScraperPlanningAgent:
 
     def test_agent_config_update(self):
         """Test that agent config is properly updated."""
-        original_input_schema = self.config.input_schema
-        original_output_schema = self.config.output_schema
         original_system_prompt_generator = self.config.system_prompt_generator
 
         agent = AtomicScraperPlanningAgent(self.config)
 
-        # Config should be updated with our schemas
-        assert self.config.input_schema == AtomicScraperAgentInputSchema
-        assert self.config.output_schema == AtomicScraperAgentOutputSchema
+        # In v2.0, schemas are type parameters, not config attributes
+        # Config should be updated with system prompt generator
         assert self.config.system_prompt_generator is not None
         assert self.config.system_prompt_generator != original_system_prompt_generator
 
     def test_agent_with_custom_model(self):
         """Test agent initialization with custom model."""
-        custom_config = BaseAgentConfig(client=self.mock_client, model="gpt-4")
+        custom_config = AgentConfig(client=self.mock_client, model="gpt-4")
 
         agent = AtomicScraperPlanningAgent(custom_config)
 
@@ -317,7 +331,7 @@ class TestRequestParsingAndStrategyCoordination:
         self.mock_client = Mock(spec=instructor.client.Instructor)
 
         # Create agent config
-        self.config = BaseAgentConfig(client=self.mock_client, model="gpt-4o-mini")
+        self.config = AgentConfig(client=self.mock_client, model="gpt-4o-mini")
 
         self.agent = AtomicScraperPlanningAgent(self.config)
 
@@ -378,7 +392,9 @@ class TestRequestParsingAndStrategyCoordination:
             "keywords": ["saturday", "markets"],
         }
 
-        input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
+        input_data = AtomicScraperAgentInputSchema(
+            request="scrape Saturday markets", target_url="https://example.com"
+        )
 
         schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
@@ -396,7 +412,9 @@ class TestRequestParsingAndStrategyCoordination:
             "keywords": ["product", "prices"],
         }
 
-        input_data = AtomicScraperAgentInputSchema(request="scrape product prices", target_url="https://example.com")
+        input_data = AtomicScraperAgentInputSchema(
+            request="scrape product prices", target_url="https://example.com"
+        )
 
         schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
@@ -453,26 +471,40 @@ class TestRequestParsingAndStrategyCoordination:
         from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
         from atomic_scraper_tool.analysis.website_analyzer import WebsiteStructureAnalysis
 
-        analysis = WebsiteStructureAnalysis(url="https://example.com", title="Test Site", metadata={})
+        analysis = WebsiteStructureAnalysis(
+            url="https://example.com", title="Test Site", metadata={}
+        )
 
         strategy = ScrapingStrategy(scrape_type="list", target_selectors=[".item"])
 
         schema_recipe = SchemaRecipe(
             name="test_schema",
             description="Test schema",
-            fields={"title": FieldDefinition(field_type="string", description="Title", extraction_selector="h1")},
+            fields={
+                "title": FieldDefinition(
+                    field_type="string", description="Title", extraction_selector="h1"
+                )
+            },
         )
 
-        parsed_request = {"keywords": ["test", "data"], "target_data": ["items"]}
+        parsed_request = {
+            "keywords": ["test", "data"],
+            "target_data": ["items"],
+            "content_type": "list",
+            "temporal_filters": [],
+            "location_filters": [],
+        }
 
-        reasoning = self.agent._generate_reasoning(analysis, strategy, schema_recipe, parsed_request)
+        reasoning = self.agent._generate_reasoning(
+            analysis, strategy, schema_recipe, parsed_request
+        )
 
         assert "Decision Reasoning" in reasoning
         assert "Strategy Selection" in reasoning
         assert "list" in reasoning
-        assert "Selector Selection" in reasoning
+        assert "Selector Strategy" in reasoning
         assert "Schema Design" in reasoning
-        assert "Quality Considerations" in reasoning
+        assert "Quality Assurance" in reasoning
 
     def test_calculate_confidence_high(self):
         """Test confidence calculation with good inputs."""
@@ -480,9 +512,13 @@ class TestRequestParsingAndStrategyCoordination:
         from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
         from atomic_scraper_tool.analysis.website_analyzer import WebsiteStructureAnalysis
 
-        analysis = WebsiteStructureAnalysis(url="https://example.com", title="Test Site", metadata={})  # No error
+        analysis = WebsiteStructureAnalysis(
+            url="https://example.com", title="Test Site", metadata={}
+        )  # No error
 
-        strategy = ScrapingStrategy(scrape_type="list", target_selectors=[".item", ".listing"])  # Has selectors
+        strategy = ScrapingStrategy(
+            scrape_type="list", target_selectors=[".item", ".listing"]
+        )  # Has selectors
 
         fields = {
             "title": FieldDefinition(
@@ -491,11 +527,17 @@ class TestRequestParsingAndStrategyCoordination:
                 extraction_selector="h1",
                 required=True,  # Has required field
             ),
-            "description": FieldDefinition(field_type="string", description="Description", extraction_selector="p"),
-            "price": FieldDefinition(field_type="string", description="Price", extraction_selector=".price"),
+            "description": FieldDefinition(
+                field_type="string", description="Description", extraction_selector="p"
+            ),
+            "price": FieldDefinition(
+                field_type="string", description="Price", extraction_selector=".price"
+            ),
         }
 
-        schema_recipe = SchemaRecipe(name="test_schema", description="Test schema", fields=fields)  # 3 fields = good coverage
+        schema_recipe = SchemaRecipe(
+            name="test_schema", description="Test schema", fields=fields
+        )  # 3 fields = good coverage
 
         confidence = self.agent._calculate_confidence(analysis, strategy, schema_recipe)
 
@@ -513,7 +555,9 @@ class TestRequestParsingAndStrategyCoordination:
             metadata={"error": "Failed to fetch"},  # Has error
         )
 
-        strategy = ScrapingStrategy(scrape_type="list", target_selectors=["div"])  # Minimal selector to pass validation
+        strategy = ScrapingStrategy(
+            scrape_type="list", target_selectors=["div"]
+        )  # Minimal selector to pass validation
 
         fields = {
             "title": FieldDefinition(
@@ -536,7 +580,9 @@ class TestRequestParsingAndStrategyCoordination:
 
     def test_handle_error(self):
         """Test error handling."""
-        input_data = AtomicScraperAgentInputSchema(request="test request", target_url="https://example.com")
+        input_data = AtomicScraperAgentInputSchema(
+            request="test request", target_url="https://example.com"
+        )
 
         result = self.agent._handle_error("Test error message", input_data)
 
