@@ -12,9 +12,7 @@ import re
 class FieldDefinition(BaseModel):
     """Definition for a data field in a schema recipe."""
 
-    field_type: str = Field(
-        ..., description="Data type: 'string', 'number', 'array', 'object', 'boolean'"
-    )
+    field_type: str = Field(..., description="Data type: 'string', 'number', 'array', 'object', 'boolean'")
     description: str = Field(..., description="Human-readable field description")
     extraction_selector: str = Field(..., description="CSS selector or XPath for extraction")
     validation_pattern: Optional[str] = Field(None, description="Regex pattern for validation")
@@ -78,9 +76,7 @@ class FieldDefinition(BaseModel):
         ]
         for step in v:
             if step not in valid_steps:
-                raise ValueError(
-                    f"Invalid post-processing step: {step}. Valid steps: {valid_steps}"
-                )
+                raise ValueError(f"Invalid post-processing step: {step}. Valid steps: {valid_steps}")
         return v
 
 
@@ -106,9 +102,7 @@ class SchemaRecipe(BaseModel):
 
         # Allow alphanumeric, underscores, hyphens, and spaces
         if not re.match(r"^[a-zA-Z0-9\s\-_]+$", v):
-            raise ValueError(
-                "name can only contain letters, numbers, spaces, hyphens, and underscores"
-            )
+            raise ValueError("name can only contain letters, numbers, spaces, hyphens, and underscores")
         return v
 
     @field_validator("description")
@@ -193,13 +187,9 @@ class SchemaRecipe(BaseModel):
         # Check that required fields have appropriate quality weights
         required_fields = self.get_required_fields()
         if required_fields:
-            avg_required_weight = sum(
-                self.fields[name].quality_weight for name in required_fields
-            ) / len(required_fields)
+            avg_required_weight = sum(self.fields[name].quality_weight for name in required_fields) / len(required_fields)
             if avg_required_weight < 0.5:
-                raise ValueError(
-                    "Required fields should have higher quality weights (average < 0.5)"
-                )
+                raise ValueError("Required fields should have higher quality weights (average < 0.5)")
 
         return self
 

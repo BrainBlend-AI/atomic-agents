@@ -123,9 +123,7 @@ class ErrorHandler:
 
         # Check if we've exceeded max attempts
         if context.attempt >= context.max_attempts:
-            self.logger.warning(
-                f"Max retry attempts ({context.max_attempts}) exceeded for {context.operation}"
-            )
+            self.logger.warning(f"Max retry attempts ({context.max_attempts}) exceeded for {context.operation}")
             self._error_stats["failed_operations"] += 1
             return False
 
@@ -162,9 +160,7 @@ class ErrorHandler:
 
         # Check if we've exceeded max attempts
         if context.attempt >= context.max_attempts:
-            self.logger.warning(
-                f"Max retry attempts ({context.max_attempts}) exceeded for {context.operation}"
-            )
+            self.logger.warning(f"Max retry attempts ({context.max_attempts}) exceeded for {context.operation}")
             self._error_stats["failed_operations"] += 1
             return False
 
@@ -206,9 +202,7 @@ class ErrorHandler:
 
         return self.handle_error(error, context)
 
-    def handle_parsing_error(
-        self, error: ParsingError, context: ErrorContext
-    ) -> Optional[Dict[str, Any]]:
+    def handle_parsing_error(self, error: ParsingError, context: ErrorContext) -> Optional[Dict[str, Any]]:
         """
         Handle parsing errors with partial data recovery.
 
@@ -249,14 +243,10 @@ class ErrorHandler:
         min_acceptable = threshold * 0.3
 
         if quality_score >= min_acceptable:
-            self.logger.warning(
-                f"Including low-quality item (score: {quality_score:.2f}, threshold: {threshold:.2f})"
-            )
+            self.logger.warning(f"Including low-quality item (score: {quality_score:.2f}, threshold: {threshold:.2f})")
             return True
 
-        self.logger.info(
-            f"Rejecting item with quality score {quality_score:.2f} (below minimum {min_acceptable:.2f})"
-        )
+        self.logger.info(f"Rejecting item with quality score {quality_score:.2f} (below minimum {min_acceptable:.2f})")
         return False
 
     def with_retry(self, operation: Callable, context: ErrorContext, *args, **kwargs) -> Any:
@@ -283,9 +273,7 @@ class ErrorHandler:
             try:
                 result = operation(*args, **kwargs)
                 if attempt > 1:
-                    self.logger.info(
-                        f"Operation {context.operation} succeeded on attempt {attempt}"
-                    )
+                    self.logger.info(f"Operation {context.operation} succeeded on attempt {attempt}")
                 return result
 
             except Exception as e:
@@ -295,14 +283,10 @@ class ErrorHandler:
                     break
 
         # All retries failed
-        self.logger.error(
-            f"Operation {context.operation} failed after {context.max_attempts} attempts"
-        )
+        self.logger.error(f"Operation {context.operation} failed after {context.max_attempts} attempts")
         raise last_exception
 
-    async def with_retry_async(
-        self, operation: Callable, context: ErrorContext, *args, **kwargs
-    ) -> Any:
+    async def with_retry_async(self, operation: Callable, context: ErrorContext, *args, **kwargs) -> Any:
         """
         Async version of with_retry.
 
@@ -326,9 +310,7 @@ class ErrorHandler:
             try:
                 result = await operation(*args, **kwargs)
                 if attempt > 1:
-                    self.logger.info(
-                        f"Operation {context.operation} succeeded on attempt {attempt}"
-                    )
+                    self.logger.info(f"Operation {context.operation} succeeded on attempt {attempt}")
                 return result
 
             except Exception as e:
@@ -338,9 +320,7 @@ class ErrorHandler:
                     break
 
         # All retries failed
-        self.logger.error(
-            f"Operation {context.operation} failed after {context.max_attempts} attempts"
-        )
+        self.logger.error(f"Operation {context.operation} failed after {context.max_attempts} attempts")
         raise last_exception
 
     def get_error_stats(self) -> Dict[str, int]:
@@ -388,11 +368,7 @@ class ErrorHandler:
             return True
         elif isinstance(error, NetworkError):
             # Don't retry client errors (4xx status codes)
-            if (
-                hasattr(error, "status_code")
-                and error.status_code
-                and 400 <= error.status_code < 500
-            ):
+            if hasattr(error, "status_code") and error.status_code and 400 <= error.status_code < 500:
                 return False
             return True
 
@@ -422,9 +398,7 @@ class ErrorHandler:
             delay = self.retry_config.base_delay * attempt
 
         elif self.retry_config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
-            delay = self.retry_config.base_delay * (
-                self.retry_config.backoff_multiplier ** (attempt - 1)
-            )
+            delay = self.retry_config.base_delay * (self.retry_config.backoff_multiplier ** (attempt - 1))
 
         else:
             delay = self.retry_config.base_delay
@@ -479,9 +453,7 @@ class ErrorHandler:
 
         return ErrorSeverity.MEDIUM
 
-    def _attempt_partial_recovery(
-        self, error: ParsingError, context: ErrorContext
-    ) -> Optional[Dict[str, Any]]:
+    def _attempt_partial_recovery(self, error: ParsingError, context: ErrorContext) -> Optional[Dict[str, Any]]:
         """
         Attempt to recover partial data from parsing errors.
 

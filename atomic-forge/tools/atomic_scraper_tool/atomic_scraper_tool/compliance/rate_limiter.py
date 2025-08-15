@@ -79,9 +79,7 @@ class RateLimiter:
         """Get statistics for a domain."""
         with self._lock:
             if domain not in self._domain_stats:
-                self._domain_stats[domain] = DomainStats(
-                    domain=domain, current_delay=self.config.default_delay
-                )
+                self._domain_stats[domain] = DomainStats(domain=domain, current_delay=self.config.default_delay)
             return self._domain_stats[domain]
 
     def get_semaphore(self, domain: str) -> threading.Semaphore:
@@ -174,9 +172,7 @@ class RateLimiter:
         """
         return attempt < self.config.max_retries
 
-    def get_retry_delay(
-        self, domain: str, attempt: int, retry_after: Optional[int] = None
-    ) -> float:
+    def get_retry_delay(self, domain: str, attempt: int, retry_after: Optional[int] = None) -> float:
         """
         Get the delay before retrying a failed request.
 
@@ -298,11 +294,7 @@ class RateLimiter:
                     "total_requests": stats.total_requests,
                     "successful_requests": stats.successful_requests,
                     "failed_requests": stats.failed_requests,
-                    "success_rate": (
-                        stats.successful_requests / stats.total_requests
-                        if stats.total_requests > 0
-                        else 0.0
-                    ),
+                    "success_rate": (stats.successful_requests / stats.total_requests if stats.total_requests > 0 else 0.0),
                     "average_response_time": stats.average_response_time,
                     "current_delay": stats.current_delay,
                     "active_requests": stats.active_requests,
@@ -320,9 +312,7 @@ class RateLimiter:
         """
         with self._lock:
             if domain in self._domain_stats:
-                self._domain_stats[domain] = DomainStats(
-                    domain=domain, current_delay=self.config.default_delay
-                )
+                self._domain_stats[domain] = DomainStats(domain=domain, current_delay=self.config.default_delay)
 
     def clear_all_stats(self):
         """Clear all domain statistics."""
@@ -390,9 +380,7 @@ class RespectfulCrawler:
         # Check robots.txt compliance if parser is available
         if self.robots_parser:
             if not self.robots_parser.can_fetch(url, user_agent):
-                raise ScrapingError(
-                    "Request not allowed: Disallowed by robots.txt", "rate_limit_error", url
-                )
+                raise ScrapingError("Request not allowed: Disallowed by robots.txt", "rate_limit_error", url)
 
         # Acquire request slot
         if not self.rate_limiter.acquire_request_slot(url):

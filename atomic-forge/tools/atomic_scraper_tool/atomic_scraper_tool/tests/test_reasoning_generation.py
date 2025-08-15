@@ -142,9 +142,7 @@ class TestReasoningGeneration:
 
     def test_get_strategy_reasoning_list(self):
         """Test strategy reasoning for list scraping."""
-        reasons = self.agent._get_strategy_reasoning(
-            self.test_strategy, self.test_parsed_request, self.mock_analysis
-        )
+        reasons = self.agent._get_strategy_reasoning(self.test_strategy, self.test_parsed_request, self.mock_analysis)
 
         assert len(reasons) > 0
         assert any("multiple items need to be extracted" in reason for reason in reasons)
@@ -153,16 +151,12 @@ class TestReasoningGeneration:
 
     def test_get_strategy_reasoning_detail(self):
         """Test strategy reasoning for detail scraping."""
-        detail_strategy = ScrapingStrategy(
-            scrape_type="detail", target_selectors=["article", ".content"]
-        )
+        detail_strategy = ScrapingStrategy(scrape_type="detail", target_selectors=["article", ".content"])
 
         detail_request = self.test_parsed_request.copy()
         detail_request["content_type"] = "detail"
 
-        reasons = self.agent._get_strategy_reasoning(
-            detail_strategy, detail_request, self.mock_analysis
-        )
+        reasons = self.agent._get_strategy_reasoning(detail_strategy, detail_request, self.mock_analysis)
 
         assert any("detailed information extraction" in reason for reason in reasons)
         assert any("comprehensive data capture" in reason for reason in reasons)
@@ -180,9 +174,7 @@ class TestReasoningGeneration:
 
     def test_get_schema_reasoning(self):
         """Test schema reasoning generation."""
-        reasons = self.agent._get_schema_reasoning(
-            self.test_schema_recipe, self.test_parsed_request
-        )
+        reasons = self.agent._get_schema_reasoning(self.test_schema_recipe, self.test_parsed_request)
 
         assert len(reasons) > 0
         assert any("3 fields with 1 required fields" in reason for reason in reasons)
@@ -195,12 +187,8 @@ class TestReasoningGeneration:
         reasons = self.agent._get_quality_reasoning(self.test_schema_recipe, self.test_strategy)
 
         assert len(reasons) > 0
-        assert any(
-            "Required fields ensure minimum data completeness" in reason for reason in reasons
-        )
-        assert any(
-            "Quality weights prioritize critical information" in reason for reason in reasons
-        )
+        assert any("Required fields ensure minimum data completeness" in reason for reason in reasons)
+        assert any("Quality weights prioritize critical information" in reason for reason in reasons)
         assert any("Post-processing steps clean and normalize" in reason for reason in reasons)
 
     def test_explain_selector(self):
@@ -222,9 +210,7 @@ class TestReasoningGeneration:
 
     def test_assess_risks(self):
         """Test risk assessment functionality."""
-        risks = self.agent._assess_risks(
-            self.mock_analysis, self.test_strategy, self.test_schema_recipe
-        )
+        risks = self.agent._assess_risks(self.mock_analysis, self.test_strategy, self.test_schema_recipe)
 
         # Should be a list (may be empty for good configurations)
         assert isinstance(risks, list)
@@ -280,9 +266,7 @@ class TestReasoningGeneration:
 
     def test_calculate_confidence_comprehensive(self):
         """Test comprehensive confidence calculation."""
-        confidence = self.agent._calculate_confidence(
-            self.mock_analysis, self.test_strategy, self.test_schema_recipe
-        )
+        confidence = self.agent._calculate_confidence(self.mock_analysis, self.test_strategy, self.test_schema_recipe)
 
         assert 0.0 <= confidence <= 1.0
         assert confidence > 0.5  # Should be reasonably confident with good inputs
@@ -392,9 +376,7 @@ class TestReasoningGeneration:
             },
         )
 
-        reasoning = self.agent._generate_reasoning(
-            self.mock_analysis, minimal_strategy, minimal_schema, minimal_request
-        )
+        reasoning = self.agent._generate_reasoning(self.mock_analysis, minimal_strategy, minimal_schema, minimal_request)
 
         # Should still generate comprehensive reasoning
         assert len(reasoning) > 500  # Should be substantial
@@ -462,9 +444,7 @@ class TestConfidenceScoring:
             },
         )
 
-        confidence = self.agent._calculate_confidence(
-            perfect_analysis, perfect_strategy, perfect_schema
-        )
+        confidence = self.agent._calculate_confidence(perfect_analysis, perfect_strategy, perfect_schema)
 
         assert confidence > 0.8  # Should be very confident
 

@@ -156,9 +156,7 @@ class TestAtomicScraperApp:
     @patch("atomic_scraper_tool.main.AtomicScraperApp._display_planning_results")
     @patch("atomic_scraper_tool.main.AtomicScraperApp._display_scraping_results")
     @patch("atomic_scraper_tool.main.Confirm.ask")
-    def test_process_scraping_request_success(
-        self, mock_confirm, mock_display_results, mock_display_planning
-    ):
+    def test_process_scraping_request_success(self, mock_confirm, mock_display_results, mock_display_planning):
         """Test successful scraping request processing."""
         app = AtomicScraperApp(config_path=self.config_file.name)
 
@@ -232,9 +230,7 @@ class TestAtomicScraperApp:
         scraping_result.summary = "Test summary"
         scraping_result.results = {"total_scraped": 5}
 
-        app._save_to_history(
-            "Test request", "https://example.com", planning_result, scraping_result
-        )
+        app._save_to_history("Test request", "https://example.com", planning_result, scraping_result)
 
         assert len(app.session_history) == 1
         entry = app.session_history[0]
@@ -306,9 +302,7 @@ class TestAtomicScraperApp:
 
         long_description = "A" * 150  # Longer than 100 characters
 
-        items = [
-            {"data": {"title": "Item 1", "description": long_description}, "quality_score": 85.0}
-        ]
+        items = [{"data": {"title": "Item 1", "description": long_description}, "quality_score": 85.0}]
 
         app._display_sample_items(items)
 
@@ -779,9 +773,7 @@ class TestMainFunction:
         main()
 
         # Verify app was created with config path
-        mock_app_class.assert_called_once_with(
-            config_path="test.json", client=None, demo_mode=False
-        )
+        mock_app_class.assert_called_once_with(config_path="test.json", client=None, demo_mode=False)
 
         # Verify debug mode was enabled
         assert mock_app.debug_mode is True

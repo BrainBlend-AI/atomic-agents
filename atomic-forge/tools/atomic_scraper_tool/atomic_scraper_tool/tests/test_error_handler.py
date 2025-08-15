@@ -315,9 +315,7 @@ class TestErrorHandler:
 
     def test_calculate_delay_exponential(self):
         """Test delay calculation with exponential backoff."""
-        config = RetryConfig(
-            strategy=RetryStrategy.EXPONENTIAL_BACKOFF, base_delay=1.0, backoff_multiplier=2.0
-        )
+        config = RetryConfig(strategy=RetryStrategy.EXPONENTIAL_BACKOFF, base_delay=1.0, backoff_multiplier=2.0)
         handler = ErrorHandler(config)
 
         assert handler._calculate_delay(1) == 1.0

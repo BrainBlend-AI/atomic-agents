@@ -174,9 +174,7 @@ Sitemap: https://example.com/sitemap2.xml
     @patch.object(RobotsParser, "get_robots_info")
     def test_can_fetch_no_robots_txt(self, mock_get_robots):
         """Test can_fetch when robots.txt is not accessible."""
-        mock_robots_info = RobotsTxtInfo(
-            url="https://example.com/robots.txt", content="", is_accessible=False
-        )
+        mock_robots_info = RobotsTxtInfo(url="https://example.com/robots.txt", content="", is_accessible=False)
         mock_get_robots.return_value = mock_robots_info
 
         result = self.parser.can_fetch("https://example.com/any/page")
@@ -208,9 +206,7 @@ Sitemap: https://example.com/sitemap2.xml
     @patch.object(RobotsParser, "get_robots_info")
     def test_get_request_rate(self, mock_get_robots):
         """Test request rate extraction."""
-        mock_robots_info = RobotsTxtInfo(
-            url="https://example.com/robots.txt", content="", request_rate="1/5s"
-        )
+        mock_robots_info = RobotsTxtInfo(url="https://example.com/robots.txt", content="", request_rate="1/5s")
         mock_get_robots.return_value = mock_robots_info
 
         rate = self.parser.get_request_rate("https://example.com/test")

@@ -164,8 +164,7 @@ class ScenarioGenerator:
 
         validation_rules = [
             lambda results: "error" in str(results).lower() or len(str(results)) > 0,
-            lambda results: not str(results).startswith("<!DOCTYPE html>")
-            or "error" in str(results).lower(),
+            lambda results: not str(results).startswith("<!DOCTYPE html>") or "error" in str(results).lower(),
         ]
 
         test_urls = ["/", "/page/1", "/page/2", "/product/1", "/product/2"]
@@ -186,9 +185,7 @@ class ScenarioGenerator:
         num_pages = kwargs.get("num_pages", 5)
         items_per_page = kwargs.get("items_per_page", 10)
 
-        mock_site = MockWebsiteGenerator.create_ecommerce_site(
-            num_products=num_pages * items_per_page
-        )
+        mock_site = MockWebsiteGenerator.create_ecommerce_site(num_products=num_pages * items_per_page)
 
         expected_results = {
             "total_pages": num_pages,
@@ -263,9 +260,7 @@ class ScenarioGenerator:
         ]
 
         # Generate many test URLs for performance testing
-        test_urls = (
-            ["/"] + [f"/page/{i}" for i in range(1, 6)] + [f"/product/{i}" for i in range(1, 21)]
-        )
+        test_urls = ["/"] + [f"/page/{i}" for i in range(1, 6)] + [f"/product/{i}" for i in range(1, 21)]
 
         return ScrapingTestScenario(
             name="Performance Testing",

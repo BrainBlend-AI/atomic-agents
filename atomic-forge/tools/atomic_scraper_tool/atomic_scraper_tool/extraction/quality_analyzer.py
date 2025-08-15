@@ -140,17 +140,11 @@ class QualityAnalyzer:
         )
 
         # Identify quality issues and recommendations
-        quality_issues = self._identify_quality_issues(
-            extracted_items, completeness_score, accuracy_score, consistency_score
-        )
-        recommendations = self._generate_recommendations(
-            quality_issues, field_scores, schema_recipe
-        )
+        quality_issues = self._identify_quality_issues(extracted_items, completeness_score, accuracy_score, consistency_score)
+        recommendations = self._generate_recommendations(quality_issues, field_scores, schema_recipe)
 
         # Check if passes threshold
-        passes_threshold = self._passes_quality_threshold(
-            overall_score, completeness_score, accuracy_score, consistency_score
-        )
+        passes_threshold = self._passes_quality_threshold(overall_score, completeness_score, accuracy_score, consistency_score)
 
         return QualityReport(
             overall_score=overall_score,
@@ -313,13 +307,10 @@ class QualityAnalyzer:
 
             if field_values:
                 # Calculate field-specific metrics
-                completeness = sum(1 for v in field_values if self._is_field_complete(v)) / len(
+                completeness = sum(1 for v in field_values if self._is_field_complete(v)) / len(field_values)
+                accuracy = sum(self._calculate_field_accuracy(field_name, v, schema_recipe) for v in field_values) / len(
                     field_values
                 )
-                accuracy = sum(
-                    self._calculate_field_accuracy(field_name, v, schema_recipe)
-                    for v in field_values
-                ) / len(field_values)
                 consistency = self._calculate_field_consistency(field_values)
 
                 # Weighted average
@@ -365,9 +356,7 @@ class QualityAnalyzer:
 
         return True
 
-    def _calculate_field_accuracy(
-        self, field_name: str, value: Any, schema_recipe: Optional[SchemaRecipe] = None
-    ) -> float:
+    def _calculate_field_accuracy(self, field_name: str, value: Any, schema_recipe: Optional[SchemaRecipe] = None) -> float:
         """Calculate accuracy score for a single field value."""
         if not self._is_field_complete(value):
             return 0.0
@@ -512,21 +501,15 @@ class QualityAnalyzer:
 
         # Completeness issues
         if completeness < 50.0:
-            issues.append(
-                f"Low completeness score ({completeness:.1f}%) - many fields are missing data"
-            )
+            issues.append(f"Low completeness score ({completeness:.1f}%) - many fields are missing data")
 
         # Accuracy issues
         if accuracy < 60.0:
-            issues.append(
-                f"Low accuracy score ({accuracy:.1f}%) - data may contain errors or invalid formats"
-            )
+            issues.append(f"Low accuracy score ({accuracy:.1f}%) - data may contain errors or invalid formats")
 
         # Consistency issues
         if consistency < 40.0:
-            issues.append(
-                f"Low consistency score ({consistency:.1f}%) - data formats vary significantly between items"
-            )
+            issues.append(f"Low consistency score ({consistency:.1f}%) - data formats vary significantly between items")
 
         # Check for specific field issues
         field_issues = self._analyze_field_issues(extracted_items)
@@ -537,9 +520,7 @@ class QualityAnalyzer:
             missing_required = []
             for item in extracted_items:
                 for required_field in self.thresholds.required_fields:
-                    if required_field not in item.data or not self._is_field_complete(
-                        item.data[required_field]
-                    ):
+                    if required_field not in item.data or not self._is_field_complete(item.data[required_field]):
                         if required_field not in missing_required:
                             missing_required.append(required_field)
 
@@ -579,9 +560,7 @@ class QualityAnalyzer:
                             break
 
                 if suspicious_count > len(valid_values) * 0.3:
-                    issues.append(
-                        f"Field '{field_name}' contains suspicious or low-quality content"
-                    )
+                    issues.append(f"Field '{field_name}' contains suspicious or low-quality content")
 
         return issues
 
@@ -596,9 +575,7 @@ class QualityAnalyzer:
 
         # General recommendations based on issues
         if any("completeness" in issue.lower() for issue in quality_issues):
-            recommendations.append(
-                "Review extraction selectors to ensure they match the target content"
-            )
+            recommendations.append("Review extraction selectors to ensure they match the target content")
             recommendations.append("Consider adding fallback selectors for better field coverage")
 
         if any("accuracy" in issue.lower() for issue in quality_issues):
@@ -612,17 +589,13 @@ class QualityAnalyzer:
         # Field-specific recommendations
         low_quality_fields = [field for field, score in field_scores.items() if score < 60.0]
         if low_quality_fields:
-            recommendations.append(
-                f"Focus on improving extraction for fields: {', '.join(low_quality_fields)}"
-            )
+            recommendations.append(f"Focus on improving extraction for fields: {', '.join(low_quality_fields)}")
 
         # Schema-specific recommendations
         if schema_recipe:
             required_fields = schema_recipe.get_required_fields()
             if required_fields:
-                recommendations.append(
-                    f"Ensure required fields are properly extracted: {', '.join(required_fields)}"
-                )
+                recommendations.append(f"Ensure required fields are properly extracted: {', '.join(required_fields)}")
 
         return recommendations
 
@@ -637,9 +610,7 @@ class QualityAnalyzer:
             and consistency >= self.thresholds.minimum_consistency
         )
 
-    def _calculate_item_quality(
-        self, item: ExtractedContent, schema_recipe: Optional[SchemaRecipe] = None
-    ) -> float:
+    def _calculate_item_quality(self, item: ExtractedContent, schema_recipe: Optional[SchemaRecipe] = None) -> float:
         """Calculate quality score for a single item."""
         # Use the item's existing quality score if available
         if hasattr(item, "quality_score") and item.quality_score is not None:
@@ -666,9 +637,7 @@ class QualityAnalyzer:
         # Check required fields
         if self.thresholds.required_fields:
             for required_field in self.thresholds.required_fields:
-                if required_field not in item.data or not self._is_field_complete(
-                    item.data[required_field]
-                ):
+                if required_field not in item.data or not self._is_field_complete(item.data[required_field]):
                     return False
 
         return True

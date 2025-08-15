@@ -65,9 +65,7 @@ class ContentExtractor:
             logger.warning(f"Failed to parse HTML with lxml: {e}")
             self.lxml_tree = None
 
-    def extract_content(
-        self, extraction_rules: Dict[str, ExtractionRule], source_url: str
-    ) -> ExtractedContent:
+    def extract_content(self, extraction_rules: Dict[str, ExtractionRule], source_url: str) -> ExtractedContent:
         """
         Extract content using the provided extraction rules.
 
@@ -93,9 +91,7 @@ class ContentExtractor:
                     extracted_data[field_name] = value
                     extraction_metadata[f"{field_name}_selector"] = rule.selector
                 else:
-                    extraction_issues.append(
-                        f"No content found for field '{field_name}' with selector '{rule.selector}'"
-                    )
+                    extraction_issues.append(f"No content found for field '{field_name}' with selector '{rule.selector}'")
             except Exception as e:
                 extraction_issues.append(f"Error extracting field '{field_name}': {str(e)}")
                 logger.error(f"Extraction error for field '{field_name}': {e}")
@@ -179,16 +175,12 @@ class ContentExtractor:
             Extracted value or None if not found
         """
         # Try primary selector first
-        value = self._extract_with_selector(
-            rule.selector, rule.extraction_type, rule.attribute_name
-        )
+        value = self._extract_with_selector(rule.selector, rule.extraction_type, rule.attribute_name)
 
         # Try fallback selectors if primary fails
         if value is None and rule.fallback_selectors:
             for fallback_selector in rule.fallback_selectors:
-                value = self._extract_with_selector(
-                    fallback_selector, rule.extraction_type, rule.attribute_name
-                )
+                value = self._extract_with_selector(fallback_selector, rule.extraction_type, rule.attribute_name)
                 if value is not None:
                     break
 
@@ -218,9 +210,7 @@ class ContentExtractor:
         else:
             return self._extract_with_css(selector, extraction_type, attribute_name)
 
-    def _extract_with_css(
-        self, selector: str, extraction_type: str, attribute_name: Optional[str] = None
-    ) -> Optional[Any]:
+    def _extract_with_css(self, selector: str, extraction_type: str, attribute_name: Optional[str] = None) -> Optional[Any]:
         """Extract content using CSS selector."""
         try:
             elements = self.soup.select(selector)
@@ -236,9 +226,7 @@ class ContentExtractor:
             logger.error(f"CSS selector extraction error: {e}")
             return None
 
-    def _extract_with_xpath(
-        self, xpath: str, extraction_type: str, attribute_name: Optional[str] = None
-    ) -> Optional[Any]:
+    def _extract_with_xpath(self, xpath: str, extraction_type: str, attribute_name: Optional[str] = None) -> Optional[Any]:
         """Extract content using XPath expression."""
         if not self.lxml_tree:
             logger.warning("XPath extraction requested but lxml tree not available")
@@ -268,9 +256,7 @@ class ContentExtractor:
             logger.error(f"XPath extraction error: {e}")
             return None
 
-    def _extract_from_element(
-        self, element: Tag, extraction_type: str, attribute_name: Optional[str] = None
-    ) -> Optional[Any]:
+    def _extract_from_element(self, element: Tag, extraction_type: str, attribute_name: Optional[str] = None) -> Optional[Any]:
         """
         Extract content from a BeautifulSoup element.
 
@@ -397,9 +383,7 @@ class ContentExtractor:
         urls = re.findall(url_pattern, text)
         return urls
 
-    def _calculate_quality_score(
-        self, extracted_data: Dict[str, Any], extraction_rules: Dict[str, ExtractionRule]
-    ) -> float:
+    def _calculate_quality_score(self, extracted_data: Dict[str, Any], extraction_rules: Dict[str, ExtractionRule]) -> float:
         """
         Calculate quality score for extracted content.
 
@@ -467,9 +451,7 @@ class ContentExtractor:
 
         return min(1.0, score)
 
-    def _calculate_confidence_level(
-        self, extracted_data: Dict[str, Any], extraction_issues: List[str]
-    ) -> float:
+    def _calculate_confidence_level(self, extracted_data: Dict[str, Any], extraction_issues: List[str]) -> float:
         """
         Calculate confidence level for the extraction.
 
@@ -491,9 +473,7 @@ class ContentExtractor:
         success_rate = len(extracted_data) / total_fields
 
         # Adjust based on data quality
-        non_empty_fields = sum(
-            1 for value in extracted_data.values() if value is not None and str(value).strip()
-        )
+        non_empty_fields = sum(1 for value in extracted_data.values() if value is not None and str(value).strip())
 
         if len(extracted_data) > 0:
             completeness = non_empty_fields / len(extracted_data)

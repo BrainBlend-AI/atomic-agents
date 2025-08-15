@@ -16,18 +16,10 @@ class ExtractionRule(BaseModel):
     field_name: str = Field(..., description="Name of the field this rule extracts")
     selector: str = Field(..., description="CSS selector or XPath for extraction")
     extraction_type: str = Field(..., description="Type of extraction: 'text', 'attribute', 'html'")
-    attribute_name: Optional[str] = Field(
-        None, description="Attribute name for 'attribute' extraction type"
-    )
-    post_processing: List[str] = Field(
-        default_factory=list, description="Post-processing steps to apply"
-    )
-    fallback_selectors: List[str] = Field(
-        default_factory=list, description="Fallback selectors if primary fails"
-    )
-    quality_indicators: List[str] = Field(
-        default_factory=list, description="Indicators of high-quality content"
-    )
+    attribute_name: Optional[str] = Field(None, description="Attribute name for 'attribute' extraction type")
+    post_processing: List[str] = Field(default_factory=list, description="Post-processing steps to apply")
+    fallback_selectors: List[str] = Field(default_factory=list, description="Fallback selectors if primary fails")
+    quality_indicators: List[str] = Field(default_factory=list, description="Indicators of high-quality content")
 
     @field_validator("field_name")
     @classmethod
@@ -38,9 +30,7 @@ class ExtractionRule(BaseModel):
 
         # Field name should be a valid identifier
         if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]*$", v):
-            raise ValueError(
-                "field_name must start with a letter and contain only letters, numbers, and underscores"
-            )
+            raise ValueError("field_name must start with a letter and contain only letters, numbers, and underscores")
         return v
 
     @field_validator("selector")
@@ -82,9 +72,7 @@ class ExtractionRule(BaseModel):
         ]
         for step in v:
             if step not in valid_steps:
-                raise ValueError(
-                    f"Invalid post-processing step: {step}. Valid steps: {valid_steps}"
-                )
+                raise ValueError(f"Invalid post-processing step: {step}. Valid steps: {valid_steps}")
         return v
 
     @field_validator("fallback_selectors")
@@ -114,9 +102,7 @@ class ExtractionRule(BaseModel):
         ]
         for indicator in v:
             if indicator not in valid_indicators:
-                raise ValueError(
-                    f"Invalid quality indicator: {indicator}. Valid indicators: {valid_indicators}"
-                )
+                raise ValueError(f"Invalid quality indicator: {indicator}. Valid indicators: {valid_indicators}")
         return v
 
     @model_validator(mode="after")
@@ -135,20 +121,12 @@ class ExtractedContent(BaseModel):
     """Content extracted from a single HTML element or page section."""
 
     data: Dict[str, Any] = Field(..., description="Extracted data fields")
-    quality_score: float = Field(
-        ..., ge=0.0, le=100.0, description="Quality score for this content"
-    )
-    extraction_issues: List[str] = Field(
-        default_factory=list, description="Issues encountered during extraction"
-    )
-    confidence_level: float = Field(
-        ..., ge=0.0, le=1.0, description="Confidence in extraction accuracy"
-    )
+    quality_score: float = Field(..., ge=0.0, le=100.0, description="Quality score for this content")
+    extraction_issues: List[str] = Field(default_factory=list, description="Issues encountered during extraction")
+    confidence_level: float = Field(..., ge=0.0, le=1.0, description="Confidence in extraction accuracy")
     source_url: str = Field(..., description="URL where content was extracted from")
     element_selector: Optional[str] = Field(None, description="Selector that matched this content")
-    extraction_metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional extraction metadata"
-    )
+    extraction_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional extraction metadata")
 
     @field_validator("data")
     @classmethod
@@ -248,9 +226,7 @@ class ExtractedContent(BaseModel):
         if not self.data:
             return 0.0
 
-        non_empty_fields = sum(
-            1 for value in self.data.values() if value is not None and str(value).strip()
-        )
+        non_empty_fields = sum(1 for value in self.data.values() if value is not None and str(value).strip())
         return (non_empty_fields / len(self.data)) * 100.0
 
     def get_data_size(self) -> int:
@@ -265,18 +241,10 @@ class ExtractedContent(BaseModel):
 class ContentQualityMetrics(BaseModel):
     """Metrics for assessing content quality."""
 
-    completeness_score: float = Field(
-        ..., ge=0.0, le=100.0, description="Percentage of fields with data"
-    )
-    accuracy_score: float = Field(
-        ..., ge=0.0, le=100.0, description="Estimated accuracy of extracted data"
-    )
-    consistency_score: float = Field(
-        ..., ge=0.0, le=100.0, description="Consistency with expected patterns"
-    )
-    relevance_score: float = Field(
-        ..., ge=0.0, le=100.0, description="Relevance to extraction criteria"
-    )
+    completeness_score: float = Field(..., ge=0.0, le=100.0, description="Percentage of fields with data")
+    accuracy_score: float = Field(..., ge=0.0, le=100.0, description="Estimated accuracy of extracted data")
+    consistency_score: float = Field(..., ge=0.0, le=100.0, description="Consistency with expected patterns")
+    relevance_score: float = Field(..., ge=0.0, le=100.0, description="Relevance to extraction criteria")
 
     @model_validator(mode="after")
     def validate_score_consistency(self):

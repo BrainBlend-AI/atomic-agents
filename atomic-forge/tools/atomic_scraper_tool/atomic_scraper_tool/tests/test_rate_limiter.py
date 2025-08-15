@@ -95,9 +95,7 @@ class TestRateLimiter:
     def test_get_domain(self):
         """Test domain extraction from URLs."""
         assert self.rate_limiter.get_domain("https://example.com/path") == "example.com"
-        assert (
-            self.rate_limiter.get_domain("http://subdomain.example.com") == "subdomain.example.com"
-        )
+        assert self.rate_limiter.get_domain("http://subdomain.example.com") == "subdomain.example.com"
         assert self.rate_limiter.get_domain("https://EXAMPLE.COM/PATH") == "example.com"
 
     def test_get_domain_stats(self):
@@ -498,9 +496,7 @@ class TestRateLimiterIntegration:
 
     def test_concurrent_requests_limiting(self):
         """Test that concurrent requests are properly limited."""
-        config = RateLimitConfig(
-            max_concurrent_requests=2, default_delay=0.01
-        )  # Very short delay for testing
+        config = RateLimitConfig(max_concurrent_requests=2, default_delay=0.01)  # Very short delay for testing
         rate_limiter = RateLimiter(config)
         url = "https://example.com/test"
 
@@ -519,9 +515,7 @@ class TestRateLimiterIntegration:
 
     def test_adaptive_delay_behavior(self):
         """Test adaptive delay behavior with real timing."""
-        config = RateLimitConfig(
-            default_delay=0.1, adaptive_delay_enabled=True, min_delay=0.05, max_delay=1.0
-        )
+        config = RateLimitConfig(default_delay=0.1, adaptive_delay_enabled=True, min_delay=0.05, max_delay=1.0)
         rate_limiter = RateLimiter(config)
         domain = "example.com"
 

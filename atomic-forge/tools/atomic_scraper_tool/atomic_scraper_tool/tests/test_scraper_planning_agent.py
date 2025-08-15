@@ -79,9 +79,7 @@ class TestAtomicScraperAgentInputSchema:
 
     def test_default_values(self):
         """Test that default values are set correctly."""
-        input_data = AtomicScraperAgentInputSchema(
-            request="test request", target_url="https://example.com"
-        )
+        input_data = AtomicScraperAgentInputSchema(request="test request", target_url="https://example.com")
 
         assert input_data.max_results == 10
         assert input_data.quality_threshold == 50.0
@@ -90,40 +88,28 @@ class TestAtomicScraperAgentInputSchema:
         """Test max_results validation constraints."""
         # Test minimum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(
-                request="test", target_url="https://example.com", max_results=0
-            )
+            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", max_results=0)
 
         # Test maximum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(
-                request="test", target_url="https://example.com", max_results=1001
-            )
+            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", max_results=1001)
 
         # Test valid values
-        valid_input = AtomicScraperAgentInputSchema(
-            request="test", target_url="https://example.com", max_results=500
-        )
+        valid_input = AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", max_results=500)
         assert valid_input.max_results == 500
 
     def test_quality_threshold_validation(self):
         """Test quality_threshold validation constraints."""
         # Test minimum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(
-                request="test", target_url="https://example.com", quality_threshold=-1.0
-            )
+            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", quality_threshold=-1.0)
 
         # Test maximum constraint
         with pytest.raises(ValueError):
-            AtomicScraperAgentInputSchema(
-                request="test", target_url="https://example.com", quality_threshold=101.0
-            )
+            AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", quality_threshold=101.0)
 
         # Test valid values
-        valid_input = AtomicScraperAgentInputSchema(
-            request="test", target_url="https://example.com", quality_threshold=85.5
-        )
+        valid_input = AtomicScraperAgentInputSchema(request="test", target_url="https://example.com", quality_threshold=85.5)
         assert valid_input.quality_threshold == 85.5
 
     def test_required_fields(self):
@@ -257,9 +243,7 @@ class TestAtomicScraperPlanningAgent:
         """Test that run method executes and returns valid output."""
         agent = AtomicScraperPlanningAgent(self.config)
 
-        input_data = AtomicScraperAgentInputSchema(
-            request="scrape Saturday markets", target_url="https://example.com"
-        )
+        input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
 
         # The run method should execute without raising NotImplementedError
         result = agent.run(input_data)
@@ -392,9 +376,7 @@ class TestRequestParsingAndStrategyCoordination:
             "keywords": ["saturday", "markets"],
         }
 
-        input_data = AtomicScraperAgentInputSchema(
-            request="scrape Saturday markets", target_url="https://example.com"
-        )
+        input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
 
         schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
@@ -412,9 +394,7 @@ class TestRequestParsingAndStrategyCoordination:
             "keywords": ["product", "prices"],
         }
 
-        input_data = AtomicScraperAgentInputSchema(
-            request="scrape product prices", target_url="https://example.com"
-        )
+        input_data = AtomicScraperAgentInputSchema(request="scrape product prices", target_url="https://example.com")
 
         schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
@@ -471,20 +451,14 @@ class TestRequestParsingAndStrategyCoordination:
         from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
         from atomic_scraper_tool.analysis.website_analyzer import WebsiteStructureAnalysis
 
-        analysis = WebsiteStructureAnalysis(
-            url="https://example.com", title="Test Site", metadata={}
-        )
+        analysis = WebsiteStructureAnalysis(url="https://example.com", title="Test Site", metadata={})
 
         strategy = ScrapingStrategy(scrape_type="list", target_selectors=[".item"])
 
         schema_recipe = SchemaRecipe(
             name="test_schema",
             description="Test schema",
-            fields={
-                "title": FieldDefinition(
-                    field_type="string", description="Title", extraction_selector="h1"
-                )
-            },
+            fields={"title": FieldDefinition(field_type="string", description="Title", extraction_selector="h1")},
         )
 
         parsed_request = {
@@ -495,9 +469,7 @@ class TestRequestParsingAndStrategyCoordination:
             "location_filters": [],
         }
 
-        reasoning = self.agent._generate_reasoning(
-            analysis, strategy, schema_recipe, parsed_request
-        )
+        reasoning = self.agent._generate_reasoning(analysis, strategy, schema_recipe, parsed_request)
 
         assert "Decision Reasoning" in reasoning
         assert "Strategy Selection" in reasoning
@@ -512,13 +484,9 @@ class TestRequestParsingAndStrategyCoordination:
         from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
         from atomic_scraper_tool.analysis.website_analyzer import WebsiteStructureAnalysis
 
-        analysis = WebsiteStructureAnalysis(
-            url="https://example.com", title="Test Site", metadata={}
-        )  # No error
+        analysis = WebsiteStructureAnalysis(url="https://example.com", title="Test Site", metadata={})  # No error
 
-        strategy = ScrapingStrategy(
-            scrape_type="list", target_selectors=[".item", ".listing"]
-        )  # Has selectors
+        strategy = ScrapingStrategy(scrape_type="list", target_selectors=[".item", ".listing"])  # Has selectors
 
         fields = {
             "title": FieldDefinition(
@@ -527,17 +495,11 @@ class TestRequestParsingAndStrategyCoordination:
                 extraction_selector="h1",
                 required=True,  # Has required field
             ),
-            "description": FieldDefinition(
-                field_type="string", description="Description", extraction_selector="p"
-            ),
-            "price": FieldDefinition(
-                field_type="string", description="Price", extraction_selector=".price"
-            ),
+            "description": FieldDefinition(field_type="string", description="Description", extraction_selector="p"),
+            "price": FieldDefinition(field_type="string", description="Price", extraction_selector=".price"),
         }
 
-        schema_recipe = SchemaRecipe(
-            name="test_schema", description="Test schema", fields=fields
-        )  # 3 fields = good coverage
+        schema_recipe = SchemaRecipe(name="test_schema", description="Test schema", fields=fields)  # 3 fields = good coverage
 
         confidence = self.agent._calculate_confidence(analysis, strategy, schema_recipe)
 
@@ -555,9 +517,7 @@ class TestRequestParsingAndStrategyCoordination:
             metadata={"error": "Failed to fetch"},  # Has error
         )
 
-        strategy = ScrapingStrategy(
-            scrape_type="list", target_selectors=["div"]
-        )  # Minimal selector to pass validation
+        strategy = ScrapingStrategy(scrape_type="list", target_selectors=["div"])  # Minimal selector to pass validation
 
         fields = {
             "title": FieldDefinition(
@@ -580,9 +540,7 @@ class TestRequestParsingAndStrategyCoordination:
 
     def test_handle_error(self):
         """Test error handling."""
-        input_data = AtomicScraperAgentInputSchema(
-            request="test request", target_url="https://example.com"
-        )
+        input_data = AtomicScraperAgentInputSchema(request="test request", target_url="https://example.com")
 
         result = self.agent._handle_error("Test error message", input_data)
 
