@@ -158,12 +158,12 @@ class ContentExtractor:
 
                 # Extract content from this container
                 extracted_content = temp_extractor.extract_content(extraction_rules, source_url)
-                extracted_content.element_selector = f"{container_selector}:nth-of-type({i+1})"
+                extracted_content.element_selector = f"{container_selector}:nth-of-type({i + 1})"
 
                 extracted_items.append(extracted_content)
 
             except Exception as e:
-                logger.error(f"Error extracting item {i+1}: {e}")
+                logger.error(f"Error extracting item {i + 1}: {e}")
                 continue
 
         return extracted_items

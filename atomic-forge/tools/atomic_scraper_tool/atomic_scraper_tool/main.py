@@ -1968,32 +1968,6 @@ For more information, see the documentation or run:
                 "No AI model provider configured. Please set API keys or use --demo-mode."
             )
 
-    def _has_model_provider_config(self) -> bool:
-        """Check if model provider is configured via environment variables or config."""
-        import os
-
-        # Check environment variables for common AI providers
-        env_keys = [
-            "OPENAI_API_KEY",
-            "ANTHROPIC_API_KEY",
-            "GOOGLE_API_KEY",
-            "AZURE_OPENAI_API_KEY",
-            "COHERE_API_KEY",
-            "HUGGINGFACE_API_TOKEN",
-        ]
-
-        for key in env_keys:
-            if os.getenv(key):
-                return True
-
-        # Check if config has model provider settings
-        if hasattr(self, "config") and self.config:
-            agent_config = self.config.get("agent", {})
-            if agent_config.get("api_key") or agent_config.get("model"):
-                return True
-
-        return False
-
 
 def main():
     """Main entry point for the application."""

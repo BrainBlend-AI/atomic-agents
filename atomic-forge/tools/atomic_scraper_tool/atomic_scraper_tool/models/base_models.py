@@ -7,7 +7,7 @@ Contains core Pydantic models for scraping operations and results.
 import uuid
 import re
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 from urllib.parse import urlparse
 

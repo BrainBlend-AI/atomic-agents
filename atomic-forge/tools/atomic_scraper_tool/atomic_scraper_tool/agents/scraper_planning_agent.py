@@ -43,33 +43,32 @@ class AtomicScrapingContextProvider(BaseDynamicContextProvider):
 
     def get_info(self) -> str:
         """Provide context about scraping capabilities and strategies."""
-        return """You are an expert website scraping planning agent. Your role is to analyze user requests and target websites to generate optimal scraping strategies.
-
-### Scraping Types Available:
-- **list**: Extract multiple items from list pages (e.g., product listings, article lists)
-- **detail**: Extract detailed information from individual pages
-- **search**: Extract results from search pages
-- **sitemap**: Extract URLs and metadata from sitemaps
-
-### Strategy Components:
-- **target_selectors**: CSS selectors to identify content containers
-- **extraction_rules**: Field-specific extraction rules with CSS selectors
-- **pagination_strategy**: How to handle multiple pages (next_link, page_numbers, infinite_scroll, load_more)
-- **content_filters**: Rules to filter out unwanted content
-- **quality_thresholds**: Minimum quality scores for extracted data
-
-### Schema Recipe Generation:
-- Analyze website structure to identify data patterns
-- Generate appropriate field definitions with extraction selectors
-- Set quality weights based on field importance
-- Create validation rules for data integrity
-
-### Best Practices:
-- Always respect robots.txt and rate limiting
-- Prefer specific CSS selectors over generic ones
-- Include fallback selectors for robustness
-- Set appropriate quality thresholds based on data criticality
-- Consider pagination and dynamic content loading"""
+        return (
+            "You are an expert website scraping planning agent. Your role is to analyze user requests "
+            "and target websites to generate optimal scraping strategies.\n\n"
+            "### Scraping Types Available:\n"
+            "- **list**: Extract multiple items from list pages (e.g., product listings, article lists)\n"
+            "- **detail**: Extract detailed information from individual pages\n"
+            "- **search**: Extract results from search pages\n"
+            "- **sitemap**: Extract URLs and metadata from sitemaps\n\n"
+            "### Strategy Components:\n"
+            "- **target_selectors**: CSS selectors to identify content containers\n"
+            "- **extraction_rules**: Field-specific extraction rules with CSS selectors\n"
+            "- **pagination_strategy**: How to handle multiple pages (next_link, page_numbers, infinite_scroll, load_more)\n"
+            "- **content_filters**: Rules to filter out unwanted content\n"
+            "- **quality_thresholds**: Minimum quality scores for extracted data\n\n"
+            "### Schema Recipe Generation:\n"
+            "- Analyze website structure to identify data patterns\n"
+            "- Generate appropriate field definitions with extraction selectors\n"
+            "- Set quality weights based on field importance\n"
+            "- Create validation rules for data integrity\n\n"
+            "### Best Practices:\n"
+            "- Always respect robots.txt and rate limiting\n"
+            "- Prefer specific CSS selectors over generic ones\n"
+            "- Include fallback selectors for robustness\n"
+            "- Set appropriate quality thresholds based on data criticality\n"
+            "- Consider pagination and dynamic content loading"
+        )
 
 
 class AtomicScraperPlanningAgent(
@@ -309,11 +308,6 @@ class AtomicScraperPlanningAgent(
         input_data: AtomicScraperAgentInputSchema,
     ) -> "SchemaRecipe":
         """Generate dynamic schema recipe."""
-        from atomic_scraper_tool.analysis.schema_recipe_generator import (
-            SchemaRecipeGenerator,
-            SchemaGenerationContext,
-        )
-
         # Note: In a real implementation, this would use SchemaRecipeGenerator
         # with actual website HTML content for dynamic schema generation
 
@@ -522,7 +516,7 @@ class AtomicScraperPlanningAgent(
                 )
                 for i, pattern in enumerate(analysis.content_patterns[:3]):
                     reasoning_parts.append(
-                        f"  - Pattern {i+1}: {pattern.get('type', 'unknown')} content"
+                        f"  - Pattern {i + 1}: {pattern.get('type', 'unknown')} content"
                     )
             else:
                 reasoning_parts.append(
@@ -569,7 +563,7 @@ class AtomicScraperPlanningAgent(
         reasoning_parts.append("**Selector Details:**")
         for i, selector in enumerate(strategy.target_selectors[:3]):
             reasoning_parts.append(
-                f"- Selector {i+1}: `{selector}` - {self._explain_selector(selector)}"
+                f"- Selector {i + 1}: `{selector}` - {self._explain_selector(selector)}"
             )
 
         reasoning_parts.append("")
@@ -587,9 +581,7 @@ class AtomicScraperPlanningAgent(
             priority = (
                 "High"
                 if field_def.required
-                else "Medium"
-                if field_def.quality_weight > 0.7
-                else "Low"
+                else "Medium" if field_def.quality_weight > 0.7 else "Low"
             )
             reasoning_parts.append(
                 f"- **{field_name}** ({priority} priority): {field_def.description}"

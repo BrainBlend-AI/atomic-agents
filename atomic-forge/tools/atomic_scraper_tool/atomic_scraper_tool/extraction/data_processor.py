@@ -9,8 +9,7 @@ import re
 import html
 import unicodedata
 from typing import Dict, List, Optional, Any, Union, Callable
-from urllib.parse import urljoin, urlparse
-from datetime import datetime
+from urllib.parse import urlparse
 import logging
 
 

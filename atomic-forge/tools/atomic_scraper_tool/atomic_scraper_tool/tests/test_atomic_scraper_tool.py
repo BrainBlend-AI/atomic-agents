@@ -342,7 +342,7 @@ class TestAtomicScraperTool:
         mock_items = []
         for i in range(12):
             mock_item = ScrapedItem(
-                source_url="https://example.com", data={"title": f"Item {i+1}"}, quality_score=85.5
+                source_url="https://example.com", data={"title": f"Item {i + 1}"}, quality_score=85.5
             )
             mock_items.append(mock_item)
 
@@ -380,7 +380,7 @@ class TestAtomicScraperTool:
         mock_items = []
         for i in range(18):
             mock_item = ScrapedItem(
-                source_url="https://example.com", data={"title": f"Item {i+1}"}, quality_score=92.3
+                source_url="https://example.com", data={"title": f"Item {i + 1}"}, quality_score=92.3
             )
             mock_items.append(mock_item)
 

@@ -6,9 +6,7 @@ These interfaces establish system boundaries and define contracts for core compo
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
-from pydantic import BaseModel
-
-from atomic_scraper_tool.models.base_models import ScrapingStrategy, ScrapingResult
+from atomic_scraper_tool.models.base_models import ScrapingStrategy
 from atomic_scraper_tool.models.schema_models import SchemaRecipe
 from atomic_scraper_tool.models.extraction_models import ExtractedContent
 
