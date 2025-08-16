@@ -96,6 +96,9 @@ class TestConfigurationManagement:
         app = AtomicScraperApp(config_path=self.config_file.name)
         app.console = Mock()
 
+        # Store original value for comparison
+        original_delay = app.config["scraper"]["request_delay"]
+
         # Mock user input for modifying request_delay
         mock_prompt.side_effect = ["1", "2.5"]  # Choose option 1, set value to 2.5
         # Call the method (would normally be interactive)
