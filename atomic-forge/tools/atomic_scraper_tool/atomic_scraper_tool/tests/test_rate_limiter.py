@@ -128,6 +128,8 @@ class TestRateLimiter:
         assert delay1 > self.config.default_delay
 
         # Second request with fast response time
+        delay2 = self.rate_limiter.calculate_delay(domain, response_time=0.1)
+        
         # Should adjust delay based on average
         stats = self.rate_limiter.get_domain_stats(domain)
         assert len(stats.request_times) == 2

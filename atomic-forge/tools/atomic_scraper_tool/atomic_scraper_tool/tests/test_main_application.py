@@ -602,7 +602,8 @@ class TestConfigurationManagement:
 
     @patch("builtins.open", create=True)
     @patch("json.dump")
-    def test_save_configuration(self, mock_json_dump, mock_open):
+    @patch("builtins.input", return_value="")
+    def test_save_configuration(self, mock_input, mock_json_dump, mock_open):
         """Test saving configuration to file."""
         app = AtomicScraperApp(config_path=self.config_file.name)
         app.console = Mock()
