@@ -6,13 +6,14 @@ Simple demo of the enhanced navigation analyzer.
 import sys
 import os
 
+# Add the atomic_scraper_tool to the path before importing
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "atomic_scraper_tool"))
-
-from analysis.enhanced_navigation_analyzer import EnhancedNavigationAnalyzer
 
 
 def demo_enhanced_navigation():
     """Demonstrate the enhanced navigation analyzer capabilities."""
+    # Import here to avoid E402 after path modification
+    from analysis.enhanced_navigation_analyzer import EnhancedNavigationAnalyzer
 
     # Complex HTML example
     complex_html = """

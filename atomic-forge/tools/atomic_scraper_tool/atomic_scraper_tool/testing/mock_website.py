@@ -125,7 +125,7 @@ class MockWebsite:
         # Generate pagination
         pagination_html = self._generate_pagination(page_num) if self.config.include_pagination else ""
 
-        content = """
+        content = f"""
         <div class="listing-page">
             <h1>Page {page_num}</h1>
             <div class="items-grid">
@@ -433,7 +433,7 @@ class MockWebsite:
         if self.config.include_metadata:
             metadata_html = self._generate_metadata(title)
 
-        return """<!DOCTYPE html>
+        return f"""<!DOCTYPE html>
 <html lang="{self.config.language}">
 <head>
     <meta charset="UTF-8">

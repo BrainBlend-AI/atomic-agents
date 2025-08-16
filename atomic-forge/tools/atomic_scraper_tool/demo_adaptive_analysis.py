@@ -9,13 +9,14 @@ standard and enhanced website analysis based on website complexity.
 import sys
 import os
 
+# Add the atomic_scraper_tool to the path before importing
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "atomic_scraper_tool"))
-
-from analysis.adaptive_website_analyzer import AdaptiveWebsiteAnalyzer, AnalysisConfig
 
 
 def demo_conditional_logic():
     """Demonstrate the conditional logic for choosing analysis depth."""
+    # Import here to avoid E402 after path modification
+    from analysis.adaptive_website_analyzer import AdaptiveWebsiteAnalyzer, AnalysisConfig
 
     print("🔄 Adaptive Website Analysis - Conditional Logic Demo")
     print("=" * 60)
