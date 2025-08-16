@@ -148,4 +148,4 @@ personal_scripts/
 debug.log
 
 # AI tools
-.claude
+.claudeatomic-forge/tools/atomic_scraper_tool/tools.backup.*/
