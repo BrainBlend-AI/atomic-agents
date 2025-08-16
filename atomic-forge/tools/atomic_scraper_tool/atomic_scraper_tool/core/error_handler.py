@@ -352,29 +352,27 @@ class ErrorHandler:
         Returns:
             bool: True if error is retryable
         """
-        # Check if error type is in retryable list
-        for retryable_type in self.retry_config.retryable_errors:
-            if isinstance(error, retryable_type):
-                return True
-
-        # Special cases for specific error types
+        # Special cases for specific error types (check these first)
         if isinstance(error, NetworkError):
             # Retry network errors except for authentication/authorization
             if hasattr(error, "status_code") and error.status_code in [401, 403]:
                 return False
-            return True
-
-        if isinstance(error, RateLimitError):
-            return True
-        elif isinstance(error, NetworkError):
             # Don't retry client errors (4xx status codes)
             if hasattr(error, "status_code") and error.status_code and 400 <= error.status_code < 500:
                 return False
             return True
 
+        if isinstance(error, RateLimitError):
+            return True
+
         # Don't retry configuration or validation errors
         if isinstance(error, (ConfigurationError, ValidationError)):
             return False
+
+        # Check if error type is in retryable list (generic check)
+        for retryable_type in self.retry_config.retryable_errors:
+            if isinstance(error, retryable_type):
+                return True
 
         return False
 

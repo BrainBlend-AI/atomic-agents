@@ -337,9 +337,9 @@ class TestConfigurationManagement:
 
         # Verify scraper tool was initialized with correct config
         assert app.scraper_tool is not None
-        assert app.scraper_tool.config.base_url == "https://test.com"
-        assert app.scraper_tool.config.request_delay == 0.1
-        assert app.scraper_tool.config.min_quality_score == 50.0
+        assert app.scraper_tool.scraper_config.base_url == "https://test.com"
+        assert app.scraper_tool.scraper_config.request_delay == 0.1
+        assert app.scraper_tool.scraper_config.min_quality_score == 50.0
 
     def test_configuration_sections_completeness(self):
         """Test that all required configuration sections are present."""
