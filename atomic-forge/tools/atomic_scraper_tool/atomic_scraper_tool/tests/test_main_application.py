@@ -638,7 +638,9 @@ class TestConfigurationManagement:
         assert app.config["scraper"]["request_delay"] == 1.0
         assert app.config["scraper"]["max_results"] == 50
 
-    def test_schema_recipe_export_import(self):
+    @patch("builtins.input", return_value="")
+    @patch("rich.prompt.Prompt.ask")
+    def test_schema_recipe_export_import(self, mock_prompt, mock_input):
         """Test exporting and importing schema recipes."""
         app = AtomicScraperApp(config_path=self.config_file.name)
         app.console = Mock()
@@ -663,27 +665,26 @@ class TestConfigurationManagement:
 
         app.config["schema_recipes"]["export_test_recipe"] = test_recipe
 
-        # Test export functionality (simulate file writing)
+        # Test export functionality
+        mock_prompt.return_value = "export_test_recipe"  # Select the recipe to export
+        
         with patch("builtins.open", create=True) as mock_open:
-            with patch("json.dump") as mock_json_dump:  # noqa: F841
-                # Simulate export
-                filename = "schema_recipe_export_test_recipe.json"
-                mock_file = mock_open.return_value.__enter__.return_value
-                json.dump(test_recipe, mock_file, indent=2)
-
+            with patch("json.dump") as mock_json_dump:
+                app._export_schema_recipe()
+                
                 # Verify export was called
-                mock_open.assert_called_with(filename, "w")
+                mock_open.assert_called_with("schema_recipe_export_test_recipe.json", "w")
+                mock_json_dump.assert_called_once()
 
         # Test import functionality
         with patch("builtins.open", create=True) as mock_open:
-            with patch("json.load", return_value=test_recipe) as mock_json_load:  # noqa: F841
-                # Simulate import
-                imported_recipe = json.load(mock_open.return_value.__enter__.return_value)
-
-                # Verify import structure
-                assert imported_recipe["name"] == "export_test_recipe"
-                assert "fields" in imported_recipe
-                assert "title" in imported_recipe["fields"]
+            with patch("json.load", return_value=test_recipe) as mock_json_load:
+                with patch("rich.prompt.Prompt.ask", return_value="test_import.json"):
+                    app._import_schema_recipe()
+                    
+                    # Verify import was attempted
+                    mock_open.assert_called_with("test_import.json", "r")
+                    mock_json_load.assert_called_once()
 
     def test_configuration_persistence(self):
         """Test configuration persistence across app restarts."""

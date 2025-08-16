@@ -252,11 +252,10 @@ class TestAtomicScraperPlanningAgent:
 
     def test_agent_config_update(self):
         """Test that agent config is properly updated."""
-        original_system_prompt_generator = self.config.system_prompt_generator
-        # In v2.0, schemas are type parameters, not config attributes
-        # Config should be updated with system prompt generator
-        assert self.config.system_prompt_generator is not None
-        assert self.config.system_prompt_generator != original_system_prompt_generator
+        # Test that the agent has properly initialized the system prompt generator
+        assert self.agent.system_prompt_generator is not None
+        assert hasattr(self.agent.system_prompt_generator, "context_providers")
+        assert "scraping_context" in self.agent.system_prompt_generator.context_providers
 
     def test_agent_with_custom_model(self):
         """Test agent initialization with custom model."""
