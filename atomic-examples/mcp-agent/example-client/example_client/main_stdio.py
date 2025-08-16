@@ -22,11 +22,11 @@ from mcp.client.stdio import stdio_client
 class MCPConfig:
     """Configuration for the MCP Agent system using STDIO transport."""
 
-    # NOTE: In contrast to other examples, we use gpt-4o and not gpt-4o-mini here.
-    # In my tests, gpt-4o-mini was not smart enough to deal with multiple tools like that
+    # NOTE: In contrast to other examples, we use gpt-5-mini and not gpt-5-mini here.
+    # In my tests, gpt-5-mini was not smart enough to deal with multiple tools like that
     # and at the moment MCP does not yet allow for adding sufficient metadata to
     # clarify tools even more and introduce more constraints.
-    openai_model: str = "gpt-4o"
+    openai_model: str = "gpt-5-mini"
     openai_api_key: str = os.getenv("OPENAI_API_KEY")
 
     # Command to run the STDIO server.

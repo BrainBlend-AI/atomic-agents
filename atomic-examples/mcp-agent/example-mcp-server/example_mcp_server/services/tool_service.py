@@ -3,7 +3,6 @@
 from typing import Dict, List, Any
 from mcp.server.fastmcp import FastMCP
 from example_mcp_server.interfaces.tool import Tool, ToolResponse, ToolContent
-from pydantic import Field
 
 
 class ToolService:
@@ -43,8 +42,8 @@ class ToolService:
         """
         tool = self.get_tool(tool_name)
 
-        # Convert input dictionary to the tool's input model
-        input_model = tool.input_model(**input_data)
+        # Use model_validate to handle complex nested objects properly
+        input_model = tool.input_model.model_validate(input_data)
 
         # Execute the tool with validated input
         return await tool.execute(input_model)
@@ -90,41 +89,19 @@ class ToolService:
     def register_mcp_handlers(self, mcp: FastMCP) -> None:
         """Register all tools as MCP handlers."""
         for tool in self._tools.values():
-            # Get the tool's schema
-            schema = tool.input_model.model_json_schema()
-            properties = schema.get("properties", {})
+            # Create a handler that uses the tool's input model directly for schema generation
+            def create_handler(tool_instance):
+                # Use the actual Pydantic model as the function parameter
+                # This ensures FastMCP gets the complete schema including nested objects
+                async def handler(input_data: tool_instance.input_model):
+                    f'"""{tool_instance.description}"""'
+                    result = await self.execute_tool(tool_instance.name, input_data.model_dump())
+                    return self._serialize_response(result)
 
-            # Create a function signature that matches the schema with parameter descriptions
-            params = []
+                return handler
 
-            for name, info in properties.items():
-                type_hint = "str"  # Default to str
-                if info.get("type") == "integer":
-                    type_hint = "int"
-                elif info.get("type") == "number":
-                    type_hint = "float"
-                elif info.get("type") == "boolean":
-                    type_hint = "bool"
+            # Create the handler
+            handler = create_handler(tool)
 
-                default = info.get("default", "...")
-                description = info.get("description", "")
-
-                # Create parameter string for function definition with Field for descriptions
-                if default == "...":
-                    params.append(f"{name}: {type_hint} = Field(description='{description}')")
-                else:
-                    params.append(f"{name}: {type_hint} = Field(description='{description}', default={repr(default)})")
-
-            # Create the function definition
-            fn_def = f"async def {tool.name}({', '.join(params)}):\n"
-            fn_def += f'    """{tool.description}"""\n'
-            fn_def += "    result = await self.execute_tool(tool.name, locals())\n"
-            fn_def += "    return self._serialize_response(result)"
-
-            # Create the function
-            namespace = {"self": self, "tool": tool, "Field": Field}
-            exec(fn_def, namespace)
-            handler = namespace[tool.name]
-
-            # Register the handler
+            # Register with FastMCP - it should auto-detect the schema from the type annotation
             mcp.tool(name=tool.name, description=tool.description)(handler)
