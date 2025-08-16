@@ -520,7 +520,11 @@ class TestConfigurationManagement:
         app = AtomicScraperApp(config_path=self.config_file.name)
         app.console = Mock()
 
-        # Test updating request_delay        new_delay = 2.5
+        # Store original value for comparison
+        original_delay = app.config["scraper"]["request_delay"]
+        
+        # Test updating request_delay
+        new_delay = 2.5
 
         # Simulate the setting modification
         app.config["scraper"]["request_delay"] = new_delay

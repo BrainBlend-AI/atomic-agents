@@ -61,7 +61,7 @@ class TestAtomicScrapingContextProvider:
 
 
 class TestAtomicScraperAgentInputSchema:
-    """Test the input schema for the scraper agent."""
+    """Test the input schema for the scraper self.agent."""
 
     def test_valid_input_schema(self):
         """Test creating a valid input schema."""
@@ -124,7 +124,7 @@ class TestAtomicScraperAgentInputSchema:
 
 
 class TestAtomicScraperAgentOutputSchema:
-    """Test the output schema for the scraper agent."""
+    """Test the output schema for the scraper self.agent."""
 
     def test_valid_output_schema(self):
         """Test creating a valid output schema."""
@@ -198,26 +198,29 @@ class TestAtomicScraperPlanningAgent:
 
         # Create agent config
         self.config = AgentConfig(client=self.mock_client, model="gpt-4o-mini")
+        
+        # Create the agent instance
+        self.agent = AtomicScraperPlanningAgent(config=self.config)
 
     def test_agent_initialization(self):
         """Test that agent initializes correctly."""
-        assert agent is not None
+        assert self.agent is not None
         # In v2.0, schemas are type parameters, not attributes
-        assert hasattr(agent, "client")
-        assert hasattr(agent, "model")
+        assert hasattr(self.agent, "client")
+        assert hasattr(self.agent, "model")
 
     def test_agent_has_system_prompt_generator(self):
         """Test that agent has system prompt generator with context."""
-        assert agent.system_prompt_generator is not None
-        assert "scraping_context" in agent.system_prompt_generator.context_providers
+        assert self.agent.system_prompt_generator is not None
+        assert "scraping_context" in self.agent.system_prompt_generator.context_providers
 
         # Test that context provider is the right type
-        context_provider = agent.system_prompt_generator.context_providers["scraping_context"]
+        context_provider = self.agent.system_prompt_generator.context_providers["scraping_context"]
         assert isinstance(context_provider, AtomicScrapingContextProvider)
 
     def test_system_prompt_generation(self):
         """Test that system prompt is generated correctly."""
-        system_prompt = agent.system_prompt_generator.generate_prompt()
+        system_prompt = self.agent.system_prompt_generator.generate_prompt()
 
         assert isinstance(system_prompt, str)
         assert len(system_prompt) > 0
@@ -226,17 +229,17 @@ class TestAtomicScraperPlanningAgent:
     def test_agent_history_initialization(self):
         """Test that agent history is initialized."""
         # In v2.0, memory is called history
-        assert hasattr(agent, "history")
-        if agent.history is not None:
-            assert hasattr(agent.history, "get_history")
-            assert hasattr(agent.history, "add_message")
+        assert hasattr(self.agent, "history")
+        if self.agent.history is not None:
+            assert hasattr(self.agent.history, "get_history")
+            assert hasattr(self.agent.history, "add_message")
 
     def test_run_method_basic_execution(self):
         """Test that run method executes and returns valid output."""
         input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
 
         # The run method should execute without raising NotImplementedError
-        result = agent.run(input_data)
+        result = self.agent.run(input_data)
 
         # Verify the result is a valid output schema
         assert isinstance(result, AtomicScraperAgentOutputSchema)
@@ -258,34 +261,34 @@ class TestAtomicScraperPlanningAgent:
     def test_agent_with_custom_model(self):
         """Test agent initialization with custom model."""
         custom_config = AgentConfig(client=self.mock_client, model="gpt-4")
-        assert agent.model == "gpt-4"
+        assert self.self.agent.model == "gpt-4"
 
     def test_agent_context_provider_methods(self):
         """Test agent context provider management methods."""
         # Test getting context provider
-        context_provider = agent.get_context_provider("scraping_context")
+        context_provider = self.agent.get_context_provider("scraping_context")
         assert isinstance(context_provider, AtomicScrapingContextProvider)
 
         # Test getting non-existent provider raises error
         with pytest.raises(KeyError):
-            agent.get_context_provider("non_existent")
+            self.agent.get_context_provider("non_existent")
 
         # Test registering new provider
         new_provider = AtomicScrapingContextProvider()
-        agent.register_context_provider("test_provider", new_provider)
+        self.agent.register_context_provider("test_provider", new_provider)
 
-        retrieved_provider = agent.get_context_provider("test_provider")
+        retrieved_provider = self.agent.get_context_provider("test_provider")
         assert retrieved_provider == new_provider
 
         # Test unregistering provider
-        agent.unregister_context_provider("test_provider")
+        self.agent.unregister_context_provider("test_provider")
 
         with pytest.raises(KeyError):
-            agent.get_context_provider("test_provider")
+            self.agent.get_context_provider("test_provider")
 
         # Test unregistering non-existent provider raises error
         with pytest.raises(KeyError):
-            agent.unregister_context_provider("non_existent")
+            self.agent.unregister_context_provider("non_existent")
 
 
 class TestRequestParsingAndStrategyCoordination:
@@ -304,7 +307,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_basic(self):
         """Test basic natural language request parsing."""
         request = "scrape Saturday markets"
-        parsed = self.agent._parse_natural_language_request(request)
+        parsed = self.self.agent._parse_natural_language_request(request)
 
         assert parsed["content_type"] == "list"
         assert "markets" in parsed["target_data"]
@@ -315,7 +318,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_detail(self):
         """Test parsing request for detailed information."""
         request = "get detailed information about this product"
-        parsed = self.agent._parse_natural_language_request(request)
+        parsed = self.self.agent._parse_natural_language_request(request)
 
         assert parsed["content_type"] == "detail"
         assert "products" in parsed["target_data"]
@@ -325,7 +328,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_search(self):
         """Test parsing search-type request."""
         request = "find search results for articles"
-        parsed = self.agent._parse_natural_language_request(request)
+        parsed = self.self.agent._parse_natural_language_request(request)
 
         assert parsed["content_type"] == "search"
         assert "articles" in parsed["target_data"]
@@ -336,7 +339,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_multiple_data_types(self):
         """Test parsing request with multiple data types."""
         request = "scrape market prices and contact information"
-        parsed = self.agent._parse_natural_language_request(request)
+        parsed = self.self.agent._parse_natural_language_request(request)
 
         assert "markets" in parsed["target_data"]
         assert "prices" in parsed["target_data"]
@@ -345,7 +348,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_location_filters(self):
         """Test parsing request with location filters."""
         request = "find Cape Town markets"
-        parsed = self.agent._parse_natural_language_request(request)
+        parsed = self.self.agent._parse_natural_language_request(request)
 
         assert "cape town" in parsed["location_filters"]
         assert "markets" in parsed["target_data"]
@@ -360,7 +363,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
 
-        schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
+        schema_recipe = self.self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
         assert schema_recipe.name == "saturday_markets_schema"
         assert "title" in schema_recipe.fields
@@ -378,7 +381,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         input_data = AtomicScraperAgentInputSchema(request="scrape product prices", target_url="https://example.com")
 
-        schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
+        schema_recipe = self.self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
         assert "price" in schema_recipe.fields
         assert schema_recipe.fields["price"].extraction_selector == ".price, .cost, .fee, .amount"
@@ -416,7 +419,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         parsed_request = {"content_type": "list"}
 
-        plan = self.agent._generate_scraping_plan(strategy, schema_recipe, parsed_request)
+        plan = self.self.agent._generate_scraping_plan(strategy, schema_recipe, parsed_request)
 
         assert "Scraping Plan for List Data" in plan
         assert "list" in plan
@@ -451,7 +454,7 @@ class TestRequestParsingAndStrategyCoordination:
             "location_filters": [],
         }
 
-        reasoning = self.agent._generate_reasoning(analysis, strategy, schema_recipe, parsed_request)
+        reasoning = self.self.agent._generate_reasoning(analysis, strategy, schema_recipe, parsed_request)
 
         assert "Decision Reasoning" in reasoning
         assert "Strategy Selection" in reasoning
@@ -483,7 +486,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         schema_recipe = SchemaRecipe(name="test_schema", description="Test schema", fields=fields)  # 3 fields = good coverage
 
-        confidence = self.agent._calculate_confidence(analysis, strategy, schema_recipe)
+        confidence = self.self.agent._calculate_confidence(analysis, strategy, schema_recipe)
 
         assert confidence > 0.7  # Should be high confidence
 
@@ -516,7 +519,7 @@ class TestRequestParsingAndStrategyCoordination:
             fields=fields,  # Only 1 field = poor coverage
         )
 
-        confidence = self.agent._calculate_confidence(analysis, strategy, schema_recipe)
+        confidence = self.self.agent._calculate_confidence(analysis, strategy, schema_recipe)
 
         assert confidence < 0.6  # Should be low confidence
 
@@ -524,7 +527,7 @@ class TestRequestParsingAndStrategyCoordination:
         """Test error handling."""
         input_data = AtomicScraperAgentInputSchema(request="test request", target_url="https://example.com")
 
-        result = self.agent._handle_error("Test error message", input_data)
+        result = self.self.agent._handle_error("Test error message", input_data)
 
         assert isinstance(result, AtomicScraperAgentOutputSchema)
         assert "Error occurred while generating scraping plan" in result.scraping_plan
@@ -545,7 +548,7 @@ class TestRequestParsingAndStrategyCoordination:
     )
     def test_content_type_detection(self, user_request, expected_content_type):
         """Test content type detection from various requests."""
-        parsed = self.agent._parse_natural_language_request(user_request)
+        parsed = self.self.agent._parse_natural_language_request(user_request)
         assert parsed["content_type"] == expected_content_type
 
     @pytest.mark.parametrize(
@@ -560,7 +563,7 @@ class TestRequestParsingAndStrategyCoordination:
     )
     def test_data_type_extraction(self, user_request, expected_data_types):
         """Test data type extraction from various requests."""
-        parsed = self.agent._parse_natural_language_request(user_request)
+        parsed = self.self.agent._parse_natural_language_request(user_request)
         for data_type in expected_data_types:
             assert data_type in parsed["target_data"]
 

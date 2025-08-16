@@ -205,6 +205,8 @@ class TestRateLimiter:
 
         delay0 = self.rate_limiter.get_retry_delay(domain, 0)
         delay1 = self.rate_limiter.get_retry_delay(domain, 1)
+        delay2 = self.rate_limiter.get_retry_delay(domain, 2)
+        
         # Should increase exponentially
         assert delay1 > delay0
         assert delay2 > delay1
