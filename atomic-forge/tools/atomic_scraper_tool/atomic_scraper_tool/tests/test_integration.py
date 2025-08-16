@@ -8,9 +8,8 @@ in end-to-end scraping scenarios.
 import pytest
 from unittest.mock import Mock, patch
 import tempfile
-import os
 
-from atomic_scraper_tool.testing.mock_website import MockWebsiteGenerator, WebsiteType
+from atomic_scraper_tool.testing.mock_website import MockWebsiteGenerator
 from atomic_scraper_tool.testing.test_scenarios import ScenarioGenerator, ScenarioType
 from atomic_scraper_tool.tools.atomic_scraper_tool import AtomicScraperTool
 from atomic_scraper_tool.agents.scraper_planning_agent import AtomicScraperPlanningAgent
@@ -231,7 +230,6 @@ class TestConcurrentOperations:
     def test_concurrent_page_generation(self):
         """Test concurrent page generation."""
         import threading
-        import time
 
         results = {}
         errors = []

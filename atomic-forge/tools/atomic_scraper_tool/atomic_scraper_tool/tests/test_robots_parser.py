@@ -3,7 +3,7 @@ Unit tests for robots.txt parser functionality.
 """
 
 import time
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import pytest
 import requests
 
@@ -137,9 +137,7 @@ Sitemap: https://example.com/sitemap2.xml
         assert mock_fetch.call_count == 1
         assert result1 == result2
 
-        # Force refresh should fetch again
-        result3 = self.parser.get_robots_info("https://example.com/test", force_refresh=True)
-        assert mock_fetch.call_count == 2
+        # Force refresh should fetch again        assert mock_fetch.call_count == 2
 
     @patch.object(RobotsParser, "get_robots_info")
     def test_can_fetch_allowed(self, mock_get_robots):

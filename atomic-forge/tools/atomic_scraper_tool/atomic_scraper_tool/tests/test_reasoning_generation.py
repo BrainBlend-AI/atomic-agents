@@ -5,16 +5,13 @@ Tests the enhanced reasoning capabilities added in task 6.3.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
+from unittest.mock import Mock
 
 from atomic_scraper_tool.agents.scraper_planning_agent import (
     AtomicScraperPlanningAgent,
-    AtomicScraperAgentInputSchema,
 )
 from atomic_scraper_tool.models.base_models import ScrapingStrategy
 from atomic_scraper_tool.models.schema_models import SchemaRecipe, FieldDefinition
-from atomic_agents import AgentConfig
 
 
 class TestReasoningGeneration:

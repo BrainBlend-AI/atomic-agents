@@ -7,13 +7,11 @@ Tests the complete workflow from user input to scraping results.
 import pytest
 import json
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from pathlib import Path
-from io import StringIO
 
 from atomic_scraper_tool.main import AtomicScraperApp
 from atomic_scraper_tool.tools.atomic_scraper_tool import AtomicScraperOutputSchema
-from atomic_scraper_tool.models.base_models import ScrapedItem
 
 
 class TestAtomicScraperApp:
@@ -522,9 +520,7 @@ class TestConfigurationManagement:
         app = AtomicScraperApp(config_path=self.config_file.name)
         app.console = Mock()
 
-        # Test updating request_delay
-        original_delay = app.config["scraper"]["request_delay"]
-        new_delay = 2.5
+        # Test updating request_delay        new_delay = 2.5
 
         # Simulate the setting modification
         app.config["scraper"]["request_delay"] = new_delay

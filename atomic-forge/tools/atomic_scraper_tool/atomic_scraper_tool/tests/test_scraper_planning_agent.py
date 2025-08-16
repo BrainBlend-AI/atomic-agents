@@ -201,8 +201,6 @@ class TestAtomicScraperPlanningAgent:
 
     def test_agent_initialization(self):
         """Test that agent initializes correctly."""
-        agent = AtomicScraperPlanningAgent(self.config)
-
         assert agent is not None
         # In v2.0, schemas are type parameters, not attributes
         assert hasattr(agent, "client")
@@ -210,8 +208,6 @@ class TestAtomicScraperPlanningAgent:
 
     def test_agent_has_system_prompt_generator(self):
         """Test that agent has system prompt generator with context."""
-        agent = AtomicScraperPlanningAgent(self.config)
-
         assert agent.system_prompt_generator is not None
         assert "scraping_context" in agent.system_prompt_generator.context_providers
 
@@ -221,8 +217,6 @@ class TestAtomicScraperPlanningAgent:
 
     def test_system_prompt_generation(self):
         """Test that system prompt is generated correctly."""
-        agent = AtomicScraperPlanningAgent(self.config)
-
         system_prompt = agent.system_prompt_generator.generate_prompt()
 
         assert isinstance(system_prompt, str)
@@ -231,8 +225,6 @@ class TestAtomicScraperPlanningAgent:
 
     def test_agent_history_initialization(self):
         """Test that agent history is initialized."""
-        agent = AtomicScraperPlanningAgent(self.config)
-
         # In v2.0, memory is called history
         assert hasattr(agent, "history")
         if agent.history is not None:
@@ -241,8 +233,6 @@ class TestAtomicScraperPlanningAgent:
 
     def test_run_method_basic_execution(self):
         """Test that run method executes and returns valid output."""
-        agent = AtomicScraperPlanningAgent(self.config)
-
         input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
 
         # The run method should execute without raising NotImplementedError
@@ -260,9 +250,6 @@ class TestAtomicScraperPlanningAgent:
     def test_agent_config_update(self):
         """Test that agent config is properly updated."""
         original_system_prompt_generator = self.config.system_prompt_generator
-
-        agent = AtomicScraperPlanningAgent(self.config)
-
         # In v2.0, schemas are type parameters, not config attributes
         # Config should be updated with system prompt generator
         assert self.config.system_prompt_generator is not None
@@ -271,15 +258,10 @@ class TestAtomicScraperPlanningAgent:
     def test_agent_with_custom_model(self):
         """Test agent initialization with custom model."""
         custom_config = AgentConfig(client=self.mock_client, model="gpt-4")
-
-        agent = AtomicScraperPlanningAgent(custom_config)
-
         assert agent.model == "gpt-4"
 
     def test_agent_context_provider_methods(self):
         """Test agent context provider management methods."""
-        agent = AtomicScraperPlanningAgent(self.config)
-
         # Test getting context provider
         context_provider = agent.get_context_provider("scraping_context")
         assert isinstance(context_provider, AtomicScrapingContextProvider)

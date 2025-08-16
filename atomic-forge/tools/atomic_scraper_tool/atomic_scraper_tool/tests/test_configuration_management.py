@@ -7,11 +7,10 @@ Tests the configuration system, schema recipe management, and persistence.
 import pytest
 import json
 import tempfile
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from pathlib import Path
 
 from atomic_scraper_tool.main import AtomicScraperApp
-from atomic_scraper_tool.config.scraper_config import AtomicScraperConfig
 
 
 class TestConfigurationManagement:
@@ -99,9 +98,6 @@ class TestConfigurationManagement:
 
         # Mock user input for modifying request_delay
         mock_prompt.side_effect = ["1", "2.5"]  # Choose option 1, set value to 2.5
-
-        original_delay = app.config["scraper"]["request_delay"]
-
         # Call the method (would normally be interactive)
         # We'll test the logic directly
         app.config["scraper"]["request_delay"] = 2.5
@@ -317,13 +313,6 @@ class TestConfigurationManagement:
     def test_configuration_validation(self):
         """Test configuration validation and error handling."""
         app = AtomicScraperApp()
-
-        # Test invalid quality threshold values
-        invalid_thresholds = {
-            "minimum_completeness": 1.5,  # Invalid: > 1.0
-            "minimum_accuracy": -0.1,  # Invalid: < 0.0
-            "minimum_overall": 150.0,  # Invalid: > 100.0
-        }
 
         # The validation should be handled in the UI methods
         # Here we test that the configuration can handle various values

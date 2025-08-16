@@ -4,11 +4,8 @@ Unit tests for the error handler module.
 Tests error handling, retry mechanisms, and graceful degradation.
 """
 
-import asyncio
 import pytest
-import time
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
+from unittest.mock import Mock, patch
 
 from atomic_scraper_tool.core.error_handler import (
     ErrorHandler,
@@ -18,10 +15,8 @@ from atomic_scraper_tool.core.error_handler import (
     ErrorSeverity,
 )
 from atomic_scraper_tool.core.exceptions import (
-    ScrapingError,
     NetworkError,
     ParsingError,
-    ValidationError,
     ConfigurationError,
     RateLimitError,
     QualityError,

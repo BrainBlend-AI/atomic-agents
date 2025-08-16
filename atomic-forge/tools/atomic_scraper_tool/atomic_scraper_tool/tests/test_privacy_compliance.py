@@ -6,10 +6,9 @@ import json
 import os
 import tempfile
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
-import pytest
+from unittest.mock import patch
 
 from atomic_scraper_tool.compliance.privacy_compliance import (
     PrivacyComplianceChecker,
@@ -485,8 +484,6 @@ class TestPrivacyComplianceChecker:
             f.write("Test log content")
 
         # Manually set file size to be larger than limit by patching the stat result
-        original_stat = Path(self.audit_log_path).stat
-
         class MockStat:
             st_size = 200 * 1024 * 1024  # 200 MB
 

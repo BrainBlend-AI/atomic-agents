@@ -5,8 +5,7 @@ Tests tool initialization, configuration validation, and basic functionality.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
+from unittest.mock import Mock, patch
 
 from atomic_scraper_tool.tools.atomic_scraper_tool import (
     AtomicScraperTool,
@@ -428,8 +427,6 @@ class TestAtomicScraperTool:
     def test_update_config(self):
         """Test configuration updates."""
         tool = AtomicScraperTool()
-        original_delay = tool.scraper_config.request_delay
-        original_timeout = tool.scraper_config.timeout
 
         tool.update_config(request_delay=3.0, timeout=90, min_quality_score=80.0)
 
