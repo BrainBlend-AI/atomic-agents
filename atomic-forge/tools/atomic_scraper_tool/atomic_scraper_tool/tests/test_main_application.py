@@ -85,7 +85,7 @@ class TestAtomicScraperApp:
         invalid_config_file.close()
 
         try:
-            with patch("builtins.print") as mock_print:
+            with patch("builtins.print") as mock_print:  # noqa: F841
                 app = AtomicScraperApp(config_path=invalid_config_file.name)
                 # Should fall back to defaults and show warning
                 assert app.config["scraper"]["base_url"] == "https://example.com"
@@ -664,7 +664,7 @@ class TestConfigurationManagement:
 
         # Test export functionality (simulate file writing)
         with patch("builtins.open", create=True) as mock_open:
-            with patch("json.dump") as mock_json_dump:
+            with patch("json.dump") as mock_json_dump:  # noqa: F841
                 # Simulate export
                 filename = "schema_recipe_export_test_recipe.json"
                 mock_file = mock_open.return_value.__enter__.return_value
@@ -675,7 +675,7 @@ class TestConfigurationManagement:
 
         # Test import functionality
         with patch("builtins.open", create=True) as mock_open:
-            with patch("json.load", return_value=test_recipe) as mock_json_load:
+            with patch("json.load", return_value=test_recipe) as mock_json_load:  # noqa: F841
                 # Simulate import
                 imported_recipe = json.load(mock_open.return_value.__enter__.return_value)
 

@@ -261,7 +261,8 @@ class TestAtomicScraperPlanningAgent:
     def test_agent_with_custom_model(self):
         """Test agent initialization with custom model."""
         custom_config = AgentConfig(client=self.mock_client, model="gpt-4")
-        assert self.self.agent.model == "gpt-4"
+        custom_agent = AtomicScraperPlanningAgent(config=custom_config)
+        assert custom_agent.model == "gpt-4"
 
     def test_agent_context_provider_methods(self):
         """Test agent context provider management methods."""
