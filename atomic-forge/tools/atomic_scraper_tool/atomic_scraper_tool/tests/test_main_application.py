@@ -522,7 +522,7 @@ class TestConfigurationManagement:
 
         # Store original value for comparison
         original_delay = app.config["scraper"]["request_delay"]
-        
+
         # Test updating request_delay
         new_delay = 2.5
 
@@ -667,11 +667,11 @@ class TestConfigurationManagement:
 
         # Test export functionality
         mock_prompt.return_value = "export_test_recipe"  # Select the recipe to export
-        
+
         with patch("builtins.open", create=True) as mock_open:
             with patch("json.dump") as mock_json_dump:
                 app._export_schema_recipe()
-                
+
                 # Verify export was called
                 mock_open.assert_called_with("schema_recipe_export_test_recipe.json", "w")
                 mock_json_dump.assert_called_once()
@@ -681,7 +681,7 @@ class TestConfigurationManagement:
             with patch("json.load", return_value=test_recipe) as mock_json_load:
                 with patch("rich.prompt.Prompt.ask", return_value="test_import.json"):
                     app._import_schema_recipe()
-                    
+
                     # Verify import was attempted
                     mock_open.assert_called_with("test_import.json", "r")
                     mock_json_load.assert_called_once()

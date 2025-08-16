@@ -198,7 +198,7 @@ class TestAtomicScraperPlanningAgent:
 
         # Create agent config
         self.config = AgentConfig(client=self.mock_client, model="gpt-4o-mini")
-        
+
         # Create the agent instance
         self.agent = AtomicScraperPlanningAgent(config=self.config)
 
