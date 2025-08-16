@@ -344,7 +344,7 @@ class AtomicScraperTool(BaseTool[AtomicScraperInputSchema, AtomicScraperOutputSc
 
     def _apply_rate_limiting(self) -> None:
         """Apply rate limiting delay between requests."""
-        if hasattr(self.config, "request_delay") and self.scraper_config.request_delay > 0:
+        if hasattr(self.scraper_config, "request_delay") and self.scraper_config.request_delay > 0:
             time.sleep(self.scraper_config.request_delay)
 
     def _generate_summary(self, scraping_result: ScrapingResult) -> str:
@@ -422,8 +422,8 @@ class AtomicScraperTool(BaseTool[AtomicScraperInputSchema, AtomicScraperOutputSc
         """
         # Update config attributes
         for key, value in config_updates.items():
-            if hasattr(self.config, key):
-                setattr(self.config, key, value)
+            if hasattr(self.scraper_config, key):
+                setattr(self.scraper_config, key, value)
                 logger.info(f"Updated config {key} to {value}")
             else:
                 logger.warning(f"Unknown config parameter: {key}")
