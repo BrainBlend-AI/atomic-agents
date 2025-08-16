@@ -2,15 +2,7 @@
 Tests for the enhanced navigation analyzer.
 """
 
-import pytest
-from bs4 import BeautifulSoup
-from atomic_scraper_tool.analysis.enhanced_navigation_analyzer import (
-    EnhancedNavigationAnalyzer,
-    NavigationHierarchy,
-    MegaMenuInfo,
-    MobileNavigationInfo,
-    AdvancedPaginationInfo,
-)
+from atomic_scraper_tool.analysis.enhanced_navigation_analyzer import EnhancedNavigationAnalyzer
 
 
 class TestEnhancedNavigationAnalyzer:
@@ -37,14 +29,14 @@ class TestEnhancedNavigationAnalyzer:
             </ul>
         </nav>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert len(analysis.main_navigation) > 0
         main_nav = analysis.main_navigation[0]
         assert main_nav.level == 0
         assert len(main_nav.items) == 3
-        
+
         # Check submenu detection
         products_item = next((item for item in main_nav.items if item["text"] == "Products"), None)
         assert products_item is not None
@@ -72,9 +64,9 @@ class TestEnhancedNavigationAnalyzer:
             </div>
         </nav>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert len(analysis.mega_menus) > 0
         mega_menu = analysis.mega_menus[0]
         assert len(mega_menu.columns) == 2
@@ -95,9 +87,9 @@ class TestEnhancedNavigationAnalyzer:
             <div class="overlay"></div>
         </header>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert analysis.mobile_navigation is not None
         mobile_nav = analysis.mobile_navigation
         assert mobile_nav.hamburger_selector is not None
@@ -120,9 +112,9 @@ class TestEnhancedNavigationAnalyzer:
             </select>
         </div>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert analysis.advanced_pagination is not None
         pagination = analysis.advanced_pagination
         assert pagination.pagination_type == "numbered"
@@ -144,9 +136,9 @@ class TestEnhancedNavigationAnalyzer:
             </div>
         </div>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert analysis.advanced_pagination is not None
         pagination = analysis.advanced_pagination
         assert pagination.pagination_type == "infinite_scroll"
@@ -168,9 +160,9 @@ class TestEnhancedNavigationAnalyzer:
             </span>
         </div>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert len(analysis.breadcrumb_variations) >= 2
         assert any("breadcrumb" in selector for selector in analysis.breadcrumb_variations)
         assert any("BreadcrumbList" in selector for selector in analysis.breadcrumb_variations)
@@ -186,9 +178,9 @@ class TestEnhancedNavigationAnalyzer:
             </div>
         </form>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert "search_form" in analysis.search_navigation
         assert "search_input" in analysis.search_navigation
         assert "search_button" in analysis.search_navigation
@@ -212,9 +204,9 @@ class TestEnhancedNavigationAnalyzer:
             </div>
         </div>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert "filter_containers" in analysis.filter_navigation
         assert "sort_selectors" in analysis.filter_navigation
         assert "view_toggles" in analysis.filter_navigation
@@ -230,9 +222,9 @@ class TestEnhancedNavigationAnalyzer:
             <div onclick="loadMore()" class="js-load-more">Load More</div>
         </div>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert len(analysis.dynamic_content_indicators) > 0
         indicators = " ".join(analysis.dynamic_content_indicators)
         assert "data-toggle" in indicators or "loading" in indicators or "lazy" in indicators
@@ -249,9 +241,9 @@ class TestEnhancedNavigationAnalyzer:
         </nav>
         <main id="main-content">Content here</main>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         accessibility = analysis.accessibility_features
         assert accessibility["has_skip_links"] is True
         assert accessibility["has_aria_labels"] is True
@@ -283,9 +275,9 @@ class TestEnhancedNavigationAnalyzer:
             </div>
         </article>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert analysis.contextual_navigation is not None
         contextual = analysis.contextual_navigation
         assert contextual.tags_selector is not None
@@ -297,9 +289,9 @@ class TestEnhancedNavigationAnalyzer:
     def test_empty_html_handling(self):
         """Test handling of empty or minimal HTML."""
         html = "<html><body></body></html>"
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert analysis.url == "https://example.com"
         assert len(analysis.main_navigation) == 0
         assert len(analysis.mega_menus) == 0
@@ -327,16 +319,16 @@ class TestEnhancedNavigationAnalyzer:
             </ul>
         </nav>
         """
-        
+
         analysis = self.analyzer.analyze_navigation(html, "https://example.com")
-        
+
         assert len(analysis.main_navigation) > 0
         main_nav = analysis.main_navigation[0]
         products_item = main_nav.items[0]
-        
+
         assert products_item["has_submenu"] is True
         assert len(products_item["submenu_items"]) == 2
-        
+
         # Check for nested submenu
         electronics_item = products_item["submenu_items"][0]
         assert electronics_item["has_submenu"] is True

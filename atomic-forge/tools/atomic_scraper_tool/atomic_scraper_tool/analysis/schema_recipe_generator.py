@@ -87,7 +87,7 @@ class SchemaRecipeGenerator:
             "location": ["location", "address", "place", "venue", "where"],
             "contact": ["contact", "phone", "email", "tel", "mail"],
             "image": ["image", "photo", "picture", "img", "thumbnail"],
-            "link": ["link", "url", "href", "website"],
+            "link": ["link", "url", "hre", "website"],
             "category": ["category", "type", "kind", "genre", "class"],
             "author": ["author", "by", "creator", "writer", "publisher"],
             "rating": ["rating", "score", "stars", "review", "grade"],
@@ -285,7 +285,7 @@ class SchemaRecipeGenerator:
         # Look for links
         links = container.find_all("a", href=True)
         if links:
-            hrefs = [link.get("href") for link in links if link.get("href")]
+            hrefs = [link.get("hre") for link in links if link.get("href")]
             if hrefs:
                 patterns.append(
                     FieldPattern(

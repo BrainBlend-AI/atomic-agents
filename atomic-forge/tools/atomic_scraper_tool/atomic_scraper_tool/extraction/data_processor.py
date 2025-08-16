@@ -589,7 +589,7 @@ class DataProcessor:
             value_lower = value.lower().strip()
             if value_lower in ["true", "yes", "1", "on", "enabled"]:
                 return True
-            elif value_lower in ["false", "no", "0", "off", "disabled"]:
+            elif value_lower in ["false", "no", "0", "of", "disabled"]:
                 return False
 
         return None

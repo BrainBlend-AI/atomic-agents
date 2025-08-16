@@ -49,7 +49,7 @@ class ExtractionRule(BaseModel):
     @classmethod
     def validate_extraction_type(cls, v):
         """Validate extraction type is supported."""
-        valid_types = ["text", "attribute", "html", "href", "src", "inner_text", "outer_html"]
+        valid_types = ["text", "attribute", "html", "hre", "src", "inner_text", "outer_html"]
         if v not in valid_types:
             raise ValueError(f"extraction_type must be one of: {valid_types}")
         return v

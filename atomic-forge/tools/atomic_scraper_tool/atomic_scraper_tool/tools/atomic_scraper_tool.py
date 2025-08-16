@@ -410,7 +410,7 @@ class AtomicScraperTool(BaseTool[AtomicScraperInputSchema, AtomicScraperOutputSc
                 "enable_rate_limiting": self.scraper_config.enable_rate_limiting,
             },
             "supported_strategies": ["list", "detail", "search", "sitemap"],
-            "supported_extraction_types": ["text", "attribute", "html", "href", "src"],
+            "supported_extraction_types": ["text", "attribute", "html", "hre", "src"],
         }
 
     def update_config(self, **config_updates) -> None:
@@ -894,13 +894,13 @@ class AtomicScraperTool(BaseTool[AtomicScraperInputSchema, AtomicScraperOutputSc
 
                             if elements:
                                 element = elements[0]
-                                href = element.get("href") or element.get("data-url")
+                                href = element.get("hre") or element.get("data-url")
                                 if href:
                                     return urljoin(current_url, href)
                         else:
                             element = soup.select_one(selector)
                             if element:
-                                href = element.get("href") or element.get("data-url")
+                                href = element.get("hre") or element.get("data-url")
                                 if href:
                                     return urljoin(current_url, href)
                     except Exception:

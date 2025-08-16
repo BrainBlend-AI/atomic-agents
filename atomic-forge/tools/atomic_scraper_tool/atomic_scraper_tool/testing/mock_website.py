@@ -125,7 +125,7 @@ class MockWebsite:
         # Generate pagination
         pagination_html = self._generate_pagination(page_num) if self.config.include_pagination else ""
 
-        content = f"""
+        content = """
         <div class="listing-page">
             <h1>Page {page_num}</h1>
             <div class="items-grid">
@@ -160,7 +160,7 @@ class MockWebsite:
 
     def _generate_category_page(self, category: str) -> str:
         """Generate a category page."""
-        content = f"""
+        content = """
         <div class="category-page">
             <h1>Category: {category.title()}</h1>
             <div class="category-items">
@@ -180,7 +180,7 @@ class MockWebsite:
 
     def _generate_generic_page(self, path: str) -> str:
         """Generate a generic page for unknown paths."""
-        content = f"""
+        content = """
         <div class="generic-page">
             <h1>Page: {path}</h1>
             <p>This is a generic page for path: {path}</p>
@@ -293,7 +293,7 @@ class MockWebsite:
 
     def _generate_product_card(self, item_id: int) -> str:
         """Generate a product card for e-commerce sites."""
-        return f"""
+        return """
         <div class="product-card" data-product-id="{item_id}">
             <img src="/images/product{item_id}.jpg" alt="Product {item_id}">
             <h3><a href="/product/{item_id}">Product {item_id}</a></h3>
@@ -305,7 +305,7 @@ class MockWebsite:
 
     def _generate_article_card(self, item_id: int) -> str:
         """Generate an article card for news sites."""
-        return f"""
+        return """
         <article class="story-card" data-article-id="{item_id}">
             <h3><a href="/article/{item_id}">Breaking News Story {item_id}</a></h3>
             <p class="summary">This is a summary of news story {item_id}...</p>
@@ -315,7 +315,7 @@ class MockWebsite:
 
     def _generate_blog_card(self, item_id: int) -> str:
         """Generate a blog post card."""
-        return f"""
+        return """
         <article class="post-card" data-post-id="{item_id}">
             <h3><a href="/post/{item_id}">Blog Post {item_id}</a></h3>
             <p class="excerpt">This is an excerpt from blog post {item_id}...</p>
@@ -325,7 +325,7 @@ class MockWebsite:
 
     def _generate_generic_card(self, item_id: int) -> str:
         """Generate a generic item card."""
-        return f"""
+        return """
         <div class="item-card" data-item-id="{item_id}">
             <h3><a href="/item/{item_id}">Item {item_id}</a></h3>
             <p>Description of item {item_id}</p>
@@ -334,7 +334,7 @@ class MockWebsite:
 
     def _generate_product_detail(self, item_id: str) -> str:
         """Generate detailed product page content."""
-        return f"""
+        return """
         <div class="product-detail" data-product-id="{item_id}">
             <h1>Product {item_id}</h1>
             <div class="product-images">
@@ -366,7 +366,7 @@ class MockWebsite:
 
     def _generate_article_detail(self, item_id: str) -> str:
         """Generate detailed article page content."""
-        return f"""
+        return """
         <article class="article-detail" data-article-id="{item_id}">
             <h1>Breaking News Story {item_id}</h1>
             <p class="meta">By Reporter {item_id} | {item_id} hours ago</p>
@@ -379,7 +379,7 @@ class MockWebsite:
 
     def _generate_blog_detail(self, item_id: str) -> str:
         """Generate detailed blog post content."""
-        return f"""
+        return """
         <article class="blog-detail" data-post-id="{item_id}">
             <h1>Blog Post {item_id}</h1>
             <p class="meta">Published {item_id} days ago</p>
@@ -392,7 +392,7 @@ class MockWebsite:
 
     def _generate_generic_detail(self, item_id: str) -> str:
         """Generate generic item detail content."""
-        return f"""
+        return """
         <div class="item-detail" data-item-id="{item_id}">
             <h1>Item {item_id}</h1>
             <div class="item-content">
@@ -433,7 +433,7 @@ class MockWebsite:
         if self.config.include_metadata:
             metadata_html = self._generate_metadata(title)
 
-        return f"""<!DOCTYPE html>
+        return """<!DOCTYPE html>
 <html lang="{self.config.language}">
 <head>
     <meta charset="UTF-8">
@@ -489,7 +489,7 @@ class MockWebsite:
         for href, text in nav_items:
             nav_links.append(f'<li><a href="{href}">{text}</a></li>')
 
-        return f"""
+        return """
         <nav class="navigation">
             <div class="container">
                 <ul>
@@ -501,7 +501,7 @@ class MockWebsite:
 
     def _generate_metadata(self, title: str) -> str:
         """Generate additional metadata tags."""
-        return f"""
+        return """
         <meta property="og:title" content="{title}">
         <meta property="og:description" content="Mock website for testing web scraping">
         <meta property="og:type" content="website">
