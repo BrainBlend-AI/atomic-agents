@@ -61,6 +61,10 @@ class AtomicScraperApp:
         self.injected_client = client
         self.demo_mode = demo_mode
 
+        # Application state - initialize before validation
+        self.running = True
+        self.debug_mode = False
+
         # Validate model provider before initializing components
         self._validate_model_provider()
 
@@ -68,10 +72,6 @@ class AtomicScraperApp:
         self.planning_agent = None
         self.scraper_tool = None
         self.session_history = []
-
-        # Application state
-        self.running = True
-        self.debug_mode = False
 
         # Initialize components
         self._initialize_components()

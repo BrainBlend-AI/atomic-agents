@@ -308,7 +308,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_basic(self):
         """Test basic natural language request parsing."""
         request = "scrape Saturday markets"
-        parsed = self.self.agent._parse_natural_language_request(request)
+        parsed = self.agent._parse_natural_language_request(request)
 
         assert parsed["content_type"] == "list"
         assert "markets" in parsed["target_data"]
@@ -319,7 +319,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_detail(self):
         """Test parsing request for detailed information."""
         request = "get detailed information about this product"
-        parsed = self.self.agent._parse_natural_language_request(request)
+        parsed = self.agent._parse_natural_language_request(request)
 
         assert parsed["content_type"] == "detail"
         assert "products" in parsed["target_data"]
@@ -329,7 +329,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_search(self):
         """Test parsing search-type request."""
         request = "find search results for articles"
-        parsed = self.self.agent._parse_natural_language_request(request)
+        parsed = self.agent._parse_natural_language_request(request)
 
         assert parsed["content_type"] == "search"
         assert "articles" in parsed["target_data"]
@@ -340,7 +340,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_multiple_data_types(self):
         """Test parsing request with multiple data types."""
         request = "scrape market prices and contact information"
-        parsed = self.self.agent._parse_natural_language_request(request)
+        parsed = self.agent._parse_natural_language_request(request)
 
         assert "markets" in parsed["target_data"]
         assert "prices" in parsed["target_data"]
@@ -349,7 +349,7 @@ class TestRequestParsingAndStrategyCoordination:
     def test_parse_natural_language_request_location_filters(self):
         """Test parsing request with location filters."""
         request = "find Cape Town markets"
-        parsed = self.self.agent._parse_natural_language_request(request)
+        parsed = self.agent._parse_natural_language_request(request)
 
         assert "cape town" in parsed["location_filters"]
         assert "markets" in parsed["target_data"]
@@ -364,7 +364,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         input_data = AtomicScraperAgentInputSchema(request="scrape Saturday markets", target_url="https://example.com")
 
-        schema_recipe = self.self.agent._create_basic_schema_recipe(parsed_request, input_data)
+        schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
         assert schema_recipe.name == "saturday_markets_schema"
         assert "title" in schema_recipe.fields
@@ -382,7 +382,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         input_data = AtomicScraperAgentInputSchema(request="scrape product prices", target_url="https://example.com")
 
-        schema_recipe = self.self.agent._create_basic_schema_recipe(parsed_request, input_data)
+        schema_recipe = self.agent._create_basic_schema_recipe(parsed_request, input_data)
 
         assert "price" in schema_recipe.fields
         assert schema_recipe.fields["price"].extraction_selector == ".price, .cost, .fee, .amount"
@@ -420,7 +420,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         parsed_request = {"content_type": "list"}
 
-        plan = self.self.agent._generate_scraping_plan(strategy, schema_recipe, parsed_request)
+        plan = self.agent._generate_scraping_plan(strategy, schema_recipe, parsed_request)
 
         assert "Scraping Plan for List Data" in plan
         assert "list" in plan
@@ -455,7 +455,7 @@ class TestRequestParsingAndStrategyCoordination:
             "location_filters": [],
         }
 
-        reasoning = self.self.agent._generate_reasoning(analysis, strategy, schema_recipe, parsed_request)
+        reasoning = self.agent._generate_reasoning(analysis, strategy, schema_recipe, parsed_request)
 
         assert "Decision Reasoning" in reasoning
         assert "Strategy Selection" in reasoning
@@ -487,7 +487,7 @@ class TestRequestParsingAndStrategyCoordination:
 
         schema_recipe = SchemaRecipe(name="test_schema", description="Test schema", fields=fields)  # 3 fields = good coverage
 
-        confidence = self.self.agent._calculate_confidence(analysis, strategy, schema_recipe)
+        confidence = self.agent._calculate_confidence(analysis, strategy, schema_recipe)
 
         assert confidence > 0.7  # Should be high confidence
 
@@ -520,7 +520,7 @@ class TestRequestParsingAndStrategyCoordination:
             fields=fields,  # Only 1 field = poor coverage
         )
 
-        confidence = self.self.agent._calculate_confidence(analysis, strategy, schema_recipe)
+        confidence = self.agent._calculate_confidence(analysis, strategy, schema_recipe)
 
         assert confidence < 0.6  # Should be low confidence
 
@@ -528,7 +528,7 @@ class TestRequestParsingAndStrategyCoordination:
         """Test error handling."""
         input_data = AtomicScraperAgentInputSchema(request="test request", target_url="https://example.com")
 
-        result = self.self.agent._handle_error("Test error message", input_data)
+        result = self.agent._handle_error("Test error message", input_data)
 
         assert isinstance(result, AtomicScraperAgentOutputSchema)
         assert "Error occurred while generating scraping plan" in result.scraping_plan
@@ -549,7 +549,7 @@ class TestRequestParsingAndStrategyCoordination:
     )
     def test_content_type_detection(self, user_request, expected_content_type):
         """Test content type detection from various requests."""
-        parsed = self.self.agent._parse_natural_language_request(user_request)
+        parsed = self.agent._parse_natural_language_request(user_request)
         assert parsed["content_type"] == expected_content_type
 
     @pytest.mark.parametrize(
@@ -564,7 +564,7 @@ class TestRequestParsingAndStrategyCoordination:
     )
     def test_data_type_extraction(self, user_request, expected_data_types):
         """Test data type extraction from various requests."""
-        parsed = self.self.agent._parse_natural_language_request(user_request)
+        parsed = self.agent._parse_natural_language_request(user_request)
         for data_type in expected_data_types:
             assert data_type in parsed["target_data"]
 
