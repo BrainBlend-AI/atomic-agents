@@ -31,9 +31,8 @@ class OrchestratorInputSchema(BaseIOSchema):
 
 
 class OrchestratorOutputSchema(BaseIOSchema):
-    """Combined output schema for the Orchestrator Agent. Contains the tool to use and its parameters."""
+    """Combined output schema for the Orchestrator Agent. Contains the tool parameters."""
 
-    tool: str = Field(..., description="The tool to use: 'search' or 'calculator'")
     tool_parameters: Union[SearXNGSearchToolInputSchema, CalculatorToolInputSchema] = Field(
         ..., description="The parameters for the selected tool"
     )
@@ -99,12 +98,12 @@ orchestrator_agent_final.register_context_provider("current_date", CurrentDatePr
 def execute_tool(
     searxng_tool: SearXNGSearchTool, calculator_tool: CalculatorTool, orchestrator_output: OrchestratorOutputSchema
 ) -> Union[SearXNGSearchToolOutputSchema, CalculatorToolOutputSchema]:
-    if orchestrator_output.tool == "search":
+    if isinstance(orchestrator_output.tool_parameters, SearXNGSearchToolInputSchema):
         return searxng_tool.run(orchestrator_output.tool_parameters)
-    elif orchestrator_output.tool == "calculator":
+    elif isinstance(orchestrator_output.tool_parameters, CalculatorToolInputSchema):
         return calculator_tool.run(orchestrator_output.tool_parameters)
     else:
-        raise ValueError(f"Unknown tool: {orchestrator_output.tool}")
+        raise ValueError(f"Unknown tool parameters type: {type(orchestrator_output.tool_parameters)}")
 
 
 #################
