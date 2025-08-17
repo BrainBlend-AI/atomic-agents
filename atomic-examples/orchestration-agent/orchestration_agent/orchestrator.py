@@ -71,7 +71,8 @@ class CurrentDateProvider(BaseDynamicContextProvider):
 ######################
 orchestrator_agent_config = AgentConfig(
     client=instructor.from_openai(openai.OpenAI()),
-    model="gpt-4o-mini",
+    model="gpt-5-mini",
+    model_api_parameters={"reasoning_effort": "low"},
     system_prompt_generator=SystemPromptGenerator(
         background=[
             "You are an Orchestrator Agent that decides between using a search tool or a calculator tool based on user input.",

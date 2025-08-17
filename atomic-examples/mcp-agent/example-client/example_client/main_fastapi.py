@@ -22,6 +22,7 @@ class MCPConfig:
     mcp_server_url: str = "http://localhost:6969"
     openai_model: str = "gpt-5-mini"
     openai_api_key: str = os.getenv("OPENAI_API_KEY") or ""
+    reasoning_effort: str = "low"
 
     def __post_init__(self):
         if not self.openai_api_key:
@@ -152,6 +153,7 @@ async def execute_with_orchestrator_async(query: str) -> tuple[str, list[str]]:
             AgentConfig(
                 client=globals()["client"],
                 model=config.openai_model,
+                model_api_parameters={"reasoning_effort": config.reasoning_effort},
                 history=ChatHistory(),
                 system_prompt_generator=SystemPromptGenerator(
                     background=[

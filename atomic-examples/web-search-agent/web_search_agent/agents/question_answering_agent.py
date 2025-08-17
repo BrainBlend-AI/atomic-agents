@@ -28,7 +28,8 @@ class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
 question_answering_agent = AtomicAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
     AgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
+        model_api_parameters={"reasoning_effort": "low"},
         system_prompt_generator=SystemPromptGenerator(
             background=[
                 "You are an intelligent question answering expert.",

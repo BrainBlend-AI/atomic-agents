@@ -28,6 +28,7 @@ class MCPConfig:
     # clarify tools even more and introduce more constraints.
     openai_model: str = "gpt-5-mini"
     openai_api_key: str = os.getenv("OPENAI_API_KEY")
+    reasoning_effort: str = "low"
 
     # Command to run the STDIO server.
     # In practice, this could be something like "pipx some-other-persons-server or npx some-other-persons-server
@@ -121,6 +122,7 @@ async def main():
             AgentConfig(
                 client=client,
                 model=config.openai_model,
+                model_api_parameters={"reasoning_effort": config.reasoning_effort},
                 history=history,
                 system_prompt_generator=SystemPromptGenerator(
                     background=[

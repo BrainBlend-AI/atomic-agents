@@ -28,7 +28,8 @@ class ChatConfig:
     """Configuration for the chat application"""
 
     api_key: str = get_api_key()  # This becomes a class variable
-    model: str = "gpt-4o-mini"
+    model: str = "gpt-5-mini"
+    reasoning_effort: str = "low"
     exit_commands: Set[str] = frozenset({"/exit", "/quit"})
     searxng_base_url: str = get_searxng_base_url()
     searxng_api_key: str = get_searxng_api_key()

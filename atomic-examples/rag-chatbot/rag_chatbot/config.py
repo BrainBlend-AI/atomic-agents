@@ -15,7 +15,8 @@ class ChatConfig:
     """Configuration for the chat application"""
 
     api_key: str = get_api_key()  # This becomes a class variable
-    model: str = "gpt-4o-mini"
+    model: str = "gpt-5-mini"
+    reasoning_effort: str = "low"
     exit_commands: set[str] = frozenset({"/exit", "exit", "quit", "/quit"})
 
     def __init__(self):

@@ -27,6 +27,7 @@ class MCPConfig:
     # clarify tools even more and introduce more constraints.
     openai_model: str = "gpt-5-mini"
     openai_api_key: str = os.getenv("OPENAI_API_KEY")
+    reasoning_effort: str = "low"
 
     def __post_init__(self):
         if not self.openai_api_key:
@@ -144,6 +145,7 @@ def main():
             AgentConfig(
                 client=client,
                 model=config.openai_model,
+                model_api_parameters={"reasoning_effort": config.reasoning_effort},
                 history=history,
                 system_prompt_generator=SystemPromptGenerator(
                     background=[

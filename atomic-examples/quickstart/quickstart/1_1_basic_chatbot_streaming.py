@@ -34,7 +34,8 @@ client = instructor.from_openai(openai.OpenAI(api_key=API_KEY))
 agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
     config=AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
+        model_api_parameters={"reasoning_effort": "low"},
         history=history,
     )
 )
