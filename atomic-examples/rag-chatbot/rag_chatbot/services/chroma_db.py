@@ -2,18 +2,13 @@ import os
 import shutil
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
-from typing import Dict, List, Optional, TypedDict
+from typing import Dict, List, Optional
 import uuid
 
-
-class QueryResult(TypedDict):
-    documents: List[str]
-    metadatas: List[Dict[str, str]]
-    distances: List[float]
-    ids: List[str]
+from .base import BaseVectorDBService, QueryResult
 
 
-class ChromaDBService:
+class ChromaDBService(BaseVectorDBService):
     """Service for interacting with ChromaDB using OpenAI embeddings."""
 
     def __init__(
@@ -89,7 +84,7 @@ class ChromaDBService:
         """
         results = self.collection.query(
             query_texts=[query_text],
-            n_results=max(1, min(n_results, self.get_count())),
+            n_results=n_results,
             where=where,
             include=["documents", "metadatas", "distances"],
         )
@@ -108,11 +103,7 @@ class ChromaDBService:
             collection_name: Name of the collection to delete. If None, deletes the current collection.
         """
         name_to_delete = collection_name if collection_name is not None else self.collection.name
-        self.client.delete_collection(name=name_to_delete)
-
-    def get_count(self) -> int:
-        """Get the number of documents in the collection."""
-        return self.collection.count()
+        self.client.delete_collection(name_to_delete)
 
     def delete_by_ids(self, ids: List[str]) -> None:
         """Delete documents from the collection by their IDs.
