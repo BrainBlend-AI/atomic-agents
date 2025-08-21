@@ -11,8 +11,9 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rag_chatbot.agents.query_agent import query_agent, RAGQueryAgentInputSchema, RAGQueryAgentOutputSchema
 from rag_chatbot.agents.qa_agent import qa_agent, RAGQuestionAnsweringAgentInputSchema, RAGQuestionAnsweringAgentOutputSchema
 from rag_chatbot.context_providers import RAGContextProvider, ChunkItem
-from rag_chatbot.services.chroma_db import ChromaDBService
-from rag_chatbot.config import CHUNK_SIZE, CHUNK_OVERLAP, NUM_CHUNKS_TO_RETRIEVE, CHROMA_PERSIST_DIR
+from rag_chatbot.services.factory import create_vector_db_service
+from rag_chatbot.services.base import BaseVectorDBService
+from rag_chatbot.config import CHUNK_SIZE, CHUNK_OVERLAP, NUM_CHUNKS_TO_RETRIEVE, VECTOR_DB_TYPE
 
 
 console = Console()
@@ -25,6 +26,8 @@ I'll show you my thought process:
 1. First, I'll generate a semantic search query from your question
 2. Then, I'll retrieve relevant chunks of text from the speech
 3. Finally, I'll analyze these chunks to provide you with an answer
+
+Using vector database: {db_type}
 """
 
 STARTER_QUESTIONS = [
@@ -83,7 +86,7 @@ def chunk_document(file_path: str, chunk_size: int = CHUNK_SIZE, overlap: int = 
     return chunks
 
 
-def initialize_system() -> tuple[ChromaDBService, RAGContextProvider]:
+def initialize_system() -> tuple[BaseVectorDBService, RAGContextProvider]:
     """Initialize the RAG system components."""
     console.print("\n[bold magenta]🚀 Initializing RAG Chatbot System...[/bold magenta]")
 
@@ -93,15 +96,13 @@ def initialize_system() -> tuple[ChromaDBService, RAGContextProvider]:
         chunks = chunk_document(doc_path)
         console.print(f"[dim]• Created {len(chunks)} document chunks[/dim]")
 
-        # Initialize ChromaDB
-        console.print("[dim]• Initializing vector database...[/dim]")
-        chroma_db = ChromaDBService(
-            collection_name="state_of_union", persist_directory=CHROMA_PERSIST_DIR, recreate_collection=True
-        )
+        # Initialize vector database
+        console.print(f"[dim]• Initializing {VECTOR_DB_TYPE.value} vector database...[/dim]")
+        vector_db = create_vector_db_service(collection_name="state_of_union", recreate_collection=True)
 
-        # Add chunks to ChromaDB
+        # Add chunks to vector database
         console.print("[dim]• Adding document chunks to vector database...[/dim]")
-        chunk_ids = chroma_db.add_documents(
+        chunk_ids = vector_db.add_documents(
             documents=chunks, metadatas=[{"source": "state_of_union", "chunk_index": i} for i in range(len(chunks))]
         )
         console.print(f"[dim]• Added {len(chunk_ids)} chunks to vector database[/dim]")
@@ -116,7 +117,7 @@ def initialize_system() -> tuple[ChromaDBService, RAGContextProvider]:
         qa_agent.register_context_provider("rag_context", rag_context)
 
         console.print("[bold green]✨ System initialized successfully![/bold green]\n")
-        return chroma_db, rag_context
+        return vector_db, rag_context
 
     except Exception as e:
         console.print(f"\n[bold red]Error during initialization:[/bold red] {str(e)}")
@@ -125,7 +126,12 @@ def initialize_system() -> tuple[ChromaDBService, RAGContextProvider]:
 
 def display_welcome() -> None:
     """Display welcome message and starter questions."""
-    welcome_panel = Panel(WELCOME_MESSAGE, title="[bold blue]RAG Chatbot[/bold blue]", border_style="blue", padding=(1, 2))
+    welcome_panel = Panel(
+        WELCOME_MESSAGE.format(db_type=VECTOR_DB_TYPE.value.upper()),
+        title="[bold blue]RAG Chatbot[/bold blue]",
+        border_style="blue",
+        padding=(1, 2),
+    )
     console.print("\n")
     console.print(welcome_panel)
 
@@ -193,7 +199,7 @@ def display_answer(qa_output: RAGQuestionAnsweringAgentOutputSchema) -> None:
     console.print(answer_panel)
 
 
-def chat_loop(chroma_db: ChromaDBService, rag_context: RAGContextProvider) -> None:
+def chat_loop(vector_db: BaseVectorDBService, rag_context: RAGContextProvider) -> None:
     """Main chat loop."""
     display_welcome()
 
@@ -230,7 +236,7 @@ def chat_loop(chroma_db: ChromaDBService, rag_context: RAGContextProvider) -> No
 
                 # Perform vector search
                 task = progress.add_task("[cyan]Searching knowledge base...", total=None)
-                search_results = chroma_db.query(query_text=query_output.query, n_results=NUM_CHUNKS_TO_RETRIEVE)
+                search_results = vector_db.query(query_text=query_output.query, n_results=NUM_CHUNKS_TO_RETRIEVE)
 
                 # Update context with retrieved chunks
                 rag_context.chunks = [
@@ -259,8 +265,8 @@ def chat_loop(chroma_db: ChromaDBService, rag_context: RAGContextProvider) -> No
 
 if __name__ == "__main__":
     try:
-        chroma_db, rag_context = initialize_system()
-        chat_loop(chroma_db, rag_context)
+        vector_db, rag_context = initialize_system()
+        chat_loop(vector_db, rag_context)
     except KeyboardInterrupt:
         console.print("\n[bold]👋 Goodbye! Thanks for using the RAG Chatbot.[/bold]")
     except Exception as e:

@@ -1,5 +1,11 @@
 import os
 from dataclasses import dataclass
+from enum import Enum
+
+
+class VectorDBType(Enum):
+    CHROMA = "chroma"
+    QDRANT = "qdrant"
 
 
 def get_api_key() -> str:
@@ -10,11 +16,20 @@ def get_api_key() -> str:
     return api_key
 
 
+def get_vector_db_type() -> VectorDBType:
+    """Get the vector database type from environment variable"""
+    db_type = os.getenv("VECTOR_DB_TYPE", "chroma").lower()
+    try:
+        return VectorDBType(db_type)
+    except ValueError:
+        raise ValueError(f"Invalid VECTOR_DB_TYPE: {db_type}. Must be 'chroma' or 'qdrant'")
+
+
 @dataclass
 class ChatConfig:
     """Configuration for the chat application"""
 
-    api_key: str = get_api_key()  # This becomes a class variable
+    api_key: str = get_api_key()
     model: str = "gpt-5-mini"
     reasoning_effort: str = "low"
     exit_commands: set[str] = frozenset({"/exit", "exit", "quit", "/quit"})
@@ -33,8 +48,14 @@ CHUNK_OVERLAP = 200
 NUM_CHUNKS_TO_RETRIEVE = 3
 SIMILARITY_METRIC = "cosine"
 
+# Vector Database Configuration
+VECTOR_DB_TYPE = get_vector_db_type()
+
 # ChromaDB Configuration
 CHROMA_PERSIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "chroma_db")
+
+# Qdrant Configuration
+QDRANT_PERSIST_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "qdrant_db")
 
 # History Configuration
 HISTORY_SIZE = 10  # Number of messages to keep in conversation history
