@@ -2,7 +2,8 @@ from enum import Enum
 
 import pytest
 import json
-from typing import List, Dict
+from typing import List, Dict, Union
+from pathlib import Path
 from pydantic import Field
 from atomic_agents.context import ChatHistory, Message
 from atomic_agents import BaseIOSchema
@@ -108,8 +109,8 @@ def test_get_history(history):
     history = history.get_history()
     assert len(history) == 2
     assert history[0]["role"] == "user"
-    assert json.loads(history[0]["content"][0]) == {"test_field": "Hello"}
-    assert json.loads(history[1]["content"][0]) == {"test_field": "Hi there"}
+    assert json.loads(history[0]["content"]) == {"test_field": "Hello"}
+    assert json.loads(history[1]["content"]) == {"test_field": "Hi there"}
 
 
 def test_get_history_allow_unicode(history):
@@ -118,10 +119,10 @@ def test_get_history_allow_unicode(history):
     history = history.get_history()
     assert len(history) == 2
     assert history[0]["role"] == "user"
-    assert history[0]["content"][0] == '{"test_field":"àéèï"}'
-    assert history[1]["content"][0] == '{"test_field":"â"}'
-    assert json.loads(history[0]["content"][0]) == {"test_field": "àéèï"}
-    assert json.loads(history[1]["content"][0]) == {"test_field": "â"}
+    assert history[0]["content"] == '{"test_field":"àéèï"}'
+    assert history[1]["content"] == '{"test_field":"â"}'
+    assert json.loads(history[0]["content"]) == {"test_field": "àéèï"}
+    assert json.loads(history[1]["content"]) == {"test_field": "â"}
 
 
 def test_copy(history):
@@ -146,36 +147,70 @@ def test_get_message_count(history):
     assert history.get_message_count() == 1
 
 
-def test_dump_and_load(history):
+def test_dump_and_load_comprehensive(history):
+    """Comprehensive test for dump/load functionality with complex nested data"""
+    # Test complex nested schemas
     history.add_message(
         "user",
         MockComplexInputSchema(
-            text_field="Hello",
-            number_field=3.14,
-            list_field=["item1", "item2"],
-            nested_field=MockNestedSchema(nested_field="Nested", nested_int=42),
-        ),
-    )
-    history.add_message(
-        "assistant",
-        MockComplexOutputSchema(
-            response_text="Hi there",
-            calculated_value=100,
-            data_dict={"key": MockNestedSchema(nested_field="Nested Output", nested_int=10)},
+            text_field="Complex input",
+            number_field=2.718,
+            list_field=["a", "b", "c"],
+            nested_field=MockNestedSchema(nested_field="Nested input", nested_int=99),
         ),
     )
 
+    history.add_message(
+        "assistant",
+        MockComplexOutputSchema(
+            response_text="Complex output",
+            calculated_value=200,
+            data_dict={
+                "key1": MockNestedSchema(nested_field="Nested output 1", nested_int=10),
+                "key2": MockNestedSchema(nested_field="Nested output 2", nested_int=20),
+            },
+        ),
+    )
+
+    # Test get_history format with nested models
+    history_output = history.get_history()
+    assert len(history_output) == 2
+    assert history_output[0]["role"] == "user"
+    assert history_output[1]["role"] == "assistant"
+    expected_input_content = (
+        '{"text_field":"Complex input","number_field":2.718,"list_field":["a","b","c"],'
+        '"nested_field":{"nested_field":"Nested input","nested_int":99}}'
+    )
+    expected_output_content = (
+        '{"response_text":"Complex output","calculated_value":200,'
+        '"data_dict":{"key1":{"nested_field":"Nested output 1","nested_int":10},'
+        '"key2":{"nested_field":"Nested output 2","nested_int":20}}}'
+    )
+    assert history_output[0]["content"] == expected_input_content
+    assert history_output[1]["content"] == expected_output_content
+
+    # Test dump and load
     dumped_data = history.dump()
     new_history = ChatHistory()
     new_history.load(dumped_data)
 
+    # Verify all properties are preserved
     assert new_history.max_messages == history.max_messages
     assert new_history.current_turn_id == history.current_turn_id
     assert len(new_history.history) == len(history.history)
     assert isinstance(new_history.history[0].content, MockComplexInputSchema)
     assert isinstance(new_history.history[1].content, MockComplexOutputSchema)
-    assert new_history.history[0].content.text_field == "Hello"
-    assert new_history.history[1].content.response_text == "Hi there"
+
+    # Verify detailed content
+    assert new_history.history[0].content.text_field == "Complex input"
+    assert new_history.history[0].content.nested_field.nested_int == 99
+    assert new_history.history[1].content.response_text == "Complex output"
+    assert new_history.history[1].content.data_dict["key1"].nested_field == "Nested output 1"
+
+    # Test adding new messages to loaded history still works
+    new_history.add_message("user", InputSchema(test_field="New message"))
+    assert len(new_history.history) == 3
+    assert new_history.history[2].content.test_field == "New message"
 
 
 def test_dump_and_load_multimodal_data(history):
@@ -252,51 +287,6 @@ def test_message_model():
     assert message.turn_id == "123"
 
 
-def test_complex_scenario(history):
-    # Add complex input
-    history.add_message(
-        "user",
-        MockComplexInputSchema(
-            text_field="Complex input",
-            number_field=2.718,
-            list_field=["a", "b", "c"],
-            nested_field=MockNestedSchema(nested_field="Nested input", nested_int=99),
-        ),
-    )
-
-    # Add complex output
-    history.add_message(
-        "assistant",
-        MockComplexOutputSchema(
-            response_text="Complex output",
-            calculated_value=200,
-            data_dict={
-                "key1": MockNestedSchema(nested_field="Nested output 1", nested_int=10),
-                "key2": MockNestedSchema(nested_field="Nested output 2", nested_int=20),
-            },
-        ),
-    )
-
-    # Dump and load
-    dumped_data = history.dump()
-    new_history = ChatHistory()
-    new_history.load(dumped_data)
-
-    # Verify loaded data
-    assert len(new_history.history) == 2
-    assert isinstance(new_history.history[0].content, MockComplexInputSchema)
-    assert isinstance(new_history.history[1].content, MockComplexOutputSchema)
-    assert new_history.history[0].content.text_field == "Complex input"
-    assert new_history.history[0].content.nested_field.nested_int == 99
-    assert new_history.history[1].content.response_text == "Complex output"
-    assert new_history.history[1].content.data_dict["key1"].nested_field == "Nested output 1"
-
-    # Add a new message to the loaded history
-    new_history.add_message("user", InputSchema(test_field="New message"))
-    assert len(new_history.history) == 3
-    assert new_history.history[2].content.test_field == "New message"
-
-
 def test_history_with_no_max_messages():
     unlimited_history = ChatHistory()
     for i in range(100):
@@ -325,43 +315,6 @@ def test_history_turn_consistency():
     assert new_turn_id != turn_id
     history.add_message("user", InputSchema(test_field="Next turn"))
     assert history.history[2].turn_id == new_turn_id
-
-
-def test_get_history_nested_model(history):
-    """Test that get_history works with nested models."""
-    # Add complex input
-    history.add_message(
-        "user",
-        MockComplexInputSchema(
-            text_field="Complex input",
-            number_field=2.718,
-            list_field=["a", "b", "c"],
-            nested_field=MockNestedSchema(nested_field="Nested input", nested_int=99),
-        ),
-    )
-
-    # Add complex output
-    history.add_message(
-        "assistant",
-        MockComplexOutputSchema(
-            response_text="Complex output",
-            calculated_value=200,
-            data_dict={
-                "key1": MockNestedSchema(nested_field="Nested output 1", nested_int=10),
-                "key2": MockNestedSchema(nested_field="Nested output 2", nested_int=20),
-            },
-        ),
-    )
-
-    # Get history and verify the format
-    history = history.get_history()
-
-    assert len(history) == 2
-    assert history[0]["role"] == "user"
-    assert history[1]["role"] == "assistant"
-
-    assert history[0]["content"][0] == '{"text_field":"Complex input"}'
-    assert history[1]["content"][0] == '{"response_text":"Complex output"}'
 
 
 def test_chat_history_delete_turn_id(history):
@@ -460,3 +413,128 @@ def test_get_history_with_multiple_images_multimodal_content(history):
     assert mock_image in history[0]["content"]
     assert mock_image_2 in history[0]["content"]
     assert mock_image_3 in history[0]["content"]
+
+
+def test_get_history_with_mixed_content(history):
+    """Test that get_history correctly handles mixed multimodal and non-multimodal items in lists"""
+
+    # Create a schema with a list that can contain both multimodal and non-multimodal items
+    class MixedContentSchema(BaseIOSchema):
+        """Schema for testing mixed multimodal and non-multimodal content"""
+
+        instruction_text: str = Field(..., description="The instruction text")
+        mixed_items: List[Union[str, instructor.Image]] = Field(..., description="Mix of strings and images")
+
+    mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
+
+    # Add a message with mixed content
+    history.add_message(
+        "user",
+        MixedContentSchema(instruction_text="Analyze this", mixed_items=["text_item1", mock_image, "text_item2"]),
+    )
+
+    # Get history and verify format
+    result = history.get_history()
+    assert len(result) == 1
+    assert result[0]["role"] == "user"
+    assert isinstance(result[0]["content"], list)
+
+    # Should have JSON for non-multimodal items and the image separately
+    json_content = json.loads(result[0]["content"][0])
+    assert json_content["instruction_text"] == "Analyze this"
+    assert json_content["mixed_items"] == ["text_item1", "text_item2"]
+    assert result[0]["content"][1] == mock_image
+
+
+def test_process_multimodal_paths_comprehensive():
+    """Comprehensive test for _process_multimodal_paths and load functionality"""
+    history = ChatHistory()
+
+    # Test 1: Direct Image/PDF objects with file paths vs URLs
+    image_file = instructor.Image(source="test/image.jpg", media_type="image/jpeg")
+    image_url = instructor.Image(source="https://example.com/image.jpg", media_type="image/jpeg")
+    image_data = instructor.Image(source="data:image/jpeg;base64,xyz", media_type="image/jpeg")
+    pdf_file = instructor.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")
+
+    history._process_multimodal_paths(image_file)
+    history._process_multimodal_paths(image_url)
+    history._process_multimodal_paths(image_data)
+    history._process_multimodal_paths(pdf_file)
+
+    assert isinstance(image_file.source, Path) and image_file.source == Path("test/image.jpg")
+    assert isinstance(image_url.source, str) and image_url.source == "https://example.com/image.jpg"
+    assert isinstance(image_data.source, str) and image_data.source == "data:image/jpeg;base64,xyz"
+    assert isinstance(pdf_file.source, Path) and pdf_file.source == Path("test/doc.pdf")
+
+    # Test 2: Lists with mixed content
+    test_list = [
+        "regular_string",
+        instructor.Image(source="test/list_image.jpg", media_type="image/jpeg"),
+        instructor.Image(source="https://example.com/url_image.jpg", media_type="image/jpeg"),
+    ]
+    history._process_multimodal_paths(test_list)
+    assert isinstance(test_list[1].source, Path) and test_list[1].source == Path("test/list_image.jpg")
+    assert isinstance(test_list[2].source, str) and test_list[2].source == "https://example.com/url_image.jpg"
+
+    # Test 3: Dictionaries
+    test_dict = {"image": instructor.Image(source="test/dict_image.jpg", media_type="image/jpeg"), "regular": "text_content"}
+    history._process_multimodal_paths(test_dict)
+    assert isinstance(test_dict["image"].source, Path) and test_dict["image"].source == Path("test/dict_image.jpg")
+
+    # Test 4: Pydantic model
+    class TestModel(BaseIOSchema):
+        """Test model for multimodal path processing"""
+
+        image_field: instructor.Image = Field(..., description="Image field")
+        text_field: str = Field(..., description="Text field")
+
+    model_instance = TestModel(
+        image_field=instructor.Image(source="test/model_image.jpg", media_type="image/jpeg"), text_field="test text"
+    )
+    history._process_multimodal_paths(model_instance)
+    assert isinstance(model_instance.image_field.source, Path)
+    assert model_instance.image_field.source == Path("test/model_image.jpg")
+
+    # Test 5: Object with __dict__
+    class SimpleObject:
+        def __init__(self):
+            self.image = instructor.Image(source="test/obj_image.jpg", media_type="image/jpeg")
+            self.__pydantic_fields_set__ = {"should_be_skipped"}
+
+    obj = SimpleObject()
+    history._process_multimodal_paths(obj)
+    assert isinstance(obj.image.source, Path) and obj.image.source == Path("test/obj_image.jpg")
+
+    # Test 6: Enum (should not process __dict__)
+    from enum import Enum
+
+    class TestEnum(Enum):
+        VALUE1 = "value1"
+
+    history._process_multimodal_paths(TestEnum.VALUE1)  # Should not raise errors
+    assert TestEnum.VALUE1.value == "value1"
+
+    # Test 7: Load functionality with multimodal file paths
+    original_history = ChatHistory()
+    original_history.add_message(
+        "user",
+        MockMultimodalSchema(
+            instruction_text="Process this file",
+            images=[instructor.Image(source="test/sample.jpg", media_type="image/jpeg")],
+            pdfs=[instructor.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")],
+            audio=instructor.multimodal.Audio(source="test/audio.mp3", media_type="audio/mp3"),
+        ),
+    )
+
+    # Dump and reload
+    dumped = original_history.dump()
+    loaded_history = ChatHistory()
+    loaded_history.load(dumped)
+
+    # Verify that the loaded images and PDFs have Path objects for file-like sources
+    loaded_message = loaded_history.history[0]
+    loaded_content = loaded_message.content
+    assert isinstance(loaded_content.images[0].source, Path)
+    assert loaded_content.images[0].source == Path("test/sample.jpg")
+    assert isinstance(loaded_content.pdfs[0].source, Path)
+    assert loaded_content.pdfs[0].source == Path("test/doc.pdf")
