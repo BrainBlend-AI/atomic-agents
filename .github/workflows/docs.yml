@@ -40,22 +40,30 @@ jobs:
         run: |
           poetry run python scripts/sync_version.py
       
-      - name: Build documentation
+      - name: Build singlehtml for documentation extraction
         run: |
           cd docs
           poetry run make singlehtml
-          poetry run make html
-
+      
       - name: Generate all llms.txt files
         run: |
           poetry run python scripts/generate_llms_files.py
-          
-      - name: Copy llms files to build directory
-        run: |
-          mkdir -p docs/_build/html/_static
-          cp docs/llms-*.txt docs/_build/html/_static/
+          # Copy to _static directory for Sphinx to process during build
+          mkdir -p docs/_static
+          cp docs/llms-*.txt docs/_static/
           echo "Generated llms files:"
-          ls -lh docs/_build/html/_static/llms-*.txt
+          ls -lh docs/_static/llms-*.txt
+      
+      - name: Build HTML documentation
+        run: |
+          cd docs
+          poetry run make html
+          
+      - name: Verify llms files in build
+        run: |
+          echo "Checking for llms files in build directory:"
+          ls -lh docs/_build/html/_static/llms-*.txt || echo "Files not in _static"
+          ls -lh docs/_build/html/_downloads/*/llms-*.txt || echo "Files not in _downloads"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
