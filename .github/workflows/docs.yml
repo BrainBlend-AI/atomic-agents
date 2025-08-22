@@ -36,6 +36,10 @@ jobs:
           pip install poetry
           poetry install
 
+      - name: Sync version from pyproject.toml
+        run: |
+          poetry run python scripts/sync_version.py
+      
       - name: Build documentation
         run: |
           cd docs
@@ -48,9 +52,10 @@ jobs:
           
       - name: Copy llms files to build directory
         run: |
-          cp docs/llms-*.txt docs/_build/html/
+          mkdir -p docs/_build/html/_static
+          cp docs/llms-*.txt docs/_build/html/_static/
           echo "Generated llms files:"
-          ls -lh docs/_build/html/llms-*.txt
+          ls -lh docs/_build/html/_static/llms-*.txt
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

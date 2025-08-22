@@ -115,7 +115,7 @@ def generate_documentation_only() -> str:
     content = create_section_divider("ATOMIC AGENTS DOCUMENTATION", 1)
     content += "This file contains the complete documentation for the Atomic Agents framework.\n"
     content += "Generated for use with Large Language Models and AI assistants.\n"
-    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-monorepo\n"
+    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-agents\n"
     
     content += create_section_divider("DOCUMENTATION", 1)
     content += extract_documentation_from_html()
@@ -128,7 +128,7 @@ def generate_source_code_only() -> str:
     content = create_section_divider("ATOMIC AGENTS SOURCE CODE", 1)
     content += "This file contains the complete source code for the Atomic Agents framework.\n"
     content += "Generated for use with Large Language Models and AI assistants.\n"
-    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-monorepo\n"
+    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-agents\n"
     
     files = get_files_to_include(ATOMIC_AGENTS_DIR, SOURCE_CODE_EXTENSIONS)
     
@@ -143,7 +143,7 @@ def generate_examples_only() -> str:
     content = create_section_divider("ATOMIC AGENTS EXAMPLES", 1)
     content += "This file contains all example implementations using the Atomic Agents framework.\n"
     content += "Each example includes its README documentation and complete source code.\n"
-    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-monorepo\n"
+    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-agents\n"
     
     # Get all example directories
     example_dirs = [d for d in ATOMIC_EXAMPLES_DIR.iterdir() if d.is_dir() and d.name not in EXCLUDE_DIRS]
@@ -153,7 +153,7 @@ def generate_examples_only() -> str:
         content += create_section_divider(f"Example: {example_dir.name}", 2)
         
         # Add GitHub link
-        github_url = f"https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/{example_dir.name}"
+        github_url = f"https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/{example_dir.name}"
         content += f"**View on GitHub:** {github_url}\n\n"
         
         # Process README first if it exists
@@ -184,7 +184,7 @@ def generate_full_content() -> str:
     content = create_section_divider("ATOMIC AGENTS - COMPREHENSIVE DOCUMENTATION, SOURCE CODE, AND EXAMPLES", 1)
     content += "This file contains the complete documentation, source code, and examples for the Atomic Agents framework.\n"
     content += "Generated for use with Large Language Models and AI assistants.\n"
-    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-monorepo\n"
+    content += f"Project Repository: https://github.com/BrainBlend-AI/atomic-agents\n"
     content += f"\nTable of Contents:\n"
     content += "1. Documentation\n"
     content += "2. Atomic Agents Source Code\n"
@@ -214,7 +214,7 @@ def generate_full_content() -> str:
     for example_dir in example_dirs:
         content += create_section_divider(f"Example: {example_dir.name}", 2)
         
-        github_url = f"https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/{example_dir.name}"
+        github_url = f"https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/{example_dir.name}"
         content += f"**View on GitHub:** {github_url}\n\n"
         
         readme_files = list(example_dir.glob("README.*"))
@@ -236,7 +236,7 @@ def generate_full_content() -> str:
     
     content += create_section_divider("END OF DOCUMENT", 1)
     content += "This comprehensive documentation was generated for use with AI assistants and LLMs.\n"
-    content += "For the latest version, please visit: https://github.com/BrainBlend-AI/atomic-monorepo\n"
+    content += "For the latest version, please visit: https://github.com/BrainBlend-AI/atomic-agents\n"
     
     return content
 
