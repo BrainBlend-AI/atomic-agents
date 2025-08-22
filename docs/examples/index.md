@@ -4,8 +4,8 @@ This section contains detailed examples of using Atomic Agents in various scenar
 
 ```{note}
 All examples are available in optimized formats for AI assistants:
-- **[Examples with documentation](../_static/llms-examples.txt)** - All examples with source code and READMEs
-- **[Full framework package](../_static/llms-full.txt)** - Complete documentation, source, and examples
+- **{download}`Examples with documentation <../_static/llms-examples.txt>`** - All examples with source code and READMEs
+- **{download}`Full framework package <../_static/llms-full.txt>`** - Complete documentation, source, and examples
 ```
 
 ## Quickstart Examples
