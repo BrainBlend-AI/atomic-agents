@@ -2,6 +2,12 @@
 
 This section contains detailed examples of using Atomic Agents in various scenarios.
 
+```{note}
+All examples are available in optimized formats for AI assistants:
+- **[Examples with documentation](../llms-examples.txt)** - All examples with source code and READMEs
+- **[Full framework package](../llms-full.txt)** - Complete documentation, source, and examples
+```
+
 ## Quickstart Examples
 
 Simple examples to get started with the framework:
@@ -12,7 +18,7 @@ Simple examples to get started with the framework:
 - Custom input/output schemas
 - Multiple provider support
 
-[View Quickstart Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/quickstart)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/quickstart)** - Browse the complete source code and run the examples
 
 ## Basic Multimodal
 
@@ -23,7 +29,7 @@ Examples of working with images and text:
 - Visual content generation
 - Multi-image comparisons
 
-[View Basic Multimodal Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/basic-multimodal)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/basic-multimodal)** - Browse the complete source code and run the examples
 
 ## RAG Chatbot
 
@@ -35,7 +41,7 @@ Build context-aware chatbots with retrieval-augmented generation:
 - Source attribution
 - Follow-up suggestions
 
-[View RAG Chatbot Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/rag-chatbot)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/rag-chatbot)** - Browse the complete source code and run the examples
 
 ## Web Search Agent
 
@@ -47,7 +53,7 @@ Create agents that can search and analyze web content:
 - Multi-source research
 - Citation tracking
 
-[View Web Search Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/web-search-agent)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/web-search-agent)** - Browse the complete source code and run the examples
 
 ## Deep Research
 
@@ -59,7 +65,7 @@ Perform comprehensive research tasks:
 - Structured output generation
 - Citation management
 
-[View Deep Research Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/deep-research)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/deep-research)** - Browse the complete source code and run the examples
 
 ## YouTube Summarizer
 
@@ -71,7 +77,7 @@ Extract and analyze information from videos:
 - Timestamp linking
 - Chapter generation
 
-[View YouTube Summarizer Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/youtube-summarizer)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/youtube-summarizer)** - Browse the complete source code and run the examples
 
 ## YouTube to Recipe
 
@@ -83,7 +89,7 @@ Convert cooking videos into structured recipes:
 - Step-by-step instructions
 - Time and temperature conversion
 
-[View YouTube Recipe Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/youtube-to-recipe)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/youtube-to-recipe)** - Browse the complete source code and run the examples
 
 ## Orchestration Agent
 
@@ -95,7 +101,7 @@ Coordinate multiple agents for complex tasks:
 - Error handling
 - Result aggregation
 
-[View Orchestration Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/orchestration-agent)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/orchestration-agent)** - Browse the complete source code and run the examples
 
 ## MCP Agent
 
@@ -108,4 +114,4 @@ Build intelligent agents using the Model Context Protocol:
 - Extensible tool architecture
 
 [View MCP Agent Documentation](mcp_agent.md)
-[View MCP Agent Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/mcp-agent)
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-monorepo/tree/main/atomic-examples/mcp-agent)** - Browse the complete source code and run the examples

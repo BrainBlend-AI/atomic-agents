@@ -42,9 +42,15 @@ jobs:
           poetry run make singlehtml
           poetry run make html
 
-      - name: Generate llms.txt
+      - name: Generate all llms.txt files
         run: |
-          poetry run python scripts/generate_llms_txt.py
+          poetry run python scripts/generate_llms_files.py
+          
+      - name: Copy llms files to build directory
+        run: |
+          cp docs/llms-*.txt docs/_build/html/
+          echo "Generated llms files:"
+          ls -lh docs/_build/html/llms-*.txt
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
