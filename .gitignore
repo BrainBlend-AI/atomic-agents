@@ -80,6 +80,7 @@ instance/
 docs/_build/
 docs/llms-*.txt
 docs/llms.txt
+docs/_static/llms-*.txt
 docs/examples/source/
 
 # PyBuilder
