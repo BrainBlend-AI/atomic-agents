@@ -21,10 +21,10 @@ contributing
 
 Choose the resource that best fits your needs:
 
-- **[📚 Full Package](_static/llms-full.txt)** - Complete documentation, source code, and examples in one file
-- **[📖 Documentation Only](_static/llms-docs.txt)** - API documentation, guides, and references
-- **[💻 Source Code Only](_static/llms-source.txt)** - Complete atomic-agents framework source code
-- **[🎯 Examples Only](_static/llms-examples.txt)** - All example implementations with READMEs
+- **{download}`📚 Full Package <_static/llms-full.txt>`** - Complete documentation, source code, and examples in one file
+- **{download}`📖 Documentation Only <_static/llms-docs.txt>`** - API documentation, guides, and references
+- **{download}`💻 Source Code Only <_static/llms-source.txt>`** - Complete atomic-agents framework source code
+- **{download}`🎯 Examples Only <_static/llms-examples.txt>`** - All example implementations with READMEs
 
 All files are optimized for AI assistants and Large Language Models, with clear structure and formatting for easy parsing.
 ```
