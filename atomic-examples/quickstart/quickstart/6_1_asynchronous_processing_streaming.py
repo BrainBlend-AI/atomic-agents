@@ -58,7 +58,12 @@ sem = asyncio.Semaphore(MAX_CONCURRENT)
 
 # Agent setup with specified configuration
 agent = AtomicAgent[BasicChatInputSchema, PersonSchema](
-    config=AgentConfig(client=client, model="gpt-4o-mini", system_prompt_generator=system_prompt_generator)
+    config=AgentConfig(
+        client=client,
+        model="gpt-5-mini",
+        model_api_parameters={"reasoning_effort": "low"},
+        system_prompt_generator=system_prompt_generator,
+    )
 )
 
 

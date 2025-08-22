@@ -28,19 +28,22 @@ def setup_client(provider):
 
         api_key = os.getenv("OPENAI_API_KEY")
         client = instructor.from_openai(OpenAI(api_key=api_key))
-        model = "gpt-4o-mini"
+        model = "gpt-5-mini"
+        model_api_parameters = {"reasoning_effort": "low"}
     elif provider == "2" or provider == "anthropic":
         from anthropic import Anthropic
 
         api_key = os.getenv("ANTHROPIC_API_KEY")
         client = instructor.from_anthropic(Anthropic(api_key=api_key))
         model = "claude-3-5-haiku-20241022"
+        model_api_parameters = {}
     elif provider == "3" or provider == "groq":
         from groq import Groq
 
         api_key = os.getenv("GROQ_API_KEY")
         client = instructor.from_groq(Groq(api_key=api_key), mode=instructor.Mode.JSON)
         model = "mixtral-8x7b-32768"
+        model_api_parameters = {}
     elif provider == "4" or provider == "ollama":
         from openai import OpenAI as OllamaClient
 
@@ -48,6 +51,7 @@ def setup_client(provider):
             OllamaClient(base_url="http://localhost:11434/v1", api_key="ollama"), mode=instructor.Mode.JSON
         )
         model = "llama3"
+        model_api_parameters = {}
     elif provider == "5" or provider == "gemini":
         from openai import OpenAI
 
@@ -56,17 +60,19 @@ def setup_client(provider):
             OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/"),
             mode=instructor.Mode.JSON,
         )
-        model = "gemini-2.0-flash-exp"
+        model = "gpt-5-mini"
+        model_api_parameters = {"reasoning_effort": "low"}
     elif provider == "6" or provider == "openrouter":
         from openai import OpenAI as OpenRouterClient
 
         api_key = os.getenv("OPENROUTER_API_KEY")
         client = instructor.from_openai(OpenRouterClient(base_url="https://openrouter.ai/api/v1", api_key=api_key))
         model = "mistral/ministral-8b"
+        model_api_parameters = {}
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
-    return client, model
+    return client, model, model_api_parameters
 
 
 # Prompt the user to choose a provider from one in the list below.
@@ -82,11 +88,13 @@ providers_str = f"[{y}]Choose a provider ({provider_inner_str}): [/{y}]"
 provider = console.input(providers_str).lower()
 
 # Set up the client and model based on the chosen provider
-client, model = setup_client(provider)
+client, model, model_api_parameters = setup_client(provider)
 
 # Agent setup with specified configuration
 agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
-    config=AgentConfig(client=client, model=model, history=history, model_api_parameters={"max_tokens": 2048})
+    config=AgentConfig(
+        client=client, model=model, history=history, model_api_parameters={**model_api_parameters, "max_tokens": 2048}
+    )
 )
 
 # Generate the default system prompt for the agent

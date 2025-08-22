@@ -24,6 +24,7 @@ query_agent = AtomicAgent[RAGQueryAgentInputSchema, RAGQueryAgentOutputSchema](
     AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
+        model_api_parameters={"reasoning_effort": ChatConfig.reasoning_effort},
         system_prompt_generator=SystemPromptGenerator(
             background=[
                 "You are an expert at formulating semantic search queries for RAG systems.",

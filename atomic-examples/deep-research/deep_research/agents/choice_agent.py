@@ -25,6 +25,7 @@ choice_agent = AtomicAgent[ChoiceAgentInputSchema, ChoiceAgentOutputSchema](
     AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
+        model_api_parameters={"reasoning_effort": ChatConfig.reasoning_effort, "temperature": 0.1},
         system_prompt_generator=SystemPromptGenerator(
             background=[
                 "You are a decision-making agent that determines whether a new web search is needed to answer the user's question.",
@@ -45,7 +46,6 @@ choice_agent = AtomicAgent[ChoiceAgentInputSchema, ChoiceAgentOutputSchema](
                 "Your decision must match your reasoning - don't contradict yourself",
             ],
         ),
-        model_api_parameters={"temperature": 0.1},
     )
 )
 

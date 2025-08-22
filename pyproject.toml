@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "atomic-agents"
-version = "2.0.2"
+version = "2.0.4"
 description = "A versatile framework for creating and managing intelligent agents."
 authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
@@ -53,6 +53,8 @@ Repository = "https://github.com/BrainBlend-AI/atomic-agents"
 
 [tool.black]
 line-length = 127
+
+
 
 
 

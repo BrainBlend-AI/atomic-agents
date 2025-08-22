@@ -1,5 +1,5 @@
 import pytest
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from atomic_agents import BaseIOSchema
 from atomic_agents.connectors.mcp import SchemaTransformer
@@ -134,3 +134,76 @@ class TestCreateModelFromSchema:
         # Test that an invalid tool_name raises an error
         with pytest.raises(ValueError):
             model(tool_name="wrong_tool")
+
+    def test_union_type_oneof(self):
+        """Test oneOf creates Union types."""
+        prop_schema = {"oneOf": [{"type": "string"}, {"type": "integer"}], "description": "A union field"}
+        result = SchemaTransformer.json_to_pydantic_field(prop_schema, True)
+        # Should create Union[str, int]
+        assert result[0] == Union[str, int]
+        assert result[1].description == "A union field"
+
+    def test_union_type_anyof(self):
+        """Test anyOf creates Union types."""
+        prop_schema = {"anyOf": [{"type": "boolean"}, {"type": "number"}], "description": "Another union field"}
+        result = SchemaTransformer.json_to_pydantic_field(prop_schema, True)
+        # Should create Union[bool, float]
+        assert result[0] == Union[bool, float]
+
+    def test_array_with_ref_items(self):
+        """Test arrays with $ref items are resolved."""
+        root_schema = {
+            "$defs": {"MyObject": {"type": "object", "properties": {"name": {"type": "string"}}, "title": "MyObject"}}
+        }
+        prop_schema = {"type": "array", "items": {"$ref": "#/$defs/MyObject"}, "description": "Array of MyObject"}
+        result = SchemaTransformer.json_to_pydantic_field(prop_schema, True, root_schema)
+        # Should be List[MyObject] not List[Any]
+        assert hasattr(result[0], "__origin__") and result[0].__origin__ is list
+        # The inner type should be the created model, not Any
+        inner_type = result[0].__args__[0]
+        assert inner_type != Any
+        assert hasattr(inner_type, "model_fields")
+
+    def test_array_with_union_items(self):
+        """Test arrays with oneOf items."""
+        prop_schema = {
+            "type": "array",
+            "items": {"oneOf": [{"type": "string"}, {"type": "integer"}]},
+            "description": "Array of union items",
+        }
+        result = SchemaTransformer.json_to_pydantic_field(prop_schema, True)
+        # Should be List[Union[str, int]]
+        assert hasattr(result[0], "__origin__") and result[0].__origin__ is list
+        inner_type = result[0].__args__[0]
+        assert inner_type == Union[str, int]
+
+    def test_model_with_complex_types(self):
+        """Test create_model_from_schema with complex types."""
+        schema = {
+            "type": "object",
+            "properties": {
+                "expr": {"oneOf": [{"$ref": "#/$defs/ANode"}, {"$ref": "#/$defs/BNode"}], "description": "Expression node"},
+                "objects": {"type": "array", "items": {"$ref": "#/$defs/MyObject"}, "description": "List of objects"},
+            },
+            "required": ["expr", "objects"],
+            "$defs": {
+                "ANode": {"type": "object", "properties": {"a_value": {"type": "string"}}, "title": "ANode"},
+                "BNode": {"type": "object", "properties": {"b_value": {"type": "integer"}}, "title": "BNode"},
+                "MyObject": {"type": "object", "properties": {"name": {"type": "string"}}, "title": "MyObject"},
+            },
+        }
+
+        model = SchemaTransformer.create_model_from_schema(schema, "ComplexModel", "complex_tool")
+
+        # Check that expr is a Union, not Any
+        expr_field = model.model_fields["expr"]
+        assert expr_field.annotation != Any
+        # Should be Union[ANode, BNode]
+        assert hasattr(expr_field.annotation, "__origin__") and expr_field.annotation.__origin__ is Union
+
+        # Check that objects is List[MyObject], not List[Any]
+        objects_field = model.model_fields["objects"]
+        assert objects_field.annotation != List[Any]
+        assert hasattr(objects_field.annotation, "__origin__") and objects_field.annotation.__origin__ is list
+        inner_type = objects_field.annotation.__args__[0]
+        assert inner_type != Any

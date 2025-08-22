@@ -78,6 +78,9 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/llms-*.txt
+docs/llms.txt
+docs/examples/source/
 
 # PyBuilder
 target/
@@ -149,6 +152,6 @@ debug.log
 
 # AI tools
 .claude
-
-# Backup directories
-atomic-forge/tools/atomic_scraper_tool/tools.backup.*/
+CLAUDE.md
+CLAUDE.local.md
+.serena

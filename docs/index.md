@@ -14,6 +14,21 @@ contributing
 
 ![Atomic Agents](_static/logo.png)
 
+```{admonition} AI Assistant Resources
+:class: tip
+
+📥 **Download Documentation for AI Assistants and LLMs**
+
+Choose the resource that best fits your needs:
+
+- **[📚 Full Package](llms-full.txt)** - Complete documentation, source code, and examples in one file
+- **[📖 Documentation Only](llms-docs.txt)** - API documentation, guides, and references
+- **[💻 Source Code Only](llms-source.txt)** - Complete atomic-agents framework source code
+- **[🎯 Examples Only](llms-examples.txt)** - All example implementations with READMEs
+
+All files are optimized for AI assistants and Large Language Models, with clear structure and formatting for easy parsing.
+```
+
 The Atomic Agents framework is designed around the concept of atomicity to be an extremely lightweight and modular framework for building Agentic AI pipelines and applications without sacrificing developer experience and maintainability. The framework provides a set of tools and agents that can be combined to create powerful applications. It is built on top of [Instructor](https://github.com/jxnl/instructor) and leverages the power of [Pydantic](https://docs.pydantic.dev/latest/) for data and schema validation and serialization.
 
 All logic and control flows are written in Python, enabling developers to apply familiar best practices and workflows from traditional software development without compromising flexibility or clarity.

@@ -52,7 +52,8 @@ console.print(Panel(system_prompt_generator.generate_prompt(), width=console.wid
 agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
     config=AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
+        model_api_parameters={"reasoning_effort": "low"},
         system_prompt_generator=system_prompt_generator,
         history=history,
     )

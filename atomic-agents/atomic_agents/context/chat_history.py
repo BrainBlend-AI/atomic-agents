@@ -93,38 +93,65 @@ class ChatHistory:
 
         Returns:
             List[Dict]: The list of messages in the chat history as dictionaries.
-            Each dictionary has 'role' and 'content' keys, where 'content' is a list
-            that may contain strings (JSON) or multimodal objects.
+            Each dictionary has 'role' and 'content' keys, where 'content' contains
+            either a single JSON string or a mixed array of JSON and multimodal objects.
 
         Note:
-            This method does not support nested multimodal content. If your schema
-            contains nested objects that themselves contain multimodal content,
-            only the top-level multimodal content will be properly processed.
-
+            This method supports multimodal content by keeping multimodal objects
+            separate while generating cohesive JSON for text-based fields.
         """
         history = []
         for message in self.history:
             input_content = message.content
-            processed_content = []
-            for field_name, field in input_content.__class__.model_fields.items():
 
+            # Check if content has any multimodal fields
+            multimodal_objects = []
+            has_multimodal = False
+
+            # Extract multimodal content first
+            for field_name, field in input_content.__class__.model_fields.items():
                 field_value = getattr(input_content, field_name)
 
                 if isinstance(field_value, list):
-                    has_multimodal_in_list = False
                     for item in field_value:
                         if isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES):
-                            processed_content.append(item)
-                            has_multimodal_in_list = True
-                    if not has_multimodal_in_list:
-                        processed_content.append(input_content.model_dump_json(include={field_name}))
-                else:
-                    if isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
-                        processed_content.append(field_value)
-                    else:
-                        processed_content.append(input_content.model_dump_json(include={field_name}))
+                            multimodal_objects.append(item)
+                            has_multimodal = True
+                elif isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
+                    multimodal_objects.append(field_value)
+                    has_multimodal = True
 
-            history.append({"role": message.role, "content": processed_content})
+            if has_multimodal:
+                # For multimodal content: create mixed array with JSON + multimodal objects
+                processed_content = []
+
+                # Add single cohesive JSON for all non-multimodal fields
+                non_multimodal_data = {}
+                for field_name, field in input_content.__class__.model_fields.items():
+                    field_value = getattr(input_content, field_name)
+
+                    if isinstance(field_value, list):
+                        # Only include non-multimodal items from lists
+                        non_multimodal_items = [
+                            item for item in field_value if not isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES)
+                        ]
+                        if non_multimodal_items:
+                            non_multimodal_data[field_name] = non_multimodal_items
+                    elif not isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
+                        non_multimodal_data[field_name] = field_value
+
+                # Add single JSON string if there are non-multimodal fields
+                if non_multimodal_data:
+                    processed_content.append(json.dumps(non_multimodal_data, ensure_ascii=False))
+
+                # Add all multimodal objects
+                processed_content.extend(multimodal_objects)
+
+                history.append({"role": message.role, "content": processed_content})
+            else:
+                # No multimodal content: generate single cohesive JSON string
+                content_json = input_content.model_dump_json()
+                history.append({"role": message.role, "content": content_json})
 
         return history
 
