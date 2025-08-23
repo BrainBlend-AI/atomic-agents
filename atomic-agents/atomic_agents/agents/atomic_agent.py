@@ -97,19 +97,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     def __init_subclass__(cls, **kwargs):
         """
         Hook called when a class is subclassed.
-
-        Captures generic type parameters during class creation and stores them as class attributes
-        to work around the unreliable __orig_class__ attribute in modern Python generic syntax.
         """
         super().__init_subclass__(**kwargs)
-        if hasattr(cls, "__orig_bases__"):
-            for base in cls.__orig_bases__:
-                if hasattr(base, "__origin__") and base.__origin__ is AtomicAgent:
-                    args = get_args(base)
-                    if len(args) == 2:
-                        cls._input_schema_cls = args[0]
-                        cls._output_schema_cls = args[1]
-                        break
 
     def __init__(self, config: AgentConfig):
         """
@@ -135,11 +124,33 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
     @property
     def input_schema(self) -> Type[BaseIOSchema]:
-        return getattr(self.__class__, "_input_schema_cls", BasicChatInputSchema)
+        """
+        Returns the input schema class for the agent.
+
+        Returns:
+            Type[BaseIOSchema]: The input schema class.
+        """
+        if hasattr(self, "__orig_class__"):
+            from typing import get_args
+            args = get_args(self.__orig_class__)
+            if len(args) >= 1:
+                return args[0]
+        return BasicChatInputSchema
 
     @property
     def output_schema(self) -> Type[BaseIOSchema]:
-        return getattr(self.__class__, "_output_schema_cls", BasicChatOutputSchema)
+        """
+        Returns the output schema class for the agent.
+
+        Returns:
+            Type[BaseIOSchema]: The output schema class.
+        """
+        if hasattr(self, "__orig_class__"):
+            from typing import get_args
+            args = get_args(self.__orig_class__)
+            if len(args) >= 2:
+                return args[1]
+        return BasicChatOutputSchema
 
     def _prepare_messages(self):
         if self.system_role is None:
