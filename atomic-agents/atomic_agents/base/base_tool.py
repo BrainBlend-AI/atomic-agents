@@ -38,6 +38,23 @@ class BaseTool[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
         tool_description (str): Description of the tool, derived from the input schema's description or overridden by the config.
     """
 
+    def __init_subclass__(cls, **kwargs):
+        """
+        Hook called when a class is subclassed.
+
+        Captures generic type parameters during class creation and stores them as class attributes
+        to work around the unreliable __orig_class__ attribute in modern Python generic syntax.
+        """
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "__orig_bases__"):
+            for base in cls.__orig_bases__:
+                if hasattr(base, "__origin__") and base.__origin__ is BaseTool:
+                    args = get_args(base)
+                    if len(args) == 2:
+                        cls._input_schema_cls = args[0]
+                        cls._output_schema_cls = args[1]
+                        break
+
     def __init__(self, config: BaseToolConfig = BaseToolConfig()):
         """
         Initializes the BaseTool with an optional configuration override.
@@ -55,12 +72,7 @@ class BaseTool[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
         Returns:
             Type[InputSchema]: The input schema class.
         """
-        if hasattr(self, "__orig_class__"):
-            TI, _ = get_args(self.__orig_class__)
-        else:
-            TI = BaseIOSchema
-
-        return TI
+        return getattr(self.__class__, "_input_schema_cls", BaseIOSchema)
 
     @property
     def output_schema(self) -> Type[OutputSchema]:
@@ -70,12 +82,7 @@ class BaseTool[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
         Returns:
             Type[OutputSchema]: The output schema class.
         """
-        if hasattr(self, "__orig_class__"):
-            _, TO = get_args(self.__orig_class__)
-        else:
-            TO = BaseIOSchema
-
-        return TO
+        return getattr(self.__class__, "_output_schema_cls", BaseIOSchema)
 
     @property
     def tool_name(self) -> str:

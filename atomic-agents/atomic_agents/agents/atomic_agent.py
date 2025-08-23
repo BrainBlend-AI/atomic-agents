@@ -94,6 +94,23 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             - Use this for parameters like 'temperature', 'max_tokens', etc.
     """
 
+    def __init_subclass__(cls, **kwargs):
+        """
+        Hook called when a class is subclassed.
+
+        Captures generic type parameters during class creation and stores them as class attributes
+        to work around the unreliable __orig_class__ attribute in modern Python generic syntax.
+        """
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "__orig_bases__"):
+            for base in cls.__orig_bases__:
+                if hasattr(base, "__origin__") and base.__origin__ is AtomicAgent:
+                    args = get_args(base)
+                    if len(args) == 2:
+                        cls._input_schema_cls = args[0]
+                        cls._output_schema_cls = args[1]
+                        break
+
     def __init__(self, config: AgentConfig):
         """
         Initializes the AtomicAgent.
@@ -118,21 +135,11 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
     @property
     def input_schema(self) -> Type[BaseIOSchema]:
-        if hasattr(self, "__orig_class__"):
-            TI, _ = get_args(self.__orig_class__)
-        else:
-            TI = BasicChatInputSchema
-
-        return TI
+        return getattr(self.__class__, "_input_schema_cls", BasicChatInputSchema)
 
     @property
     def output_schema(self) -> Type[BaseIOSchema]:
-        if hasattr(self, "__orig_class__"):
-            _, TO = get_args(self.__orig_class__)
-        else:
-            TO = BasicChatOutputSchema
-
-        return TO
+        return getattr(self.__class__, "_output_schema_cls", BasicChatOutputSchema)
 
     def _prepare_messages(self):
         if self.system_role is None:
