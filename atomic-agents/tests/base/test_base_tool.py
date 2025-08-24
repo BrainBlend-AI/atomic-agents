@@ -94,3 +94,30 @@ def test_base_tool_config_optional_fields():
     config = BaseToolConfig()
     assert hasattr(config, "title")
     assert hasattr(config, "description")
+
+
+# Test for GitHub issue #161 fix: proper schema resolution
+def test_base_tool_schema_resolution():
+    """Test that input_schema and output_schema return correct types (not BaseIOSchema)"""
+
+    class CustomInput(BaseIOSchema):
+        """Custom input schema for testing"""
+
+        name: str
+
+    class CustomOutput(BaseIOSchema):
+        """Custom output schema for testing"""
+
+        result: str
+
+    class TestTool(BaseTool[CustomInput, CustomOutput]):
+        def run(self, params: CustomInput) -> CustomOutput:
+            return CustomOutput(result=f"processed_{params.name}")
+
+    tool = TestTool()
+
+    # These should return the specific types, not BaseIOSchema
+    assert tool.input_schema == CustomInput
+    assert tool.output_schema == CustomOutput
+    assert tool.input_schema != BaseIOSchema
+    assert tool.output_schema != BaseIOSchema
