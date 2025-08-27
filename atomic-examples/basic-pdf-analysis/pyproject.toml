@@ -1,18 +1,25 @@
-[tool.poetry]
+[project]
 name = "basic-pdf-analysis"
 version = "1.0.0"
 description = "Basic PDF analysis Quickstart example for Atomic Agents"
-authors = ["Renaud Dufour <renaud.dufour59@gmail.com>"]
+authors = [{name = "Renaud Dufour", email = "renaud.dufour59@gmail.com"}]
 readme = "README.md"
+requires-python = ">=3.12,<3.14"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.14"
-atomic-agents = {path = "../..", develop = true}
-instructor = ">=1.9.0,<2.0.0"
-google-genai = ">=1.18.0,<2.0.0"
-jsonref = ">=1.1.0,<2.0.0"
+dependencies = [
+    "atomic-agents",
+    "instructor>=1.9.0,<2.0.0",
+    "google-genai>=1.18.0,<2.0.0",
+    "jsonref>=1.1.0,<2.0.0"
+]
 
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+only-include = ["basic_pdf_analysis"]
+
+[tool.uv.sources]
+atomic-agents = { workspace = true }

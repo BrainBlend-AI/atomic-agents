@@ -1,70 +1,25 @@
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-name = "atomic-agents"
-version = "2.0.5"
-description = "A versatile framework for creating and managing intelligent agents."
-authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
-readme = "README.md"
-license = "MIT"
-packages = [
-    { include = "atomic_agents", from = "atomic-agents" },
-    { include = "atomic_assembler", from = "atomic-assembler" }
+# UV Workspace Configuration
+[tool.uv.workspace]
+members = [
+    "atomic-agents",
+    "atomic-assembler", 
+    "atomic-examples/quickstart",
+    "atomic-examples/basic-multimodal",
+    "atomic-examples/basic-pdf-analysis",
+    "atomic-examples/deep-research",
+    "atomic-examples/mcp-agent/example-client",
+    "atomic-examples/mcp-agent/example-mcp-server",
+    "atomic-examples/orchestration-agent",
+    "atomic-examples/rag-chatbot",
+    "atomic-examples/web-search-agent",
+    "atomic-examples/youtube-summarizer",
+    "atomic-examples/youtube-to-recipe",
+    "atomic-forge/tools/calculator",
+    "atomic-forge/tools/searxng_search"
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-instructor = ">=1.9.0,<2.0.0"
-pydantic = ">=2.11.0,<3.0.0"
-rich = ">=13.7.1,<14.0.0"
-gitpython = ">=3.1.43,<4.0.0"
-pyfiglet = ">=1.0.2,<2.0.0"
-textual = ">=5.3.0,<6.0.0"
-pyyaml = ">=6.0.2,<7.0.0"
-requests = ">=2.32.3,<3.0.0"
-mcp = {extras = ["cli"], version = "^1.6.0"}
-
-[tool.poetry.group.dev.dependencies]
-black = ">=24.8.0,<25.0.0"
-flake8 = ">=7.1.1,<8.0.0"
-pdoc3 = ">=0.11.1,<1.0.0"
-pytest = ">=8.3.3,<9.0.0"
-pytest-cov = ">=5.0.0,<6.0.0"
-pytest-asyncio = ">=0.24.0,<1.0.0"
-openai = ">=1.35.12,<2.0.0"
-sphinx = ">=7.2.6,<8.0.0"
-sphinx-rtd-theme = ">=2.0.0,<3.0.0"
-myst-parser = ">=2.0.0,<3.0.0"
-sphinx-copybutton = ">=0.5.2,<1.0.0"
-sphinx-design = ">=0.5.0,<1.0.0"
-sphinx-autobuild = ">=2024.2.4,<2025.0.0"
-beautifulsoup4 = ">=4.12.3,<5.0.0"
-markdownify = ">=0.9.0,<1.0.0"
-
-[tool.poetry.scripts]
-atomic = "atomic_assembler.main:main"
-
-[tool.poetry.urls]
-Homepage = "https://github.com/BrainBlend-AI/atomic-agents"
-Repository = "https://github.com/BrainBlend-AI/atomic-agents"
+[tool.uv.sources]
+atomic-agents = { workspace = true }
 
 [tool.black]
 line-length = 127
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

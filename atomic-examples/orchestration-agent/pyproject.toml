@@ -1,20 +1,27 @@
-[tool.poetry]
+[project]
 name = "orchestration-agent"
 version = "0.1.0"
-description = ""
-authors = ["KennyVaneetvelde <kenny@inosta.be>"]
+description = "Orchestration Agent example for Atomic Agents"
+authors = [{name = "KennyVaneetvelde", email = "kenny@inosta.be"}]
 readme = "README.md"
+requires-python = ">=3.12,<4.0"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-atomic-agents = {path = "../..", develop = true}
-instructor = "^1.6.1"
-pydantic = ">=2.10.3,<3.0.0"
-sympy = "^1.13.3"
-python-dotenv = ">=1.0.1,<2.0.0"
-openai = ">=1.35.12,<2.0.0"
+dependencies = [
+    "atomic-agents",
+    "instructor>=1.6.1,<2.0.0",
+    "pydantic>=2.10.3,<3.0.0",
+    "sympy>=1.13.3,<2.0.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+    "openai>=1.35.12,<2.0.0"
+]
 
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["orchestration_agent"]
+
+[tool.uv.sources]
+atomic-agents = { workspace = true }

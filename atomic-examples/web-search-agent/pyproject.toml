@@ -1,19 +1,26 @@
-[tool.poetry]
+[project]
 name = "web-search-agent"
 version = "1.0.0"
 description = "Web search agent example for Atomic Agents"
-authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
+authors = [{name = "Kenny Vaneetvelde", email = "kenny.vaneetvelde@gmail.com"}]
 readme = "README.md"
+requires-python = ">=3.12,<4.0"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-atomic-agents = {path = "../..", develop = true}
-openai = ">=1.35.12,<2.0.0"
-pydantic = ">=2.9.2,<3.0.0"
-instructor = ">=1.5.2,<2.0.0"
-python-dotenv = ">=1.0.1,<2.0.0"
+dependencies = [
+    "atomic-agents",
+    "openai>=1.35.12,<2.0.0",
+    "pydantic>=2.9.2,<3.0.0",
+    "instructor>=1.5.2,<2.0.0",
+    "python-dotenv>=1.0.1,<2.0.0"
+]
 
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["web_search_agent"]
+
+[tool.uv.sources]
+atomic-agents = { workspace = true }

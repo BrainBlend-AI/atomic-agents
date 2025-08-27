@@ -362,7 +362,7 @@ For local development, you can install from the repository:
 ```bash
 git clone https://github.com/BrainBlend-AI/atomic-agents.git
 cd atomic-agents
-poetry install
+uv sync
 ```
 
 ## Provider & Model Compatibility
@@ -376,9 +376,9 @@ We welcome contributions! Please see the [Contributing Guide](/docs/contributing
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature-branch`)
 3. Make your changes
-4. Run tests (`poetry run pytest --cov=atomic_agents atomic-agents`)
-5. Format your code (`poetry run black atomic-agents atomic-assembler atomic-examples atomic-forge`)
-6. Lint your code (`poetry run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge`)
+4. Run tests (`uv run pytest --cov=atomic_agents atomic-agents`)
+5. Format your code (`uv run black atomic-agents atomic-assembler atomic-examples atomic-forge`)
+6. Lint your code (`uv run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge`)
 7. Commit your changes (`git commit -m 'Add some feature'`)
 8. Push to the branch (`git push origin feature-branch`)
 9. Open a pull request
