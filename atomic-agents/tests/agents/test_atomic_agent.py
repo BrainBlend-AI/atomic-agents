@@ -655,6 +655,9 @@ def test_backward_compatibility_no_breaking_changes(mock_instructor, mock_histor
     user_input = BasicChatInputSchema(chat_message="test")
     response = agent.run(user_input)
 
+    # Verify the response is valid
+    assert response is not None
+
     # Verify the call was made correctly
     mock_instructor.chat.completions.create.assert_called()
 
