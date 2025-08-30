@@ -391,13 +391,15 @@ async def test_model_from_chunks_async_patched():
 
     assert results == expected_values
 
+
 # Hook System Tests
+
 
 def test_hook_initialization(agent):
     """Test that hook system is properly initialized."""
     # Verify hook attributes exist and are properly initialized
-    assert hasattr(agent, '_hook_handlers')
-    assert hasattr(agent, '_hooks_enabled')
+    assert hasattr(agent, "_hook_handlers")
+    assert hasattr(agent, "_hooks_enabled")
     assert isinstance(agent._hook_handlers, dict)
     assert agent._hooks_enabled is True
     assert len(agent._hook_handlers) == 0
@@ -407,16 +409,16 @@ def test_hook_registration(agent):
     """Test hook registration and unregistration functionality."""
     # Test registration
     handler_called = []
-    
+
     def test_handler(error):
         handler_called.append(error)
-    
+
     agent.register_hook("parse:error", test_handler)
-    
+
     # Verify internal storage
     assert "parse:error" in agent._hook_handlers
     assert test_handler in agent._hook_handlers["parse:error"]
-    
+
     # Test unregistration
     agent.unregister_hook("parse:error", test_handler)
     assert test_handler not in agent._hook_handlers["parse:error"]
@@ -428,17 +430,17 @@ def test_hook_registration_with_instructor_client(mock_instructor):
     mock_instructor.on = Mock()
     mock_instructor.off = Mock()
     mock_instructor.clear = Mock()
-    
+
     config = AgentConfig(client=mock_instructor, model="gpt-4o-mini")
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
-    
+
     def test_handler(error):
         pass
-    
+
     # Test registration delegates to instructor client
     agent.register_hook("parse:error", test_handler)
     mock_instructor.on.assert_called_once_with("parse:error", test_handler)
-    
+
     # Test unregistration delegates to instructor client
     agent.unregister_hook("parse:error", test_handler)
     mock_instructor.off.assert_called_once_with("parse:error", test_handler)
@@ -448,26 +450,26 @@ def test_multiple_hook_handlers(agent):
     """Test multiple handlers for the same event."""
     handler1_calls = []
     handler2_calls = []
-    
+
     def handler1(error):
         handler1_calls.append(error)
-        
+
     def handler2(error):
         handler2_calls.append(error)
-    
+
     # Register multiple handlers
     agent.register_hook("parse:error", handler1)
     agent.register_hook("parse:error", handler2)
-    
+
     # Verify both are registered
     assert len(agent._hook_handlers["parse:error"]) == 2
     assert handler1 in agent._hook_handlers["parse:error"]
     assert handler2 in agent._hook_handlers["parse:error"]
-    
+
     # Test dispatch to both handlers
     test_error = Exception("test error")
     agent._dispatch_hook("parse:error", test_error)
-    
+
     assert len(handler1_calls) == 1
     assert len(handler2_calls) == 1
     assert handler1_calls[0] is test_error
@@ -476,19 +478,20 @@ def test_multiple_hook_handlers(agent):
 
 def test_hook_clear_specific_event(agent):
     """Test clearing hooks for a specific event."""
+
     def handler1():
         pass
-        
+
     def handler2():
         pass
-    
+
     # Register handlers for different events
     agent.register_hook("parse:error", handler1)
     agent.register_hook("completion:error", handler2)
-    
+
     # Clear specific event
     agent.clear_hooks("parse:error")
-    
+
     # Verify only parse:error was cleared
     assert len(agent._hook_handlers["parse:error"]) == 0
     assert handler2 in agent._hook_handlers["completion:error"]
@@ -496,19 +499,20 @@ def test_hook_clear_specific_event(agent):
 
 def test_hook_clear_all_events(agent):
     """Test clearing all hooks."""
+
     def handler1():
         pass
-        
+
     def handler2():
         pass
-    
+
     # Register handlers for different events
     agent.register_hook("parse:error", handler1)
     agent.register_hook("completion:error", handler2)
-    
+
     # Clear all hooks
     agent.clear_hooks()
-    
+
     # Verify all hooks are cleared
     assert len(agent._hook_handlers) == 0
 
@@ -517,12 +521,12 @@ def test_hook_enable_disable(agent):
     """Test hook enable/disable functionality."""
     # Test initial state
     assert agent.hooks_enabled is True
-    
+
     # Test disable
     agent.disable_hooks()
     assert agent.hooks_enabled is False
     assert agent._hooks_enabled is False
-    
+
     # Test enable
     agent.enable_hooks()
     assert agent.hooks_enabled is True
@@ -532,19 +536,19 @@ def test_hook_enable_disable(agent):
 def test_hook_dispatch_when_disabled(agent):
     """Test that hooks don't execute when disabled."""
     handler_called = []
-    
+
     def test_handler(error):
         handler_called.append(error)
-    
+
     agent.register_hook("parse:error", test_handler)
-    
+
     # Disable hooks
     agent.disable_hooks()
-    
+
     # Dispatch should not call handler
     agent._dispatch_hook("parse:error", Exception("test"))
     assert len(handler_called) == 0
-    
+
     # Re-enable and test
     agent.enable_hooks()
     agent._dispatch_hook("parse:error", Exception("test"))
@@ -554,27 +558,27 @@ def test_hook_dispatch_when_disabled(agent):
 def test_hook_error_isolation(agent):
     """Test that hook handler errors don't interrupt main flow."""
     good_handler_called = []
-    
+
     def bad_handler(error):
         raise RuntimeError("Handler error")
-    
+
     def good_handler(error):
         good_handler_called.append(error)
-    
+
     # Register both handlers
     agent.register_hook("test:event", bad_handler)
     agent.register_hook("test:event", good_handler)
-    
+
     # Dispatch should not raise exception
-    with patch('logging.getLogger') as mock_logger:
+    with patch("logging.getLogger") as mock_logger:
         mock_log = Mock()
         mock_logger.return_value = mock_log
-        
+
         agent._dispatch_hook("test:event", Exception("test"))
-        
+
         # Verify error was logged
         mock_log.warning.assert_called_once()
-        
+
         # Verify good handler still executed
         assert len(good_handler_called) == 1
 
@@ -587,9 +591,10 @@ def test_hook_dispatch_nonexistent_event(agent):
 
 def test_hook_unregister_nonexistent_handler(agent):
     """Test unregistering handler that doesn't exist."""
+
     def test_handler():
         pass
-    
+
     # Should not raise exception
     agent.unregister_hook("parse:error", test_handler)
 
@@ -602,72 +607,72 @@ def test_agent_initialization_includes_hooks(mock_instructor, mock_history, mock
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
     )
-    
+
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
-    
+
     # Verify hook system is initialized
-    assert hasattr(agent, '_hook_handlers')
-    assert hasattr(agent, '_hooks_enabled')
+    assert hasattr(agent, "_hook_handlers")
+    assert hasattr(agent, "_hooks_enabled")
     assert agent._hooks_enabled is True
     assert isinstance(agent._hook_handlers, dict)
     assert len(agent._hook_handlers) == 0
-    
+
     # Verify hook management methods exist
-    assert hasattr(agent, 'register_hook')
-    assert hasattr(agent, 'unregister_hook')
-    assert hasattr(agent, 'clear_hooks')
-    assert hasattr(agent, 'enable_hooks')
-    assert hasattr(agent, 'disable_hooks')
-    assert hasattr(agent, 'hooks_enabled')
-    assert hasattr(agent, '_dispatch_hook')
+    assert hasattr(agent, "register_hook")
+    assert hasattr(agent, "unregister_hook")
+    assert hasattr(agent, "clear_hooks")
+    assert hasattr(agent, "enable_hooks")
+    assert hasattr(agent, "disable_hooks")
+    assert hasattr(agent, "hooks_enabled")
+    assert hasattr(agent, "_dispatch_hook")
 
 
 def test_backward_compatibility_no_breaking_changes(mock_instructor, mock_history, mock_system_prompt_generator):
     """Test that hook system addition doesn't break existing functionality."""
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini", 
+        model="gpt-4o-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
     )
-    
+
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
-    
+
     # Test that all existing attributes still exist and work
     assert agent.client == mock_instructor
     assert agent.model == "gpt-4o-mini"
     assert agent.history == mock_history
     assert agent.system_prompt_generator == mock_system_prompt_generator
-    
+
     # Test that existing methods still work
     agent.reset_history()
-    
+
     # Properties should work
     assert agent.input_schema == BasicChatInputSchema
     assert agent.output_schema == BasicChatOutputSchema
-    
+
     # Run method should work (with hooks enabled by default)
     user_input = BasicChatInputSchema(chat_message="test")
     response = agent.run(user_input)
-    
+
     # Verify the call was made correctly
     mock_instructor.chat.completions.create.assert_called()
-    
+
     # Test context provider methods still work
     from atomic_agents.context import BaseDynamicContextProvider
-    
+
     class TestProvider(BaseDynamicContextProvider):
         def get_info(self):
             return "test"
-    
+
     provider = TestProvider(title="Test")
     agent.register_context_provider("test", provider)
-    
+
     retrieved = agent.get_context_provider("test")
     assert retrieved == provider
-    
+
     agent.unregister_context_provider("test")
-    
+
     # Should raise KeyError for non-existent provider
     with pytest.raises(KeyError):
         agent.get_context_provider("test")

@@ -1,6 +1,6 @@
 import instructor
 from pydantic import BaseModel, Field
-from typing import Optional, Type, Generator, AsyncGenerator, get_args, Dict, List, Callable, Any
+from typing import Optional, Type, Generator, AsyncGenerator, get_args, Dict, List, Callable
 import logging
 from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.context.system_prompt_generator import (
@@ -98,13 +98,13 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     Hook System:
         The AtomicAgent integrates with Instructor's hook system to provide comprehensive monitoring
         and error handling capabilities. Supported events include:
-        
+
         - 'parse:error': Triggered when Pydantic validation fails
-        - 'completion:kwargs': Triggered before completion request  
+        - 'completion:kwargs': Triggered before completion request
         - 'completion:response': Triggered after completion response
         - 'completion:error': Triggered on completion errors
         - 'completion:last_attempt': Triggered on final retry attempt
-        
+
     Hook Methods:
         - register_hook(event, handler): Register a hook handler for an event
         - unregister_hook(event, handler): Remove a hook handler
@@ -116,14 +116,14 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         ```python
         # Basic usage
         agent = AtomicAgent[InputSchema, OutputSchema](config)
-        
+
         # Register parse error hook for intelligent retry handling
         def handle_parse_error(error):
             print(f"Validation failed: {error}")
             # Implement custom retry logic, logging, etc.
-            
+
         agent.register_hook("parse:error", handle_parse_error)
-        
+
         # Now parse:error hooks will fire on validation failures
         response = agent.run(user_input)
         ```
@@ -144,7 +144,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.initial_history = self.history.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
-        
+
         # Hook management attributes
         self._hook_handlers: Dict[str, List[Callable]] = {}
         self._hooks_enabled: bool = True
@@ -361,7 +361,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     def register_hook(self, event: str, handler: Callable) -> None:
         """
         Registers a hook handler for a specific event.
-        
+
         Args:
             event (str): The event name (e.g., 'parse:error', 'completion:kwargs', etc.)
             handler (Callable): The callback function to handle the event
@@ -369,49 +369,49 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         if event not in self._hook_handlers:
             self._hook_handlers[event] = []
         self._hook_handlers[event].append(handler)
-        
+
         # Register with instructor client if it supports hooks
-        if hasattr(self.client, 'on'):
+        if hasattr(self.client, "on"):
             self.client.on(event, handler)
 
     def unregister_hook(self, event: str, handler: Callable) -> None:
         """
         Unregisters a hook handler for a specific event.
-        
+
         Args:
             event (str): The event name
             handler (Callable): The callback function to remove
         """
         if event in self._hook_handlers and handler in self._hook_handlers[event]:
             self._hook_handlers[event].remove(handler)
-            
+
             # Remove from instructor client if it supports hooks
-            if hasattr(self.client, 'off'):
+            if hasattr(self.client, "off"):
                 self.client.off(event, handler)
 
     def clear_hooks(self, event: Optional[str] = None) -> None:
         """
         Clears hook handlers for a specific event or all events.
-        
+
         Args:
             event (Optional[str]): The event name to clear, or None to clear all
         """
         if event:
             if event in self._hook_handlers:
                 # Clear from instructor client first
-                if hasattr(self.client, 'clear'):
+                if hasattr(self.client, "clear"):
                     self.client.clear(event)
                 self._hook_handlers[event].clear()
         else:
             # Clear all hooks
-            if hasattr(self.client, 'clear'):
+            if hasattr(self.client, "clear"):
                 self.client.clear()
             self._hook_handlers.clear()
 
     def _dispatch_hook(self, event: str, *args, **kwargs) -> None:
         """
         Internal method to dispatch hook events with error isolation.
-        
+
         Args:
             event (str): The event name
             *args: Arguments to pass to handlers
@@ -419,7 +419,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         """
         if not self._hooks_enabled or event not in self._hook_handlers:
             return
-            
+
         for handler in self._hook_handlers[event]:
             try:
                 handler(*args, **kwargs)
