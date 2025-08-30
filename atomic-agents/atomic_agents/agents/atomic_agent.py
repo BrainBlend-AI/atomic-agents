@@ -1,6 +1,7 @@
 import instructor
 from pydantic import BaseModel, Field
-from typing import Optional, Type, Generator, AsyncGenerator, get_args
+from typing import Optional, Type, Generator, AsyncGenerator, get_args, Dict, List, Callable, Any
+import logging
 from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.context.system_prompt_generator import (
     BaseDynamicContextProvider,
@@ -73,10 +74,11 @@ class AgentConfig(BaseModel):
 
 class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
     """
-    Base class for chat agents.
+    Base class for chat agents with full Instructor hook system integration.
 
     This class provides the core functionality for handling chat interactions, including managing history,
-    generating system prompts, and obtaining responses from a language model.
+    generating system prompts, and obtaining responses from a language model. It includes comprehensive
+    hook system support for monitoring and error handling.
 
     Type Parameters:
         InputSchema: Schema for the user input, must be a subclass of BaseIOSchema.
@@ -92,6 +94,39 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         current_user_input (Optional[InputSchema]): The current user input being processed.
         model_api_parameters (dict): Additional parameters passed to the API provider.
             - Use this for parameters like 'temperature', 'max_tokens', etc.
+
+    Hook System:
+        The AtomicAgent integrates with Instructor's hook system to provide comprehensive monitoring
+        and error handling capabilities. Supported events include:
+        
+        - 'parse:error': Triggered when Pydantic validation fails
+        - 'completion:kwargs': Triggered before completion request  
+        - 'completion:response': Triggered after completion response
+        - 'completion:error': Triggered on completion errors
+        - 'completion:last_attempt': Triggered on final retry attempt
+        
+    Hook Methods:
+        - register_hook(event, handler): Register a hook handler for an event
+        - unregister_hook(event, handler): Remove a hook handler
+        - clear_hooks(event=None): Clear hooks for specific event or all events
+        - enable_hooks()/disable_hooks(): Control hook processing
+        - hooks_enabled: Property to check if hooks are enabled
+
+    Example:
+        ```python
+        # Basic usage
+        agent = AtomicAgent[InputSchema, OutputSchema](config)
+        
+        # Register parse error hook for intelligent retry handling
+        def handle_parse_error(error):
+            print(f"Validation failed: {error}")
+            # Implement custom retry logic, logging, etc.
+            
+        agent.register_hook("parse:error", handle_parse_error)
+        
+        # Now parse:error hooks will fire on validation failures
+        response = agent.run(user_input)
+        ```
     """
 
     def __init__(self, config: AgentConfig):
@@ -109,6 +144,10 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.initial_history = self.history.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
+        
+        # Hook management attributes
+        self._hook_handlers: Dict[str, List[Callable]] = {}
+        self._hooks_enabled: bool = True
 
     def reset_history(self):
         """
@@ -317,6 +356,90 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             del self.system_prompt_generator.context_providers[provider_name]
         else:
             raise KeyError(f"Context provider '{provider_name}' not found.")
+
+    # Hook Management Methods
+    def register_hook(self, event: str, handler: Callable) -> None:
+        """
+        Registers a hook handler for a specific event.
+        
+        Args:
+            event (str): The event name (e.g., 'parse:error', 'completion:kwargs', etc.)
+            handler (Callable): The callback function to handle the event
+        """
+        if event not in self._hook_handlers:
+            self._hook_handlers[event] = []
+        self._hook_handlers[event].append(handler)
+        
+        # Register with instructor client if it supports hooks
+        if hasattr(self.client, 'on'):
+            self.client.on(event, handler)
+
+    def unregister_hook(self, event: str, handler: Callable) -> None:
+        """
+        Unregisters a hook handler for a specific event.
+        
+        Args:
+            event (str): The event name
+            handler (Callable): The callback function to remove
+        """
+        if event in self._hook_handlers and handler in self._hook_handlers[event]:
+            self._hook_handlers[event].remove(handler)
+            
+            # Remove from instructor client if it supports hooks
+            if hasattr(self.client, 'off'):
+                self.client.off(event, handler)
+
+    def clear_hooks(self, event: Optional[str] = None) -> None:
+        """
+        Clears hook handlers for a specific event or all events.
+        
+        Args:
+            event (Optional[str]): The event name to clear, or None to clear all
+        """
+        if event:
+            if event in self._hook_handlers:
+                # Clear from instructor client first
+                if hasattr(self.client, 'clear'):
+                    self.client.clear(event)
+                self._hook_handlers[event].clear()
+        else:
+            # Clear all hooks
+            if hasattr(self.client, 'clear'):
+                self.client.clear()
+            self._hook_handlers.clear()
+
+    def _dispatch_hook(self, event: str, *args, **kwargs) -> None:
+        """
+        Internal method to dispatch hook events with error isolation.
+        
+        Args:
+            event (str): The event name
+            *args: Arguments to pass to handlers
+            **kwargs: Keyword arguments to pass to handlers
+        """
+        if not self._hooks_enabled or event not in self._hook_handlers:
+            return
+            
+        for handler in self._hook_handlers[event]:
+            try:
+                handler(*args, **kwargs)
+            except Exception as e:
+                # Log error but don't interrupt main flow
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Hook handler for '{event}' raised exception: {e}")
+
+    def enable_hooks(self) -> None:
+        """Enable hook processing."""
+        self._hooks_enabled = True
+
+    def disable_hooks(self) -> None:
+        """Disable hook processing."""
+        self._hooks_enabled = False
+
+    @property
+    def hooks_enabled(self) -> bool:
+        """Check if hooks are enabled."""
+        return self._hooks_enabled
 
 
 if __name__ == "__main__":
