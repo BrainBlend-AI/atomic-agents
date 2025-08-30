@@ -1,327 +1,212 @@
 #!/usr/bin/env python3
 """
-AtomicAgent Hook System Demo
-
-Shows how to monitor agent execution with hooks.
-Includes error handling and performance metrics.
+Demonstrates AtomicAgent not triggering instructor parse:error hooks.
+Expected: parse:error hook called on validation failure
+Actual: Only completion:* hooks are called
 """
 
-import os
-import time
-import logging
-
+import asyncio
+from pydantic import Field
 import instructor
 import openai
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from pydantic import Field, ValidationError
-
-from atomic_agents import AtomicAgent, AgentConfig
-from atomic_agents.context import ChatHistory
+from atomic_agents.agents.atomic_agent import AtomicAgent, AgentConfig
+from atomic_agents.context.system_prompt_generator import SystemPromptGenerator
+from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.base.base_io_schema import BaseIOSchema
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-console = Console()
-metrics = {
-    "total_requests": 0,
-    "successful_requests": 0,
-    "failed_requests": 0,
-    "parse_errors": 0,
-    "retry_attempts": 0,
-    "total_response_time": 0.0,
-    "start_time": time.time(),
-}
 
-_request_start_time = None
+from pydantic import field_validator
 
 
-class UserQuery(BaseIOSchema):
-    chat_message: str = Field(..., description="User's question or message")
+class SimpleOutput(BaseIOSchema):
+    """Output model designed to trigger validation errors."""
+
+    # Impossible constraint: must be both positive and negative
+    impossible_number: int = Field(..., description="A number")
+    # String that must pass validation
+    test_string: str = Field(..., description="Any string")
+
+    @field_validator("impossible_number")
+    @classmethod
+    def validate_impossible(cls, v):
+        if v > 0:
+            raise ValueError("Number must be negative")
+        if v <= 0:
+            raise ValueError("Number must be positive")
+        return v
 
 
-class AgentResponse(BaseIOSchema):
-    chat_message: str = Field(..., description="Agent's response to the user")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score (0.0-1.0)")
-    reasoning: str = Field(..., description="Brief explanation of the reasoning")
+class SimpleInput(BaseIOSchema):
+    """Input schema."""
+
+    question: str = Field(..., description="The question to ask")
 
 
-class DetailedResponse(BaseIOSchema):
-    chat_message: str = Field(..., description="Primary response")
-    alternative_suggestions: list[str] = Field(default_factory=list, description="Alternative suggestions")
-    confidence_level: str = Field(..., description="Must be 'low', 'medium', or 'high'")
-    requires_followup: bool = Field(default=False, description="Whether follow-up is needed")
+class MinimalAgent:
+    def __init__(self):
+        self.hook_calls = []
+        self.client = self._setup_instructor_client()
+        self.agent = self._setup_atomic_agent()
 
+    def _setup_instructor_client(self):
+        import os
 
-def setup_api_key() -> str:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        console.print("[bold red]Error: OPENAI_API_KEY environment variable not set.[/bold red]")
-        console.print("Please set it with: export OPENAI_API_KEY='your-api-key-here'")
-        exit(1)
-    return api_key
+        # Check if API key is available
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("⚠️  OPENAI_API_KEY not set. Set it to test with real API:")
+            print("   export OPENAI_API_KEY=your_key_here")
+            print("   This example will demonstrate hook registration without API calls.")
+            # Return None to skip API calls but still demonstrate hook registration
+            return None
 
-
-def display_metrics():
-    runtime = time.time() - metrics["start_time"]
-    avg_response_time = metrics["total_response_time"] / metrics["total_requests"] if metrics["total_requests"] > 0 else 0
-    success_rate = metrics["successful_requests"] / metrics["total_requests"] * 100 if metrics["total_requests"] > 0 else 0
-
-    table = Table(title="🔍 Hook System Performance Metrics", style="cyan")
-    table.add_column("Metric", style="bold")
-    table.add_column("Value", style="green")
-
-    table.add_row("Runtime", f"{runtime:.1f}s")
-    table.add_row("Total Requests", str(metrics["total_requests"]))
-    table.add_row("Successful Requests", str(metrics["successful_requests"]))
-    table.add_row("Failed Requests", str(metrics["failed_requests"]))
-    table.add_row("Parse Errors", str(metrics["parse_errors"]))
-    table.add_row("Retry Attempts", str(metrics["retry_attempts"]))
-    table.add_row("Success Rate", f"{success_rate:.1f}%")
-    table.add_row("Avg Response Time", f"{avg_response_time:.2f}s")
-
-    console.print(table)
-
-
-def on_parse_error(error):
-    metrics["parse_errors"] += 1
-    metrics["failed_requests"] += 1
-    logger.error(f"🚨 Parse error occurred: {type(error).__name__}: {error}")
-
-    if isinstance(error, ValidationError):
-        console.print("[bold red]❌ Validation Error:[/bold red]")
-        for err in error.errors():
-            field_path = " -> ".join(str(x) for x in err["loc"])
-            console.print(f"  • Field '{field_path}': {err['msg']}")
-            logger.error(f"Validation error in field '{field_path}': {err['msg']}")
-    else:
-        console.print(f"[bold red]❌ Parse Error:[/bold red] {error}")
-
-
-def on_completion_kwargs(**kwargs):
-    global _request_start_time
-    metrics["total_requests"] += 1
-    model = kwargs.get("model", "unknown")
-    messages_count = len(kwargs.get("messages", []))
-    logger.info(f"🚀 API call starting - Model: {model}, Messages: {messages_count}")
-    _request_start_time = time.time()
-
-
-def on_completion_response(response, **kwargs):
-    global _request_start_time
-    if _request_start_time:
-        response_time = time.time() - _request_start_time
-        metrics["total_response_time"] += response_time
-        logger.info(f"✅ API call completed in {response_time:.2f}s")
-        _request_start_time = None
-
-    if hasattr(response, "usage"):
-        usage = response.usage
-        logger.info(
-            f"📊 Token usage - Prompt: {usage.prompt_tokens}, "
-            f"Completion: {usage.completion_tokens}, "
-            f"Total: {usage.total_tokens}"
+        # Use OpenAI with API key
+        client = instructor.from_openai(
+            openai.AsyncOpenAI(api_key=api_key),
+            mode=instructor.Mode.TOOLS,
         )
 
-    metrics["successful_requests"] += 1
+        return client
 
+    def _setup_atomic_agent(self):
+        if not self.client:
+            print("🚫 No client available - creating agent for hook demonstration only")
+            # Create minimal config for demonstration
+            return None
 
-def on_completion_error(error, **kwargs):
-    global _request_start_time
-    metrics["failed_requests"] += 1
-    metrics["retry_attempts"] += 1
-
-    if _request_start_time:
-        _request_start_time = None
-
-    logger.error(f"🔥 API error: {type(error).__name__}: {error}")
-    console.print(f"[bold red]🔥 API Error:[/bold red] {error}")
-
-
-def create_agent_with_hooks(schema_type: type, system_prompt: str = None) -> AtomicAgent:
-    api_key = setup_api_key()
-    client = instructor.from_openai(openai.OpenAI(api_key=api_key))
-
-    config = AgentConfig(
-        client=client,
-        model="gpt-5-mini",
-        model_api_parameters={"reasoning_effort": "low"},
-        history=ChatHistory(),
-        system_prompt=system_prompt,
-    )
-
-    agent = AtomicAgent[UserQuery, schema_type](config)
-
-    agent.register_hook("parse:error", on_parse_error)
-    agent.register_hook("completion:kwargs", on_completion_kwargs)
-    agent.register_hook("completion:response", on_completion_response)
-    agent.register_hook("completion:error", on_completion_error)
-
-    console.print("[bold green]✅ Agent created with comprehensive hook monitoring[/bold green]")
-    return agent
-
-
-def demonstrate_basic_hooks():
-    console.print(Panel("🔧 Basic Hook System Demonstration", style="bold blue"))
-
-    agent = create_agent_with_hooks(
-        AgentResponse, "You are a helpful assistant. Always provide confident, well-reasoned responses."
-    )
-
-    test_queries = [
-        "What is the capital of France?",
-        "Explain quantum computing in simple terms.",
-        "What are the benefits of renewable energy?",
-    ]
-
-    for query_text in test_queries:
-        console.print(f"\n[bold cyan]Query:[/bold cyan] {query_text}")
-
-        try:
-            query = UserQuery(chat_message=query_text)
-            response = agent.run(query)
-
-            console.print(f"[bold green]Response:[/bold green] {response.chat_message}")
-            console.print(f"[bold yellow]Confidence:[/bold yellow] {response.confidence:.2f}")
-            console.print(f"[bold magenta]Reasoning:[/bold magenta] {response.reasoning}")
-
-        except Exception as e:
-            console.print(f"[bold red]Error processing query:[/bold red] {e}")
-
-    display_metrics()
-
-
-def demonstrate_validation_errors():
-    console.print(Panel("🚨 Validation Error Handling Demonstration", style="bold red"))
-
-    agent = create_agent_with_hooks(
-        DetailedResponse,
-        """You are a helpful assistant. You must respond with:
-        - A main answer
-        - Alternative suggestions (list)
-        - Confidence level (exactly 'low', 'medium', or 'high')
-        - Whether follow-up is needed (boolean)
-        
-        Be very strict about the confidence_level field - it must be exactly one of the three allowed values.""",
-    )
-
-    validation_test_queries = [
-        "Give me a simple yes or no answer about whether the sky is blue.",
-        "Provide a complex analysis of climate change with multiple perspectives.",
-    ]
-
-    for query_text in validation_test_queries:
-        console.print(f"\n[bold cyan]Query:[/bold cyan] {query_text}")
-
-        try:
-            query = UserQuery(chat_message=query_text)
-            response = agent.run(query)
-
-            console.print(f"[bold green]Main Answer:[/bold green] {response.chat_message}")
-            console.print(f"[bold yellow]Confidence Level:[/bold yellow] {response.confidence_level}")
-            console.print(f"[bold magenta]Alternatives:[/bold magenta] {response.alternative_suggestions}")
-            console.print(f"[bold cyan]Needs Follow-up:[/bold cyan] {response.requires_followup}")
-
-        except Exception as e:
-            console.print(f"[bold red]Handled error:[/bold red] {e}")
-
-    display_metrics()
-
-
-def demonstrate_interactive_mode():
-    console.print(Panel("🎮 Interactive Hook System Testing", style="bold magenta"))
-
-    agent = create_agent_with_hooks(
-        AgentResponse, "You are a helpful assistant. Provide clear, confident responses with reasoning."
-    )
-
-    console.print("[bold green]Welcome to the interactive hook system demo![/bold green]")
-    console.print("Type your questions below. Use /metrics to see performance data, /exit to quit.")
-
-    while True:
-        try:
-            user_input = console.input("\n[bold blue]Your question:[/bold blue] ")
-
-            if user_input.lower() in ["/exit", "/quit"]:
-                console.print("Exiting interactive mode...")
-                break
-            elif user_input.lower() == "/metrics":
-                display_metrics()
-                continue
-            elif user_input.strip() == "":
-                continue
-
-            query = UserQuery(chat_message=user_input)
-            start_time = time.time()
-
-            response = agent.run(query)
-
-            response_time = time.time() - start_time
-
-            console.print(f"\n[bold green]Answer:[/bold green] {response.chat_message}")
-            console.print(f"[bold yellow]Confidence:[/bold yellow] {response.confidence:.2f}")
-            console.print(f"[bold magenta]Reasoning:[/bold magenta] {response.reasoning}")
-            console.print(f"[dim]Response time: {response_time:.2f}s[/dim]")
-
-        except KeyboardInterrupt:
-            console.print("\nExiting on user interrupt...")
-            break
-        except Exception as e:
-            console.print(f"[bold red]Error:[/bold red] {e}")
-
-
-def main():
-    console.print(Panel.fit("🎯 AtomicAgent Hook System Comprehensive Demo", style="bold green"))
-
-    console.print(
-        """
-[bold cyan]This demonstration showcases:[/bold cyan]
-• 🔍 Comprehensive monitoring with hooks
-• 🛡️ Robust error handling and validation
-• 📊 Real-time performance metrics
-• 🔄 Production-ready patterns
-
-[bold yellow]The hook system provides zero-overhead monitoring when hooks aren't registered,
-and powerful insights when they are enabled.[/bold yellow]
-    """
-    )
-
-    try:
-        demonstrate_basic_hooks()
-        console.print("\n" + "=" * 50)
-        demonstrate_validation_errors()
-        console.print("\n" + "=" * 50)
-        demonstrate_interactive_mode()
-
-    except KeyboardInterrupt:
-        console.print("\n[bold yellow]Demo interrupted by user.[/bold yellow]")
-    except Exception as e:
-        console.print(f"\n[bold red]Demo error:[/bold red] {e}")
-        logger.error(f"Demo error: {e}", exc_info=True)
-    finally:
-        console.print("\n" + "=" * 50)
-        console.print(Panel("📊 Final Performance Summary", style="bold green"))
-        display_metrics()
-
-        console.print(
-            """
-[bold green]✅ Hook system demonstration complete![/bold green]
-
-[bold cyan]Key takeaways:[/bold cyan]
-• Hooks provide comprehensive monitoring without performance overhead
-• Error handling is robust and provides detailed context
-• Metrics collection enables performance optimization
-• The system is production-ready and scalable
-
-[bold yellow]Next steps:[/bold yellow]
-• Implement custom retry logic in hook handlers
-• Add monitoring service integration
-• Explore advanced error recovery patterns
-• Build custom metrics dashboards
-        """
+        system_prompt = SystemPromptGenerator(
+            background=["You are a helpful assistant."],
+            steps=["Answer with required JSON format."],
+            output_instructions=[
+                "Return JSON with 'name', 'count', and 'items' fields",
+                "Example: {'name': 'test', 'count': 5, 'items': ['a', 'b']}",
+            ],
         )
+
+        config = AgentConfig(
+            client=self.client,
+            model="gpt-5-nano",  # Using new weaker model
+            history=ChatHistory(),
+            system_prompt_generator=system_prompt,
+            model_api_parameters={"reasoning_effort": "minimal"},
+        )
+
+        agent = AtomicAgent[SimpleInput, SimpleOutput](config=config)
+
+        # Register ALL available instructor hooks
+        self._register_all_hooks(agent)
+
+        return agent
+
+    def _register_all_hooks(self, agent):
+        """Register all available instructor hooks with the AtomicAgent."""
+
+        print("🎯 Registering all instructor hooks:")
+
+        # All instructor hook types based on the documentation
+        hooks = [
+            ("completion:kwargs", self._hook_completion_kwargs, "Called before sending request to LLM"),
+            ("completion:response", self._hook_completion_response, "Called when response received from LLM"),
+            ("completion:error", self._hook_completion_error, "Called when completion request fails"),
+            ("parse:error", self._hook_parse_error, "Called when parsing/validation fails"),
+            ("completion:last_attempt", self._hook_last_attempt, "Called on final retry attempt"),
+        ]
+
+        for hook_name, handler, description in hooks:
+            if agent:
+                agent.register_hook(hook_name, handler)
+                print(f"   ✅ {hook_name}: {description}")
+            else:
+                print(f"   📝 {hook_name}: {description} (would register if agent available)")
+
+        print("✅ All hooks registered!")
+
+    def _hook_completion_kwargs(self, *args, **kwargs):
+        self.hook_calls.append("completion:kwargs")
+        print("🔵 completion:kwargs hook fired")
+        print(f"   📋 Request parameters: {list(kwargs.keys())}")
+
+    def _hook_completion_response(self, response):
+        self.hook_calls.append("completion:response")
+        print("🔵 completion:response hook fired")
+        if hasattr(response, "choices") and response.choices:
+            content = response.choices[0].message.content or "No content"
+            print(f"   📄 Response preview: {content[:100]}...")
+
+    def _hook_completion_error(self, error):
+        self.hook_calls.append("completion:error")
+        print(f"🔴 completion:error hook fired: {type(error).__name__}")
+        print(f"   ❌ Error: {str(error)[:150]}...")
+
+    def _hook_parse_error(self, error):
+        self.hook_calls.append("parse:error")
+        print(f"🔴 parse:error hook fired: {type(error).__name__}")
+        print(f"   🚫 Validation failed: {str(error)[:150]}...")
+        print("   🎯 THIS IS THE KEY HOOK FOR VALIDATION FEEDBACK!")
+
+    def _hook_last_attempt(self, error):
+        self.hook_calls.append("completion:last_attempt")
+        print(f"🔴 completion:last_attempt hook fired: {type(error).__name__}")
+        print(f"   🔄 Final retry failed: {str(error)[:150]}...")
+
+    async def run_test(self):
+        if not self.agent:
+            print("\n🎯 HOOK DEMONSTRATION COMPLETE")
+            print("   All hook types have been registered and are ready to fire when:")
+            print("   • completion:kwargs - Before each LLM request")
+            print("   • completion:response - When LLM responds successfully")
+            print("   • completion:error - When LLM request fails")
+            print("   • parse:error - When response fails Pydantic validation")
+            print("   • completion:last_attempt - On final retry attempt")
+            print("\n💡 To test with real API calls:")
+            print("   1. Set OPENAI_API_KEY environment variable")
+            print("   2. Run this example again")
+            return []
+
+        print("\n🧪 Testing with real API calls...")
+
+        # Test case designed to trigger validation errors with impossible constraints
+        test_input = SimpleInput(
+            question="Return JSON with impossible_number=5 and test_string='hello'. " "Use exactly these values."
+        )
+
+        try:
+            result = await self.agent.run_async(test_input)
+            print(f"✅ Success: {result}")
+        except Exception as e:
+            print(f"❌ Expected failure: {type(e).__name__}")
+            print(f"   Details: {str(e)[:200]}...")
+
+        print("\n📊 Final Results:")
+        print(f"   All hooks called: {self.hook_calls}")
+        print(f"   Unique hooks fired: {set(self.hook_calls)}")
+
+        # Report hook coverage
+        all_hooks = ["completion:kwargs", "completion:response", "completion:error", "parse:error", "completion:last_attempt"]
+
+        print("\n🎯 Hook Coverage Report:")
+        for hook in all_hooks:
+            status = "✅" if hook in self.hook_calls else "❌"
+            count = self.hook_calls.count(hook)
+            print(f"   {status} {hook}" + (f" (called {count}x)" if count > 0 else ""))
+
+        if "parse:error" in self.hook_calls:
+            print("\n🎉 SUCCESS: parse:error hook was triggered!")
+            print("   This means AtomicAgent hook integration is working correctly.")
+        else:
+            print("\n💭 NOTE: parse:error hook not triggered in this test.")
+            print("   This could mean:")
+            print("   • No validation errors occurred (LLM returned valid JSON)")
+            print("   • Different error type occurred before validation")
+            print("   • More specific test conditions needed to trigger validation failure")
+
+        return self.hook_calls
+
+
+async def main():
+    agent = MinimalAgent()
+    await agent.run_test()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
