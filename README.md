@@ -276,6 +276,7 @@ For full, runnable examples, please refer to the following files in the `atomic-
 
 In addition to the quickstart examples, we have more complex examples demonstrating the power of Atomic Agents:
 
+- [Hooks System](/atomic-examples/hooks-example/README.md): Comprehensive demonstration of the AtomicAgent hook system for monitoring, error handling, and performance metrics with intelligent retry mechanisms.
 - [Basic Multimodal](/atomic-examples/basic-multimodal/README.md): Demonstrates how to analyze images with text, focusing on extracting structured information from nutrition labels using GPT-4 Vision capabilities.
 - [Deep Research](/atomic-examples/deep-research/README.md): An advanced example showing how to perform deep research tasks.
 - [Orchestration Agent](/atomic-examples/orchestration-agent/README.md): Shows how to create an Orchestrator Agent that intelligently decides between using different tools (search or calculator) based on user input.

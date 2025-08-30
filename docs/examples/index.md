@@ -20,6 +20,19 @@ Simple examples to get started with the framework:
 
 📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/quickstart)** - Browse the complete source code and run the examples
 
+## Hooks System
+
+Comprehensive monitoring and error handling with the AtomicAgent hook system:
+
+- Parse error handling and validation
+- API call monitoring and metrics
+- Response time tracking and performance analysis
+- Intelligent retry mechanisms
+- Production-ready error isolation
+- Real-time performance dashboards
+
+📂 **[View on GitHub](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/hooks-example)** - Browse the complete source code and run the examples
+
 ## Basic Multimodal
 
 Examples of working with images and text:

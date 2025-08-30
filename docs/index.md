@@ -115,6 +115,7 @@ print(response)
 Check out our example projects in our [GitHub repository](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples):
 
 - [Quickstart Examples](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/quickstart): Simple examples to get started
+- [Hooks System](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/hooks-example): Comprehensive monitoring, error handling, and performance metrics
 - [Basic Multimodal](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/basic-multimodal): Analyze images with text
 - [RAG Chatbot](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/rag-chatbot): Build context-aware chatbots
 - [Web Search Agent](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/web-search-agent): Create agents that perform web searches
