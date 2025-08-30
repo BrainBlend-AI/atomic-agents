@@ -1,17 +1,9 @@
 #!/usr/bin/env python3
 """
-AtomicAgent Hook System Demonstration
+AtomicAgent Hook System Demo
 
-This example showcases the powerful hook system integration in AtomicAgent,
-demonstrating monitoring, error handling, and intelligent retry mechanisms.
-
-The hook system leverages Instructor's hook system to provide:
-- Comprehensive monitoring of agent execution
-- Robust error handling and recovery
-- Performance metrics and insights
-- Intelligent retry patterns
-
-Run with: python main.py
+Shows how to monitor agent execution with hooks.
+Includes error handling and performance metrics.
 """
 
 import os
@@ -29,14 +21,9 @@ from atomic_agents import AtomicAgent, AgentConfig
 from atomic_agents.context import ChatHistory
 from atomic_agents.base.base_io_schema import BaseIOSchema
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
-
-# Initialize Rich console for pretty output
 console = Console()
-
-# Global metrics storage
 metrics = {
     "total_requests": 0,
     "successful_requests": 0,
@@ -47,27 +34,20 @@ metrics = {
     "start_time": time.time(),
 }
 
-# Global variable to track request start times
 _request_start_time = None
 
 
 class UserQuery(BaseIOSchema):
-    """User input schema for the agent."""
-
     chat_message: str = Field(..., description="User's question or message")
 
 
 class AgentResponse(BaseIOSchema):
-    """Agent response schema with confidence scoring."""
-
     chat_message: str = Field(..., description="Agent's response to the user")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score (0.0-1.0)")
     reasoning: str = Field(..., description="Brief explanation of the reasoning")
 
 
 class DetailedResponse(BaseIOSchema):
-    """More complex response schema to test validation."""
-
     chat_message: str = Field(..., description="Primary response")
     alternative_suggestions: list[str] = Field(default_factory=list, description="Alternative suggestions")
     confidence_level: str = Field(..., description="Must be 'low', 'medium', or 'high'")
@@ -75,7 +55,6 @@ class DetailedResponse(BaseIOSchema):
 
 
 def setup_api_key() -> str:
-    """Setup and validate API key."""
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         console.print("[bold red]Error: OPENAI_API_KEY environment variable not set.[/bold red]")
@@ -85,10 +64,8 @@ def setup_api_key() -> str:
 
 
 def display_metrics():
-    """Display current performance metrics."""
     runtime = time.time() - metrics["start_time"]
     avg_response_time = metrics["total_response_time"] / metrics["total_requests"] if metrics["total_requests"] > 0 else 0
-
     success_rate = metrics["successful_requests"] / metrics["total_requests"] * 100 if metrics["total_requests"] > 0 else 0
 
     table = Table(title="🔍 Hook System Performance Metrics", style="cyan")
@@ -107,14 +84,9 @@ def display_metrics():
     console.print(table)
 
 
-# Hook functions for comprehensive monitoring and error handling
-
-
 def on_parse_error(error):
-    """Handle parse errors with detailed logging and metrics update."""
     metrics["parse_errors"] += 1
     metrics["failed_requests"] += 1
-
     logger.error(f"🚨 Parse error occurred: {type(error).__name__}: {error}")
 
     if isinstance(error, ValidationError):
@@ -126,37 +98,24 @@ def on_parse_error(error):
     else:
         console.print(f"[bold red]❌ Parse Error:[/bold red] {error}")
 
-    # In a production system, you might:
-    # - Send error to monitoring service
-    # - Trigger alerts for high error rates
-    # - Store detailed error context for analysis
-
 
 def on_completion_kwargs(**kwargs):
-    """Monitor outgoing API calls."""
     global _request_start_time
     metrics["total_requests"] += 1
-
-    # Log API call details (without sensitive information)
     model = kwargs.get("model", "unknown")
     messages_count = len(kwargs.get("messages", []))
-
     logger.info(f"🚀 API call starting - Model: {model}, Messages: {messages_count}")
-
-    # Store start time for response time calculation
     _request_start_time = time.time()
 
 
 def on_completion_response(response, **kwargs):
-    """Monitor API responses and calculate metrics."""
     global _request_start_time
     if _request_start_time:
         response_time = time.time() - _request_start_time
         metrics["total_response_time"] += response_time
         logger.info(f"✅ API call completed in {response_time:.2f}s")
-        _request_start_time = None  # Reset for next request
+        _request_start_time = None
 
-    # Log response details
     if hasattr(response, "usage"):
         usage = response.usage
         logger.info(
@@ -169,41 +128,31 @@ def on_completion_response(response, **kwargs):
 
 
 def on_completion_error(error, **kwargs):
-    """Handle API errors with retry logic."""
     global _request_start_time
     metrics["failed_requests"] += 1
     metrics["retry_attempts"] += 1
 
-    # Reset start time on error
     if _request_start_time:
         _request_start_time = None
 
     logger.error(f"🔥 API error: {type(error).__name__}: {error}")
     console.print(f"[bold red]🔥 API Error:[/bold red] {error}")
 
-    # In a production system, you might implement:
-    # - Exponential backoff retry logic
-    # - Fallback to different models
-    # - Circuit breaker patterns
-    # - Dead letter queues for failed requests
-
 
 def create_agent_with_hooks(schema_type: type, system_prompt: str = None) -> AtomicAgent:
-    """Create an AtomicAgent with comprehensive hook setup."""
     api_key = setup_api_key()
     client = instructor.from_openai(openai.OpenAI(api_key=api_key))
 
-    # Create agent with configuration
     config = AgentConfig(
         client=client,
-        model="gpt-4o-mini",  # Using a reliable model for demonstrations
+        model="gpt-5-mini",
+        model_api_parameters={"reasoning_effort": "low"},
         history=ChatHistory(),
         system_prompt=system_prompt,
     )
 
     agent = AtomicAgent[UserQuery, schema_type](config)
 
-    # Register comprehensive hook suite
     agent.register_hook("parse:error", on_parse_error)
     agent.register_hook("completion:kwargs", on_completion_kwargs)
     agent.register_hook("completion:response", on_completion_response)
@@ -214,10 +163,8 @@ def create_agent_with_hooks(schema_type: type, system_prompt: str = None) -> Ato
 
 
 def demonstrate_basic_hooks():
-    """Demonstrate basic hook functionality with simple responses."""
     console.print(Panel("🔧 Basic Hook System Demonstration", style="bold blue"))
 
-    # Create agent with basic schema
     agent = create_agent_with_hooks(
         AgentResponse, "You are a helpful assistant. Always provide confident, well-reasoned responses."
     )
@@ -246,10 +193,8 @@ def demonstrate_basic_hooks():
 
 
 def demonstrate_validation_errors():
-    """Demonstrate hook system handling validation errors."""
     console.print(Panel("🚨 Validation Error Handling Demonstration", style="bold red"))
 
-    # Create agent with strict validation schema
     agent = create_agent_with_hooks(
         DetailedResponse,
         """You are a helpful assistant. You must respond with:
@@ -261,7 +206,6 @@ def demonstrate_validation_errors():
         Be very strict about the confidence_level field - it must be exactly one of the three allowed values.""",
     )
 
-    # Queries designed to potentially trigger validation errors
     validation_test_queries = [
         "Give me a simple yes or no answer about whether the sky is blue.",
         "Provide a complex analysis of climate change with multiple perspectives.",
@@ -286,7 +230,6 @@ def demonstrate_validation_errors():
 
 
 def demonstrate_interactive_mode():
-    """Interactive demonstration where users can test the hook system."""
     console.print(Panel("🎮 Interactive Hook System Testing", style="bold magenta"))
 
     agent = create_agent_with_hooks(
@@ -329,7 +272,6 @@ def demonstrate_interactive_mode():
 
 
 def main():
-    """Main demonstration function."""
     console.print(Panel.fit("🎯 AtomicAgent Hook System Comprehensive Demo", style="bold green"))
 
     console.print(
@@ -346,17 +288,10 @@ and powerful insights when they are enabled.[/bold yellow]
     )
 
     try:
-        # Run basic demonstration
         demonstrate_basic_hooks()
-
         console.print("\n" + "=" * 50)
-
-        # Run validation error demonstration
         demonstrate_validation_errors()
-
         console.print("\n" + "=" * 50)
-
-        # Interactive mode
         demonstrate_interactive_mode()
 
     except KeyboardInterrupt:
@@ -365,7 +300,6 @@ and powerful insights when they are enabled.[/bold yellow]
         console.print(f"\n[bold red]Demo error:[/bold red] {e}")
         logger.error(f"Demo error: {e}", exc_info=True)
     finally:
-        # Final metrics display
         console.print("\n" + "=" * 50)
         console.print(Panel("📊 Final Performance Summary", style="bold green"))
         display_metrics()

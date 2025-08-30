@@ -631,12 +631,12 @@ def test_backward_compatibility_no_breaking_changes(mock_instructor, mock_histor
     """Test that hook system addition doesn't break existing functionality."""
     # Ensure mock_history.get_history() returns an empty list
     mock_history.get_history.return_value = []
-    
+
     # Ensure the copy method returns a properly configured mock
     copied_mock = Mock(spec=ChatHistory)
     copied_mock.get_history.return_value = []
     mock_history.copy.return_value = copied_mock
-    
+
     config = AgentConfig(
         client=mock_instructor,
         model="gpt-4o-mini",
