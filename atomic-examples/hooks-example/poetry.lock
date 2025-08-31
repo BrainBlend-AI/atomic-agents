@@ -180,7 +180,7 @@ develop = true
 
 [package.dependencies]
 gitpython = ">=3.1.43,<4.0.0"
-instructor = ">=1.9.0,<2.0.0"
+instructor = "==1.9.2"
 mcp = {version = "^1.6.0", extras = ["cli"]}
 pydantic = ">=2.11.0,<3.0.0"
 pyfiglet = ">=1.0.2,<2.0.0"
@@ -2558,4 +2558,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "d76c02f15f125b64a6ba28a66ae51dbb8d0573df8087c86c0139915090702774"
+content-hash = "a413547e9b27dd8b4cf0ae39e9c25abe8874adfb232169e2fcab0a21e835829e"
