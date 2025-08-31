@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
 atomic-agents = {path = "../..", develop = true}
-instructor = ">=1.9.2,<2.0.0"
+instructor = "==1.9.2"
 openai = ">=1.35.12,<2.0.0"
 python-dotenv = ">=1.0.1,<2.0.0"
 
