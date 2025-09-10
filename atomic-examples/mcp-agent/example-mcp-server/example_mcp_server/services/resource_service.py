@@ -2,6 +2,7 @@
 
 from typing import Dict, List
 import re
+import inspect
 from mcp.server.fastmcp import FastMCP
 from example_mcp_server.interfaces.resource import Resource, ResourceResponse
 
@@ -76,7 +77,9 @@ class ResourceService:
             # For static resources with no parameters
             async def static_handler() -> ResourceResponse:
                 """Handle static resource request."""
-                return await resource.read()
+                # Create empty input for resources without parameters
+                input_data = resource.input_model()
+                return await resource.read(input_data)
 
             # Set metadata for the handler
             static_handler.__name__ = resource.name
@@ -84,20 +87,36 @@ class ResourceService:
             return static_handler
         else:
             # For resources with parameters
-            # Define a dynamic function with named parameters matching URI placeholders
-            params_str = ", ".join(uri_params)
-            func_def = f"async def param_handler({params_str}) -> ResourceResponse:\n"
-            func_def += f'    """{resource.description}"""\n'
-            func_def += f"    return await resource.read({params_str})"
+            # Create parameters for the signature
+            uri_params_list = list(uri_params)
+            sig = inspect.Signature(
+                [
+                    inspect.Parameter(param, inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=str)
+                    for param in uri_params_list
+                ]
+            )
 
-            # Create namespace for execution
-            namespace = {"resource": resource, "ResourceResponse": ResourceResponse}
-            exec(func_def, namespace)
+            # Create the handler function
+            async def param_handler(*args, **kwargs):
+                """Handle parameterized resource request."""
+                # Bind the arguments to the signature
+                bound_args = sig.bind(*args, **kwargs)
+                bound_args.apply_defaults()
 
-            # Get the handler and set its name
-            handler = namespace["param_handler"]
-            handler.__name__ = resource.name
-            return handler
+                # Create input data from bound arguments
+                input_data = resource.input_model(**bound_args.arguments)
+                return await resource.read(input_data)
+
+            # Set the signature and metadata on the handler
+            param_handler.__signature__ = sig
+            param_handler.__name__ = resource.name
+            param_handler.__doc__ = resource.description
+
+            # Set annotations
+            param_handler.__annotations__ = {param: str for param in uri_params_list}
+            param_handler.__annotations__["return"] = ResourceResponse
+
+            return param_handler
 
     def register_mcp_handlers(self, mcp: FastMCP) -> None:
         """Register all resources as MCP handlers."""
