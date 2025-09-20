@@ -1,4 +1,4 @@
-"""Interfaces for resource abstractions."""
+"""Interfaces for prompt abstractions."""
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, ClassVar, Type, TypeVar
@@ -8,14 +8,14 @@ from pydantic import BaseModel, Field
 T = TypeVar("T", bound=BaseModel)
 
 
-class BaseResourceInput(BaseModel):
-    """Base class for resource input models."""
+class BasePromptInput(BaseModel):
+    """Base class for prompt input models."""
 
     model_config = {"extra": "forbid"}  # Equivalent to additionalProperties: false
 
 
-class ResourceContent(BaseModel):
-    """Model for content in resource responses."""
+class PromptContent(BaseModel):
+    """Model for content in prompt responses."""
 
     type: str = Field(default="text", description="Content type identifier")
 
@@ -32,12 +32,6 @@ class ResourceContent(BaseModel):
     # Model content (will be converted to json_data during serialization)
     model: Optional[Any] = Field(None, exclude=True, description="Pydantic model instance")
 
-    # Resource-specific fields
-    uri: Optional[str] = Field(None, description="URI of the resource")
-    mime_type: Optional[str] = Field(None, description="MIME type of the resource")
-
-    # Add more content types as needed (e.g., binary, image, etc.)
-
     def model_post_init(self, __context: Any) -> None:
         """Post-initialization hook to handle model conversion."""
         if self.model and not self.json_data:
@@ -48,14 +42,14 @@ class ResourceContent(BaseModel):
                     self.type = "json"
 
 
-class ResourceResponse(BaseModel):
-    """Model for resource responses."""
+class PromptResponse(BaseModel):
+    """Model for prompt responses."""
 
-    content: List[ResourceContent]
+    content: List[PromptContent]
 
     @classmethod
-    def from_model(cls, model: BaseModel) -> "ResourceResponse":
-        """Create a ResourceResponse from a Pydantic model.
+    def from_model(cls, model: BaseModel) -> "PromptResponse":
+        """Create a PromptResponse from a Pydantic model.
 
         This makes it easier to return structured data directly.
 
@@ -63,53 +57,43 @@ class ResourceResponse(BaseModel):
             model: A Pydantic model instance to convert
 
         Returns:
-            A ResourceResponse with the model data in JSON format
+            A PromptResponse with the model data in JSON format
         """
-        return cls(content=[ResourceContent(type="json", json_data=model.model_dump(), model=model)])
+        return cls(content=[PromptContent(type="json", json_data=model.model_dump(), model=model)])
 
     @classmethod
-    def from_text(cls, text: str, uri: Optional[str] = None, mime_type: Optional[str] = None) -> "ResourceResponse":
-        """Create a ResourceResponse from plain text.
+    def from_text(cls, text: str) -> "PromptResponse":
+        """Create a PromptResponse from plain text.
 
         Args:
             text: The text content
-            uri: Optional URI of the resource
-            mime_type: Optional MIME type
 
         Returns:
-            A ResourceResponse with text content
+            A PromptResponse with text content
         """
-        return cls(content=[ResourceContent(type="text", text=text, uri=uri, mime_type=mime_type)])
+        return cls(content=[PromptContent(type="text", text=text)])
 
 
-class Resource(ABC):
-    """Abstract base class for all resources."""
+class Prompt(ABC):
+    """Abstract base class for all prompts."""
 
     name: ClassVar[str]
     description: ClassVar[str]
-    uri: ClassVar[str]
-    mime_type: ClassVar[Optional[str]] = None
-    input_model: ClassVar[Optional[Type[BaseResourceInput]]] = None
+    input_model: ClassVar[Type[BasePromptInput]]
     output_model: ClassVar[Optional[Type[BaseModel]]] = None
 
     @abstractmethod
-    async def read(self, input_data: BaseResourceInput) -> ResourceResponse:
-        """Execute the resource with given arguments."""
+    async def generate(self, input_data: BasePromptInput) -> PromptResponse:
+        """Generate the prompt with given arguments."""
         pass
 
     def get_schema(self) -> Dict[str, Any]:
-        """Get JSON schema for the resource."""
+        """Get JSON schema for the prompt."""
         schema = {
             "name": self.name,
             "description": self.description,
-            "uri": self.uri,
+            "input": self.input_model.model_json_schema(),
         }
-
-        if self.mime_type:
-            schema["mime_type"] = self.mime_type
-
-        if self.input_model:
-            schema["input"] = self.input_model.model_json_schema()
 
         if self.output_model:
             schema["output"] = self.output_model.model_json_schema()

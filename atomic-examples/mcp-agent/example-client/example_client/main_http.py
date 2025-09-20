@@ -3,7 +3,12 @@ HTTP Stream transport client for MCP Agent example.
 Communicates with the server_http.py `/mcp` endpoint using HTTP GET/POST/DELETE for JSON-RPC streams.
 """
 
-from atomic_agents.connectors.mcp import fetch_mcp_tools, MCPTransportType
+from atomic_agents.connectors.mcp import (
+    fetch_mcp_tools,
+    fetch_mcp_resources,
+    fetch_mcp_prompts,
+    MCPTransportType,
+)
 from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 import sys
@@ -40,8 +45,10 @@ def main():
 
     console.print("[bold green]Initializing MCP Agent System (HTTP Stream mode)...[/bold green]")
     tools = fetch_mcp_tools(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.HTTP_STREAM)
-    if not tools:
-        console.print(f"[bold red]No MCP tools found at {config.mcp_server_url}[/bold red]")
+    resources = fetch_mcp_resources(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.HTTP_STREAM)
+    prompts = fetch_mcp_prompts(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.HTTP_STREAM)
+    if not tools and not resources and not prompts:
+        console.print(f"[bold red]No MCP tools or resources or prompts found at {config.mcp_server_url}[/bold red]")
         sys.exit(1)
 
     # Display available tools
@@ -53,6 +60,26 @@ def main():
         schema_name = getattr(ToolClass.input_schema, "__name__", "N/A")
         table.add_row(ToolClass.mcp_tool_name, schema_name, ToolClass.__doc__ or "")
     console.print(table)
+
+    # Display resources and prompts if available
+    if resources:
+        rtable = Table(title="Available MCP Resources", box=None)
+        rtable.add_column("Name", style="cyan")
+        rtable.add_column("Description", style="magenta")
+        rtable.add_column("Input Schema", style="yellow")
+        for ResourceClass in resources:
+            schema_name = getattr(ResourceClass.input_schema, "__name__", "N/A")
+            rtable.add_row(ResourceClass.mcp_resource_name, schema_name, ResourceClass.__doc__ or "")
+        console.print(rtable)
+    if prompts:
+        ptable = Table(title="Available MCP Prompts", box=None)
+        ptable.add_column("Name", style="cyan")
+        ptable.add_column("Description", style="magenta")
+        ptable.add_column("Input Schema", style="yellow")
+        for PromptClass in prompts:
+            schema_name = getattr(PromptClass.input_schema, "__name__", "N/A")
+            ptable.add_row(PromptClass.mcp_prompt_name, schema_name, PromptClass.__doc__ or "")
+        console.print(ptable)
 
     # Build orchestrator
     class MCPOrchestratorInputSchema(BaseIOSchema):
@@ -69,14 +96,28 @@ def main():
     tool_schema_map: Dict[Type[BaseIOSchema], Type] = {
         ToolClass.input_schema: ToolClass for ToolClass in tools if hasattr(ToolClass, "input_schema")
     }
-    available_schemas = tuple(tool_schema_map.keys()) + (FinalResponseSchema,)
+    resource_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
+        ResourceClass.input_schema: ResourceClass for ResourceClass in resources if hasattr(ResourceClass, "input_schema")
+    }  # type: ignore
+    prompt_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
+        PromptClass.input_schema: PromptClass for PromptClass in prompts if hasattr(PromptClass, "input_schema")
+    }  # type: ignore
+    available_schemas = (
+        tuple(tool_schema_map.keys())
+        + tuple(resource_schema_to_class_map.keys())
+        + tuple(prompt_schema_to_class_map.keys())
+        + (FinalResponseSchema,)
+    )
     ActionUnion = Union[available_schemas]
 
     class OrchestratorOutputSchema(BaseIOSchema):
         """Output schema for the MCP orchestrator containing reasoning and selected action."""
 
         reasoning: str
-        action: ActionUnion
+        action: ActionUnion = Field(  # type: ignore[reportInvalidTypeForm]
+            ...,
+            description="The chosen action: either a tool/resource/prompt's input schema instance or a final response schema instance.",
+        )
 
     history = ChatHistory()
     orchestrator_agent = AtomicAgent[MCPOrchestratorInputSchema, OrchestratorOutputSchema](
@@ -88,22 +129,27 @@ def main():
             system_prompt_generator=SystemPromptGenerator(
                 background=[
                     "You are an MCP Orchestrator Agent, designed to chat with users and",
-                    "determine the best way to handle their queries using the available tools.",
+                    "determine the best way to handle their queries using the available tools, resources, and prompts.",
                 ],
                 steps=[
-                    "1. Use the reasoning field to determine if one or more successive tool calls could be used to handle the user's query.",
-                    "2. If so, choose the appropriate tool(s) one at a time and extract all necessary parameters from the query.",
-                    "3. If a single tool can not be used to handle the user's query, think about how to break down the query into "
-                    "smaller tasks and route them to the appropriate tool(s).",
-                    "4. If no sequence of tools could be used, or if you are finished processing the user's query, provide a final "
-                    "response to the user.",
+                    "1. Use the reasoning field to determine if one or more successive "
+                    "tool/resource/prompt calls could be used to handle the user's query.",
+                    "2. If so, choose the appropriate tool(s), resource(s), or prompt(s) one "
+                    "at a time and extract all necessary parameters from the query.",
+                    "3. If a single tool/resource/prompt can not be used to handle the user's query, "
+                    "think about how to break down the query into "
+                    "smaller tasks and route them to the appropriate tool(s)/resource(s)/prompt(s).",
+                    "4. If no sequence of tools/resources/prompts could be used, or if you are "
+                    "finished processing the user's query, provide a final response to the user.",
+                    "5. If the context is sufficient and no more tools/resources/prompts are needed, provide a final response to the user.",
                 ],
                 output_instructions=[
                     "1. Always provide a detailed explanation of your decision-making process in the 'reasoning' field.",
-                    "2. Choose exactly one action schema (either a tool input or FinalResponseSchema).",
-                    "3. Ensure all required parameters for the chosen tool are properly extracted and validated.",
+                    "2. Choose exactly one action schema (either a tool/resource/prompt input or FinalResponseSchema).",
+                    "3. Ensure all required parameters for the chosen tool/resource/prompt are properly extracted and validated.",
                     "4. Maintain a professional and helpful tone in all responses.",
-                    "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
+                    "5. Break down complex queries into sequential tool/resource/prompt calls "
+                    "before giving the final answer via `FinalResponseSchema`.",
                 ],
             ),
         )
@@ -144,32 +190,70 @@ def main():
 
             # Keep executing until we get a final response
             while not isinstance(action_instance, FinalResponseSchema):
-                # Find the matching tool class
-                tool_class = tool_schema_map.get(type(action_instance))
-                if not tool_class:
-                    console.print(f"[red]Error: No tool found for schema {type(action_instance)}[/red]")
-                    action_instance = FinalResponseSchema(
-                        response_text="I encountered an internal error. Could not find the appropriate tool."
-                    )
-                    break
+                schema_type = type(action_instance)
+                schema_type_valid = False
 
-                # Execute the tool
-                console.print(f"[blue]Executing {tool_class.mcp_tool_name}...[/blue]")
-                console.print(f"[dim]Parameters: {action_instance.model_dump()}")
-                tool_instance = tool_class()
                 try:
-                    result = tool_instance.run(action_instance)
-                    console.print(f"[bold green]Result:[/bold green] {result.result}")
+                    ToolClass = tool_schema_map.get(schema_type)
+                    if ToolClass:
+                        schema_type_valid = True
+                        tool_name = ToolClass.mcp_tool_name
+                        console.print(f"[blue]Executing tool:[/blue] {tool_name}")
+                        console.print(f"[dim]Parameters:[/dim] " f"{action_instance.model_dump()}")
 
-                    # Ask orchestrator what to do next with the result
-                    next_query = f"Based on the tool result: {result.result}, please provide the final response to the user's original query: {query}"
-                    next_output = orchestrator_agent.run(MCPOrchestratorInputSchema(query=next_query))
+                        tool_instance = ToolClass()
+                        # The persistent session/loop are already part of the ToolClass definition
+                        tool_output = tool_instance.run(action_instance)
+                        console.print(f"[bold green]Result:[/bold green] {tool_output.result}")
 
-                    # Debug output for subsequent responses
-                    console.print(
-                        f"[dim]Debug - subsequent orchestrator_output type: {type(next_output)}, fields: {next_output.model_dump()}"
-                    )
+                        # Add tool result to agent history
+                        result_message = MCPOrchestratorInputSchema(
+                            query=(f"Tool {tool_name} executed with result: " f"{tool_output.result}")
+                        )
+                        orchestrator_agent.history.add_message("system", result_message)
 
+                    ResourceClass = resource_schema_to_class_map.get(schema_type)
+                    if ResourceClass:
+                        schema_type_valid = True
+                        resource_name = ResourceClass.mcp_resource_name
+                        console.print(f"[blue]Reading resource:[/blue] {resource_name}")
+                        console.print(f"[dim]Parameters: {action_instance.model_dump()}")
+
+                        resource_instance = ResourceClass()
+                        resource_output = resource_instance.read(action_instance)
+                        console.print(f"[bold green]Resource content:[/bold green] {resource_output.content}")
+
+                        # Add resource result to agent history
+                        result_message = MCPOrchestratorInputSchema(
+                            query=(f"Resource {resource_name} read with content: {resource_output.content}")
+                        )
+                        orchestrator_agent.history.add_message("system", result_message)
+
+                    PromptClass = prompt_schema_to_class_map.get(schema_type)
+                    if PromptClass:
+                        schema_type_valid = True
+                        prompt_name = PromptClass.mcp_prompt_name
+                        console.print(f"[blue]Fetching prompt:[/blue] {prompt_name}")
+                        console.print(f"[dim]Parameters:[/dim] " f"{action_instance.model_dump()}")
+
+                        prompt_instance = PromptClass()
+                        prompt_output = prompt_instance.generate(action_instance)
+                        console.print(f"[bold green]Prompt content:[/bold green] {prompt_output.content}")
+
+                        # Add prompt result to agent history
+                        result_message = MCPOrchestratorInputSchema(
+                            query=(f"Prompt {prompt_name} generated content: {prompt_output.content}")
+                        )
+                        orchestrator_agent.history.add_message("system", result_message)
+
+                    if not schema_type_valid:
+                        console.print(f"[red]Error: Unknown schema type {schema_type.__name__}[/red]")
+                        action_instance = FinalResponseSchema(
+                            response_text="I encountered an internal error. Could not find the appropriate tool/resource/prompt."
+                        )
+                        break
+
+                    next_output = orchestrator_agent.run()
                     if hasattr(next_output, "action"):
                         action_instance = next_output.action
                         if hasattr(next_output, "reasoning"):

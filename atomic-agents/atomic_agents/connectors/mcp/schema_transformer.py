@@ -3,6 +3,7 @@
 import logging
 from typing import Any, Dict, List, Optional, Type, Tuple, Literal, Union, cast
 
+from atomic_agents.connectors.mcp.mcp_definition_service import MCPAttributeType
 from pydantic import Field, create_model
 
 from atomic_agents.base.base_io_schema import BaseIOSchema
@@ -149,6 +150,7 @@ class SchemaTransformer:
         model_name: str,
         tool_name_literal: str,
         docstring: Optional[str] = None,
+        attribute_type: str = MCPAttributeType.TOOL,
     ) -> Type[BaseIOSchema]:
         """
         Dynamically create a Pydantic model from a JSON schema.
@@ -178,11 +180,11 @@ class SchemaTransformer:
                 f"Schema for {model_name} is not a typical object with properties. Fields might be empty beyond tool_name."
             )
 
-        # Create a proper Literal type for tool_name
-        tool_name_type = cast(Type[str], Literal[tool_name_literal])  # type: ignore
-        fields["tool_name"] = (
+        # Create a proper Literal type for the attribute identifier field.
+        tool_name_type = cast(Type[str], Literal[tool_name_literal])
+        fields[f"{attribute_type}_name"] = (
             tool_name_type,
-            Field(..., description=f"Required identifier for the {tool_name_literal} tool."),
+            Field(..., description=f"Required identifier for the {tool_name_literal} {attribute_type}."),
         )
 
         # Create the model

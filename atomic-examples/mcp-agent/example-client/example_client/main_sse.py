@@ -1,5 +1,10 @@
 # pyright: reportInvalidTypeForm=false
-from atomic_agents.connectors.mcp import fetch_mcp_tools, MCPTransportType
+from atomic_agents.connectors.mcp import (
+    fetch_mcp_tools,
+    fetch_mcp_resources,
+    fetch_mcp_prompts,
+    MCPTransportType,
+)
 from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
 from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from rich.console import Console
@@ -50,8 +55,10 @@ tools = fetch_mcp_tools(
     mcp_endpoint=config.mcp_server_url,
     transport_type=MCPTransportType.SSE,
 )
-if not tools:
-    raise RuntimeError("No MCP tools found. Please ensure the MCP server is running and accessible.")
+resources = fetch_mcp_resources(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.SSE)
+prompts = fetch_mcp_prompts(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.SSE)
+if not tools and not resources and not prompts:
+    raise RuntimeError("No MCP tools/resources/prompts found. Please ensure the MCP server is running and accessible.")
 
 # Build mapping from input_schema to ToolClass
 tool_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
@@ -60,8 +67,18 @@ tool_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
 # Collect all tool input schemas
 tool_input_schemas = tuple(tool_schema_to_class_map.keys())
 
-# Available schemas include all tool input schemas and the final response schema
-available_schemas = tool_input_schemas + (FinalResponseSchema,)
+resource_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
+    ResourceClass.input_schema: ResourceClass for ResourceClass in resources if hasattr(ResourceClass, "input_schema")
+}  # type: ignore
+prompt_schema_to_class_map: Dict[Type[BaseIOSchema], Type[AtomicAgent]] = {
+    PromptClass.input_schema: PromptClass for PromptClass in prompts if hasattr(PromptClass, "input_schema")
+}  # type: ignore
+available_schemas = (
+    tuple(tool_schema_to_class_map.keys())
+    + tuple(resource_schema_to_class_map.keys())
+    + tuple(prompt_schema_to_class_map.keys())
+    + (FinalResponseSchema,)
+)
 
 # Define the Union of all action schemas
 ActionUnion = Union[available_schemas]
@@ -117,6 +134,8 @@ def format_math_expressions(text):
 def main():
     try:
         console.print("[bold green]Initializing MCP Agent System (SSE mode)...[/bold green]")
+        resources = fetch_mcp_resources(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.SSE)
+        prompts = fetch_mcp_prompts(mcp_endpoint=config.mcp_server_url, transport_type=MCPTransportType.SSE)
         # Display available tools
         table = Table(title="Available MCP Tools", box=None)
         table.add_column("Tool Name", style="cyan")
@@ -138,6 +157,27 @@ def main():
                 schema_name = "N/A"
             table.add_row(ToolClass.mcp_tool_name, schema_name, ToolClass.__doc__ or "")
         console.print(table)
+
+        # Display resources and prompts if available
+        if resources:
+            rtable = Table(title="Available MCP Resources", box=None)
+            rtable.add_column("Name", style="cyan")
+            rtable.add_column("Description", style="magenta")
+            rtable.add_column("Input Schema", style="yellow")
+            for ResourceClass in resources:
+                schema_name = ResourceClass.input_schema.__name__
+                rtable.add_row(ResourceClass.mcp_resource_name, ResourceClass.__doc__ or "", schema_name)
+            console.print(rtable)
+        if prompts:
+            ptable = Table(title="Available MCP Prompts", box=None)
+            ptable.add_column("Name", style="cyan")
+            ptable.add_column("Description", style="magenta")
+            ptable.add_column("Input Schema", style="yellow")
+            for PromptClass in prompts:
+                schema_name = PromptClass.input_schema.__name__
+                ptable.add_row(PromptClass.mcp_prompt_name, PromptClass.__doc__ or "", schema_name)
+            console.print(ptable)
+
         # Create and initialize orchestrator agent
         console.print("[dim]• Creating orchestrator agent...[/dim]")
         history = ChatHistory()
@@ -150,22 +190,27 @@ def main():
                 system_prompt_generator=SystemPromptGenerator(
                     background=[
                         "You are an MCP Orchestrator Agent, designed to chat with users and",
-                        "determine the best way to handle their queries using the available tools.",
+                        "determine the best way to handle their queries using the available tools, resources, and prompts.",
                     ],
                     steps=[
-                        "1. Use the reasoning field to determine if one or more successive tool calls could be used to handle the user's query.",
-                        "2. If so, choose the appropriate tool(s) one at a time and extract all necessary parameters from the query.",
-                        "3. If a single tool can not be used to handle the user's query, think about how to break down the query into "
-                        "smaller tasks and route them to the appropriate tool(s).",
-                        "4. If no sequence of tools could be used, or if you are finished processing the user's query, provide a final "
-                        "response to the user.",
+                        "1. Use the reasoning field to determine if one or more successive "
+                        "tool/resource/prompt calls could be used to handle the user's query.",
+                        "2. If so, choose the appropriate tool(s), resource(s), or prompt(s) one "
+                        "at a time and extract all necessary parameters from the query.",
+                        "3. If a single tool/resource/prompt can not be used to handle the user's query, "
+                        "think about how to break down the query into "
+                        "smaller tasks and route them to the appropriate tool(s)/resource(s)/prompt(s).",
+                        "4. If no sequence of tools/resources/prompts could be used, or if you are "
+                        "finished processing the user's query, provide a final response to the user.",
+                        "5. If the context is sufficient and no more tools/resources/prompts are needed, provide a final response to the user.",
                     ],
                     output_instructions=[
                         "1. Always provide a detailed explanation of your decision-making process in the 'reasoning' field.",
-                        "2. Choose exactly one action schema (either a tool input or FinalResponseSchema).",
-                        "3. Ensure all required parameters for the chosen tool are properly extracted and validated.",
+                        "2. Choose exactly one action schema (either a tool/resource/prompt input or FinalResponseSchema).",
+                        "3. Ensure all required parameters for the chosen tool/resource/prompt are properly extracted and validated.",
                         "4. Maintain a professional and helpful tone in all responses.",
-                        "5. Break down complex queries into sequential tool calls before giving the final answer via `FinalResponseSchema`.",
+                        "5. Break down complex queries into sequential tool/resource/prompt calls "
+                        "before giving the final answer via `FinalResponseSchema`.",
                     ],
                 ),
             )
@@ -362,28 +407,66 @@ def main():
                             break
 
                     schema_type = type(action_instance)
+                    schema_type_valid = False
+
                     ToolClass = tool_schema_to_class_map.get(schema_type)
-                    if not ToolClass:
+                    if ToolClass:
+                        schema_type_valid = True
+                        tool_name = ToolClass.mcp_tool_name
+                        console.print(f"[blue]Executing tool:[/blue] {tool_name}")
+                        console.print(f"[dim]Parameters: {action_instance.model_dump()}")
+
+                        tool_instance = ToolClass()
+                        tool_output = tool_instance.run(action_instance)
+                        console.print(f"[bold green]Result:[/bold green] {tool_output.result}")
+
+                        # Add tool result to agent history
+                        result_message = MCPOrchestratorInputSchema(
+                            query=f"Tool {tool_name} executed with result: {tool_output.result}"
+                        )
+                        orchestrator_agent.history.add_message("system", result_message)
+
+                    ResourceClass = resource_schema_to_class_map.get(schema_type)
+                    if ResourceClass:
+                        schema_type_valid = True
+                        resource_name = ResourceClass.mcp_resource_name  # type: ignore
+                        console.print(f"[blue]Fetching resource:[/blue] {resource_name}")
+                        console.print(f"[dim]Parameters: {action_instance.model_dump()}")
+
+                        resource_instance = ResourceClass()  # type: ignore
+                        resource_output = resource_instance.read(action_instance)  # type: ignore
+                        console.print(f"[bold green]Result:[/bold green] {resource_output.content}")
+
+                        # Add resource result to agent history
+                        result_message = MCPOrchestratorInputSchema(
+                            query=f"Resource {resource_name} used to fetch content: {resource_output.content}"
+                        )
+                        orchestrator_agent.history.add_message("system", result_message)
+
+                    PromptClass = prompt_schema_to_class_map.get(schema_type)
+                    if PromptClass:
+                        schema_type_valid = True
+                        prompt_name = PromptClass.mcp_prompt_name  # type: ignore
+                        console.print(f"[blue]Using prompt:[/blue] {prompt_name}")
+                        console.print(f"[dim]Parameters: {action_instance.model_dump()}")
+
+                        prompt_instance = PromptClass()  # type: ignore
+                        prompt_output = prompt_instance.generate(action_instance)  # type: ignore
+                        console.print(f"[bold green]Result:[/bold green] {prompt_output.content}")
+
+                        # Add prompt result to agent history
+                        result_message = MCPOrchestratorInputSchema(
+                            query=f"Prompt {prompt_name} created: {prompt_output.content}"
+                        )
+                        orchestrator_agent.history.add_message("system", result_message)
+
+                    if not schema_type_valid:
                         console.print(f"[red]Unknown schema type '{schema_type.__name__}' returned by orchestrator[/red]")
                         # Create a final response with an error message
                         action_instance = FinalResponseSchema(
-                            response_text="I encountered an internal error. The tool type could not be recognized."
+                            response_text="I encountered an internal error. The tool/resource/prompt type could not be recognized."
                         )
                         break
-
-                    tool_name = ToolClass.mcp_tool_name
-                    console.print(f"[blue]Executing tool:[/blue] {tool_name}")
-                    console.print(f"[dim]Parameters: {action_instance.model_dump()}")
-
-                    tool_instance = ToolClass()
-                    tool_output = tool_instance.run(action_instance)
-                    console.print(f"[bold green]Result:[/bold green] {tool_output.result}")
-
-                    # Add tool result to agent history
-                    result_message = MCPOrchestratorInputSchema(
-                        query=f"Tool {tool_name} executed with result: {tool_output.result}"
-                    )
-                    orchestrator_agent.history.add_message("system", result_message)
 
                     # Run the agent again without parameters to continue the flow
                     orchestrator_output = orchestrator_agent.run()

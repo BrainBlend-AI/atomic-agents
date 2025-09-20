@@ -10,8 +10,10 @@ from mcp.server.fastmcp import FastMCP
 
 from example_mcp_server.services.tool_service import ToolService
 from example_mcp_server.services.resource_service import ResourceService
+from example_mcp_server.services.prompt_service import PromptService
 from example_mcp_server.interfaces.tool import Tool
 from example_mcp_server.interfaces.resource import Resource
+from example_mcp_server.interfaces.prompt import Prompt
 from example_mcp_server.tools import (
     AddNumbersTool,
     SubtractNumbersTool,
@@ -19,6 +21,8 @@ from example_mcp_server.tools import (
     DivideNumbersTool,
     BatchCalculatorTool,
 )
+from example_mcp_server.resources.sample_resources import TestWeatherResource
+from example_mcp_server.prompts.sample_prompts import GreetingPrompt
 
 
 def get_available_tools() -> List[Tool]:
@@ -34,7 +38,18 @@ def get_available_tools() -> List[Tool]:
 
 def get_available_resources() -> List[Resource]:
     """Get list of all available resources."""
-    return []
+    return [
+        TestWeatherResource(),
+        # Add more resources here as you create them
+    ]
+
+
+def get_available_prompts() -> List[Prompt]:
+    """Get list of all available prompts."""
+    return [
+        GreetingPrompt(),
+        # Add more prompts here as you create them
+    ]
 
 
 def create_mcp_server() -> FastMCP:
@@ -42,6 +57,7 @@ def create_mcp_server() -> FastMCP:
     mcp = FastMCP("example-mcp-server")
     tool_service = ToolService()
     resource_service = ResourceService()
+    prompt_service = PromptService()
 
     # Register all tools and their MCP handlers
     tool_service.register_tools(get_available_tools())
@@ -50,6 +66,10 @@ def create_mcp_server() -> FastMCP:
     # Register all resources and their MCP handlers
     resource_service.register_resources(get_available_resources())
     resource_service.register_mcp_handlers(mcp)
+
+    # Register all prompts and their MCP handlers
+    prompt_service.register_prompts(get_available_prompts())
+    prompt_service.register_mcp_handlers(mcp)
 
     return mcp
 

@@ -41,6 +41,7 @@ The framework supports various implementation patterns and use cases:
 - Recipe generation from various sources
 - Multimodal interactions (text, images, etc.)
 - Custom tool integration
+- Custom MCP integration to support tools, resources, and prompts
 - Task orchestration
 
 ## Provider Integration Guide

@@ -135,7 +135,7 @@ async def setup_tools():
 The example implements three distinct transport methods via the `MCPTransportType` enum, each with its own advantages:
 
 ```python
-from atomic_agents.connectors.mcp.tool_definition_service import MCPTransportType
+from atomic_agents.connectors.mcp.mcp_definition_service import MCPTransportType
 
 # Available transport types
 MCPTransportType.STDIO       # Standard input/output transport  
@@ -226,7 +226,9 @@ tools = fetch_mcp_tools(
 - Microservice architectures
 - API gateway integration
 
-## Tool Interface
+## Interfaces
+
+### Tool Interface
 
 The MCP server defines a standardized tool interface that all tools must implement:
 
@@ -274,6 +276,110 @@ The tool interface consists of:
    - Provides JSON Schema for tool discovery
    - Enables automatic documentation generation
    - Facilitates client-side validation
+
+### Resource Interface
+
+The MCP server defines a standardized resource interface that all resources must implement:
+
+```python
+class Resource(ABC):
+    """Abstract base class for all resources."""
+    name: ClassVar[str]
+    description: ClassVar[str]
+    uri: ClassVar[str]
+    mime_type: ClassVar[str]
+    input_model: ClassVar[Type[BaseResourceInput]]
+    output_model: ClassVar[Optional[Type[BaseModel]]] = None
+
+    @abstractmethod
+    async def read(self, input_data: BaseResourceInput) -> ResourceResponse:
+        """Read data from the resource."""
+        pass
+
+    def get_schema(self) -> Dict[str, Any]:
+        """Get JSON schema for the resource."""
+        schema = {
+            "name": self.name,
+            "description": self.description,
+            "uri": self.uri,
+            "mime_type": self.mime_type,
+            "input": self.input_model.model_json_schema(),
+        }
+
+        if self.output_model:
+            schema["output"] = self.output_model.model_json_schema()
+
+        return schema
+```
+
+The resource interface consists of:
+
+1. **Class Variables**:
+   - `name`: Resource identifier used in MCP communications
+   - `description`: Human-readable resource description
+   - `uri`: URI pattern for accessing the resource
+   - `mime_type`: MIME type of the resource content
+   - `input_model`: Pydantic model defining input parameters
+   - `output_model`: Pydantic model defining output structure (optional)
+
+2. **Read Method**:
+   - Asynchronous method that retrieves data from the resource
+   - Takes strongly-typed input data
+   - Returns a structured ResourceResponse
+
+3. **Schema Method**:
+   - Provides URI Template for resource discovery
+   - Enables automatic documentation generation
+
+
+### Prompt Interface
+
+The MCP client uses a standardized prompt interface for managing prompts:
+
+```python
+class Prompt(ABC):
+    """Abstract base class for all prompts."""
+    name: ClassVar[str]
+    description: ClassVar[str]
+    input_model: ClassVar[Type[BasePromptInput]]
+    output_model: ClassVar[Optional[Type[BaseModel]]] = None
+
+    @abstractmethod
+    async def generate(self, input_data: BasePromptInput) -> PromptResponse:
+        """Generate the prompt with given arguments."""
+        pass
+
+    def get_schema(self) -> Dict[str, Any]:
+        """Get JSON schema for the prompt."""
+        schema = {
+            "name": self.name,
+            "description": self.description,
+            "input": self.input_model.model_json_schema(),
+        }
+
+        if self.output_model:
+            schema["output"] = self.output_model.model_json_schema()
+
+        return schema
+```
+
+The prompt interface consists of:
+
+1. **Class Variables**:
+   - `name`: Prompt identifier used in MCP communications
+   - `description`: Human-readable prompt description
+   - `input_model`: Pydantic model defining input parameters
+   - `output_model`: Pydantic model defining output structure (optional)
+
+2. **Generate Method**:
+   - Asynchronous method that generates the prompt
+   - Takes strongly-typed input data
+   - Returns a structured PromptResponse
+
+3. **Schema Method**:
+   - Provides JSON Schema for prompt discovery
+   - Enables automatic documentation generation
+
 
 ## Configuration
 
@@ -366,6 +472,8 @@ You: Generate a random number between 1 and 100
 
 ## Extending the Example
 
+### Adding New Tools
+
 To add new tools:
 
 1. Create a new tool class implementing the Tool interface
@@ -396,5 +504,76 @@ def get_available_tools() -> List[Tool]:
     return [
         # ... existing tools ...
         MyNewTool(),
+    ]
+```
+
+### Adding New Resources
+
+To add new resources:
+
+1. Create a new resource class implementing the Resource interface
+2. Register the resource in the server's resource service
+3. The client can access the new resource via its URI
+
+Example resource structure:
+```python
+class MyNewResource(Resource):
+    name = "my_new_resource"
+    description = "This resource provides custom data"
+    uri = "resource://my_new_resource/{param1}"
+    mime_type = "application/json"
+    input_model = create_model(
+        "MyNewResourceInput",
+        param1=(str, Field(..., description="Resource parameter")),
+        __base__=BaseResourceInput
+    )
+
+    async def read(self, input_data: BaseResourceInput) -> ResourceResponse:
+        # Access params with input_data.param1
+        data = {"message": f"Data for {input_data.param1}"}
+        return ResourceResponse.from_data(data, self.mime_type)
+```
+
+Then register the resource in the server:
+```python
+def get_available_resources() -> List[Resource]:
+    return [
+        # ... existing resources ...
+        MyNewResource(),
+    ]
+```
+
+### Adding New Prompts
+
+To add new prompts:
+
+1. Create a new prompt class implementing the Prompt interface
+2. Register the prompt in the server's prompt service
+3. The client will automatically discover and use the new prompt
+
+Example prompt structure:
+```python
+class MyNewPrompt(Prompt):
+    name = "my_new_prompt"
+    description = "This prompt generates a custom response"
+    input_model = create_model(
+        "MyNewPromptInput",
+        param1=(str, Field(..., description="First parameter")),
+        param2=(int, Field(..., description="Second parameter")),
+        __base__=BasePromptInput
+    )
+
+    async def generate(self, input_data: BasePromptInput) -> PromptResponse:
+        # Access params with input_data.param1, input_data.param2
+        result = f"Generated response for {input_data.param1} with {input_data.param2}"
+        return PromptResponse.from_text(result)
+```
+
+Then register the prompt in the server:
+```python
+def get_available_prompts() -> List[Prompt]:
+    return [
+        # ... existing prompts ...
+        MyNewPrompt(),
     ]
 ```
