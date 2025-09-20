@@ -511,9 +511,15 @@ class MCPFactory:
                             resource_result = await _connect_and_read()
 
                         # Process the result
-                        if isinstance(resource_result, BaseModel) and hasattr(resource_result, "content"):
+                        if isinstance(resource_result, BaseModel) and hasattr(resource_result, "contents"):
                             actual_content = resource_result.contents
-                            actual_mime = getattr(resource_result, "mime_type", mime_type)
+                            # MCP stores mimeType in each content item, not on the result itself
+                            if actual_content and len(actual_content) > 0:
+                                # Get mimeType from the first content item
+                                first_content = actual_content[0]
+                                actual_mime = getattr(first_content, "mimeType", mime_type)
+                            else:
+                                actual_mime = mime_type
                         elif isinstance(resource_result, dict) and "contents" in resource_result:
                             actual_content = resource_result["contents"]
                             actual_mime = resource_result.get("mime_type", mime_type)
