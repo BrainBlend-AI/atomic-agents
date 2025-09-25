@@ -39,11 +39,13 @@ _request_start_time = None
 
 class UserQuery(BaseIOSchema):
     """Schema for user input containing a chat message."""
+
     chat_message: str = Field(..., description="User's question or message")
 
 
 class AgentResponse(BaseIOSchema):
     """Schema for agent response with confidence and reasoning."""
+
     chat_message: str = Field(..., description="Agent's response to the user")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score (0.0-1.0)")
     reasoning: str = Field(..., description="Brief explanation of the reasoning")
@@ -51,6 +53,7 @@ class AgentResponse(BaseIOSchema):
 
 class DetailedResponse(BaseIOSchema):
     """Schema for detailed response with alternatives and confidence level."""
+
     chat_message: str = Field(..., description="Primary response")
     alternative_suggestions: list[str] = Field(default_factory=list, description="Alternative suggestions")
     confidence_level: str = Field(..., description="Must be 'low', 'medium', or 'high'")
