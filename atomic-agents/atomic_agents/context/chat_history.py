@@ -308,9 +308,9 @@ class ChatHistory:
             # Process each value in the dictionary
             for value in obj.values():
                 self._process_multimodal_paths(value)
-        elif hasattr(obj, "model_fields"):
+        elif hasattr(obj, "__class__") and hasattr(obj.__class__, "model_fields"):
             # Process each field of the Pydantic model
-            for field_name in obj.model_fields:
+            for field_name in obj.__class__.model_fields:
                 if hasattr(obj, field_name):
                     self._process_multimodal_paths(getattr(obj, field_name))
         elif hasattr(obj, "__dict__") and not isinstance(obj, Enum):
