@@ -18,7 +18,7 @@ from rich.table import Table
 from pydantic import Field, ValidationError
 
 from atomic_agents import AtomicAgent, AgentConfig
-from atomic_agents.context import ChatHistory
+from atomic_agents.context import ChatHistory, SystemPromptGenerator
 from atomic_agents.base.base_io_schema import BaseIOSchema
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -149,12 +149,15 @@ def create_agent_with_hooks(schema_type: type, system_prompt: str = None) -> Ato
     api_key = setup_api_key()
     client = instructor.from_openai(openai.OpenAI(api_key=api_key))
 
+    # Create a system prompt generator if a system prompt is provided
+    system_prompt_generator = SystemPromptGenerator(background=[system_prompt]) if system_prompt else None
+
     config = AgentConfig(
         client=client,
         model="gpt-5-mini",
         model_api_parameters={"reasoning_effort": "low"},
         history=ChatHistory(),
-        system_prompt=system_prompt,
+        system_prompt_generator=system_prompt_generator,
     )
 
     agent = AtomicAgent[UserQuery, schema_type](config)
