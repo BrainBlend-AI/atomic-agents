@@ -242,6 +242,32 @@ def test_custom_input_output_schemas(mock_instructor):
     assert custom_agent.output_schema == CustomOutputSchema
 
 
+def test_subclass_with_custom_constructor(mock_instructor):
+    """Test that generic types are preserved in subclasses with custom constructors."""
+
+    class CustomInputSchema(BaseModel):
+        custom_field: str
+
+    class CustomOutputSchema(BaseModel):
+        result: str
+
+    class MyAgent(AtomicAgent[CustomInputSchema, CustomOutputSchema]):
+        def __init__(self, extra_param: str):
+            self.extra_param = extra_param
+            config = AgentConfig(
+                client=mock_instructor,
+                model="gpt-4o-mini",
+            )
+            super().__init__(config)
+
+    agent = MyAgent("test_value")
+
+    # These would fail without the __init_subclass__ fix
+    assert agent.input_schema == CustomInputSchema
+    assert agent.output_schema == CustomOutputSchema
+    assert agent.extra_param == "test_value"
+
+
 def test_base_agent_io_str_and_rich():
     class TestIO(BaseIOSchema):
         """TestIO docstring"""

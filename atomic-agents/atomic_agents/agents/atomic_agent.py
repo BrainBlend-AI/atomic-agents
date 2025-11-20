@@ -1,6 +1,6 @@
 import instructor
 from pydantic import BaseModel, Field
-from typing import Optional, Type, Generator, AsyncGenerator, get_args, Dict, List, Callable
+from typing import Optional, Type, Generator, AsyncGenerator, get_args, get_origin, Dict, List, Callable
 import logging
 from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.context.system_prompt_generator import (
@@ -129,6 +129,24 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         ```
     """
 
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        """
+        Hook called when a class is subclassed.
+
+        Captures generic type parameters during class creation and stores them as class attributes
+        to work around the unreliable __orig_class__ attribute in modern Python generic syntax.
+        """
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "__orig_bases__"):
+            for base in cls.__orig_bases__:
+                if get_origin(base) is AtomicAgent:
+                    args = get_args(base)
+                    if len(args) == 2:
+                        cls._input_schema_cls = args[0]
+                        cls._output_schema_cls = args[1]
+                        break
+
     def __init__(self, config: AgentConfig):
         """
         Initializes the AtomicAgent.
@@ -157,21 +175,47 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
     @property
     def input_schema(self) -> Type[BaseIOSchema]:
+        """
+        Returns the input schema for the agent.
+
+        Uses a three-level fallback mechanism:
+        1. Class attributes from __init_subclass__ (handles subclassing)
+        2. Instance __orig_class__ (handles direct instantiation)
+        3. Default schema (handles untyped usage)
+        """
+        # Inheritance pattern: MyAgent(AtomicAgent[Schema1, Schema2])
+        if hasattr(self.__class__, "_input_schema_cls"):
+            return self.__class__._input_schema_cls
+
+        # Dynamic instantiation: AtomicAgent[Schema1, Schema2]()
         if hasattr(self, "__orig_class__"):
             TI, _ = get_args(self.__orig_class__)
-        else:
-            TI = BasicChatInputSchema
+            return TI
 
-        return TI
+        # No type info available
+        return BasicChatInputSchema
 
     @property
     def output_schema(self) -> Type[BaseIOSchema]:
+        """
+        Returns the output schema for the agent.
+
+        Uses a three-level fallback mechanism:
+        1. Class attributes from __init_subclass__ (handles subclassing)
+        2. Instance __orig_class__ (handles direct instantiation)
+        3. Default schema (handles untyped usage)
+        """
+        # Inheritance pattern: MyAgent(AtomicAgent[Schema1, Schema2])
+        if hasattr(self.__class__, "_output_schema_cls"):
+            return self.__class__._output_schema_cls
+
+        # Dynamic instantiation: AtomicAgent[Schema1, Schema2]()
         if hasattr(self, "__orig_class__"):
             _, TO = get_args(self.__orig_class__)
-        else:
-            TO = BasicChatOutputSchema
+            return TO
 
-        return TO
+        # No type info available
+        return BasicChatOutputSchema
 
     def _prepare_messages(self):
         if self.system_role is None:
