@@ -4,10 +4,8 @@ from typing import Optional
 
 import instructor
 import openai
-from atomic_agents.agents.atomic_agent import AtomicAgent
-from atomic_agents.lib.base.base_io_schema import BaseIOSchema
-from atomic_agents.lib.components.agent_config import AgentConfig
-from atomic_agents.lib.components.system_prompt_generator import SystemPromptGenerator
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import Field
@@ -16,11 +14,15 @@ load_dotenv()
 
 
 class ChatRequest(BaseIOSchema):
+    """Request schema for chat endpoint"""
+
     message: str = Field(..., description="User message")
     session_id: Optional[str] = Field(None, description="Session identifier for conversation continuity")
 
 
 class ChatResponse(BaseIOSchema):
+    """Response schema for chat endpoint"""
+
     response: str = Field(..., description="Agent response")
     session_id: str = Field(..., description="Session identifier")
 
