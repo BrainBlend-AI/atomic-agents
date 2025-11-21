@@ -1,0 +1,84 @@
+{
+  "comment": "Automated review by Greptile",
+  "strictness": 2,
+  "triggerOnUpdates": true,
+  "statusCheck": true,
+  "commentTypes": ["logic", "syntax"],
+  "ignorePatterns": [
+    "*.lock",
+    "*.log",
+    "*.pyc",
+    "**/__pycache__/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.venv/**",
+    "**/.pytest_cache/**",
+    "**/docs/_build/**",
+    "**/.coverage",
+    "personal_scripts/**",
+    "personal_experiments/**",
+    ".github/**",
+    "guides/**"
+  ],
+  "directoryRules": {
+    "atomic-agents/atomic_agents/**/*.py": {
+      "strictness": 2,
+      "commentTypes": ["logic", "syntax"],
+      "instructions": "This is the core library. Focus on API consistency, type safety, backward compatibility, and potential bugs."
+    },
+    "atomic-agents/tests/**/*.py": {
+      "strictness": 3,
+      "commentTypes": ["logic"],
+      "instructions": "Test files - only flag critical logic issues or incorrect test patterns."
+    },
+    "atomic-assembler/**/*.py": {
+      "strictness": 2,
+      "commentTypes": ["logic", "syntax"]
+    },
+    "atomic-examples/**/*.py": {
+      "strictness": 3,
+      "commentTypes": ["logic"],
+      "instructions": "Example code - only flag significant bugs that would confuse users."
+    },
+    "atomic-forge/**/*.py": {
+      "strictness": 2,
+      "commentTypes": ["logic", "syntax"]
+    }
+  },
+  "customContext": {
+    "rules": [
+      {
+        "rule": "All public API methods must maintain backward compatibility unless explicitly marked as breaking change",
+        "scope": ["atomic-agents/atomic_agents/**"]
+      },
+      {
+        "rule": "Agent classes should use proper type annotations with BaseIOSchema subclasses",
+        "scope": ["atomic-agents/atomic_agents/**"]
+      },
+      {
+        "rule": "New features must include corresponding tests in the tests/ directory",
+        "scope": ["atomic-agents/atomic_agents/**"]
+      }
+    ],
+    "files": [
+      {
+        "path": "README.md",
+        "scope": ["**"]
+      },
+      {
+        "path": "atomic-agents/README.md",
+        "scope": ["atomic-agents/**"]
+      }
+    ],
+    "other": [
+      {
+        "context": "This is a Python framework for building AI agents using Pydantic schemas and instructor. The main packages are: atomic-agents (core library), atomic-assembler (CLI), atomic-forge (tools), and atomic-examples (example implementations).",
+        "scope": ["**"]
+      },
+      {
+        "context": "The project uses Poetry for dependency management, pytest for testing, and Black for code formatting with a line length of 127.",
+        "scope": ["**"]
+      }
+    ]
+  }
+}
