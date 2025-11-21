@@ -68,6 +68,10 @@ class AgentConfig(BaseModel):
     system_role: Optional[str] = Field(
         default="system", description="The role of the system in the conversation. None means no system prompt."
     )
+    assistant_role: str = Field(
+        default="assistant",
+        description="The role of the assistant in the conversation. Use 'model' for Gemini, 'assistant' for OpenAI/Anthropic.",
+    )
     model_config = {"arbitrary_types_allowed": True}
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
 
@@ -90,6 +94,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         history (ChatHistory): History component for storing chat history.
         system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
         system_role (Optional[str]): The role of the system in the conversation. None means no system prompt.
+        assistant_role (str): The role of the assistant in the conversation. Use 'model' for Gemini, 'assistant' for OpenAI/Anthropic.
         initial_history (ChatHistory): Initial state of the history.
         current_user_input (Optional[InputSchema]): The current user input being processed.
         model_api_parameters (dict): Additional parameters passed to the API provider.
@@ -159,6 +164,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.history = config.history or ChatHistory()
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.system_role = config.system_role
+        self.assistant_role = config.assistant_role
         self.initial_history = self.history.copy()
         self.current_user_input = None
         self.model_api_parameters = config.model_api_parameters or {}
@@ -255,7 +261,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             response_model=self.output_schema,
             **self.model_api_parameters,
         )
-        self.history.add_message("assistant", response)
+        self.history.add_message(self.assistant_role, response)
 
         return response
 
@@ -294,7 +300,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         full_response_content = self.output_schema(**partial_response.model_dump())
-        self.history.add_message("assistant", full_response_content)
+        self.history.add_message(self.assistant_role, full_response_content)
 
         return full_response_content
 
@@ -324,7 +330,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
         )
 
-        self.history.add_message("assistant", response)
+        self.history.add_message(self.assistant_role, response)
         return response
 
     async def run_async_stream(self, user_input: Optional[InputSchema] = None) -> AsyncGenerator[OutputSchema, None]:
@@ -360,7 +366,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
         if last_response:
             full_response_content = self.output_schema(**last_response.model_dump())
-            self.history.add_message("assistant", full_response_content)
+            self.history.add_message(self.assistant_role, full_response_content)
 
     def get_context_provider(self, provider_name: str) -> Type[BaseDynamicContextProvider]:
         """
