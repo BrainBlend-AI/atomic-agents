@@ -16,10 +16,14 @@ A simple example demonstrating how to integrate Atomic Agents with FastAPI for b
 poetry install
 ```
 
-2. Create a `.env` file with your OpenAI API key:
+2. Set your OpenAI API key:
 ```bash
-cp .env.example .env
-# Edit .env and add your OpenAI API key
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+Or create a `.env` file in the project root:
+```
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 ## Running the Example

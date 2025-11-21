@@ -30,7 +30,7 @@ class ChatResponse(BaseIOSchema):
 sessions = {}
 
 
-def get_or_create_agent(session_id: str) -> AtomicAgent:
+def get_or_create_agent(session_id: str) -> AtomicAgent[ChatRequest, ChatResponse]:
     if session_id not in sessions:
         client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
 
@@ -46,7 +46,7 @@ def get_or_create_agent(session_id: str) -> AtomicAgent:
             system_prompt_generator=system_prompt,
         )
 
-        sessions[session_id] = AtomicAgent(config=config)
+        sessions[session_id] = AtomicAgent[ChatRequest, ChatResponse](config=config)
 
     return sessions[session_id]
 
