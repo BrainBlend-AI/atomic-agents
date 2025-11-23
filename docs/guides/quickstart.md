@@ -44,7 +44,7 @@ client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"
 agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
     config=AgentConfig(
         client=client,
-        model="gpt-4o-mini",  # Using the latest model
+        model="gpt-5-mini",  # Using the latest model
         history=history,
         model_api_parameters={"max_tokens": 2048}
     )
@@ -100,7 +100,7 @@ client = instructor.from_openai(openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API
 agent = AtomicAgent(
     config=AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=history,
     )
 )
@@ -205,7 +205,7 @@ system_prompt_generator = SystemPromptGenerator(
 agent = AtomicAgent[BasicChatInputSchema, CustomOutputSchema](
     config=AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         system_prompt_generator=system_prompt_generator,
         history=history,
     )
@@ -240,7 +240,7 @@ The framework supports multiple AI providers:
 
 ```json
 {
-    "openai": "gpt-4o-mini",
+    "openai": "gpt-5-mini",
     "anthropic": "claude-3-5-haiku-20241022",
     "groq": "mixtral-8x7b-32768",
     "ollama": "llama3",
@@ -278,7 +278,7 @@ def setup_client(provider):
         from openai import OpenAI
         api_key = os.getenv("OPENAI_API_KEY")
         client = instructor.from_openai(OpenAI(api_key=api_key))
-        model = "gpt-4o-mini"
+        model = "gpt-5-mini"
 
     elif provider == "anthropic":
         from anthropic import Anthropic
