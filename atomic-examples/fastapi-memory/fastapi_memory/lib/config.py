@@ -22,7 +22,7 @@ def get_api_key() -> str:
 
     search_paths = [
         Path(".env"),
-        Path(r"C:\dev_new\BrainAtomics\atomic-monorepo\atomic-examples\quickstart\.env"),
+        Path("..") / "quickstart" / ".env",
     ]
 
     for env_path in search_paths:
