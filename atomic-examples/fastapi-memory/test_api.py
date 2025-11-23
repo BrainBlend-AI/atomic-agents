@@ -4,6 +4,7 @@ import httpx
 
 BASE_URL = "http://localhost:8000"
 
+
 def test_api():
     """Test the basic API flow."""
     print("Testing FastAPI Memory API...\n")
@@ -29,26 +30,14 @@ def test_api():
     # 3. Send a chat message
     print("3. Sending first chat message...")
     response = httpx.post(
-        f"{BASE_URL}/chat",
-        json={
-            "message": "Hello, how are you?",
-            "user_id": user_id,
-            "session_id": session_id
-        }
+        f"{BASE_URL}/chat", json={"message": "Hello, how are you?", "user_id": user_id, "session_id": session_id}
     )
     print(f"   Status: {response.status_code}")
     print(f"   Response: {response.json()}\n")
 
     # 3b. Send another message to build conversation
     print("3b. Sending second chat message...")
-    response = httpx.post(
-        f"{BASE_URL}/chat",
-        json={
-            "message": "Tell me a joke",
-            "user_id": user_id,
-            "session_id": session_id
-        }
-    )
+    response = httpx.post(f"{BASE_URL}/chat", json={"message": "Tell me a joke", "user_id": user_id, "session_id": session_id})
     print(f"   Status: {response.status_code}")
     print(f"   Response: {response.json()}\n")
 
@@ -99,6 +88,7 @@ def test_api():
     print(f"   Response: {response.json()}\n")
 
     print("✅ All tests completed!")
+
 
 if __name__ == "__main__":
     try:

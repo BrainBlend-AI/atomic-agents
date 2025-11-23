@@ -36,10 +36,7 @@ def get_api_key() -> str:
             except Exception:
                 continue
 
-    raise ValueError(
-        "OPENAI_API_KEY environment variable is required. "
-        "Please set it or create a .env file."
-    )
+    raise ValueError("OPENAI_API_KEY environment variable is required. " "Please set it or create a .env file.")
 
 
 # Constants

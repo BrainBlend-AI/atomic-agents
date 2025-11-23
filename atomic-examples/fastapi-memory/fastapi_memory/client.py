@@ -95,10 +95,7 @@ def _delete_session(user_id: str, session_id: str) -> bool:
         True if successful, False otherwise
     """
     try:
-        response = httpx.delete(
-            f"{BASE_URL}/users/{user_id}/sessions/{session_id}",
-            timeout=REQUEST_TIMEOUT
-        )
+        response = httpx.delete(f"{BASE_URL}/users/{user_id}/sessions/{session_id}", timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return True
     except httpx.HTTPStatusError as e:
@@ -212,10 +209,7 @@ def _fetch_conversation_history(user_id: str, session_id: str) -> Optional[List[
         List of message dicts with 'role', 'content', 'timestamp', or None if request failed
     """
     try:
-        response = httpx.get(
-            f"{BASE_URL}/users/{user_id}/sessions/{session_id}/history",
-            timeout=REQUEST_TIMEOUT
-        )
+        response = httpx.get(f"{BASE_URL}/users/{user_id}/sessions/{session_id}/history", timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         data = response.json()
         return data.get("messages", [])
@@ -244,7 +238,7 @@ def _display_conversation_history(messages: List[dict]) -> None:
         elif role == "assistant":
             console.print(Text("Agent:", style="bold green"), end=" ")
             console.print(Text(content, style="green"))
-            
+
             if msg.get("suggested_questions"):
                 _display_suggested_questions(msg["suggested_questions"])
         console.print()
@@ -289,7 +283,7 @@ def chat_non_streaming(user_id: str, session_id: str) -> None:
         initial_questions = [
             "What can you help me with?",
             "Tell me about your capabilities",
-            "How does this chat system work?"
+            "How does this chat system work?",
         ]
         _display_suggested_questions(initial_questions)
         console.print()
@@ -347,7 +341,7 @@ async def chat_streaming_async(user_id: str, session_id: str) -> None:
         initial_questions = [
             "What can you help me with?",
             "Tell me about your capabilities",
-            "How does this chat system work?"
+            "How does this chat system work?",
         ]
         _display_suggested_questions(initial_questions)
         console.print()
@@ -380,9 +374,7 @@ async def chat_streaming_async(user_id: str, session_id: str) -> None:
                                     data = json.loads(data_str)
 
                                     if "error" in data:
-                                        console.print(
-                                            f"\n[bold red]Error:[/bold red] {data['error']}\n"
-                                        )
+                                        console.print(f"\n[bold red]Error:[/bold red] {data['error']}\n")
                                         break
 
                                     if data.get("response"):
@@ -390,15 +382,11 @@ async def chat_streaming_async(user_id: str, session_id: str) -> None:
                                     if data.get("suggested_questions"):
                                         current_questions = data["suggested_questions"]
 
-                                    display_text = Text.assemble(
-                                        ("Agent: ", "bold green"), (current_response, "green")
-                                    )
+                                    display_text = Text.assemble(("Agent: ", "bold green"), (current_response, "green"))
 
                                     if current_questions:
                                         display_text.append("\n\n")
-                                        display_text.append(
-                                            "Suggested questions:\n", style="bold cyan"
-                                        )
+                                        display_text.append("Suggested questions:\n", style="bold cyan")
                                         for i, question in enumerate(current_questions, 1):
                                             display_text.append(f"{i}. {question}\n", style="cyan")
 
@@ -461,11 +449,11 @@ def manage_sessions(user_id: str) -> None:
                 confirm = Prompt.ask(
                     f"\n[bold yellow]Delete session {session_to_delete[:8]}...?[/bold yellow]",
                     choices=["yes", "no"],
-                    default="no"
+                    default="no",
                 )
                 if confirm == "yes":
                     if _delete_session(user_id, session_to_delete):
-                        console.print(f"\n[bold green]✓ Session deleted[/bold green]")
+                        console.print("\n[bold green]✓ Session deleted[/bold green]")
             else:
                 console.print("[bold red]Invalid selection[/bold red]")
         except ValueError:

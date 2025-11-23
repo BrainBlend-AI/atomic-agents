@@ -11,9 +11,7 @@ class ChatRequest(BaseIOSchema):
 
     message: str = Field(..., description="User message")
     user_id: str = Field(..., description="User identifier")
-    session_id: Optional[str] = Field(
-        None, description="Session identifier for conversation continuity"
-    )
+    session_id: Optional[str] = Field(None, description="Session identifier for conversation continuity")
 
 
 class ChatResponse(BaseIOSchema):

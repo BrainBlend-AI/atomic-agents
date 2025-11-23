@@ -16,7 +16,6 @@ from fastapi_memory.lib.schemas import (
     ChatResponse,
     ConversationHistory,
     ConversationMessage,
-    SessionCreateRequest,
     SessionCreateResponse,
     SessionDeleteResponse,
     SessionInfo,
@@ -174,8 +173,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
     try:
         if not request.session_id:
             raise HTTPException(
-                status_code=400,
-                detail="session_id is required. Create a session first using POST /users/{user_id}/sessions"
+                status_code=400, detail="session_id is required. Create a session first using POST /users/{user_id}/sessions"
             )
 
         # Store user message in history
@@ -225,8 +223,7 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
     try:
         if not request.session_id:
             raise HTTPException(
-                status_code=400,
-                detail="session_id is required. Create a session first using POST /users/{user_id}/sessions"
+                status_code=400, detail="session_id is required. Create a session first using POST /users/{user_id}/sessions"
             )
 
         # Store user message in history
@@ -239,13 +236,11 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
             full_response = ""
             final_suggested_questions = []
             try:
-                async for chunk in agent.run_async_stream(
-                    ChatRequest(message=request.message, user_id=request.user_id)
-                ):
+                async for chunk in agent.run_async_stream(ChatRequest(message=request.message, user_id=request.user_id)):
                     chunk_dict = chunk.model_dump() if hasattr(chunk, "model_dump") else {}
                     response_text = chunk_dict.get("response", "")
                     full_response = response_text  # Keep updating with latest full text
-                    
+
                     if chunk_dict.get("suggested_questions"):
                         final_suggested_questions = chunk_dict.get("suggested_questions")
 
@@ -299,10 +294,7 @@ async def create_session(user_id: str) -> SessionCreateResponse:
         session_id = _generate_session_id()
         session_metadata[user_id][session_id] = datetime.now().isoformat()
 
-        return SessionCreateResponse(
-            session_id=session_id,
-            message=f"Session '{session_id}' created successfully"
-        )
+        return SessionCreateResponse(session_id=session_id, message=f"Session '{session_id}' created successfully")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create session: {str(e)}")
@@ -327,17 +319,10 @@ async def get_user_sessions(user_id: str) -> UserSessionsResponse:
 
     # Build session info list
     session_list = [
-        SessionInfo(
-            session_id=sid,
-            created_at=session_metadata.get(user_id, {}).get(sid)
-        )
-        for sid in sorted(all_session_ids)
+        SessionInfo(session_id=sid, created_at=session_metadata.get(user_id, {}).get(sid)) for sid in sorted(all_session_ids)
     ]
 
-    return UserSessionsResponse(
-        user_id=user_id,
-        sessions=session_list
-    )
+    return UserSessionsResponse(user_id=user_id, sessions=session_list)
 
 
 @app.get("/users/{user_id}/sessions/{session_id}/history", response_model=ConversationHistory, tags=["Sessions"])
@@ -358,10 +343,7 @@ async def get_conversation_history(user_id: str, session_id: str) -> Conversatio
 
     messages = conversation_history.get(user_id, {}).get(session_id, [])
 
-    return ConversationHistory(
-        session_id=session_id,
-        messages=[ConversationMessage(**msg) for msg in messages]
-    )
+    return ConversationHistory(session_id=session_id, messages=[ConversationMessage(**msg) for msg in messages])
 
 
 @app.delete("/users/{user_id}/sessions/{session_id}", response_model=SessionDeleteResponse, tags=["Sessions"])
@@ -395,10 +377,7 @@ async def delete_session(user_id: str, session_id: str) -> SessionDeleteResponse
         del conversation_history[user_id][session_id]
 
     if not found:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Session '{session_id}' not found for user '{user_id}'"
-        )
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found for user '{user_id}'")
 
     return SessionDeleteResponse(message=f"Session '{session_id}' deleted successfully")
 
