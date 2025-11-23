@@ -112,7 +112,7 @@ client = instructor.from_openai(OpenAI())
 agent = AtomicAgent[BasicChatInputSchema, CustomOutputSchema](
     config=AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         system_prompt_generator=system_prompt_generator,
         history=ChatHistory(),
     )
@@ -219,7 +219,7 @@ class QueryAgentInputSchema(BaseIOSchema):
 query_agent = AtomicAgent[QueryAgentInputSchema, SearXNGSearchTool.input_schema](
     config=AgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         system_prompt_generator=SystemPromptGenerator(
             background=[
                 "You are an intelligent query generation expert.",

@@ -333,7 +333,7 @@ agent = AtomicAgent(
     system_prompt="You are a helpful assistant. Provide accurate answers.",
     input_schema=InputSchema,
     output_schema=OutputSchema,
-    model="gpt-4o-mini",
+    model="gpt-5-mini",
 )
 
 # Run agent

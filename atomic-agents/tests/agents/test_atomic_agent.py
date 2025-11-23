@@ -76,7 +76,7 @@ def mock_system_prompt_generator():
 def agent_config(mock_instructor, mock_history, mock_system_prompt_generator):
     return AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
     )
@@ -91,7 +91,7 @@ def agent(agent_config):
 def agent_config_async(mock_instructor_async, mock_history, mock_system_prompt_generator):
     return AgentConfig(
         client=mock_instructor_async,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
     )
@@ -104,7 +104,7 @@ def agent_async(agent_config_async):
 
 def test_initialization(agent, mock_instructor, mock_history, mock_system_prompt_generator):
     assert agent.client == mock_instructor
-    assert agent.model == "gpt-4o-mini"
+    assert agent.model == "gpt-5-mini"
     assert agent.history == mock_history
     assert agent.system_prompt_generator == mock_system_prompt_generator
     assert "max_tokens" not in agent.model_api_parameters
@@ -114,7 +114,7 @@ def test_initialization(agent, mock_instructor, mock_history, mock_system_prompt
 def test_initialization_temperature_priority(mock_instructor, mock_history, mock_system_prompt_generator):
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
         model_api_parameters={"temperature": 1.0},
@@ -126,7 +126,7 @@ def test_initialization_temperature_priority(mock_instructor, mock_history, mock
 def test_initialization_without_temperature(mock_instructor, mock_history, mock_system_prompt_generator):
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
         model_api_parameters={"temperature": 0.5},
@@ -138,7 +138,7 @@ def test_initialization_without_temperature(mock_instructor, mock_history, mock_
 def test_initialization_without_max_tokens(mock_instructor, mock_history, mock_system_prompt_generator):
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
         model_api_parameters={"max_tokens": 1024},
@@ -150,7 +150,7 @@ def test_initialization_without_max_tokens(mock_instructor, mock_history, mock_s
 def test_initialization_system_role_equals_developer(mock_instructor, mock_history, mock_system_prompt_generator):
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
         system_role="developer",
@@ -164,7 +164,7 @@ def test_initialization_system_role_equals_developer(mock_instructor, mock_histo
 def test_initialization_system_role_equals_None(mock_instructor, mock_history, mock_system_prompt_generator):
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
         system_role=None,
@@ -215,7 +215,7 @@ def test_unregister_context_provider(agent, mock_system_prompt_generator):
 def test_no_type_parameters(mock_instructor):
     custom_config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
     )
 
     custom_agent = AtomicAgent(custom_config)
@@ -233,7 +233,7 @@ def test_custom_input_output_schemas(mock_instructor):
 
     custom_config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
     )
 
     custom_agent = AtomicAgent[CustomInputSchema, CustomOutputSchema](custom_config)
@@ -256,7 +256,7 @@ def test_subclass_with_custom_constructor(mock_instructor):
             self.extra_param = extra_param
             config = AgentConfig(
                 client=mock_instructor,
-                model="gpt-4o-mini",
+                model="gpt-5-mini",
             )
             super().__init__(config)
 
@@ -319,7 +319,7 @@ def test_run_stream(mock_instructor, mock_history):
     # Create a AgentConfig with system_role set to None
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=None,  # No system prompt generator
     )
@@ -457,7 +457,7 @@ def test_hook_registration_with_instructor_client(mock_instructor):
     mock_instructor.off = Mock()
     mock_instructor.clear = Mock()
 
-    config = AgentConfig(client=mock_instructor, model="gpt-4o-mini")
+    config = AgentConfig(client=mock_instructor, model="gpt-5-mini")
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
 
     def test_handler(error):
@@ -629,7 +629,7 @@ def test_agent_initialization_includes_hooks(mock_instructor, mock_history, mock
     """Test that agent initialization properly sets up hook system."""
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
     )
@@ -665,7 +665,7 @@ def test_backward_compatibility_no_breaking_changes(mock_instructor, mock_histor
 
     config = AgentConfig(
         client=mock_instructor,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
     )
@@ -674,7 +674,7 @@ def test_backward_compatibility_no_breaking_changes(mock_instructor, mock_histor
 
     # Test that all existing attributes still exist and work
     assert agent.client == mock_instructor
-    assert agent.model == "gpt-4o-mini"
+    assert agent.model == "gpt-5-mini"
     assert agent.history == mock_history
     assert agent.system_prompt_generator == mock_system_prompt_generator
 

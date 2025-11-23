@@ -182,7 +182,7 @@ client = instructor.from_openai(OpenAI())
 agent = BaseAgent(
     BaseAgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         memory=AgentMemory()
         # No schema parameters = uses BaseAgentInputSchema and BaseAgentOutputSchema
     )
@@ -192,7 +192,7 @@ agent = BaseAgent(
 agent = BaseAgent(
     BaseAgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         memory=AgentMemory(),
         input_schema=CustomInputSchema,   # Passed in config
         output_schema=CustomOutputSchema   # Passed in config
@@ -226,7 +226,7 @@ client = instructor.from_openai(OpenAI())
 agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
     AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=ChatHistory()
     )
 )
@@ -235,7 +235,7 @@ agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
 agent = AtomicAgent[CustomInputSchema, CustomOutputSchema](
     AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=ChatHistory()
         # No schema parameters in config!
     )
@@ -262,7 +262,7 @@ agent = AtomicAgent[CustomInputSchema, CustomOutputSchema](
    agent = BaseAgent(
        BaseAgentConfig(
            client=client,
-           model="gpt-4o-mini",
+           model="gpt-5-mini",
            memory=AgentMemory(),
            input_schema=TranslationInput,  # Was here
            output_schema=TranslationOutput  # Was here
@@ -273,7 +273,7 @@ agent = AtomicAgent[CustomInputSchema, CustomOutputSchema](
    agent = AtomicAgent[TranslationInput, TranslationOutput](
        AgentConfig(
            client=client,
-           model="gpt-4o-mini",
+           model="gpt-5-mini",
            history=ChatHistory()  # Note: memory → history
            # Schemas no longer in config!
        )
@@ -285,7 +285,7 @@ agent = AtomicAgent[CustomInputSchema, CustomOutputSchema](
    # OLD - Direct parameters
    config = BaseAgentConfig(
        client=client,
-       model="gpt-4o-mini",
+       model="gpt-5-mini",
        memory=AgentMemory(),  # Old field name
        temperature=0.7,       # Direct parameter
        max_tokens=1000        # Direct parameter
@@ -294,7 +294,7 @@ agent = AtomicAgent[CustomInputSchema, CustomOutputSchema](
    # NEW - Grouped parameters
    config = AgentConfig(
        client=client,
-       model="gpt-4o-mini",
+       model="gpt-5-mini",
        history=ChatHistory(),  # New field name
        model_api_parameters={  # Temperature and max_tokens moved here
            "temperature": 0.7,
@@ -347,7 +347,7 @@ from atomic_agents.context import ChatHistory
 
 client = instructor.from_openai(OpenAI())
 agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
-    AgentConfig(client=client, model="gpt-4o-mini", history=ChatHistory())
+    AgentConfig(client=client, model="gpt-5-mini", history=ChatHistory())
 )
 
 # Non-streaming (same as v1.x) - Wait for complete response
@@ -372,7 +372,7 @@ import asyncio
 
 client = instructor.from_openai(AsyncOpenAI())
 agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
-    AgentConfig(client=client, model="gpt-4o-mini", history=ChatHistory())
+    AgentConfig(client=client, model="gpt-5-mini", history=ChatHistory())
 )
 
 # OLD (v1.x) - run_async was a streaming generator
@@ -605,7 +605,7 @@ system_prompt = SystemPromptGenerator(
 agent = BaseAgent(
     BaseAgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         memory=memory,
         system_prompt_generator=system_prompt,
         input_schema=SupportTicketInput,
@@ -663,7 +663,7 @@ system_prompt = SystemPromptGenerator(
 agent = AtomicAgent[SupportTicketInput, SupportTicketOutput](  # Schemas as type parameters
     AgentConfig(
         client=client,
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         history=history,  # Changed from memory
         system_prompt_generator=system_prompt,
         # No input_schema or output_schema in config

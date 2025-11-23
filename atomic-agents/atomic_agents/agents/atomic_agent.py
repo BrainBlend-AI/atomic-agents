@@ -60,7 +60,7 @@ class BasicChatOutputSchema(BaseIOSchema):
 
 class AgentConfig(BaseModel):
     client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
-    model: str = Field(default="gpt-4o-mini", description="The model to use for generating responses.")
+    model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
         default=None, description="Component for generating system prompts."
@@ -585,11 +585,11 @@ if __name__ == "__main__":
         """
         if streaming:
             client = instructor.from_openai(AsyncOpenAI())
-            config = AgentConfig(client=client, model="gpt-4o-mini")
+            config = AgentConfig(client=client, model="gpt-5-mini")
             agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
         else:
             client = instructor.from_openai(OpenAI())
-            config = AgentConfig(client=client, model="gpt-4o-mini")
+            config = AgentConfig(client=client, model="gpt-5-mini")
             agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
 
         # Display agent information before starting the chat
