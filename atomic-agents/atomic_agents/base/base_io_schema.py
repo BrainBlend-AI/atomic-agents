@@ -23,7 +23,10 @@ class BaseIOSchema(BaseModel):
         description = cls.__doc__
 
         if not description or not description.strip():
-            if cls.__module__ != "instructor.function_calls" and not hasattr(cls, "from_streaming_response"):
+            # Skip validation for instructor-generated schemas (both old and new module paths)
+            if cls.__module__ not in ("instructor.function_calls", "instructor.processing.function_calls") and not hasattr(
+                cls, "from_streaming_response"
+            ):
                 raise ValueError(f"{cls.__name__} must have a non-empty docstring to serve as its description")
 
     @classmethod
