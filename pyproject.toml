@@ -16,7 +16,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
-instructor = "==1.9.2"
+instructor = "==1.13.0"
 pydantic = ">=2.11.0,<3.0.0"
 rich = ">=13.7.1,<14.0.0"
 gitpython = ">=3.1.43,<4.0.0"
@@ -33,7 +33,7 @@ pdoc3 = ">=0.11.1,<1.0.0"
 pytest = ">=8.3.3,<9.0.0"
 pytest-cov = ">=5.0.0,<6.0.0"
 pytest-asyncio = ">=0.24.0,<1.0.0"
-openai = ">=1.35.12,<2.0.0"
+openai = ">=2.0.0,<3.0.0"
 sphinx = ">=7.2.6,<8.0.0"
 sphinx-rtd-theme = ">=2.0.0,<3.0.0"
 myst-parser = ">=2.0.0,<3.0.0"

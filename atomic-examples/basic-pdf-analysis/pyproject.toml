@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
 atomic-agents = {path = "../..", develop = true}
-instructor = "==1.9.2"
+instructor = "==1.13.0"
 google-genai = ">=1.18.0,<2.0.0"
 jsonref = ">=1.1.0,<2.0.0"
 
