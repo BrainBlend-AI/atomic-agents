@@ -33,7 +33,7 @@ tool_name/
 │   pyproject.toml
 │   README.md
 │   requirements.txt
-│   poetry.lock
+│   uv.lock
 │
 ├── tool/
 │   │   tool_name.py
@@ -48,7 +48,7 @@ tool_name/
 
 To keep things modular and organized, you should place your tool code in the `tool/` folder and your test code in the `tests/` folder. Let's go over the important files:
 
-- **`pyproject.toml`:** This is the Python project file that contains metadata about your project and its dependencies. It is used by [Poetry](https://python-poetry.org/) to install dependencies and manage the tool. Remember to run `poetry install` before starting development to ensure you are working in a clean, stand-alone environment.
+- **`pyproject.toml`:** This is the Python project file that contains metadata about your project and its dependencies. It is used by [uv](https://docs.astral.sh/uv/) to install dependencies and manage the tool. Remember to run `uv sync` before starting development to ensure you are working in a clean, stand-alone environment.
 
 - **`README.md`:** This file contains information about your tool, including how to use it, its purpose, environment variables, etc. Be sure to look at existing READMEs for examples.
 
@@ -56,39 +56,42 @@ To keep things modular and organized, you should place your tool code in the `to
 
 - **`.coveragerc`:** This is the coverage configuration file that contains the configuration for the coverage tool. This file is the same across all tools and should always be included.
 
-- **`poetry.lock`:** This is the lock file that contains the exact versions of the dependencies that were installed when `poetry install` was last run. This file should be committed as well to ensure consistency across different environments.
+- **`uv.lock`:** This is the lock file that contains the exact versions of the dependencies that were installed when `uv sync` was last run. This file should be committed as well to ensure consistency across different environments.
 
 #### Creating `requirements.txt`
 
-Since exporting `requirements.txt` using `poetry export` can sometimes include unnecessary details or development dependencies, it's recommended to create this file manually. Your `requirements.txt` should include all the non-development dependencies specified in your `pyproject.toml`, excluding the `python` version.
+It's recommended to create the `requirements.txt` file manually. Your `requirements.txt` should include all the non-development dependencies specified in your `pyproject.toml`, excluding the `python` version.
 
 **Example `pyproject.toml`:**
 
 ```toml
-[tool.poetry]
-name = "pizza-ordering-tool"
-version = "1.0"
-description = "A tool for placing and processing pizza orders"
-authors = ["Your Name <your.email@example.com>"]
-readme = "README.md"
-package-mode = false
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-atomic-agents = {path = "../../../", develop = true}
-pydantic = ">=2.8.2,<3.0.0"
-requests = ">=2.28.0,<3.0.0"
-
-[tool.poetry.group.dev.dependencies]
-coverage = ">=7.0.0,<8.0.0"
-pytest = ">=8.0.0,<9.0.0"
-pytest-cov = ">=5.0.0,<6.0.0"
-python-dotenv = ">=1.0.0,<2.0.0"
-rich = ">=13.7.0,<14.0.0"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pizza-ordering-tool"
+version = "1.0.0"
+description = "A tool for placing and processing pizza orders"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "atomic-agents",
+    "pydantic>=2.8.2,<3.0.0",
+    "requests>=2.28.0,<3.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.0.0,<8.0.0",
+    "pytest>=8.0.0,<9.0.0",
+    "pytest-cov>=5.0.0,<6.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "rich>=13.7.0,<14.0.0",
+]
+
+[tool.uv.sources]
+atomic-agents = { workspace = true }
 ```
 
 **Corresponding `requirements.txt`:**
@@ -101,8 +104,8 @@ requests>=2.28.0,<3.0.0
 
 **Explanation:**
 
-- The `requirements.txt` includes all the runtime dependencies specified under `[tool.poetry.dependencies]` in `pyproject.toml`, excluding `python`.
-- It does **not** include any of the development dependencies specified under `[tool.poetry.group.dev.dependencies]`.
+- The `requirements.txt` includes all the runtime dependencies specified under `[project.dependencies]` in `pyproject.toml`, excluding `python`.
+- It does **not** include any of the development dependencies specified under `[dependency-groups.dev]`.
 - This manual approach ensures that `requirements.txt` is clean and only contains the necessary packages for running your tool.
 
 ### Inheritance and Base Classes
@@ -475,7 +478,7 @@ if __name__ == "__main__":
 - **Validate Inputs Thoroughly:** Use Pydantic's features to enforce data integrity.
 - **Handle Errors Gracefully:** Provide informative error messages and handle exceptions where appropriate.
 - **Keep Functions Small and Focused:** Break down complex logic into helper methods.
-- **Commit `poetry.lock`:** Ensure you commit your `poetry.lock` file to maintain consistent dependencies across environments.
+- **Commit `uv.lock`:** Ensure you commit your `uv.lock` file to maintain consistent dependencies across environments.
 - **Manually Create `requirements.txt`:** Ensure your `requirements.txt` file matches the non-development dependencies in your `pyproject.toml`, excluding `python`, and create it manually for clarity.
 
 ### Don'ts

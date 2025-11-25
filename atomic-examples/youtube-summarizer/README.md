@@ -16,9 +16,9 @@ To get started with the YouTube Summarizer:
    cd atomic-agents/atomic-examples/youtube-summarizer
    ```
 
-3. **Install the dependencies using Poetry:**
+3. **Install the dependencies using uv:**
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. **Set up environment variables:**
@@ -35,12 +35,12 @@ To get started with the YouTube Summarizer:
 
 5. **Run the YouTube Summarizer:**
    ```bash
-   poetry run python youtube_summarizer/main.py
+   uv run python youtube_summarizer/main.py
    ```
    or
 
    ```bash
-   poetry run python -m youtube_summarizer.main
+   uv run python -m youtube_summarizer.main
    ```
 
 ## File Explanation

@@ -18,16 +18,16 @@ To run these examples:
    cd atomic-agents/atomic-examples/quickstart
    ```
 
-3. Install the dependencies using Poetry:
+3. Install the dependencies using uv:
 
    ```bash
-   poetry install
+   uv sync
    ```
 
-4. Run the examples using Poetry:
+4. Run the examples using uv:
 
    ```bash
-   poetry run python quickstart/1_basic_chatbot.py
+   uv run python quickstart/1_0_basic_chatbot.py
    ```
 
 ## Example Files
@@ -93,7 +93,7 @@ This example adds streaming to 6_0.
 To run any of the examples, use the following command:
 
 ```bash
-poetry run python quickstart/<example_file_name>.py
+uv run python quickstart/<example_file_name>.py
 ```
 
 Replace `<example_file_name>` with the name of the example you want to run (e.g., `1_basic_chatbot.py`).

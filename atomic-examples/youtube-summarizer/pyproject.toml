@@ -1,21 +1,28 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["youtube_summarizer"]
+
+[project]
 name = "youtube-summarizer"
 version = "1.0.0"
 description = "Youtube Summarizer example for Atomic Agents"
-authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
+authors = [
+    { name = "Kenny Vaneetvelde", email = "kenny.vaneetvelde@gmail.com" }
+]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "atomic-agents",
+    "openai>=2.0.0,<3.0.0",
+    "pydantic>=2.10.3,<3.0.0",
+    "google-api-python-client>=2.101.0,<3.0.0",
+    "youtube-transcript-api>=1.1.1,<2.0.0",
+    "instructor==1.13.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.14"
-atomic-agents = {path = "../..", develop = true}
-openai = ">=2.0.0,<3.0.0"
-pydantic = ">=2.10.3,<3.0.0"
-google-api-python-client = ">=2.101.0,<3.0.0"
-youtube-transcript-api = "^1.1.1"
-instructor = "==1.13.0"
-python-dotenv = ">=1.0.1,<2.0.0"
-
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv.sources]
+atomic-agents = { workspace = true }

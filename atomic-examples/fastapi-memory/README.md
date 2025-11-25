@@ -18,7 +18,7 @@ A comprehensive example demonstrating how to integrate Atomic Agents with FastAP
 
 1. Install dependencies:
 ```bash
-poetry install
+uv sync
 ```
 
 2. Set your OpenAI API key:
@@ -37,12 +37,12 @@ OPENAI_API_KEY=your_openai_api_key
 
 Start the server:
 ```bash
-poetry run python fastapi_memory/main.py
+uv run python fastapi_memory/main.py
 ```
 
 In a separate terminal, run the interactive client:
 ```bash
-poetry run python fastapi_memory/client.py
+uv run python fastapi_memory/client.py
 ```
 
 The client will:
@@ -56,7 +56,7 @@ The client will:
 
 Start the FastAPI server:
 ```bash
-poetry run python fastapi_memory/main.py
+uv run python fastapi_memory/main.py
 ```
 
 The API will be available at `http://localhost:8000`.
@@ -144,7 +144,7 @@ curl -X DELETE "http://localhost:8000/users/user123/sessions/550e8400-e29b-41d4-
 
 ### 6. Test the API:
 ```bash
-poetry run python test_api.py
+uv run python test_api.py
 ```
 
 ## How It Works

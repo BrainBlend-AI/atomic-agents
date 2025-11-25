@@ -18,10 +18,10 @@ To get started with the YouTube Recipe Extractor:
    cd atomic-agents/atomic-examples/youtube-to-recipe
    ```
 
-3. **Install the dependencies using Poetry:**
+3. **Install the dependencies using uv:**
 
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. **Set up environment variables:**
@@ -40,7 +40,7 @@ To get started with the YouTube Recipe Extractor:
 5. **Run the YouTube Recipe Extractor:**
 
    ```bash
-   poetry run python youtube_to_recipe/main.py
+   uv run python youtube_to_recipe/main.py
    ```
 
 ## File Explanation

@@ -15,8 +15,8 @@ def get_version_from_pyproject():
     """Extract version from pyproject.toml using regex"""
     with open(PYPROJECT_FILE, 'r') as f:
         content = f.read()
-    
-    # Look for version line in [tool.poetry] section
+
+    # Look for version line in [project] section
     match = re.search(r'^version = ["\'](.*?)["\']', content, re.MULTILINE)
     if match:
         return match.group(1)

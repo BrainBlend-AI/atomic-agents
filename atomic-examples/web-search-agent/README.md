@@ -45,10 +45,10 @@ Make sure to add these lines to `settings.tml`:
    cd atomic-agents/atomic-examples/web-search-agent
    ```
 
-1. Install dependencies using Poetry:
+1. Install dependencies using uv:
 
    ```bash
-   poetry install
+   uv sync
    ```
 
 1. Set up environment variables:
@@ -65,7 +65,7 @@ Make sure to add these lines to `settings.tml`:
 2. Run the Web Search Agent:
 
    ```bash
-   poetry run python web_search_agent/main.py
+   uv run python web_search_agent/main.py
    ```
 
 ## How It Works

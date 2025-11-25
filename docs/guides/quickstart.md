@@ -392,7 +392,7 @@ To run any of these examples:
 3. Run the script:
 
    ```bash
-   poetry run python chatbot.py
+   uv run python chatbot.py
    ```
 
 ## Next Steps

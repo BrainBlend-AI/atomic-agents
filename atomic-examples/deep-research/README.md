@@ -14,9 +14,9 @@ This directory contains the Deep Research Agent example for the Atomic Agents pr
    cd atomic-agents/atomic-examples/deep-research
    ```
 
-3. **Install dependencies using Poetry:**
+3. **Install dependencies using uv:**
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. **Set up environment variables:**
@@ -35,7 +35,7 @@ This directory contains the Deep Research Agent example for the Atomic Agents pr
 
 6. **Run the Deep Research Agent:**
    ```bash
-   poetry run python deep_research/main.py
+   uv run python deep_research/main.py
    ```
 
 ## File Explanation

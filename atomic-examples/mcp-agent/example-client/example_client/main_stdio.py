@@ -38,7 +38,7 @@ class MCPConfig:
     # Command to run the STDIO server.
     # In practice, this could be something like "pipx some-other-persons-server or npx some-other-persons-server
     # if working with a server you did not write yourself.
-    mcp_stdio_server_command: str = "poetry run example-mcp-server --mode stdio"
+    mcp_stdio_server_command: str = "uv run example-mcp-server --mode stdio"
 
     def __post_init__(self):
         if not self.openai_api_key:

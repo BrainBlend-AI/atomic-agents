@@ -9,22 +9,22 @@ function Update-VersionInFile {
     $content = Get-Content $FilePath
     $updated = $false
     $oldVersion = ""
-    
-    # Process each line to only update the main package version in [tool.poetry] section
-    $inPoetrySection = $false
+
+    # Process each line to only update the main package version in [project] section
+    $inProjectSection = $false
     for ($i = 0; $i -lt $content.Length; $i++) {
         $line = $content[$i]
-        
-        # Check if we're entering the [tool.poetry] section
-        if ($line -match '^\[tool\.poetry\]') {
-            $inPoetrySection = $true
+
+        # Check if we're entering the [project] section
+        if ($line -match '^\[project\]') {
+            $inProjectSection = $true
         }
         # Check if we're entering a different section
-        elseif ($line -match '^\[.*\]' -and $line -notmatch '^\[tool\.poetry\]') {
-            $inPoetrySection = $false
+        elseif ($line -match '^\[.*\]' -and $line -notmatch '^\[project\]') {
+            $inProjectSection = $false
         }
-        # Update version only if we're in the [tool.poetry] section and it's the main version line
-        elseif ($inPoetrySection -and $line -match '^version = "(.+)"$') {
+        # Update version only if we're in the [project] section and it's the main version line
+        elseif ($inProjectSection -and $line -match '^version = "(.+)"$') {
             $oldVersion = $matches[1]
             if (-not $DryRun) {
                 $content[$i] = $line -replace 'version = ".*"', "version = `"$Version`""
@@ -33,7 +33,7 @@ function Update-VersionInFile {
             break
         }
     }
-    
+
     if ($updated) {
         if ($DryRun) {
             Write-Host "[DRY RUN] Would update main package version in $FilePath from $oldVersion to $Version"
@@ -92,9 +92,9 @@ function Set-PyPIToken {
         }
     }
     if ($DryRun) {
-        Write-Host "[DRY RUN] Would configure PyPI token"
+        Write-Host "[DRY RUN] Would set UV_PUBLISH_TOKEN"
     } else {
-        poetry config pypi-token.pypi $env:PYPI_TOKEN
+        $env:UV_PUBLISH_TOKEN = $env:PYPI_TOKEN
         Write-Host "PyPI token configured successfully."
     }
 }
@@ -151,26 +151,26 @@ if ($releaseType -notin @("major", "minor", "patch")) {
     exit 1
 }
 
-# Get current version from pyproject.toml (specifically from [tool.poetry] section)
+# Get current version from pyproject.toml (specifically from [project] section)
 $pyprojectContent = Get-Content "pyproject.toml"
 $currentVersion = ""
-$inPoetrySection = $false
+$inProjectSection = $false
 
 foreach ($line in $pyprojectContent) {
-    if ($line -match '^\[tool\.poetry\]') {
-        $inPoetrySection = $true
+    if ($line -match '^\[project\]') {
+        $inProjectSection = $true
     }
-    elseif ($line -match '^\[.*\]' -and $line -notmatch '^\[tool\.poetry\]') {
-        $inPoetrySection = $false
+    elseif ($line -match '^\[.*\]' -and $line -notmatch '^\[project\]') {
+        $inProjectSection = $false
     }
-    elseif ($inPoetrySection -and $line -match '^version = "(.+)"$') {
+    elseif ($inProjectSection -and $line -match '^version = "(.+)"$') {
         $currentVersion = $matches[1]
         break
     }
 }
 
 if (-not $currentVersion) {
-    Write-Host "Error: Could not find current version in pyproject.toml [tool.poetry] section"
+    Write-Host "Error: Could not find current version in pyproject.toml [project] section"
     exit 1
 }
 
@@ -189,10 +189,10 @@ Update-VersionInFile -Version $newVersion -FilePath "pyproject.toml" -DryRun $dr
 if ($dryRun) {
     Write-Host "[DRY RUN] Would perform the following actions:"
     Write-Host "[DRY RUN] - Build consolidated atomic-agents package"
-    Write-Host "[DRY RUN] - Install dependencies with poetry install"
-    Write-Host "[DRY RUN] - Build package with poetry build"
+    Write-Host "[DRY RUN] - Install dependencies with uv sync"
+    Write-Host "[DRY RUN] - Build package with uv build"
     Write-Host "[DRY RUN] - Configure PyPI token"
-    Write-Host "[DRY RUN] - Upload to PyPI with poetry publish"
+    Write-Host "[DRY RUN] - Upload to PyPI with uv publish"
     Write-Host "[DRY RUN] Dry run completed - no actual changes made!"
     exit 0
 }
@@ -200,17 +200,17 @@ if ($dryRun) {
 # Build the consolidated package
 Write-Host "Building consolidated atomic-agents package..."
 
-# Create a new virtualenv in the project directory and install dependencies
-poetry install
+# Install dependencies
+uv sync
 
 # Build the package
-poetry build
+uv build
 
 # Before publishing, set the PyPI token
 Set-PyPIToken -DryRun $dryRun
 
 # Upload to PyPI
 Write-Host "Uploading atomic-agents to PyPI..."
-poetry publish
+uv publish
 
 Write-Host "Build and deploy process completed successfully!"

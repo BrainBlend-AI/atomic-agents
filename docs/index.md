@@ -50,10 +50,10 @@ You can install Atomic Agents using pip:
 pip install atomic-agents
 ```
 
-Or using Poetry (recommended):
+Or using uv (recommended):
 
 ```bash
-poetry add atomic-agents
+uv add atomic-agents
 ```
 
 Make sure you also install the provider you want to use. For example, to use OpenAI and Groq:

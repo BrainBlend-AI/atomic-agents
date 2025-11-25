@@ -175,7 +175,7 @@ async def lifespan(app: FastAPI):
         print("ERROR: Could not connect to MCP server!")
         print("Please start the MCP server first:")
         print("  cd /path/to/example-mcp-server")
-        print("  poetry run python -m example_mcp_server.server --mode=http_stream")
+        print("  uv run python -m example_mcp_server.server --mode=http_stream")
         print("=" * 60)
         raise RuntimeError(f"MCP server connection failed: {e}") from e
 
