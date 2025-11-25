@@ -17,6 +17,7 @@ members = [
     "example-mcp-server",
     "fastapi-memory",
     "hooks-example",
+    "nested-multimodal",
     "orchestration-agent",
     "quickstart",
     "rag-chatbot",
@@ -2004,6 +2005,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e8/c1/48ea47b78ade0bb0281f34c9e343e3ea0c681fbc81464dbfd134e983954f/myst_parser-2.0.0.tar.gz", hash = "sha256:ea929a67a6a0b1683cdbe19b8d2e724cd7643f8aa3e7bb18dd65beac3483bead", size = 85800, upload-time = "2023-06-13T16:30:30.136Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1d/f6/6d61a023d758f488e36638076e8a4ec4447a2cdf86938cf6c60cf1c860e6/myst_parser-2.0.0-py3-none-any.whl", hash = "sha256:7c36344ae39c8e740dad7fdabf5aa6fc4897a813083c6cc9990044eb93656b14", size = 77158, upload-time = "2023-06-13T16:30:27.697Z" },
+]
+
+[[package]]
+name = "nested-multimodal"
+version = "1.0.0"
+source = { editable = "atomic-examples/nested-multimodal" }
+dependencies = [
+    { name = "atomic-agents" },
+    { name = "google-genai" },
+    { name = "instructor" },
+    { name = "jsonref" },
+    { name = "python-dotenv" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "atomic-agents", editable = "." },
+    { name = "google-genai", specifier = ">=1.18.0,<2.0.0" },
+    { name = "instructor", specifier = ">=1.7.0" },
+    { name = "jsonref", specifier = ">=1.1.0,<2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
 ]
 
 [[package]]

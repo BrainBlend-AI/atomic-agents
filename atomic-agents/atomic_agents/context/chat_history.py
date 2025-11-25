@@ -4,13 +4,117 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 
-from instructor.multimodal import PDF, Image, Audio
+from instructor.processing.multimodal import PDF, Image, Audio
 from pydantic import BaseModel, Field
 
 from atomic_agents.base.base_io_schema import BaseIOSchema
 
 
 INSTRUCTOR_MULTIMODAL_TYPES = (Image, Audio, PDF)
+
+
+def _contains_multimodal(obj) -> bool:
+    """
+    Recursively checks if an object contains any multimodal content.
+
+    Args:
+        obj: The object to check.
+
+    Returns:
+        bool: True if the object contains multimodal content, False otherwise.
+    """
+    if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES):
+        return True
+    elif isinstance(obj, list):
+        return any(_contains_multimodal(item) for item in obj)
+    elif isinstance(obj, dict):
+        return any(_contains_multimodal(value) for value in obj.values())
+    elif hasattr(obj, "__class__") and hasattr(obj.__class__, "model_fields"):
+        # Pydantic model - check all fields
+        for field_name in obj.__class__.model_fields:
+            if hasattr(obj, field_name):
+                if _contains_multimodal(getattr(obj, field_name)):
+                    return True
+        return False
+    return False
+
+
+def _extract_multimodal_objects(obj) -> List:
+    """
+    Recursively extracts all multimodal objects from a nested structure.
+
+    Args:
+        obj: The object to extract multimodal content from.
+
+    Returns:
+        List: A list of all multimodal objects found.
+    """
+    multimodal_objects = []
+
+    if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES):
+        multimodal_objects.append(obj)
+    elif isinstance(obj, list):
+        for item in obj:
+            multimodal_objects.extend(_extract_multimodal_objects(item))
+    elif isinstance(obj, dict):
+        for value in obj.values():
+            multimodal_objects.extend(_extract_multimodal_objects(value))
+    elif hasattr(obj, "__class__") and hasattr(obj.__class__, "model_fields"):
+        # Pydantic model - check all fields
+        for field_name in obj.__class__.model_fields:
+            if hasattr(obj, field_name):
+                multimodal_objects.extend(_extract_multimodal_objects(getattr(obj, field_name)))
+
+    return multimodal_objects
+
+
+def _build_non_multimodal_dict(obj):
+    """
+    Recursively builds a dictionary representation of an object,
+    excluding multimodal content but preserving the structure.
+
+    Args:
+        obj: The object to convert.
+
+    Returns:
+        The non-multimodal representation of the object, or None if the object
+        is purely multimodal content.
+    """
+    if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES):
+        # Multimodal content - exclude from JSON
+        return None
+    elif isinstance(obj, list):
+        # Filter out multimodal items and recursively process others
+        result = []
+        for item in obj:
+            processed = _build_non_multimodal_dict(item)
+            if processed is not None:
+                result.append(processed)
+        return result if result else None
+    elif isinstance(obj, dict):
+        # Recursively process dict values, excluding multimodal
+        result = {}
+        for key, value in obj.items():
+            processed = _build_non_multimodal_dict(value)
+            if processed is not None:
+                result[key] = processed
+        return result if result else None
+    elif hasattr(obj, "__class__") and hasattr(obj.__class__, "model_fields"):
+        # Pydantic model - recursively process fields
+        result = {}
+        for field_name in obj.__class__.model_fields:
+            if hasattr(obj, field_name):
+                field_value = getattr(obj, field_name)
+                processed = _build_non_multimodal_dict(field_value)
+                if processed is not None:
+                    result[field_name] = processed
+        return result if result else None
+    else:
+        # Primitive types or other objects - return as-is for JSON serialization
+        # Handle Pydantic serialization for complex types
+        if hasattr(obj, "model_dump"):
+            return obj.model_dump()
+        return obj
 
 
 class Message(BaseModel):
@@ -91,60 +195,39 @@ class ChatHistory:
         """
         Retrieves the chat history, handling both regular and multimodal content.
 
+        This method supports multimodal content (Image, Audio, PDF) including when
+        nested within other schemas. Multimodal objects are kept separate from
+        the JSON serialization to allow Instructor to handle them appropriately.
+
         Returns:
             List[Dict]: The list of messages in the chat history as dictionaries.
             Each dictionary has 'role' and 'content' keys, where 'content' contains
             either a single JSON string or a mixed array of JSON and multimodal objects.
 
         Note:
-            This method supports multimodal content by keeping multimodal objects
-            separate while generating cohesive JSON for text-based fields.
+            This method supports nested multimodal content by recursively detecting
+            and extracting multimodal objects from any level of the schema hierarchy.
         """
         history = []
         for message in self.history:
             input_content = message.content
 
-            # Check if content has any multimodal fields
-            multimodal_objects = []
-            has_multimodal = False
-
-            # Extract multimodal content first
-            for field_name, field in input_content.__class__.model_fields.items():
-                field_value = getattr(input_content, field_name)
-
-                if isinstance(field_value, list):
-                    for item in field_value:
-                        if isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES):
-                            multimodal_objects.append(item)
-                            has_multimodal = True
-                elif isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
-                    multimodal_objects.append(field_value)
-                    has_multimodal = True
+            # Use recursive function to check for multimodal content at any depth
+            has_multimodal = _contains_multimodal(input_content)
 
             if has_multimodal:
                 # For multimodal content: create mixed array with JSON + multimodal objects
                 processed_content = []
 
-                # Add single cohesive JSON for all non-multimodal fields
-                non_multimodal_data = {}
-                for field_name, field in input_content.__class__.model_fields.items():
-                    field_value = getattr(input_content, field_name)
-
-                    if isinstance(field_value, list):
-                        # Only include non-multimodal items from lists
-                        non_multimodal_items = [
-                            item for item in field_value if not isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES)
-                        ]
-                        if non_multimodal_items:
-                            non_multimodal_data[field_name] = non_multimodal_items
-                    elif not isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
-                        non_multimodal_data[field_name] = field_value
+                # Build non-multimodal data recursively
+                non_multimodal_data = _build_non_multimodal_dict(input_content)
 
                 # Add single JSON string if there are non-multimodal fields
                 if non_multimodal_data:
                     processed_content.append(json.dumps(non_multimodal_data, ensure_ascii=False))
 
-                # Add all multimodal objects
+                # Extract all multimodal objects recursively and add them
+                multimodal_objects = _extract_multimodal_objects(input_content)
                 processed_content.extend(multimodal_objects)
 
                 history.append({"role": message.role, "content": processed_content})

@@ -8,6 +8,7 @@ from pydantic import Field
 from atomic_agents.context import ChatHistory, Message
 from atomic_agents import BaseIOSchema
 import instructor
+from instructor.processing.multimodal import Image, PDF, Audio
 
 
 class InputSchema(BaseIOSchema):
@@ -50,9 +51,9 @@ class MockMultimodalSchema(BaseIOSchema):
     """Test schema for multimodal content"""
 
     instruction_text: str = Field(..., description="The instruction text")
-    images: List[instructor.Image] = Field(..., description="The images to analyze")
-    pdfs: List[instructor.multimodal.PDF] = Field(..., description="The PDFs to analyze")
-    audio: instructor.multimodal.Audio = Field(..., description="The audio to analyze")
+    images: List[Image] = Field(..., description="The images to analyze")
+    pdfs: List[PDF] = Field(..., description="The PDFs to analyze")
+    audio: Audio = Field(..., description="The audio to analyze")
 
 
 class ColorEnum(str, Enum):
@@ -218,8 +219,8 @@ def test_dump_and_load_multimodal_data(history):
 
     base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     test_image = instructor.Image.from_path(path=os.path.join(base_path, "files/image_sample.jpg"))
-    test_pdf = instructor.multimodal.PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
-    test_audio = instructor.multimodal.Audio.from_path(path=os.path.join(base_path, "files/audio_sample.mp3"))
+    test_pdf = PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
+    test_audio = Audio.from_path(path=os.path.join(base_path, "files/audio_sample.mp3"))
 
     # multimodal message
     history.add_message(
@@ -361,8 +362,8 @@ def test_get_history_with_multimodal_content(history):
     """Test that get_history correctly handles multimodal content"""
     # Create mock multimodal objects
     mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
-    mock_pdf = instructor.multimodal.PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
-    mock_audio = instructor.multimodal.Audio(source="test_audio_url", media_type="audio/mp3", detail="low")
+    mock_pdf = PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
+    mock_audio = Audio(source="test_audio_url", media_type="audio/mp3", detail="low")
 
     # Add a multimodal message
     history.add_message(
@@ -454,7 +455,7 @@ def test_process_multimodal_paths_comprehensive():
     image_file = instructor.Image(source="test/image.jpg", media_type="image/jpeg")
     image_url = instructor.Image(source="https://example.com/image.jpg", media_type="image/jpeg")
     image_data = instructor.Image(source="data:image/jpeg;base64,xyz", media_type="image/jpeg")
-    pdf_file = instructor.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")
+    pdf_file = PDF(source="test/doc.pdf", media_type="application/pdf")
 
     history._process_multimodal_paths(image_file)
     history._process_multimodal_paths(image_url)
@@ -521,8 +522,8 @@ def test_process_multimodal_paths_comprehensive():
         MockMultimodalSchema(
             instruction_text="Process this file",
             images=[instructor.Image(source="test/sample.jpg", media_type="image/jpeg")],
-            pdfs=[instructor.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")],
-            audio=instructor.multimodal.Audio(source="test/audio.mp3", media_type="audio/mp3"),
+            pdfs=[PDF(source="test/doc.pdf", media_type="application/pdf")],
+            audio=Audio(source="test/audio.mp3", media_type="audio/mp3"),
         ),
     )
 
@@ -538,3 +539,273 @@ def test_process_multimodal_paths_comprehensive():
     assert loaded_content.images[0].source == Path("test/sample.jpg")
     assert isinstance(loaded_content.pdfs[0].source, Path)
     assert loaded_content.pdfs[0].source == Path("test/doc.pdf")
+
+
+# ========================================
+# Tests for nested multimodal content (GitHub Issue #141)
+# ========================================
+
+
+class DocumentWithPDF(BaseIOSchema):
+    """PDF document with owner - for testing nested multimodal content."""
+
+    pdf: PDF = Field(..., description="The PDF data")
+    owner: str = Field(..., description="The PDF owner")
+
+
+class DocumentWithImage(BaseIOSchema):
+    """Image document with metadata - for testing nested multimodal content."""
+
+    image: instructor.Image = Field(..., description="The image data")
+    description: str = Field(..., description="The image description")
+
+
+class NestedDocumentsInputSchema(BaseIOSchema):
+    """A list of documents to analyze - for testing nested multimodal content."""
+
+    documents: List[DocumentWithPDF] = Field(..., description="List of documents")
+    query: str = Field(..., description="The query about the documents")
+
+
+class DeeplyNestedSchema(BaseIOSchema):
+    """Schema with multiple levels of nesting."""
+
+    title: str = Field(..., description="The title")
+    nested_doc: DocumentWithImage = Field(..., description="A nested document with image")
+    more_docs: List[DocumentWithPDF] = Field(..., description="More nested documents")
+
+
+class DictWithNestedMultimodal(BaseIOSchema):
+    """Schema with dict containing nested multimodal content."""
+
+    metadata: str = Field(..., description="Some metadata")
+    documents_by_name: Dict[str, DocumentWithPDF] = Field(..., description="Documents keyed by name")
+
+
+def test_get_history_with_nested_multimodal_content(history):
+    """Test that get_history correctly handles nested multimodal content (Issue #141)."""
+    mock_pdf_1 = PDF(source="test_pdf_1.pdf", media_type="application/pdf", detail="low")
+    mock_pdf_2 = PDF(source="test_pdf_2.pdf", media_type="application/pdf", detail="low")
+
+    # Create nested documents with PDFs
+    doc1 = DocumentWithPDF(pdf=mock_pdf_1, owner="Alice")
+    doc2 = DocumentWithPDF(pdf=mock_pdf_2, owner="Bob")
+
+    # Add a message with nested multimodal content
+    history.add_message(
+        "user",
+        NestedDocumentsInputSchema(
+            documents=[doc1, doc2],
+            query="Summarize these documents",
+        ),
+    )
+
+    # Get history and verify format
+    result = history.get_history()
+    assert len(result) == 1
+    assert result[0]["role"] == "user"
+    assert isinstance(result[0]["content"], list)
+
+    # Should have JSON with the non-multimodal content
+    json_content = json.loads(result[0]["content"][0])
+    assert json_content["query"] == "Summarize these documents"
+    # The nested documents should be present but without the PDF content
+    assert "documents" in json_content
+    assert len(json_content["documents"]) == 2
+    assert json_content["documents"][0]["owner"] == "Alice"
+    assert json_content["documents"][1]["owner"] == "Bob"
+    # PDF fields should not be in the JSON
+    assert "pdf" not in json_content["documents"][0]
+    assert "pdf" not in json_content["documents"][1]
+
+    # The multimodal objects should be in the content list
+    assert mock_pdf_1 in result[0]["content"]
+    assert mock_pdf_2 in result[0]["content"]
+
+
+def test_get_history_with_deeply_nested_multimodal_content(history):
+    """Test that get_history handles multiple levels of nested multimodal content."""
+    mock_image = instructor.Image(source="nested_image.jpg", media_type="image/jpeg", detail="low")
+    mock_pdf_1 = PDF(source="nested_pdf_1.pdf", media_type="application/pdf", detail="low")
+    mock_pdf_2 = PDF(source="nested_pdf_2.pdf", media_type="application/pdf", detail="low")
+
+    # Create deeply nested content
+    history.add_message(
+        "user",
+        DeeplyNestedSchema(
+            title="Test Report",
+            nested_doc=DocumentWithImage(image=mock_image, description="A test image"),
+            more_docs=[
+                DocumentWithPDF(pdf=mock_pdf_1, owner="Charlie"),
+                DocumentWithPDF(pdf=mock_pdf_2, owner="Diana"),
+            ],
+        ),
+    )
+
+    # Get history and verify format
+    result = history.get_history()
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+
+    # Verify JSON content structure
+    json_content = json.loads(result[0]["content"][0])
+    assert json_content["title"] == "Test Report"
+    assert json_content["nested_doc"]["description"] == "A test image"
+    assert "image" not in json_content["nested_doc"]  # Image should be extracted
+    assert len(json_content["more_docs"]) == 2
+    assert json_content["more_docs"][0]["owner"] == "Charlie"
+    assert json_content["more_docs"][1]["owner"] == "Diana"
+
+    # All multimodal objects should be extracted
+    assert mock_image in result[0]["content"]
+    assert mock_pdf_1 in result[0]["content"]
+    assert mock_pdf_2 in result[0]["content"]
+
+
+def test_get_history_with_dict_nested_multimodal_content(history):
+    """Test that get_history handles nested multimodal content in dicts."""
+    mock_pdf_1 = PDF(source="dict_pdf_1.pdf", media_type="application/pdf", detail="low")
+    mock_pdf_2 = PDF(source="dict_pdf_2.pdf", media_type="application/pdf", detail="low")
+
+    history.add_message(
+        "user",
+        DictWithNestedMultimodal(
+            metadata="Important documents",
+            documents_by_name={
+                "contract": DocumentWithPDF(pdf=mock_pdf_1, owner="Legal"),
+                "invoice": DocumentWithPDF(pdf=mock_pdf_2, owner="Finance"),
+            },
+        ),
+    )
+
+    result = history.get_history()
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+
+    # Verify JSON content
+    json_content = json.loads(result[0]["content"][0])
+    assert json_content["metadata"] == "Important documents"
+    assert "documents_by_name" in json_content
+    assert json_content["documents_by_name"]["contract"]["owner"] == "Legal"
+    assert json_content["documents_by_name"]["invoice"]["owner"] == "Finance"
+
+    # Multimodal objects should be extracted
+    assert mock_pdf_1 in result[0]["content"]
+    assert mock_pdf_2 in result[0]["content"]
+
+
+def test_contains_multimodal_recursive():
+    """Test the recursive multimodal detection function."""
+    from atomic_agents.context.chat_history import _contains_multimodal
+
+    mock_pdf = PDF(source="test.pdf", media_type="application/pdf", detail="low")
+    mock_image = instructor.Image(source="test.jpg", media_type="image/jpeg", detail="low")
+
+    # Direct multimodal
+    assert _contains_multimodal(mock_pdf) is True
+    assert _contains_multimodal(mock_image) is True
+
+    # Non-multimodal
+    assert _contains_multimodal("string") is False
+    assert _contains_multimodal(123) is False
+    assert _contains_multimodal({"key": "value"}) is False
+
+    # Nested in list
+    assert _contains_multimodal([mock_pdf]) is True
+    assert _contains_multimodal(["string", mock_image]) is True
+    assert _contains_multimodal(["string", "another"]) is False
+
+    # Nested in dict
+    assert _contains_multimodal({"pdf": mock_pdf}) is True
+    assert _contains_multimodal({"key": "value"}) is False
+
+    # Nested in Pydantic model
+    doc = DocumentWithPDF(pdf=mock_pdf, owner="Test")
+    assert _contains_multimodal(doc) is True
+
+    simple = InputSchema(test_field="test")
+    assert _contains_multimodal(simple) is False
+
+
+def test_extract_multimodal_objects_recursive():
+    """Test the recursive multimodal extraction function."""
+    from atomic_agents.context.chat_history import _extract_multimodal_objects
+
+    mock_pdf_1 = PDF(source="test1.pdf", media_type="application/pdf", detail="low")
+    mock_pdf_2 = PDF(source="test2.pdf", media_type="application/pdf", detail="low")
+    mock_image = instructor.Image(source="test.jpg", media_type="image/jpeg", detail="low")
+
+    # Direct extraction
+    result = _extract_multimodal_objects(mock_pdf_1)
+    assert result == [mock_pdf_1]
+
+    # From list
+    result = _extract_multimodal_objects([mock_pdf_1, mock_pdf_2])
+    assert mock_pdf_1 in result
+    assert mock_pdf_2 in result
+
+    # From nested Pydantic model
+    doc = DocumentWithPDF(pdf=mock_pdf_1, owner="Test")
+    result = _extract_multimodal_objects(doc)
+    assert result == [mock_pdf_1]
+
+    # From deeply nested structure
+    nested = DeeplyNestedSchema(
+        title="Test",
+        nested_doc=DocumentWithImage(image=mock_image, description="desc"),
+        more_docs=[
+            DocumentWithPDF(pdf=mock_pdf_1, owner="A"),
+            DocumentWithPDF(pdf=mock_pdf_2, owner="B"),
+        ],
+    )
+    result = _extract_multimodal_objects(nested)
+    assert mock_image in result
+    assert mock_pdf_1 in result
+    assert mock_pdf_2 in result
+    assert len(result) == 3
+
+
+def test_build_non_multimodal_dict_recursive():
+    """Test the recursive non-multimodal dict building function."""
+    from atomic_agents.context.chat_history import _build_non_multimodal_dict
+
+    mock_pdf = PDF(source="test.pdf", media_type="application/pdf", detail="low")
+    mock_image = instructor.Image(source="test.jpg", media_type="image/jpeg", detail="low")
+
+    # Multimodal returns None
+    assert _build_non_multimodal_dict(mock_pdf) is None
+    assert _build_non_multimodal_dict(mock_image) is None
+
+    # Primitives pass through
+    assert _build_non_multimodal_dict("string") == "string"
+    assert _build_non_multimodal_dict(123) == 123
+
+    # List filtering
+    result = _build_non_multimodal_dict(["a", mock_pdf, "b"])
+    assert result == ["a", "b"]
+
+    # Dict filtering
+    result = _build_non_multimodal_dict({"text": "value", "pdf": mock_pdf})
+    assert result == {"text": "value"}
+
+    # Nested Pydantic model
+    doc = DocumentWithPDF(pdf=mock_pdf, owner="Alice")
+    result = _build_non_multimodal_dict(doc)
+    assert result == {"owner": "Alice"}
+
+    # Complex nested structure
+    mock_pdf_2 = PDF(source="test2.pdf", media_type="application/pdf", detail="low")
+    nested = NestedDocumentsInputSchema(
+        documents=[
+            DocumentWithPDF(pdf=mock_pdf, owner="Alice"),
+            DocumentWithPDF(pdf=mock_pdf_2, owner="Bob"),
+        ],
+        query="Test query",
+    )
+    result = _build_non_multimodal_dict(nested)
+    assert result["query"] == "Test query"
+    assert len(result["documents"]) == 2
+    assert result["documents"][0]["owner"] == "Alice"
+    assert result["documents"][1]["owner"] == "Bob"
+    assert "pdf" not in result["documents"][0]
+    assert "pdf" not in result["documents"][1]
