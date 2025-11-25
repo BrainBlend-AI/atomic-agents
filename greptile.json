@@ -76,7 +76,7 @@
         "scope": ["**"]
       },
       {
-        "context": "The project uses Poetry for dependency management, pytest for testing, and Black for code formatting with a line length of 127.",
+        "context": "The project uses uv for dependency management with a workspace configuration, pytest for testing, and Black for code formatting with a line length of 127.",
         "scope": ["**"]
       }
     ]
