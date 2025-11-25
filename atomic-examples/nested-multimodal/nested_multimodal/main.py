@@ -156,14 +156,11 @@ def main():
     image_path1 = os.path.join(test_media_directory, "image_sample.jpg")
     image_path2 = os.path.join(test_media_directory, "image_sample2.jpg")
 
-    # Create test_media directory and download sample images if needed
-    os.makedirs(test_media_directory, exist_ok=True)
+    # Check for test images
     if not os.path.exists(image_path1) or not os.path.exists(image_path2):
-        print("Downloading sample test images...")
-        import urllib.request
-        urllib.request.urlretrieve("https://picsum.photos/300/200", image_path1)
-        urllib.request.urlretrieve("https://picsum.photos/400/300", image_path2)
-        print("Downloaded test images.")
+        print(f"Error: Test images not found in {test_media_directory}")
+        print("Please ensure image_sample.jpg and image_sample2.jpg exist.")
+        return
 
     print(f"Using test images from: {test_media_directory}")
     print()
