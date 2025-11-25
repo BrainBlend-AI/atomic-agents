@@ -4,79 +4,102 @@ This guide provides instructions for developers who want to contribute to the At
 
 ## Project Structure
 
-Atomic Agents uses a monorepo structure, which means multiple related projects are managed in a single repository. The main components are:
+Atomic Agents uses a monorepo structure managed with [uv workspaces](https://docs.astral.sh/uv/concepts/projects/workspaces/), which means multiple related projects are managed in a single repository with a unified lockfile. The main components are:
 
 1. `atomic-agents/`: The core Atomic Agents library
 2. `atomic-assembler/`: The CLI tool for managing Atomic Agents components
-3. `atomic-examples/`: Example projects showcasing Atomic Agents usage
-4. `atomic-forge/`: A collection of tools that can be used with Atomic Agents
+3. `atomic-examples/`: Example projects showcasing Atomic Agents usage (workspace members)
+4. `atomic-forge/`: A collection of tools that can be used with Atomic Agents (workspace members)
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.11 or higher
-- Poetry (for dependency management)
+- Python 3.12 or higher
+- [uv](https://docs.astral.sh/uv/) (for dependency management)
 - Git
+
+### Installing uv
+
+If you don't have uv installed, you can install it with:
+
+```bash
+# On macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# On Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
 ### Setting Up the Development Environment
 
 1. Fork the repository on GitHub.
 2. Clone your fork locally:
-   ```
+   ```bash
    git clone https://github.com/BrainBlend-AI/atomic-agents.git
    cd atomic-agents
    ```
-3. Install dependencies using Poetry:
+3. Install dependencies using uv:
+   ```bash
+   uv sync
    ```
-   poetry install
-   ```
-4. Activate the virtual environment:
-   ```
-   # For Poetry < 2.0
-   poetry shell
-   
-   # For Poetry >= 2.0
-   poetry env activate
+4. To install all workspace packages (examples and tools):
+   ```bash
+   uv sync --all-packages
    ```
 
 ## Development Workflow
 
 1. Create a new branch for your feature or bugfix:
-   ```
+   ```bash
    git checkout -b feature-branch
    ```
 
 2. Make your changes in the appropriate project directory.
 
 3. Format your code using Black:
-   ```
-   poetry run black atomic-agents atomic-assembler atomic-examples atomic-forge
+   ```bash
+   uv run black atomic-agents atomic-assembler atomic-examples atomic-forge
    ```
 
 4. Lint your code using Flake8:
-   ```
-   poetry run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
+   ```bash
+   uv run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
    ```
 
 5. Run the tests:
-   ```
-   poetry run pytest --cov=atomic_agents atomic-agents
+   ```bash
+   uv run pytest --cov=atomic_agents atomic-agents
    ```
 
 6. If you've added new functionality, make sure to add appropriate tests.
 
 7. Commit your changes:
-   ```
+   ```bash
    git commit -m 'Add some feature'
    ```
 
 8. Push to your fork:
-   ```
+   ```bash
    git push origin feature-branch
    ```
 
 9. Open a pull request on GitHub.
+
+## Working with Workspace Members
+
+The monorepo uses uv workspaces. To work with specific packages:
+
+```bash
+# Run a command in a specific package context
+uv run --package quickstart python quickstart/1_0_basic_chatbot.py
+
+# Install dependencies for all packages
+uv sync --all-packages
+
+# Build a specific package
+uv build --package atomic-agents
+```
 
 ## Code Style and Best Practices
 
@@ -91,12 +114,12 @@ Atomic Agents uses a monorepo structure, which means multiple related projects a
 - Write unit tests for all new functionality.
 - Make sure to get 100% test coverage for all new functionality.
 - Run the test suite before submitting a pull request:
-  ```
-  pytest --cov atomic_agents
+  ```bash
+  uv run pytest --cov atomic_agents
   ```
 - To view a detailed coverage report:
-  ```
-  coverage html
+  ```bash
+  uv run coverage html
   ```
   This will generate an HTML report in the `htmlcov/` directory.
 

@@ -26,10 +26,10 @@ To get started with the RAG Chatbot:
    cd atomic-agents/atomic-examples/rag-chatbot
    ```
 
-3. **Install the dependencies using Poetry:**
+3. **Install the dependencies using uv:**
 
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. **Set up environment variables:**
@@ -45,7 +45,7 @@ To get started with the RAG Chatbot:
 5. **Run the RAG Chatbot:**
 
    ```bash
-   poetry run python rag_chatbot/main.py
+   uv run python rag_chatbot/main.py
    ```
 
 ## Vector Database Configuration
@@ -68,14 +68,14 @@ The RAG Chatbot supports two vector databases:
 
 ```bash
 export VECTOR_DB_TYPE=chroma
-poetry run python rag_chatbot/main.py
+uv run python rag_chatbot/main.py
 ```
 
 ### Using Qdrant (Local)
 
 ```bash
 export VECTOR_DB_TYPE=qdrant
-poetry run python rag_chatbot/main.py
+uv run python rag_chatbot/main.py
 ```
 
 ## Components

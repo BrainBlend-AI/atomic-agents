@@ -1,21 +1,29 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fastapi_memory"]
+
+[project]
 name = "fastapi-memory"
 version = "0.1.0"
 description = "Simple FastAPI integration example with Atomic Agents"
-authors = ["BrainBlend AI"]
 readme = "README.md"
+authors = [
+    { name = "BrainBlend AI" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "atomic-agents",
+    "fastapi>=0.115.14,<1.0.0",
+    "uvicorn>=0.32.1,<1.0.0",
+    "instructor==1.13.0",
+    "openai>=2.0.0,<3.0.0",
+    "pydantic>=2.10.3,<3.0.0",
+    "httpx>=0.28.1,<1.0.0",
+    "rich>=13.9.4,<14.0.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-atomic-agents = {path = "../..", develop = true}
-fastapi = "^0.115.14"
-uvicorn = "^0.32.1"
-instructor = "==1.13.0"
-openai = ">=2.0.0,<3.0.0"
-pydantic = ">=2.10.3,<3.0.0"
-httpx = "^0.28.1"
-rich = "^13.9.4"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv.sources]
+atomic-agents = { workspace = true }

@@ -387,9 +387,9 @@ The prompt interface consists of:
 
 The server can be configured through command-line arguments:
 ```bash
-poetry run example-mcp-server --mode=sse --host=0.0.0.0 --port=6969 --reload
-poetry run example-mcp-server --mode=stdio
-poetry run example-mcp-server --mode=http_stream --host=0.0.0.0 --port=6969
+uv run example-mcp-server --mode=sse --host=0.0.0.0 --port=6969 --reload
+uv run example-mcp-server --mode=stdio
+uv run example-mcp-server --mode=http_stream --host=0.0.0.0 --port=6969
 ```
 
 Options:
@@ -415,7 +415,7 @@ For STDIO transport, additional options are available:
 class MCPConfig:
     openai_model: str = "gpt-5-mini"
     openai_api_key: str = os.getenv("OPENAI_API_KEY")
-    mcp_stdio_server_command: str = "poetry run example-mcp-server --mode stdio"
+    mcp_stdio_server_command: str = "uv run example-mcp-server --mode stdio"
 ```
 
 ## Usage Examples
@@ -423,7 +423,7 @@ class MCPConfig:
 1. **Start the Server (SSE mode)**:
 ```bash
 cd example-mcp-server
-poetry run example-mcp-server --mode=sse
+uv run example-mcp-server --mode=sse
 ```
 
 2. **Run the Client**:
@@ -431,19 +431,19 @@ poetry run example-mcp-server --mode=sse
 Using the main launcher with transport selection:
 ```bash
 cd example-client
-poetry run python -m example_client.main --transport sse
+uv run python -m example_client.main --transport sse
 ```
 
 Directly calling the SSE client:
 ```bash
 cd example-client
-poetry run python -m example_client.main_sse
+uv run python -m example_client.main_sse
 ```
 
 Directly calling the STDIO client:
 ```bash
 cd example-client
-poetry run python -m example_client.main_stdio
+uv run python -m example_client.main_stdio
 ```
 
 3. **Example Queries**:

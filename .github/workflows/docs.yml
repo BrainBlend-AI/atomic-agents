@@ -28,37 +28,39 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'  # ensure consistency with project requirement
-          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install
+          uv sync
 
       - name: Sync version from pyproject.toml
         run: |
-          poetry run python scripts/sync_version.py
-      
+          uv run python scripts/sync_version.py
+
       - name: Build singlehtml for documentation extraction
         run: |
           cd docs
-          poetry run make singlehtml
-      
+          uv run make singlehtml
+
       - name: Generate all llms.txt files
         run: |
-          poetry run python scripts/generate_llms_files.py
+          uv run python scripts/generate_llms_files.py
           # Copy to _static directory for Sphinx to process during build
           mkdir -p docs/_static
           cp docs/llms-*.txt docs/_static/
           echo "Generated llms files:"
           ls -lh docs/_static/llms-*.txt
-      
+
       - name: Build HTML documentation
         run: |
           cd docs
-          poetry run make html
-          
+          uv run make html
+
       - name: Verify llms files in build
         run: |
           echo "Checking for llms files in build directory:"

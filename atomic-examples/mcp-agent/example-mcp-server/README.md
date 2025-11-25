@@ -38,9 +38,9 @@ This project is an MCP (Model Context Protocol) server that provides tools and r
    cd atomic-examples/mcp-agent/example-mcp-server
    ```
 
-2. **Create a virtual environment** and install dependencies:
+2. **Install dependencies**:
    ```bash
-   poetry install
+   uv sync
    ```
 
 ## Running the Server
@@ -53,25 +53,25 @@ After installation, you can use the `example-mcp-server` command directly:
 
 ```bash
 # Run in stdio mode (for direct subprocess communication)
-poetry run example-mcp-server --mode=stdio
+uv run example-mcp-server --mode=stdio
 
 # Run in SSE mode (defaults to http://0.0.0.0:6969)
-poetry run example-mcp-server --mode=sse
+uv run example-mcp-server --mode=sse
 
 # Run in SSE mode with custom host/port
-poetry run example-mcp-server --mode=sse --host 127.0.0.1 --port 8000
+uv run example-mcp-server --mode=sse --host 127.0.0.1 --port 8000
 
 # Run in SSE mode with auto-reload for development
-poetry run example-mcp-server --mode=sse --reload
+uv run example-mcp-server --mode=sse --reload
 
 # Run in HTTP Stream mode (default http://0.0.0.0:6969/mcp)
-poetry run example-mcp-server --mode=http_stream
+uv run example-mcp-server --mode=http_stream
 
 # Run in HTTP Stream mode with custom host/port
-poetry run example-mcp-server --mode=http_stream --host 127.0.0.1 --port 8000
+uv run example-mcp-server --mode=http_stream --host 127.0.0.1 --port 8000
 
 # Run in HTTP Stream mode with auto-reload
-poetry run example-mcp-server --mode=http_stream --reload
+uv run example-mcp-server --mode=http_stream --reload
 ```
 
 ### Using Python Module
@@ -80,14 +80,14 @@ Alternatively, you can run the server as a Python module:
 
 ```bash
 # Using the unified server script
-poetry run python -m example_mcp_server.server --mode=stdio
-poetry run python -m example_mcp_server.server --mode=sse
-poetry run python -m example_mcp_server.server --mode=http_stream
+uv run python -m example_mcp_server.server --mode=stdio
+uv run python -m example_mcp_server.server --mode=sse
+uv run python -m example_mcp_server.server --mode=http_stream
 
 # Or call the specific implementations directly
-poetry run python -m example_mcp_server.server_stdio
-poetry run python -m example_mcp_server.server_sse
-poetry run python -m example_mcp_server.server_http
+uv run python -m example_mcp_server.server_stdio
+uv run python -m example_mcp_server.server_sse
+uv run python -m example_mcp_server.server_http
 ```
 
 ## Client Integration
@@ -103,7 +103,7 @@ This server is designed to work with the companion MCP client in the `example-cl
 In STDIO mode, the client launches the server using a command like:
 
 ```python
-mcp_stdio_server_command: str = "poetry run example-mcp-server --mode stdio"
+mcp_stdio_server_command: str = "uv run example-mcp-server --mode stdio"
 ```
 
 This mode is useful for local development, testing, and when you don't want to run a separate server process.
@@ -135,7 +135,7 @@ This mode supports a streaming RPC-like interaction over HTTP, where the client 
 For faster development with the SSE mode, you can use the auto-reload feature which automatically restarts the server when code changes are detected:
 
 ```bash
-poetry run example-mcp-server --mode=sse --reload
+uv run example-mcp-server --mode=sse --reload
 ```
 
 This is particularly useful during active development as you won't need to manually restart the server after each code change.

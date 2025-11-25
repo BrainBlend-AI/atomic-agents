@@ -30,7 +30,7 @@ atomic-monorepo/
 ├── docs/                   # Sphinx documentation
 ├── guides/                 # Development guides
 ├── .github/workflows/      # CI/CD pipelines
-├── pyproject.toml          # Poetry configuration
+├── pyproject.toml          # Project configuration
 └── README.md              # Main documentation
 ```
 
@@ -183,7 +183,7 @@ Full support for MCP enables connection to external tools and resources through 
 - **CLI Framework:** Textual (TUI), Rich (terminal formatting)
 - **Testing:** pytest with coverage
 - **Documentation:** Sphinx + MyST + ReadTheDocs theme
-- **Build System:** Poetry
+- **Build System:** uv (with hatchling)
 
 ### LLM Provider Compatibility
 
@@ -211,7 +211,7 @@ Through Instructor, Atomic Agents supports all major LLM providers:
 ### Prerequisites
 
 - Python ≥3.12, <4.0
-- Poetry (package manager)
+- [uv](https://docs.astral.sh/uv/) (package manager)
 
 ### Installation
 
@@ -221,23 +221,23 @@ git clone https://github.com/BrainBlend-AI/atomic-agents.git
 cd atomic-monorepo
 
 # Install dependencies
-poetry install
+uv sync
 
-# Activate virtual environment
-poetry shell
+# Install all workspace packages (examples and tools)
+uv sync --all-packages
 ```
 
 ### Development Commands
 
 ```bash
 # Code formatting
-poetry run black atomic-agents atomic-assembler atomic-examples atomic-forge
+uv run black atomic-agents atomic-assembler atomic-examples atomic-forge
 
 # Linting
-poetry run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
+uv run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
 
 # Testing
-poetry run pytest --cov=atomic_agents atomic-agents
+uv run pytest --cov=atomic_agents atomic-agents
 
 # Build documentation
 cd docs && make html

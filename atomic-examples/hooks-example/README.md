@@ -23,9 +23,9 @@ This example demonstrates the powerful hook system integration in AtomicAgent, w
    cd atomic-agents/atomic-examples/hooks-example
    ```
 
-3. Install the dependencies using Poetry:
+3. Install the dependencies using uv:
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. Set up your OpenAI API key:
@@ -35,7 +35,7 @@ This example demonstrates the powerful hook system integration in AtomicAgent, w
 
 5. Run the example:
    ```bash
-   poetry run python hooks_example/main.py
+   uv run python hooks_example/main.py
    ```
 
 ## What This Example Shows

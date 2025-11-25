@@ -21,9 +21,14 @@ There are many ways to contribute to Atomic Agents:
    cd atomic-agents
    ```
 
-2. Install dependencies:
+2. Install dependencies with uv:
    ```bash
-   poetry install
+   uv sync
+   ```
+
+   To install all workspace packages (examples and tools):
+   ```bash
+   uv sync --all-packages
    ```
 
 3. Set up pre-commit hooks:
@@ -101,7 +106,7 @@ When creating new tools:
 Run tests with pytest:
 
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 Include tests for:
@@ -122,7 +127,7 @@ When adding documentation:
 5. Build and verify locally:
    ```bash
    cd docs
-   poetry run sphinx-build -b html . _build/html
+   uv run sphinx-build -b html . _build/html
    ```
 
 ## Submitting Changes

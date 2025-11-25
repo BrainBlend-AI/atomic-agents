@@ -21,48 +21,39 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Poetry
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
-      - name: Configure Poetry
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-
-      - name: Cache Poetry virtualenv
+      - name: Cache uv
         uses: actions/cache@v4
         id: cache
         with:
-          path: ./.venv
-          key: venv-${{ runner.os }}-python-${{ runner.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-python-${{ runner.python-version }}-${{ hashFiles('**/uv.lock') }}
           restore-keys: |
-            venv-${{ runner.os }}-python-${{ runner.python-version }}-
-
-      - name: Select Python for Poetry
-        run: |
-          poetry env use $(which python)
+            uv-${{ runner.os }}-python-${{ runner.python-version }}-
 
       - name: Install Dependencies
         run: |
-          poetry install --with dev
-          poetry run pip list  # Verify installation
+          uv sync
+          uv run pip list  # Verify installation
 
       - name: Verify Black Installation
         run: |
-          poetry run which black || echo "Black not found"
-          poetry run black --version
+          uv run which black || echo "Black not found"
+          uv run black --version
 
       - name: Run Black Check
         run: |
-          poetry run black --check atomic-agents atomic-assembler atomic-examples atomic-forge
+          uv run black --check atomic-agents atomic-assembler atomic-examples atomic-forge
         if: success()
 
       - name: Run Flake8
-        run: poetry run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
+        run: uv run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
         if: success()
 
       - name: Run Tests
-        run: poetry run pytest --cov=atomic_agents atomic-agents
+        run: uv run pytest --cov=atomic_agents atomic-agents
         if: success()

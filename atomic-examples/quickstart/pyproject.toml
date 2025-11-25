@@ -1,20 +1,28 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["quickstart"]
+
+[project]
 name = "quickstart"
 version = "1.0.0"
 description = "Quickstart example for Atomic Agents"
-authors = ["Kenny Vaneetvelde <kenny.vaneetvelde@gmail.com>"]
 readme = "README.md"
+authors = [
+    { name = "Kenny Vaneetvelde", email = "kenny.vaneetvelde@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "atomic-agents",
+    "instructor==1.13.0",
+    "openai>=2.0.0,<3.0.0",
+    "groq>=0.11.0,<1.0.0",
+    "mistralai>=1.1.0,<2.0.0",
+    "anthropic>=0.39.0,<1.0.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-atomic-agents = {path = "../..", develop = true}
-instructor = "==1.13.0"
-openai = ">=2.0.0,<3.0.0"
-groq = ">=0.11.0,<1.0.0"
-mistralai = ">=1.1.0,<2.0.0"
-anthropic = ">=0.39.0,<1.0.0"
-python-dotenv = ">=1.0.1,<2.0.0"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv.sources]
+atomic-agents = { workspace = true }

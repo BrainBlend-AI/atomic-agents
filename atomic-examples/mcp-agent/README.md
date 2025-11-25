@@ -75,13 +75,13 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 
    ```bash
    cd example-mcp-server
-   poetry install
+   uv sync
    ```
-   
+
 3. Set up the client:
    ```bash
    cd ../example-client
-   poetry install
+   uv sync
    ```
 
 4. Run the example:
@@ -90,40 +90,40 @@ This example shows the flexibility of the MCP architecture with two distinct tra
 
    ```bash
    cd example-client
-   poetry run python -m example_client.main --client stdio
+   uv run python -m example_client.main --client stdio
    # or simply:
-   poetry run python -m example_client.main
+   uv run python -m example_client.main
    ```
-   
+
    **Using async STDIO transport:**
 
    ```bash
    cd example-client
-   poetry run python -m example_client.main --client stdio_async
+   uv run python -m example_client.main --client stdio_async
    ```
-   
+
    **Using SSE transport (Deprecated):**
 
    ```bash
    # First terminal: Start the server
    cd example-mcp-server
-   poetry run -m example_mcp_server.server --mode=sse
+   uv run python -m example_mcp_server.server --mode=sse
 
    # Second terminal: Run the client with SSE transport
    cd example-client
-   poetry run python -m example_client.main --client sse
+   uv run python -m example_client.main --client sse
    ```
-   
+
    **Using HTTP Stream transport:**
 
    ```bash
    # First terminal: Start the server
    cd example-mcp-server
-   poetry run python -m example_mcp_server.server --mode=http_stream
+   uv run python -m example_mcp_server.server --mode=http_stream
 
    # Second terminal: Run the client with HTTP Stream transport
    cd example-client
-   poetry run python -m example_client.main --client http_stream
+   uv run python -m example_client.main --client http_stream
    ```
 
    **Using FastAPI client:**
@@ -131,11 +131,11 @@ This example shows the flexibility of the MCP architecture with two distinct tra
    ```bash
    # First terminal: Start the MCP server
    cd example-mcp-server
-   poetry run python -m example_mcp_server.server --mode=http_stream
+   uv run python -m example_mcp_server.server --mode=http_stream
 
    # Second terminal: Run the FastAPI client
    cd example-client
-   poetry run python -m example_client.main --client fastapi
+   uv run python -m example_client.main --client fastapi
    # Then visit http://localhost:8000 for the API interface
    ```
 

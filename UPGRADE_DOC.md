@@ -7,9 +7,9 @@ Atomic Agents v2.0 introduces breaking changes to improve the developer experien
 ## Prerequisites
 
 - **Python Version**: Ensure your environment is running Python 3.12 or higher (v2.0 requires >=3.12)
-- **Update Dependencies**: 
+- **Update Dependencies**:
   ```bash
-  poetry update atomic-agents
+  uv sync
   # or
   pip install --upgrade atomic-agents>=2.0.0
   ```
@@ -467,8 +467,8 @@ This upgrade introduces breaking changes. All projects must be updated to use th
 ### YouTube API Update
 The YouTube API dependency has been updated to version 1.1.1 to resolve compatibility issues with lower versions.
 
-### Poetry Dependencies
-Examples and forge dependencies have been updated using `poetry update atomic-agents` to ensure compatibility with the new package structure.
+### Package Dependencies
+Examples and forge dependencies have been updated using `uv sync` to ensure compatibility with the new package structure.
 
 ## Version Information
 

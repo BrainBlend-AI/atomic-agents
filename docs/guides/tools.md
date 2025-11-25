@@ -46,7 +46,7 @@ tool_name/
 │   pyproject.toml
 │   README.md
 │   requirements.txt
-│   poetry.lock
+│   uv.lock
 │
 ├── tool/
 │   │   tool_name.py

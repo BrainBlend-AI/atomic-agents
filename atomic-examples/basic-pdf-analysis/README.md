@@ -21,9 +21,9 @@ This example demonstrates how to use the Atomic Agents framework to analyze a PD
    cd atomic-agents/atomic-examples/basic-pdf-analysis
    ```
 
-3. Install dependencies using Poetry:
+3. Install dependencies using uv:
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. Set up environment variables:
@@ -35,7 +35,7 @@ This example demonstrates how to use the Atomic Agents framework to analyze a PD
 
 5. Run the example:
    ```bash
-   poetry run python basic_pdf_analysis/main.py
+   uv run python basic_pdf_analysis/main.py
    ```
 
 ## Components

@@ -21,9 +21,9 @@ This example demonstrates how to create an Orchestrator Agent that intelligently
    cd atomic-agents/atomic-examples/orchestration-agent
    ```
 
-3. Install dependencies using Poetry:
+3. Install dependencies using uv:
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. Set up environment variables:
@@ -36,7 +36,7 @@ This example demonstrates how to create an Orchestrator Agent that intelligently
 
 6. Run the example:
    ```bash
-   poetry run python orchestration_agent/orchestrator.py
+   uv run python orchestration_agent/orchestrator.py
    ```
 
 ## Components

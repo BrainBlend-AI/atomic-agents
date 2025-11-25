@@ -27,10 +27,10 @@ This example demonstrates how to use the Atomic Agents framework to analyze imag
    cd atomic-agents/atomic-examples/basic-multimodal
    ```
 
-3. Install dependencies using Poetry:
+3. Install dependencies using uv:
 
    ```bash
-   poetry install
+   uv sync
    ```
 
 4. Set up environment variables:
@@ -45,7 +45,7 @@ This example demonstrates how to use the Atomic Agents framework to analyze imag
 5. Run the example:
 
    ```bash
-   poetry run python basic_multimodal/main.py
+   uv run python basic_multimodal/main.py
    ```
 
 ## Components
