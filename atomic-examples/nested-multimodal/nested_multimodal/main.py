@@ -18,7 +18,7 @@ This example supports both:
 """
 
 import os
-from typing import List, Optional
+from typing import List
 
 import instructor
 from openai import OpenAI
