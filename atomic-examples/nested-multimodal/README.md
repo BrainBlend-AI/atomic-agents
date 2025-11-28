@@ -1,141 +1,76 @@
 # Nested Multimodal Content Example
 
-This example demonstrates the support for **nested multimodal content** in Atomic Agents, as implemented for [GitHub Issue #141](https://github.com/BrainBlend-AI/atomic-agents/issues/141).
+Analyze multiple images (or PDFs/audio) in a single request using nested schemas.
 
-## The Problem (Issue #141)
+## What This Does
 
-Previously, `ChatHistory` only detected multimodal content (Image, PDF, Audio) at the **top level** of input schemas. When multimodal content was nested within other schemas, it was incorrectly serialized with `json.dumps`, causing issues.
-
-For example, this structure would NOT work correctly:
+Pass a **list of documents** - each containing an image plus metadata - to an agent that analyzes them all and provides a comparative summary.
 
 ```python
-class Document(BaseIOSchema):
-    pdf: PDF = Field(...)  # Nested multimodal content
+class ImageDocument(BaseIOSchema):
+    image: Image = Field(...)
     owner: str = Field(...)
+    category: str = Field(...)
 
-class InputSchema(BaseIOSchema):
-    documents: list[Document] = Field(...)  # List of nested schemas with PDFs
+class Input(BaseIOSchema):
+    documents: list[ImageDocument] = Field(...)  # Multiple images with metadata
+    query: str = Field(...)
+
+# Analyze multiple images at once
+result = agent.run(Input(
+    documents=[doc1, doc2, doc3],
+    query="Compare these images"
+))
 ```
 
-## The Solution
-
-The `ChatHistory.get_history()` method now **recursively** detects and extracts multimodal content from any depth of nested schemas:
-
-1. `_contains_multimodal(obj)` - Recursively checks for multimodal content
-2. `_extract_multimodal_objects(obj)` - Recursively extracts all multimodal objects
-3. `_build_non_multimodal_dict(obj)` - Builds JSON excluding multimodal content
-
-## What This Example Demonstrates
-
-This example creates:
-- A `Document` schema containing a `PDF` field AND metadata (owner, type)
-- A `NestedMultimodalInput` schema containing a **list** of `Document` objects
-- An agent that processes all nested PDFs and provides comparative analysis
-
-This is the exact scenario that was broken before Issue #141 was fixed.
-
-## Prerequisites
-
-1. **Google AI API Key**: This example uses Google's Gemini model for multimodal processing.
-
-   Set your API key in `.env`:
-   ```
-   GEMINI_API_KEY=your_api_key_here
-   ```
-
-2. **Python 3.12+**
-
-## Installation
-
-From the monorepo root:
+## Setup
 
 ```bash
 cd atomic-examples/nested-multimodal
 uv sync
 ```
 
-## Running the Example
+Set your API key in `.env`:
+```
+OPENAI_API_KEY=your_key_here
+# or
+GEMINI_API_KEY=your_key_here
+```
+
+## Run
 
 ```bash
 uv run python nested_multimodal/main.py
 ```
 
-## Expected Output
+## Example Output
 
 ```
-============================================================
-Nested Multimodal Content Example (Issue #141)
-============================================================
-
-Using test PDF: .../test_media/pdf_sample.pdf
+Using OpenAI GPT-5.1
 
 Creating nested document structure...
-  - Document 1: PDF owned by 'Legal Department', type 'contract'
-  - Document 2: PDF owned by 'Finance Team', type 'report'
-
-Sending nested multimodal content to agent...
-(Previously this would fail due to incorrect JSON serialization)
+  - Document 1: Image owned by 'Marketing Team', category 'photo'
+  - Document 2: Image owned by 'Content Team', category 'photo'
 
 ============================================================
 ANALYSIS RESULTS
 ============================================================
 
-Document 1:
-  Owner: Legal Department
-  Type: contract
-  Title: [extracted title]
-  Pages: [page count]
-  Summary: [brief summary]
+Image 1:
+  Owner: Marketing Team
+  Description: A black-and-white mountain valley with dramatic lighting...
+  Dominant Colors: black, white, gray
+  Key Elements: mountain slopes, valley, diagonal light beam
 
-Document 2:
-  Owner: Finance Team
-  Type: report
-  Title: [extracted title]
-  Pages: [page count]
-  Summary: [brief summary]
+Image 2:
+  Owner: Content Team
+  Description: Layered blue mountain ridges receding into distance...
+  Dominant Colors: various blues, soft white haze
+  Key Elements: overlapping ridges, atmospheric haze
 
 Comparative Summary:
-  [AI-generated comparison based on the query]
+  Both images depict mountainous landscapes with atmospheric depth...
+  The first is high-contrast black-and-white, the second uses blue tones...
 
-============================================================
 SUCCESS: Nested multimodal content handled correctly!
-============================================================
 ```
-
-## Key Code Patterns
-
-### Defining Nested Multimodal Schemas
-
-```python
-from instructor.multimodal import PDF
-
-class Document(BaseIOSchema):
-    """Document with nested PDF content."""
-    pdf: PDF = Field(..., description="The PDF content")
-    owner: str = Field(..., description="Document owner")
-
-class InputSchema(BaseIOSchema):
-    """Input with list of nested documents."""
-    documents: List[Document] = Field(..., description="Documents to analyze")
-    query: str = Field(..., description="Analysis query")
-```
-
-### Creating Nested Input
-
-```python
-doc1 = Document(pdf=PDF.from_path("doc1.pdf"), owner="Alice")
-doc2 = Document(pdf=PDF.from_path("doc2.pdf"), owner="Bob")
-
-input_data = InputSchema(
-    documents=[doc1, doc2],
-    query="Compare these documents"
-)
-
-# This now works correctly!
-result = agent.run(input_data)
-```
-
-## Related Issues
-
-- [Issue #141: AgentMemory: support nested multimodal data](https://github.com/BrainBlend-AI/atomic-agents/issues/141)
-- [PR #137: Improve handling of multi-modal content in AgentMemory](https://github.com/BrainBlend-AI/atomic-agents/pull/137)
