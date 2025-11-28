@@ -98,15 +98,11 @@ def create_agent():
     elif gemini_key:
         print("Using Google Gemini")
         from google import genai
-        client = instructor.from_genai(
-            client=genai.Client(api_key=gemini_key),
-            mode=instructor.Mode.GENAI_TOOLS
-        )
+
+        client = instructor.from_genai(client=genai.Client(api_key=gemini_key), mode=instructor.Mode.GENAI_TOOLS)
         model = "gemini-2.0-flash"
     else:
-        raise ValueError(
-            "No API key found. Please set OPENAI_API_KEY or GEMINI_API_KEY in your .env file."
-        )
+        raise ValueError("No API key found. Please set OPENAI_API_KEY or GEMINI_API_KEY in your .env file.")
 
     system_prompt_generator = SystemPromptGenerator(
         background=[
@@ -186,21 +182,13 @@ def main():
     print("  - Document 2: Image owned by 'Content Team', category 'random photo'")
     print()
 
-    document1 = ImageDocument(
-        image=Image.from_path(image_path1),
-        owner="Marketing Team",
-        category="random photo"
-    )
-    document2 = ImageDocument(
-        image=Image.from_path(image_path2),
-        owner="Content Team",
-        category="random photo"
-    )
+    document1 = ImageDocument(image=Image.from_path(image_path1), owner="Marketing Team", category="random photo")
+    document2 = ImageDocument(image=Image.from_path(image_path2), owner="Content Team", category="random photo")
 
     # Create the nested input - this is what Issue #141 fixed
     nested_input = NestedMultimodalInput(
         documents=[document1, document2],
-        analysis_query="Compare these images and describe what you see in each one. Note any similarities or differences."
+        analysis_query="Compare these images and describe what you see in each one. Note any similarities or differences.",
     )
 
     print("Sending nested multimodal content to agent...")
@@ -237,6 +225,7 @@ def main():
     except Exception as e:
         print(f"Error during analysis: {e}")
         import traceback
+
         traceback.print_exc()
         raise
 
