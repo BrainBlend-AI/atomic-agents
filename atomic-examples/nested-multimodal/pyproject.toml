@@ -19,7 +19,6 @@ dependencies = [
     "instructor>=1.7.0",
     "google-genai>=1.18.0,<2.0.0",
     "jsonref>=1.1.0,<2.0.0",
-    "python-dotenv>=1.0.0",
 ]
 
 [tool.uv.sources]

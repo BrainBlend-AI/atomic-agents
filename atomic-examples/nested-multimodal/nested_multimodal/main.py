@@ -18,18 +18,31 @@ This example supports both:
 """
 
 import os
+from pathlib import Path
 from typing import List
 
 import instructor
 from openai import OpenAI
 from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
 from atomic_agents.context import SystemPromptGenerator
-from dotenv import load_dotenv
 from instructor.processing.multimodal import Image
 from pydantic import Field
 
 
-load_dotenv()
+def _load_env():
+    """Load .env file from current or parent directories."""
+    for directory in [Path.cwd(), *Path.cwd().parents]:
+        env_file = directory / ".env"
+        if env_file.exists():
+            for line in env_file.read_text().splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+            break
+
+
+_load_env()
 
 
 # =============================================================================

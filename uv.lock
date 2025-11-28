@@ -2016,7 +2016,6 @@ dependencies = [
     { name = "google-genai" },
     { name = "instructor" },
     { name = "jsonref" },
-    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -2025,7 +2024,6 @@ requires-dist = [
     { name = "google-genai", specifier = ">=1.18.0,<2.0.0" },
     { name = "instructor", specifier = ">=1.7.0" },
     { name = "jsonref", specifier = ">=1.1.0,<2.0.0" },
-    { name = "python-dotenv", specifier = ">=1.0.0" },
 ]
 
 [[package]]

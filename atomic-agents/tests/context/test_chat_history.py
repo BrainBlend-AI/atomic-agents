@@ -694,118 +694,63 @@ def test_get_history_with_dict_nested_multimodal_content(history):
     assert mock_pdf_2 in result[0]["content"]
 
 
-def test_contains_multimodal_recursive():
-    """Test the recursive multimodal detection function."""
-    from atomic_agents.context.chat_history import _contains_multimodal
+def test_extract_multimodal_content():
+    """Test the unified multimodal content extraction function."""
+    from atomic_agents.context.chat_history import _extract_multimodal_content
 
     mock_pdf = PDF(source="test.pdf", media_type="application/pdf", detail="low")
     mock_image = instructor.Image(source="test.jpg", media_type="image/jpeg", detail="low")
 
-    # Direct multimodal
-    assert _contains_multimodal(mock_pdf) is True
-    assert _contains_multimodal(mock_image) is True
+    # Direct multimodal - has_multimodal=True, json_data=None
+    result = _extract_multimodal_content(mock_pdf)
+    assert result.has_multimodal is True
+    assert result.objects == [mock_pdf]
+    assert result.json_data is None
 
-    # Non-multimodal
-    assert _contains_multimodal("string") is False
-    assert _contains_multimodal(123) is False
-    assert _contains_multimodal({"key": "value"}) is False
+    # Non-multimodal - has_multimodal=False, json_data preserved
+    result = _extract_multimodal_content("string")
+    assert result.has_multimodal is False
+    assert result.json_data == "string"
+
+    result = _extract_multimodal_content({"key": "value"})
+    assert result.has_multimodal is False
+    assert result.json_data == {"key": "value"}
 
     # Nested in list
-    assert _contains_multimodal([mock_pdf]) is True
-    assert _contains_multimodal(["string", mock_image]) is True
-    assert _contains_multimodal(["string", "another"]) is False
+    result = _extract_multimodal_content([mock_pdf, "text"])
+    assert result.has_multimodal is True
+    assert mock_pdf in result.objects
+    assert result.json_data == ["text"]
 
     # Nested in dict
-    assert _contains_multimodal({"pdf": mock_pdf}) is True
-    assert _contains_multimodal({"key": "value"}) is False
+    result = _extract_multimodal_content({"pdf": mock_pdf, "text": "value"})
+    assert result.has_multimodal is True
+    assert mock_pdf in result.objects
+    assert result.json_data == {"text": "value"}
 
-    # Nested in Pydantic model
-    doc = DocumentWithPDF(pdf=mock_pdf, owner="Test")
-    assert _contains_multimodal(doc) is True
+    # Nested Pydantic model
+    doc = DocumentWithPDF(pdf=mock_pdf, owner="Alice")
+    result = _extract_multimodal_content(doc)
+    assert result.has_multimodal is True
+    assert result.objects == [mock_pdf]
+    assert result.json_data == {"owner": "Alice"}
 
-    simple = InputSchema(test_field="test")
-    assert _contains_multimodal(simple) is False
-
-
-def test_extract_multimodal_objects_recursive():
-    """Test the recursive multimodal extraction function."""
-    from atomic_agents.context.chat_history import _extract_multimodal_objects
-
-    mock_pdf_1 = PDF(source="test1.pdf", media_type="application/pdf", detail="low")
+    # Deeply nested structure
     mock_pdf_2 = PDF(source="test2.pdf", media_type="application/pdf", detail="low")
-    mock_image = instructor.Image(source="test.jpg", media_type="image/jpeg", detail="low")
-
-    # Direct extraction
-    result = _extract_multimodal_objects(mock_pdf_1)
-    assert result == [mock_pdf_1]
-
-    # From list
-    result = _extract_multimodal_objects([mock_pdf_1, mock_pdf_2])
-    assert mock_pdf_1 in result
-    assert mock_pdf_2 in result
-
-    # From nested Pydantic model
-    doc = DocumentWithPDF(pdf=mock_pdf_1, owner="Test")
-    result = _extract_multimodal_objects(doc)
-    assert result == [mock_pdf_1]
-
-    # From deeply nested structure
     nested = DeeplyNestedSchema(
         title="Test",
         nested_doc=DocumentWithImage(image=mock_image, description="desc"),
         more_docs=[
-            DocumentWithPDF(pdf=mock_pdf_1, owner="A"),
+            DocumentWithPDF(pdf=mock_pdf, owner="A"),
             DocumentWithPDF(pdf=mock_pdf_2, owner="B"),
         ],
     )
-    result = _extract_multimodal_objects(nested)
-    assert mock_image in result
-    assert mock_pdf_1 in result
-    assert mock_pdf_2 in result
-    assert len(result) == 3
-
-
-def test_build_non_multimodal_dict_recursive():
-    """Test the recursive non-multimodal dict building function."""
-    from atomic_agents.context.chat_history import _build_non_multimodal_dict
-
-    mock_pdf = PDF(source="test.pdf", media_type="application/pdf", detail="low")
-    mock_image = instructor.Image(source="test.jpg", media_type="image/jpeg", detail="low")
-
-    # Multimodal returns None
-    assert _build_non_multimodal_dict(mock_pdf) is None
-    assert _build_non_multimodal_dict(mock_image) is None
-
-    # Primitives pass through
-    assert _build_non_multimodal_dict("string") == "string"
-    assert _build_non_multimodal_dict(123) == 123
-
-    # List filtering
-    result = _build_non_multimodal_dict(["a", mock_pdf, "b"])
-    assert result == ["a", "b"]
-
-    # Dict filtering
-    result = _build_non_multimodal_dict({"text": "value", "pdf": mock_pdf})
-    assert result == {"text": "value"}
-
-    # Nested Pydantic model
-    doc = DocumentWithPDF(pdf=mock_pdf, owner="Alice")
-    result = _build_non_multimodal_dict(doc)
-    assert result == {"owner": "Alice"}
-
-    # Complex nested structure
-    mock_pdf_2 = PDF(source="test2.pdf", media_type="application/pdf", detail="low")
-    nested = NestedDocumentsInputSchema(
-        documents=[
-            DocumentWithPDF(pdf=mock_pdf, owner="Alice"),
-            DocumentWithPDF(pdf=mock_pdf_2, owner="Bob"),
-        ],
-        query="Test query",
-    )
-    result = _build_non_multimodal_dict(nested)
-    assert result["query"] == "Test query"
-    assert len(result["documents"]) == 2
-    assert result["documents"][0]["owner"] == "Alice"
-    assert result["documents"][1]["owner"] == "Bob"
-    assert "pdf" not in result["documents"][0]
-    assert "pdf" not in result["documents"][1]
+    result = _extract_multimodal_content(nested)
+    assert result.has_multimodal is True
+    assert len(result.objects) == 3
+    assert mock_image in result.objects
+    assert mock_pdf in result.objects
+    assert mock_pdf_2 in result.objects
+    assert result.json_data["title"] == "Test"
+    assert result.json_data["nested_doc"]["description"] == "desc"
+    assert "image" not in result.json_data["nested_doc"]
