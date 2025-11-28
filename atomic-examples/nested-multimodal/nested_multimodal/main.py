@@ -13,7 +13,7 @@ Previously, nested multimodal content like this would be incorrectly serialized 
 causing issues. Now the ChatHistory recursively detects and extracts multimodal content at any depth.
 
 This example supports both:
-- OpenAI (GPT-4 Vision) with OPENAI_API_KEY
+- OpenAI (GPT-5.1) with OPENAI_API_KEY
 - Google Gemini with GEMINI_API_KEY
 """
 
@@ -92,9 +92,9 @@ def create_agent():
     gemini_key = os.getenv("GEMINI_API_KEY")
 
     if openai_key:
-        print("Using OpenAI GPT-4.1")
+        print("Using OpenAI GPT-5.1")
         client = instructor.from_openai(OpenAI(api_key=openai_key))
-        model = "gpt-4.1"
+        model = "gpt-5.1"
     elif gemini_key:
         print("Using Google Gemini")
         from google import genai
