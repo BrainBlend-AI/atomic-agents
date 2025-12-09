@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["progressive_disclosure"]
+
+[project]
+name = "progressive-disclosure"
+version = "0.1.0"
+description = "Progressive Disclosure example for Atomic Agents - demonstrating Anthropic's pattern for efficient MCP tool loading"
+readme = "README.md"
+authors = [
+    { name = "KennyVaneetvelde", email = "kenny@inosta.be" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "atomic-agents",
+    "pd-math-server",
+    "pd-text-server",
+    "pd-data-server",
+    "instructor==1.13.0",
+    "pydantic>=2.10.3,<3.0.0",
+    "rich>=13.0.0",
+    "openai>=2.0.0,<3.0.0",
+    "mcp[cli]>=1.9.4",
+    "fastmcp>=2.0.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+]
+
+[tool.uv.sources]
+atomic-agents = { workspace = true }
+pd-math-server = { path = "servers/math_server" }
+pd-text-server = { path = "servers/text_server" }
+pd-data-server = { path = "servers/data_server" }
