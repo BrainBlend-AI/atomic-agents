@@ -24,5 +24,11 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
+[dependency-groups]
+dev = [
+    "black>=24.10.0",
+    "flake8>=7.3.0",
+]
+
 [tool.uv.sources]
 atomic-agents = { workspace = true }

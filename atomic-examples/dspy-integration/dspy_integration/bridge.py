@@ -7,10 +7,11 @@ This module provides the core integration that allows:
 3. Applying DSPy optimizers (BootstrapFewShot, MIPROv2, etc.) to improve agent performance
 """
 
-from typing import Type, Dict, Any, Optional, List, get_type_hints, get_origin, get_args, Literal
+from typing import Any, Dict, List, Literal, Optional, Type, get_args, get_origin
+
 import dspy
-from pydantic import BaseModel, Field
-from pydantic.fields import FieldInfo
+from pydantic import BaseModel
+
 from atomic_agents.base.base_io_schema import BaseIOSchema
 
 
@@ -38,11 +39,11 @@ def python_type_to_dspy_type(python_type: Any) -> Any:
         return list
 
     # Handle Optional types
-    if origin is type(None) or (hasattr(origin, '__origin__') and origin.__origin__ is type(None)):
+    if origin is type(None) or (hasattr(origin, "__origin__") and origin.__origin__ is type(None)):
         return python_type
 
     # Handle Union types (including Optional)
-    if hasattr(origin, '__name__') and origin.__name__ == 'UnionType':
+    if hasattr(origin, "__name__") and origin.__name__ == "UnionType":
         args = get_args(python_type)
         # Filter out NoneType for Optional handling
         non_none_args = [a for a in args if a is not type(None)]
@@ -58,8 +59,7 @@ def python_type_to_dspy_type(python_type: Any) -> Any:
 
 
 def pydantic_to_dspy_fields(
-    schema: Type[BaseModel],
-    field_type: str = "input"
+    schema: Type[BaseModel], field_type: str = "input"
 ) -> Dict[str, tuple]:
     """
     Convert Pydantic schema fields to DSPy field definitions.
@@ -184,9 +184,7 @@ class DSPyAtomicModule(dspy.Module):
 
         # Create DSPy signature from schemas
         self.signature = create_dspy_signature_from_schemas(
-            input_schema,
-            output_schema,
-            instructions
+            input_schema, output_schema, instructions
         )
 
         # Create the predictor
@@ -300,7 +298,7 @@ class DSPyAtomicPipeline(dspy.Module):
             current_input = {
                 k: getattr(prediction, k)
                 for k in dir(prediction)
-                if not k.startswith('_') and not callable(getattr(prediction, k))
+                if not k.startswith("_") and not callable(getattr(prediction, k))
             }
 
         return results
@@ -336,10 +334,7 @@ def create_dspy_example(
         **validated_output.model_dump(),
     }
 
-    # Create DSPy example with output fields marked
-    output_keys = list(output_schema.model_fields.keys())
-    example = dspy.Example(**example_data).with_inputs(
-        *list(input_schema.model_fields.keys())
-    )
+    # Create DSPy example with input fields marked
+    example = dspy.Example(**example_data).with_inputs(*list(input_schema.model_fields.keys()))
 
     return example
