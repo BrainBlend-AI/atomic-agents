@@ -55,9 +55,7 @@ class MovieGenreSignature(dspy.Signature):
     """
 
     review: str = dspy.InputField(desc="The movie review text to classify")
-    genre: GenreType = dspy.OutputField(
-        desc="The primary genre: action, comedy, drama, horror, sci-fi, or romance"
-    )
+    genre: GenreType = dspy.OutputField(desc="The primary genre: action, comedy, drama, horror, sci-fi, or romance")
     confidence: float = dspy.OutputField(desc="Confidence score between 0.0 and 1.0")
     reasoning: str = dspy.OutputField(desc="Brief explanation for the classification")
 
@@ -135,9 +133,7 @@ def run_stage1_raw_dspy(api_key: str) -> Tuple[EvalResult, Dict[str, Any]]:
     # Step 8: Display results
     _display_stage_results(eval_result, predictions)
 
-    behind_scenes = _create_behind_scenes_data(
-        unoptimized_prompt, optimized_prompt, optimized_classify
-    )
+    behind_scenes = _create_behind_scenes_data(unoptimized_prompt, optimized_prompt, optimized_classify)
 
     return eval_result, behind_scenes
 
@@ -236,9 +232,7 @@ def _capture_optimized_prompt(
         prompt_str = json.dumps(optimized_prompt, indent=2)
         truncated = prompt_str[:3500] + ("..." if len(prompt_str) > 3500 else "")
 
-        content = (
-            "[dim]Notice the auto-selected few-shot examples with reasoning:[/dim]\n\n" + truncated
-        )
+        content = "[dim]Notice the auto-selected few-shot examples with reasoning:[/dim]\n\n" + truncated
         display_panel(content, "Optimized DSPy Prompt (With Auto-Selected Examples)", "green")
 
     return optimized_prompt
@@ -269,9 +263,7 @@ def _run_optimization(lm: dspy.LM, classify: dspy.Module) -> dspy.Module:
         expected_genre = str(example.genre).lower().strip()
         return pred_genre == expected_genre
 
-    with create_progress_context(
-        "[cyan]Running DSPy optimization (30 training examples)..."
-    ) as progress:
+    with create_progress_context("[cyan]Running DSPy optimization (30 training examples)...") as progress:
         task = progress.add_task("Optimizing...", total=None)
 
         optimizer = dspy.BootstrapFewShot(
@@ -323,9 +315,7 @@ def _evaluate_model(
     optimized_classify: dspy.Module,
 ) -> Tuple[EvalResult, List[Dict[str, Any]]]:
     """Evaluate the optimized model on test set."""
-    display_step_header(
-        f"Step 1.6: Evaluation on Test Set ({len(TEST_DATASET)} challenging examples)"
-    )
+    display_step_header(f"Step 1.6: Evaluation on Test Set ({len(TEST_DATASET)} challenging examples)")
 
     predictions = []
     start_time = time.time()
@@ -410,8 +400,6 @@ def _create_behind_scenes_data(
     return {
         "unoptimized_prompt_sample": str(unoptimized_prompt)[:500],
         "optimized_prompt_sample": str(optimized_prompt)[:500],
-        "num_demos_selected": (
-            len(optimized_classify.demos) if hasattr(optimized_classify, "demos") else "N/A"
-        ),
+        "num_demos_selected": (len(optimized_classify.demos) if hasattr(optimized_classify, "demos") else "N/A"),
         "training_examples": 30,
     }

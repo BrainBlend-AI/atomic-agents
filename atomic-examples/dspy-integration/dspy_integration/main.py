@@ -141,13 +141,8 @@ def main() -> None:
 
     # Display configuration
     console.print("\n[dim]Using model: gpt-4o-mini[/dim]")
-    console.print(
-        f"[dim]Training set: {len(TRAINING_DATASET)} examples (balanced across 6 genres)[/dim]"
-    )
-    console.print(
-        f"[dim]Test set: {len(TEST_DATASET)} challenging examples "
-        "(sarcasm, multi-genre, etc.)[/dim]\n"
-    )
+    console.print(f"[dim]Training set: {len(TRAINING_DATASET)} examples (balanced across 6 genres)[/dim]")
+    console.print(f"[dim]Test set: {len(TEST_DATASET)} challenging examples " "(sarcasm, multi-genre, etc.)[/dim]\n")
 
     # Run demonstration
     try:

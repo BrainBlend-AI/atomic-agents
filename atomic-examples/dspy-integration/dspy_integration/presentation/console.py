@@ -128,8 +128,7 @@ def display_results_table(
         show_confidence: Whether to show confidence column
     """
     table = Table(
-        title=f"{title}: {eval_result.accuracy:.1%} Accuracy "
-        f"({eval_result.correct}/{eval_result.total})",
+        title=f"{title}: {eval_result.accuracy:.1%} Accuracy " f"({eval_result.correct}/{eval_result.total})",
         box=box.ROUNDED,
     )
 

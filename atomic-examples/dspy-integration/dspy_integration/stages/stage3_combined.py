@@ -230,9 +230,7 @@ def _run_optimization(
         expected_genre = str(example.genre).lower().strip()
         return pred_genre == expected_genre
 
-    with create_progress_context(
-        f"[green]Running optimization ({len(trainset)} training examples)..."
-    ) as progress:
+    with create_progress_context(f"[green]Running optimization ({len(trainset)} training examples)...") as progress:
         task = progress.add_task("Optimizing...", total=None)
 
         optimizer = dspy.BootstrapFewShot(

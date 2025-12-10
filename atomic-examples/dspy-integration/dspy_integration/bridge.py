@@ -58,9 +58,7 @@ def python_type_to_dspy_type(python_type: Any) -> Any:
     return str  # Default to string for complex types
 
 
-def pydantic_to_dspy_fields(
-    schema: Type[BaseModel], field_type: str = "input"
-) -> Dict[str, tuple]:
+def pydantic_to_dspy_fields(schema: Type[BaseModel], field_type: str = "input") -> Dict[str, tuple]:
     """
     Convert Pydantic schema fields to DSPy field definitions.
 
@@ -183,9 +181,7 @@ class DSPyAtomicModule(dspy.Module):
         self.output_schema = output_schema
 
         # Create DSPy signature from schemas
-        self.signature = create_dspy_signature_from_schemas(
-            input_schema, output_schema, instructions
-        )
+        self.signature = create_dspy_signature_from_schemas(input_schema, output_schema, instructions)
 
         # Create the predictor
         if use_chain_of_thought:

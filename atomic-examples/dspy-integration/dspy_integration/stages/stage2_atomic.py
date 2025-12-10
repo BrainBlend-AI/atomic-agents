@@ -304,8 +304,7 @@ def _display_stage_results(
     # Show sample outputs
     samples = "\n".join(
         [
-            f"  • genre='{predictions[i]['genre']}' (Literal) "
-            f"confidence={predictions[i]['confidence']:.2f} (float)"
+            f"  • genre='{predictions[i]['genre']}' (Literal) " f"confidence={predictions[i]['confidence']:.2f} (float)"
             for i in range(min(3, len(predictions)))
         ]
     )
