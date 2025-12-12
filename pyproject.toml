@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "atomic-agents"
-version = "2.4.0"
+version = "2.4.1"
 description = "A versatile framework for creating and managing intelligent agents."
 readme = "README.md"
 license = "MIT"
@@ -12,6 +12,17 @@ authors = [
     { name = "Kenny Vaneetvelde", email = "kenny.vaneetvelde@gmail.com" }
 ]
 requires-python = ">=3.12"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "instructor==1.13.0",
     "pydantic>=2.11.0,<3.0.0",
