@@ -315,6 +315,51 @@ def test_run(agent, mock_history):
     mock_history.add_message.assert_has_calls([call("user", mock_input), call("assistant", result)])
 
 
+def test_messages_sync_after_run(mock_instructor, mock_system_prompt_generator):
+    """
+    Test that agent.messages includes the assistant response after run() completes.
+    
+    Regression test for GitHub issue #194:
+    https://github.com/BrainBlend-AI/atomic-agents/issues/194
+    
+    The issue was that agent.messages only contained the system prompt and user message
+    after run(), while agent.history.get_history() correctly included the assistant response.
+    """
+    # Use real ChatHistory instead of mock to verify actual message synchronization
+    real_history = ChatHistory()
+    
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=real_history,
+        system_prompt_generator=mock_system_prompt_generator,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    
+    mock_input = BasicChatInputSchema(chat_message="Test input")
+    
+    result = agent.run(mock_input)
+    
+    # Verify agent.messages is in sync with history.get_history()
+    history_messages = agent.history.get_history()
+    
+    # agent.messages should contain: system prompt + history (user + assistant)
+    assert len(agent.messages) == 3, f"Expected 3 messages (system + user + assistant), got {len(agent.messages)}"
+    
+    # First message should be the system prompt
+    assert agent.messages[0]["role"] == "system"
+    
+    # Second message should be the user input
+    assert agent.messages[1]["role"] == "user"
+    
+    # Third message should be the assistant response (the key fix for issue #194)
+    assert agent.messages[2]["role"] == "assistant"
+    
+    # Verify consistency: agent.messages[-2:] should match history.get_history()
+    assert len(history_messages) == 2, f"Expected 2 history messages, got {len(history_messages)}"
+    assert agent.messages[1:] == history_messages
+
+
 def test_run_stream(mock_instructor, mock_history):
     # Create a AgentConfig with system_role set to None
     config = AgentConfig(

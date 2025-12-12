@@ -262,6 +262,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             **self.model_api_parameters,
         )
         self.history.add_message(self.assistant_role, response)
+        self._prepare_messages()
 
         return response
 
@@ -301,6 +302,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
         full_response_content = self.output_schema(**partial_response.model_dump())
         self.history.add_message(self.assistant_role, full_response_content)
+        self._prepare_messages()
 
         return full_response_content
 
@@ -331,6 +333,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         )
 
         self.history.add_message(self.assistant_role, response)
+        self._prepare_messages()
         return response
 
     async def run_async_stream(self, user_input: Optional[InputSchema] = None) -> AsyncGenerator[OutputSchema, None]:
@@ -367,6 +370,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         if last_response:
             full_response_content = self.output_schema(**last_response.model_dump())
             self.history.add_message(self.assistant_role, full_response_content)
+            self._prepare_messages()
 
     def get_context_provider(self, provider_name: str) -> Type[BaseDynamicContextProvider]:
         """
