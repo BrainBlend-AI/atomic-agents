@@ -74,6 +74,7 @@ def create_orchestrator_output_schema(
     ActionUnion = Union[all_schemas]  # type: ignore[valid-type]
 
     if parallel:
+
         class ParallelOrchestratorOutputSchema(BaseIOSchema):
             """Orchestrator output schema supporting parallel tool execution."""
 
@@ -90,6 +91,7 @@ def create_orchestrator_output_schema(
 
         return ParallelOrchestratorOutputSchema
     else:
+
         class DynamicOrchestratorOutputSchema(BaseIOSchema):
             """Dynamically generated orchestrator output schema."""
 
@@ -193,26 +195,18 @@ class OrchestratorFactory:
             )
 
         # Filter to only the requested tools
-        filtered_tools = [
-            tool for tool in all_tools
-            if getattr(tool, "mcp_tool_name", None) in tool_names
-        ]
+        filtered_tools = [tool for tool in all_tools if getattr(tool, "mcp_tool_name", None) in tool_names]
 
         if not filtered_tools:
             # If no MCP tools match, create a minimal orchestrator
             return self._create_minimal_orchestrator(), {}
 
         # Build schema-to-class mapping for execution
-        tool_schema_to_class: Dict[Type[BaseIOSchema], Type[BaseTool]] = {
-            tool.input_schema: tool for tool in filtered_tools
-        }
+        tool_schema_to_class: Dict[Type[BaseIOSchema], Type[BaseTool]] = {tool.input_schema: tool for tool in filtered_tools}
 
         # Create the dynamic output schema with only filtered tools
         tool_input_schemas = tuple(tool.input_schema for tool in filtered_tools)
-        output_schema = create_orchestrator_output_schema(
-            tool_input_schemas,
-            parallel=self.parallel_execution
-        )
+        output_schema = create_orchestrator_output_schema(tool_input_schemas, parallel=self.parallel_execution)
 
         # Build tool descriptions for the system prompt
         tool_descriptions = []
@@ -368,9 +362,7 @@ def execute_orchestrator_loop(
         tool_output = tool_instance.run(action)
 
         # Add result to history
-        result_message = OrchestratorInputSchema(
-            query=f"Tool '{tool_name}' executed. Result: {tool_output.result}"
-        )
+        result_message = OrchestratorInputSchema(query=f"Tool '{tool_name}' executed. Result: {tool_output.result}")
         orchestrator.history.add_message("system", result_message)
 
         # Continue the loop
@@ -487,6 +479,7 @@ def execute_orchestrator_loop_parallel(
             try:
                 # Use sync run method - it handles async internally for MCP tools
                 import warnings
+
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)
                     tool_output = tool_instance.run(action)
@@ -505,10 +498,7 @@ def execute_orchestrator_loop_parallel(
         # Execute all tools in parallel
         results = []
         with ThreadPoolExecutor(max_workers=max_parallel_workers) as executor:
-            future_to_action = {
-                executor.submit(execute_single_tool, action): action
-                for action in tool_actions
-            }
+            future_to_action = {executor.submit(execute_single_tool, action): action for action in tool_actions}
             for future in as_completed(future_to_action):
                 results.append(future.result())
 

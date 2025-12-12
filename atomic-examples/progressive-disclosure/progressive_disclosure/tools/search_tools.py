@@ -227,24 +227,30 @@ if __name__ == "__main__":
 
     # Create a test registry
     registry = ToolRegistry()
-    registry.register(ToolMetadata(
-        name="AddNumbers",
-        description="Add two numbers together",
-        keywords=["add", "sum", "plus", "arithmetic"],
-        category="math",
-    ))
-    registry.register(ToolMetadata(
-        name="SubtractNumbers",
-        description="Subtract one number from another",
-        keywords=["subtract", "minus", "difference", "arithmetic"],
-        category="math",
-    ))
-    registry.register(ToolMetadata(
-        name="SearchWeb",
-        description="Search the web for information",
-        keywords=["search", "web", "query", "find"],
-        category="search",
-    ))
+    registry.register(
+        ToolMetadata(
+            name="AddNumbers",
+            description="Add two numbers together",
+            keywords=["add", "sum", "plus", "arithmetic"],
+            category="math",
+        )
+    )
+    registry.register(
+        ToolMetadata(
+            name="SubtractNumbers",
+            description="Subtract one number from another",
+            keywords=["subtract", "minus", "difference", "arithmetic"],
+            category="math",
+        )
+    )
+    registry.register(
+        ToolMetadata(
+            name="SearchWeb",
+            description="Search the web for information",
+            keywords=["search", "web", "query", "find"],
+            category="search",
+        )
+    )
 
     # Test search
     search_tool = SearchToolsTool(SearchToolsConfig(registry=registry))

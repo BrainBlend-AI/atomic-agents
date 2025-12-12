@@ -40,7 +40,7 @@ def divide_numbers(a: float, b: float) -> float:
 @mcp.tool
 def power(base: float, exponent: float) -> float:
     """Raise base to the power of exponent (base ** exponent). Use for exponentiation."""
-    return base ** exponent
+    return base**exponent
 
 
 @mcp.tool

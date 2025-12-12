@@ -61,6 +61,7 @@ from progressive_disclosure.agents.orchestrator_agent import (
 @dataclass
 class ServerConfig:
     """Configuration for an MCP server."""
+
     name: str
     command: str
     category: str  # For tool categorization
@@ -76,23 +77,13 @@ class ProgressiveDisclosureConfig:
     parallel_execution: bool = True  # Enable parallel tool execution
 
     # Three MCP servers demonstrating multi-server progressive disclosure
-    servers: List[ServerConfig] = field(default_factory=lambda: [
-        ServerConfig(
-            name="math-server",
-            command="uv run pd-math-server",
-            category="math"
-        ),
-        ServerConfig(
-            name="text-server",
-            command="uv run pd-text-server",
-            category="text"
-        ),
-        ServerConfig(
-            name="data-server",
-            command="uv run pd-data-server",
-            category="data"
-        ),
-    ])
+    servers: List[ServerConfig] = field(
+        default_factory=lambda: [
+            ServerConfig(name="math-server", command="uv run pd-math-server", category="math"),
+            ServerConfig(name="text-server", command="uv run pd-text-server", category="text"),
+            ServerConfig(name="data-server", command="uv run pd-data-server", category="data"),
+        ]
+    )
 
     def __post_init__(self):
         if not self.openai_api_key:
@@ -119,18 +110,10 @@ class MCPServerManager:
         self.exit_stacks[config.name] = exit_stack
 
         command_parts = shlex.split(config.command)
-        server_params = StdioServerParameters(
-            command=command_parts[0],
-            args=command_parts[1:],
-            env=None
-        )
+        server_params = StdioServerParameters(command=command_parts[0], args=command_parts[1:], env=None)
 
-        read_stream, write_stream = await exit_stack.enter_async_context(
-            stdio_client(server_params)
-        )
-        session = await exit_stack.enter_async_context(
-            ClientSession(read_stream, write_stream)
-        )
+        read_stream, write_stream = await exit_stack.enter_async_context(stdio_client(server_params))
+        session = await exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
         await session.initialize()
         return session
 
@@ -223,11 +206,13 @@ def main():
     console = Console()
     config = ProgressiveDisclosureConfig()
 
-    console.print(Panel.fit(
-        "[bold cyan]Progressive Disclosure Demo[/bold cyan]\n"
-        "[dim]Demonstrating Anthropic's pattern with 3 MCP servers (24 total tools)[/dim]",
-        border_style="cyan"
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]Progressive Disclosure Demo[/bold cyan]\n"
+            "[dim]Demonstrating Anthropic's pattern with 3 MCP servers (24 total tools)[/dim]",
+            border_style="cyan",
+        )
+    )
 
     # Initialize instructor client
     client = instructor.from_openai(openai.OpenAI(api_key=config.openai_api_key))
@@ -269,11 +254,13 @@ def main():
             for tool in server_manager.tools_by_server.get(server_config.name, []):
                 name = getattr(tool, "mcp_tool_name", tool.__name__)
                 description = tool.__doc__ or ""
-                mcp_definitions.append(MCPToolDefinition(
-                    name=name,
-                    description=description,
-                    input_schema={},
-                ))
+                mcp_definitions.append(
+                    MCPToolDefinition(
+                        name=name,
+                        description=description,
+                        input_schema={},
+                    )
+                )
 
         registry.register_from_mcp(mcp_definitions)
 
@@ -336,7 +323,9 @@ def main():
                 stats.search_queries_made += len(finder_result.search_queries_used)
                 stats.tools_selected = len(finder_result.selected_tools)
 
-                console.print(f"[green]Selected {len(finder_result.selected_tools)} tools:[/green] {finder_result.selected_tools}")
+                console.print(
+                    f"[green]Selected {len(finder_result.selected_tools)} tools:[/green] {finder_result.selected_tools}"
+                )
                 console.print(f"[dim]Reasoning: {finder_result.reasoning}[/dim]")
 
                 # Phase 2: Dynamic Orchestrator Creation
@@ -389,11 +378,13 @@ def main():
                 # Show savings summary
                 savings_pct = stats.tools_filtered_percentage
                 parallel_info = " | ⚡ Parallel mode" if config.parallel_execution else ""
-                console.print(Panel(
-                    f"[dim]Progressive Disclosure: {len(finder_result.selected_tools)}/{len(all_tools)} tools loaded "
-                    f"({savings_pct:.0f}% context reduction){parallel_info}[/dim]",
-                    border_style="dim",
-                ))
+                console.print(
+                    Panel(
+                        f"[dim]Progressive Disclosure: {len(finder_result.selected_tools)}/{len(all_tools)} tools loaded "
+                        f"({savings_pct:.0f}% context reduction){parallel_info}[/dim]",
+                        border_style="dim",
+                    )
+                )
 
                 # Reset histories for next query
                 finder_agent.history.history = []
@@ -404,6 +395,7 @@ def main():
             except Exception as e:
                 console.print(f"[red]Error:[/red] {str(e)}")
                 import traceback
+
                 console.print(f"[dim]{traceback.format_exc()}[/dim]")
 
     finally:

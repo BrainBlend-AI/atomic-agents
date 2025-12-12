@@ -201,42 +201,54 @@ if __name__ == "__main__":
 
     # Create a test registry
     registry = ToolRegistry()
-    registry.register(ToolMetadata(
-        name="add_numbers",
-        description="Add two numbers together",
-        keywords=["add", "sum", "plus", "arithmetic"],
-        category="math",
-    ))
-    registry.register(ToolMetadata(
-        name="subtract_numbers",
-        description="Subtract one number from another",
-        keywords=["subtract", "minus", "difference", "arithmetic"],
-        category="math",
-    ))
-    registry.register(ToolMetadata(
-        name="multiply_numbers",
-        description="Multiply two numbers together",
-        keywords=["multiply", "times", "product", "arithmetic"],
-        category="math",
-    ))
-    registry.register(ToolMetadata(
-        name="divide_numbers",
-        description="Divide one number by another",
-        keywords=["divide", "quotient", "arithmetic"],
-        category="math",
-    ))
-    registry.register(ToolMetadata(
-        name="uppercase",
-        description="Convert text to uppercase",
-        keywords=["upper", "capitalize", "text"],
-        category="text",
-    ))
-    registry.register(ToolMetadata(
-        name="reverse_text",
-        description="Reverse the characters in text",
-        keywords=["reverse", "backwards", "text"],
-        category="text",
-    ))
+    registry.register(
+        ToolMetadata(
+            name="add_numbers",
+            description="Add two numbers together",
+            keywords=["add", "sum", "plus", "arithmetic"],
+            category="math",
+        )
+    )
+    registry.register(
+        ToolMetadata(
+            name="subtract_numbers",
+            description="Subtract one number from another",
+            keywords=["subtract", "minus", "difference", "arithmetic"],
+            category="math",
+        )
+    )
+    registry.register(
+        ToolMetadata(
+            name="multiply_numbers",
+            description="Multiply two numbers together",
+            keywords=["multiply", "times", "product", "arithmetic"],
+            category="math",
+        )
+    )
+    registry.register(
+        ToolMetadata(
+            name="divide_numbers",
+            description="Divide one number by another",
+            keywords=["divide", "quotient", "arithmetic"],
+            category="math",
+        )
+    )
+    registry.register(
+        ToolMetadata(
+            name="uppercase",
+            description="Convert text to uppercase",
+            keywords=["upper", "capitalize", "text"],
+            category="text",
+        )
+    )
+    registry.register(
+        ToolMetadata(
+            name="reverse_text",
+            description="Reverse the characters in text",
+            keywords=["reverse", "backwards", "text"],
+            category="text",
+        )
+    )
 
     # Create client
     client = instructor.from_openai(openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY")))
