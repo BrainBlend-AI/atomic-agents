@@ -340,6 +340,9 @@ def test_messages_sync_after_run(mock_instructor, mock_system_prompt_generator):
 
     result = agent.run(mock_input)
 
+    # Verify the result is returned correctly
+    assert result.chat_message == "Test output"
+
     # Verify agent.messages is in sync with history.get_history()
     history_messages = agent.history.get_history()
 
