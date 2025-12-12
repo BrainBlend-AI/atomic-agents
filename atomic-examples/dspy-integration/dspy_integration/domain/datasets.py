@@ -315,11 +315,17 @@ _SARCASM_TESTS: List[MovieExample] = [
         "genre": "comedy",
     },
     {
-        "review": "Wow, they really subverted my expectations by doing exactly what I expected. The jokes were so obvious they circled back to funny.",
+        "review": (
+            "Wow, they really subverted my expectations by doing exactly what I expected. "
+            "The jokes were so obvious they circled back to funny."
+        ),
         "genre": "comedy",
     },
     {
-        "review": "Another 'scary' movie where the characters make terrible decisions. At least the kills were creative. Actually terrifying creature design though.",
+        "review": (
+            "Another 'scary' movie where the characters make terrible decisions. "
+            "At least the kills were creative. Actually terrifying creature design though."
+        ),
         "genre": "horror",
     },
 ]
@@ -339,7 +345,10 @@ _MULTIGENRE_TESTS: List[MovieExample] = [
         "genre": "romance",
     },
     {
-        "review": "It's technically a war movie but really it's about two soldiers finding love in the trenches. The battle scenes support the love story.",
+        "review": (
+            "It's technically a war movie but really it's about two soldiers finding love "
+            "in the trenches. The battle scenes support the love story."
+        ),
         "genre": "romance",
     },
     {

@@ -25,7 +25,7 @@ import os
 import shlex
 from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
-from typing import Optional, List, Type, Dict
+from typing import List, Type, Dict
 
 import instructor
 import openai
@@ -49,7 +49,6 @@ from progressive_disclosure.agents.tool_finder_agent import (
 )
 from progressive_disclosure.agents.orchestrator_agent import (
     OrchestratorFactory,
-    FinalResponseSchema,
     execute_orchestrator_loop,
     execute_orchestrator_loop_parallel,
 )
@@ -337,9 +336,12 @@ def main():
                 )
 
                 if finder_result.selected_tools:
+                    tools_count = len(finder_result.selected_tools)
+                    tokens_saved = (len(all_tools) - tools_count) * 500
                     console.print(
-                        f"[green]Orchestrator context: {len(finder_result.selected_tools)} tools "
-                        f"(filtered {stats.tools_filtered_percentage:.0f}% = saved ~{(len(all_tools) - len(finder_result.selected_tools)) * 500} tokens)[/green]"
+                        f"[green]Orchestrator context: {tools_count} tools "
+                        f"(filtered {stats.tools_filtered_percentage:.0f}% = "
+                        f"saved ~{tokens_saved} tokens)[/green]"
                     )
                 else:
                     console.print("[yellow]No tools needed - conversational response[/yellow]")
