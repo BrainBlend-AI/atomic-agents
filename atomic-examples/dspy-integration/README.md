@@ -239,7 +239,7 @@ system_prompt = SystemPromptGenerator(
 agent = AtomicAgent[MovieReviewInput, MovieGenreOutput](
     config=AgentConfig(
         client=instructor.from_openai(openai.OpenAI()),
-        model="gpt-4o-mini",
+        model="gpt-5-mini",
         system_prompt_generator=system_prompt,
     )
 )

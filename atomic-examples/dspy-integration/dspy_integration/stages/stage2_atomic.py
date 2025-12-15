@@ -231,7 +231,7 @@ def _create_agent(
     agent = AtomicAgent[MovieReviewInput, MovieGenreOutput](
         config=AgentConfig(
             client=client,
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             system_prompt_generator=system_prompt,
         )
     )
