@@ -8,9 +8,15 @@ This section contains detailed guides for working with Atomic Agents.
 
 quickstart
 tools
+hooks
+orchestration
 cookbook
 error-handling
 testing
+deployment
+performance
+security
+logging
 faq
 ```
 
