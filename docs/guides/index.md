@@ -7,9 +7,11 @@ This section contains detailed guides for working with Atomic Agents.
 :caption: Guides
 
 quickstart
-basic_concepts
 tools
-advanced_usage
+cookbook
+error-handling
+testing
+faq
 ```
 
 ## Implementation Patterns
