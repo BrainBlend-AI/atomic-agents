@@ -1,0 +1,34 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "brainblend-plugins",
+  "description": "Official plugins for the Atomic Agents framework - a lightweight, modular system for building AI agents with Pydantic and Instructor",
+  "owner": {
+    "name": "BrainBlend AI",
+    "email": "support@brainblend.ai"
+  },
+  "plugins": [
+    {
+      "name": "atomic-agents",
+      "description": "Comprehensive development workflow for building well-organized Atomic Agents applications with specialized agents for schema design, architecture planning, code review, and tool development",
+      "version": "1.0.0",
+      "author": {
+        "name": "BrainBlend AI",
+        "email": "support@brainblend.ai"
+      },
+      "source": "./claude-plugin/atomic-agents",
+      "category": "development",
+      "homepage": "https://github.com/BrainBlend-AI/atomic-agents",
+      "repository": "https://github.com/BrainBlend-AI/atomic-agents",
+      "license": "MIT",
+      "keywords": [
+        "atomic-agents",
+        "ai-agents",
+        "llm",
+        "pydantic",
+        "instructor",
+        "multi-agent",
+        "orchestration"
+      ]
+    }
+  ]
+}

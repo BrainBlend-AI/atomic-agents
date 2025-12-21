@@ -1,0 +1,23 @@
+{
+  "name": "atomic-agents",
+  "version": "1.0.0",
+  "description": "Comprehensive development workflow for building well-organized Atomic Agents applications with specialized sub-agents for schema design, agent creation, tool development, and code review",
+  "author": {
+    "name": "BrainBlend AI",
+    "email": "support@brainblend.ai"
+  },
+  "homepage": "https://github.com/BrainBlend-AI/atomic-agents",
+  "repository": "https://github.com/BrainBlend-AI/atomic-agents",
+  "license": "MIT",
+  "keywords": [
+    "atomic-agents",
+    "ai-agents",
+    "llm",
+    "pydantic",
+    "instructor",
+    "multi-agent",
+    "orchestration",
+    "tools",
+    "schemas"
+  ]
+}
