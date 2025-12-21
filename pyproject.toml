@@ -33,6 +33,7 @@ dependencies = [
     "pyyaml>=6.0.2,<7.0.0",
     "requests>=2.32.3,<3.0.0",
     "mcp[cli]>=1.6.0",
+    "litellm>=1.50.0,<2.0.0",
 ]
 
 [project.urls]

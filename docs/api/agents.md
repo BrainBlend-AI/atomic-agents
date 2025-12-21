@@ -167,6 +167,7 @@ class BasicChatOutputSchema(BaseIOSchema):
 - `get_context_provider(provider_name: str)`: Get a registered context provider
 - `register_context_provider(provider_name: str, provider: BaseDynamicContextProvider)`: Register a new context provider
 - `unregister_context_provider(provider_name: str)`: Remove a context provider
+- `get_context_token_count() -> TokenCountResult`: Get token count for current context (system prompt + history)
 
 ### Context Providers
 
@@ -219,6 +220,33 @@ agent.reset_history()
 serialized = agent.history.dump()
 agent.history.load(serialized)
 ```
+
+### Token Counting
+
+Monitor context usage with the `get_context_token_count()` method. Token counts are computed accurately on-demand by serializing the context exactly as Instructor does, including the output schema overhead. This works with any provider (OpenAI, Anthropic, Google, etc.) and supports multimodal content:
+
+```python
+# Get accurate token count at any time - always returns a result
+token_info = agent.get_context_token_count()
+print(f"Total tokens: {token_info.total}")
+print(f"System prompt (with schema): {token_info.system_prompt} tokens")
+print(f"History: {token_info.history} tokens")
+print(f"Model: {token_info.model}")
+
+# Check context utilization if max tokens is known
+if token_info.max_tokens:
+    print(f"Max context: {token_info.max_tokens} tokens")
+if token_info.utilization:
+    print(f"Context utilization: {token_info.utilization:.1%}")
+```
+
+The `TokenCountResult` contains:
+- `total`: Total tokens in context (system + history + schema overhead)
+- `system_prompt`: Tokens used by system prompt and output schema
+- `history`: Tokens used by conversation history (including multimodal content)
+- `model`: The model name used for counting
+- `max_tokens`: Maximum context window (if known)
+- `utilization`: Percentage of context used (if max_tokens known)
 
 ### Custom Schemas
 

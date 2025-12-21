@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, call, patch
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import instructor
 from atomic_agents import (
     BaseIOSchema,
@@ -10,6 +10,7 @@ from atomic_agents import (
     BasicChatOutputSchema,
 )
 from atomic_agents.context import ChatHistory, SystemPromptGenerator, BaseDynamicContextProvider
+from atomic_agents.utils.token_counter import TokenCountResult
 from instructor.dsl.partial import PartialBase
 
 
@@ -761,3 +762,248 @@ def test_backward_compatibility_no_breaking_changes(mock_instructor, mock_histor
     # Should raise KeyError for non-existent provider
     with pytest.raises(KeyError):
         agent.get_context_provider("test")
+
+
+# Token Counting Tests
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_basic(mock_token_counter_class, mock_instructor, mock_history, mock_system_prompt_generator):
+    """Test basic token counting functionality."""
+    mock_history.get_history.return_value = [
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi there!"},
+    ]
+    mock_system_prompt_generator.generate_prompt.return_value = "You are a helpful assistant."
+
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=100, system_prompt=30, history=70, model="gpt-5-mini", max_tokens=8192, utilization=0.0122
+    )
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=mock_history,
+        system_prompt_generator=mock_system_prompt_generator,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    result = agent.get_context_token_count()
+
+    assert result.total == 100
+    assert result.system_prompt == 30
+    assert result.history == 70
+    assert result.model == "gpt-5-mini"
+    assert result.max_tokens == 8192
+    assert result.utilization is not None  # Should have utilization since max_tokens is known
+    mock_counter_instance.count_context.assert_called_once()
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_includes_schema_overhead(mock_token_counter_class, mock_instructor, mock_history, mock_system_prompt_generator):
+    """Test that token counting includes the output schema overhead."""
+    mock_history.get_history.return_value = []
+    mock_system_prompt_generator.generate_prompt.return_value = "System prompt"
+
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=50, system_prompt=50, history=0, model="gpt-5-mini"
+    )
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=mock_history,
+        system_prompt_generator=mock_system_prompt_generator,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    result = agent.get_context_token_count()
+
+    # Verify count_context was called with system message that includes schema
+    call_args = mock_counter_instance.count_context.call_args
+    system_messages = call_args.kwargs["system_messages"]
+    assert len(system_messages) == 1
+    # System message should contain both the prompt AND the schema
+    assert "System prompt" in system_messages[0]["content"]
+    assert "chat_message" in system_messages[0]["content"]  # Schema field from BasicChatOutputSchema
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_no_system_prompt(mock_token_counter_class, mock_instructor, mock_history):
+    """Test token counting when system_role is None (schema still included)."""
+    mock_history.get_history.return_value = [{"role": "user", "content": "Hello"}]
+
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=25, system_prompt=20, history=5, model="gpt-5-mini"
+    )
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=mock_history,
+        system_role=None,  # No system prompt
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    result = agent.get_context_token_count()
+
+    # Even without system prompt, schema should be included
+    call_args = mock_counter_instance.count_context.call_args
+    system_messages = call_args.kwargs["system_messages"]
+    assert len(system_messages) == 1  # Schema is added as system message
+    assert "chat_message" in system_messages[0]["content"]  # Schema content
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_uses_configured_model(mock_token_counter_class, mock_instructor, mock_history, mock_system_prompt_generator):
+    """Test that token counting uses the agent's configured model."""
+    mock_history.get_history.return_value = []
+
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=15, system_prompt=15, history=0, model="claude-3-opus-20240229"
+    )
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="claude-3-opus-20240229",  # Different model
+        history=mock_history,
+        system_prompt_generator=mock_system_prompt_generator,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    agent.get_context_token_count()
+
+    call_args = mock_counter_instance.count_context.call_args
+    assert call_args.kwargs["model"] == "claude-3-opus-20240229"
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_returns_token_count_result(mock_token_counter_class, agent):
+    """Test that get_context_token_count returns a TokenCountResult."""
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=50, system_prompt=20, history=30, model="gpt-5-mini"
+    )
+
+    result = agent.get_context_token_count()
+
+    assert isinstance(result, TokenCountResult)
+    assert hasattr(result, "total")
+    assert hasattr(result, "system_prompt")
+    assert hasattr(result, "history")
+    assert hasattr(result, "model")
+    assert hasattr(result, "max_tokens")
+    assert hasattr(result, "utilization")
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_hook_dispatch(mock_token_counter_class, agent):
+    """Test that token:counted hook is dispatched."""
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    expected_result = TokenCountResult(total=100, system_prompt=30, history=70, model="gpt-5-mini")
+    mock_counter_instance.count_context.return_value = expected_result
+
+    hook_called = []
+
+    def hook_handler(result):
+        hook_called.append(result)
+
+    agent.register_hook("token:counted", hook_handler)
+
+    result = agent.get_context_token_count()
+
+    assert len(hook_called) == 1
+    assert hook_called[0] == expected_result
+    assert hook_called[0].total == 100
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_hook_not_called_when_disabled(mock_token_counter_class, agent):
+    """Test that token:counted hook is not called when hooks are disabled."""
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=100, system_prompt=30, history=70, model="gpt-5-mini"
+    )
+
+    hook_called = []
+
+    def hook_handler(result):
+        hook_called.append(result)
+
+    agent.register_hook("token:counted", hook_handler)
+    agent.disable_hooks()
+
+    agent.get_context_token_count()
+
+    assert len(hook_called) == 0
+
+
+@patch("atomic_agents.agents.atomic_agent.TokenCounter")
+def test_get_context_token_count_multimodal_content(mock_token_counter_class, mock_instructor):
+    """Test that multimodal content is properly serialized for token counting."""
+    from instructor.processing.multimodal import Image
+    from instructor import Mode
+
+    mock_counter_instance = Mock()
+    mock_token_counter_class.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=150, system_prompt=50, history=100, model="gpt-4-vision-preview"
+    )
+
+    # Create a multimodal input schema
+    class MultimodalInputSchema(BaseIOSchema):
+        """Input with image."""
+
+        text: str = Field(..., description="Text input")
+        image: instructor.Image = Field(..., description="Image to analyze")
+
+    # Create agent with multimodal schema
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-4-vision-preview",
+    )
+    agent = AtomicAgent[MultimodalInputSchema, BasicChatOutputSchema](config)
+
+    # Add multimodal message to history
+    test_image = Image(source="https://example.com/test.png", media_type="image/png")
+    multimodal_input = MultimodalInputSchema(text="Describe this image", image=test_image)
+    agent.history.add_message("user", multimodal_input)
+
+    # Get token count
+    result = agent.get_context_token_count()
+
+    # Verify count_context was called
+    assert mock_counter_instance.count_context.called
+
+    # Get the history_messages passed to count_context
+    call_args = mock_counter_instance.count_context.call_args
+    history_messages = call_args.kwargs["history_messages"]
+
+    # Verify multimodal content was serialized properly
+    assert len(history_messages) == 1
+    assert history_messages[0]["role"] == "user"
+
+    # Content should be a list with text and image
+    content = history_messages[0]["content"]
+    assert isinstance(content, list)
+
+    # Should have text and image entries
+    content_types = [item.get("type") for item in content]
+    assert "text" in content_types
+    assert "image_url" in content_types
+
+    # Verify image was converted to OpenAI format
+    image_entry = next(item for item in content if item.get("type") == "image_url")
+    assert "image_url" in image_entry
+    assert image_entry["image_url"]["url"] == "https://example.com/test.png"

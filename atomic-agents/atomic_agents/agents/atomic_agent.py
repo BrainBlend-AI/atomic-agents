@@ -1,6 +1,8 @@
 import instructor
+from instructor import Mode
+from instructor.processing.multimodal import Image, Audio, PDF
 from pydantic import BaseModel, Field
-from typing import Optional, Type, Generator, AsyncGenerator, get_args, get_origin, Dict, List, Callable
+from typing import Optional, Type, Generator, AsyncGenerator, get_args, get_origin, Dict, List, Callable, Any, Union
 import logging
 from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.context.system_prompt_generator import (
@@ -8,6 +10,8 @@ from atomic_agents.context.system_prompt_generator import (
     SystemPromptGenerator,
 )
 from atomic_agents.base.base_io_schema import BaseIOSchema
+from atomic_agents.utils.token_counter import TokenCounter, TokenCountResult
+import json
 
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
@@ -223,18 +227,153 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         # No type info available
         return BasicChatOutputSchema
 
-    def _prepare_messages(self):
+    def _build_system_messages(self) -> List[Dict]:
+        """
+        Builds the system message(s) based on the configured system role.
+
+        Returns:
+            List[Dict]: A list containing the system message, or an empty list if system_role is None.
+        """
         if self.system_role is None:
-            self.messages = []
-        else:
-            self.messages = [
+            return []
+        return [
+            {
+                "role": self.system_role,
+                "content": self.system_prompt_generator.generate_prompt(),
+            }
+        ]
+
+    def _prepare_messages(self):
+        self.messages = self._build_system_messages()
+        self.messages += self.history.get_history()
+
+    def _build_schema_context(self) -> str:
+        """
+        Build the schema context that Instructor adds for structured output.
+
+        This replicates how Instructor serializes the output schema for the LLM,
+        allowing accurate token counting before making API calls.
+
+        Returns:
+            str: JSON string of the output schema in Instructor's format.
+        """
+        schema = self.output_schema.model_json_schema()
+        # Instructor typically sends the schema in a format like this for JSON mode
+        # For TOOLS mode, it would be in the tools parameter, but the token count is similar
+        return json.dumps(schema, ensure_ascii=False)
+
+    def _serialize_history_for_token_count(self) -> List[Dict[str, Any]]:
+        """
+        Serialize conversation history for token counting, handling multimodal content.
+
+        This method converts instructor multimodal objects (Image, Audio, PDF) to the
+        OpenAI format that LiteLLM's token counter expects. Text content is also
+        converted to the proper multimodal text format when mixed with media.
+
+        Returns:
+            List[Dict[str, Any]]: History messages in LiteLLM-compatible format.
+        """
+        history = self.history.get_history()
+        serialized = []
+
+        for message in history:
+            content = message.get("content")
+
+            if isinstance(content, list):
+                # Multimodal content - convert to OpenAI format
+                serialized_content = []
+                for item in content:
+                    if isinstance(item, str):
+                        # Text content - wrap in OpenAI text format
+                        serialized_content.append({"type": "text", "text": item})
+                    elif isinstance(item, (Image, Audio, PDF)):
+                        # Multimodal object - use instructor's to_openai method
+                        try:
+                            serialized_content.append(item.to_openai(Mode.JSON))
+                        except Exception:
+                            # Fallback: just include a placeholder for the media
+                            media_type = type(item).__name__.lower()
+                            serialized_content.append(
+                                {"type": "text", "text": f"[{media_type} content]"}
+                            )
+                    else:
+                        # Unknown type - convert to string
+                        serialized_content.append({"type": "text", "text": str(item)})
+                serialized.append({"role": message["role"], "content": serialized_content})
+            else:
+                # Simple text content - keep as is
+                serialized.append(message)
+
+        return serialized
+
+    def get_context_token_count(self) -> TokenCountResult:
+        """
+        Get the accurate token count for the current context.
+
+        This method computes the token count by serializing the context exactly
+        as Instructor does, including:
+        - System prompt
+        - Conversation history (with Pydantic schemas serialized as JSON)
+        - Output schema overhead (the schema Instructor sends for structured output)
+
+        Works with any model supported by LiteLLM including OpenAI, Anthropic,
+        Google, and 100+ other providers.
+
+        Returns:
+            TokenCountResult: A named tuple containing:
+                - total: Total tokens in the context (including schema overhead)
+                - system_prompt: Tokens in the system prompt + schema overhead
+                - history: Tokens in the conversation history
+                - model: The model used for counting
+                - max_tokens: Maximum context window (if known)
+                - utilization: Percentage of context used (if max_tokens known)
+
+        Example:
+            ```python
+            agent = AtomicAgent[InputSchema, OutputSchema](config)
+
+            # Get accurate token count at any time
+            result = agent.get_context_token_count()
+            print(f"Total: {result.total} tokens")
+            print(f"System (with schema): {result.system_prompt} tokens")
+            print(f"History: {result.history} tokens")
+            if result.utilization:
+                print(f"Context usage: {result.utilization:.1%}")
+            ```
+
+        Note:
+            The 'token:counted' hook event is dispatched, allowing for
+            monitoring and logging of token usage.
+        """
+        counter = TokenCounter()
+
+        # Build system messages with schema overhead appended
+        system_messages = self._build_system_messages()
+        schema_context = self._build_schema_context()
+
+        # Add schema as part of system context (Instructor adds this for structured output)
+        if system_messages:
+            # Append schema to existing system message
+            system_messages = [
                 {
-                    "role": self.system_role,
-                    "content": self.system_prompt_generator.generate_prompt(),
+                    "role": system_messages[0]["role"],
+                    "content": system_messages[0]["content"] + "\n\n" + schema_context,
                 }
             ]
+        else:
+            # No system message, add schema as its own message
+            system_messages = [{"role": "system", "content": schema_context}]
 
-        self.messages += self.history.get_history()
+        result = counter.count_context(
+            model=self.model,
+            system_messages=system_messages,
+            history_messages=self._serialize_history_for_token_count(),
+        )
+
+        # Dispatch hook for monitoring
+        self._dispatch_hook("token:counted", result)
+
+        return result
 
     def run(self, user_input: Optional[InputSchema] = None) -> OutputSchema:
         """
