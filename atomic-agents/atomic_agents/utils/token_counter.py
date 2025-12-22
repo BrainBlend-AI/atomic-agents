@@ -108,10 +108,7 @@ class TokenCounter:
                 return token_counter(model=model, messages=messages, tools=tools)
             return token_counter(model=model, messages=messages)
         except ImportError as e:
-            raise ImportError(
-                "litellm is required for token counting. "
-                "Install it with: pip install litellm"
-            ) from e
+            raise ImportError("litellm is required for token counting. " "Install it with: pip install litellm") from e
         except Exception as e:
             raise TokenCountError(f"Failed to count tokens for model '{model}': {e}") from e
 
@@ -152,10 +149,7 @@ class TokenCounter:
         try:
             from litellm import get_max_tokens
         except ImportError as e:
-            raise ImportError(
-                "litellm is required for token counting. "
-                "Install it with: pip install litellm"
-            ) from e
+            raise ImportError("litellm is required for token counting. " "Install it with: pip install litellm") from e
 
         try:
             return get_max_tokens(model)
@@ -193,12 +187,8 @@ class TokenCounter:
         if tools:
             # To count just the tools overhead, we count empty messages with tools
             # and subtract the base overhead
-            empty_with_tools = self.count_messages(
-                model, [{"role": "user", "content": ""}], tools=tools
-            )
-            empty_without_tools = self.count_messages(
-                model, [{"role": "user", "content": ""}]
-            )
+            empty_with_tools = self.count_messages(model, [{"role": "user", "content": ""}], tools=tools)
+            empty_without_tools = self.count_messages(model, [{"role": "user", "content": ""}])
             tools_tokens = empty_with_tools - empty_without_tools
 
         total_tokens = system_tokens + history_tokens + tools_tokens

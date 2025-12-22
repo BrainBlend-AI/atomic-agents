@@ -803,7 +803,9 @@ def test_get_context_token_count_basic(mock_get_token_counter, mock_instructor, 
 
 
 @patch("atomic_agents.agents.atomic_agent.get_token_counter")
-def test_get_context_token_count_includes_schema_overhead(mock_get_token_counter, mock_instructor, mock_history, mock_system_prompt_generator):
+def test_get_context_token_count_includes_schema_overhead(
+    mock_get_token_counter, mock_instructor, mock_history, mock_system_prompt_generator
+):
     """Test that token counting includes the output schema overhead for JSON mode."""
     from instructor import Mode
 
@@ -868,7 +870,9 @@ def test_get_context_token_count_no_system_prompt(mock_get_token_counter, mock_i
 
 
 @patch("atomic_agents.agents.atomic_agent.get_token_counter")
-def test_get_context_token_count_uses_configured_model(mock_get_token_counter, mock_instructor, mock_history, mock_system_prompt_generator):
+def test_get_context_token_count_uses_configured_model(
+    mock_get_token_counter, mock_instructor, mock_history, mock_system_prompt_generator
+):
     """Test that token counting uses the agent's configured model."""
     mock_history.get_history.return_value = []
 

@@ -112,9 +112,7 @@ class TestTokenCounter:
 
         assert result == 5
         # Should wrap text in a message
-        mock_token_counter.assert_called_once_with(
-            model="gpt-4", messages=[{"role": "user", "content": "Hello world"}]
-        )
+        mock_token_counter.assert_called_once_with(model="gpt-4", messages=[{"role": "user", "content": "Hello world"}])
 
     @patch("litellm.get_max_tokens")
     def test_get_max_tokens(self, mock_get_max_tokens):
@@ -145,9 +143,7 @@ class TestTokenCounter:
         result = counter.count_messages("gpt-4", messages, tools=tools)
 
         assert result == 150
-        mock_token_counter.assert_called_once_with(
-            model="gpt-4", messages=messages, tools=tools
-        )
+        mock_token_counter.assert_called_once_with(model="gpt-4", messages=messages, tools=tools)
 
     @patch("litellm.token_counter")
     def test_count_messages_raises_token_count_error(self, mock_token_counter):
@@ -267,12 +263,9 @@ class TestTokenCounter:
         # Verify all models were called
         assert mock_token_counter.call_count == len(models)
 
-
     @patch("litellm.get_max_tokens")
     @patch("litellm.token_counter")
-    def test_count_context_division_by_zero_prevention(
-        self, mock_token_counter, mock_get_max_tokens
-    ):
+    def test_count_context_division_by_zero_prevention(self, mock_token_counter, mock_get_max_tokens):
         """Test that division by zero is prevented when max_tokens is 0."""
         mock_token_counter.side_effect = [20, 30]
         mock_get_max_tokens.return_value = 0  # Edge case: max_tokens = 0

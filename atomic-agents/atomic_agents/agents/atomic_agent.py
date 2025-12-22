@@ -261,7 +261,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             Optional[List[Dict[str, Any]]]: Tools definition for TOOLS mode, or None for JSON modes.
         """
         from instructor.processing.schema import generate_openai_schema
-        
+
         # Only return tools for TOOLS-based modes
         tools_modes = {Mode.TOOLS, Mode.TOOLS_STRICT, Mode.PARALLEL_TOOLS}
         if self.mode in tools_modes:
@@ -283,16 +283,18 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             str: JSON schema string formatted as Instructor does.
         """
         from textwrap import dedent
-        
+
         schema = self.output_schema.model_json_schema()
-        return dedent(f"""
+        return dedent(
+            f"""
         As a genius expert, your task is to understand the content and provide
         the parsed objects in json that match the following json_schema:
 
         {json.dumps(schema, indent=2, ensure_ascii=False)}
 
         Make sure to return an instance of the JSON, not the schema itself
-        """).strip()
+        """
+        ).strip()
 
     def _serialize_history_for_token_count(self) -> List[Dict[str, Any]]:
         """
@@ -330,9 +332,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
                                 f"Failed to serialize {media_type} for token counting: {e}. "
                                 f"Using placeholder for estimation."
                             )
-                            serialized_content.append(
-                                {"type": "text", "text": f"[{media_type.lower()} content]"}
-                            )
+                            serialized_content.append({"type": "text", "text": f"[{media_type.lower()} content]"})
                     else:
                         # Unknown type - convert to string
                         serialized_content.append({"type": "text", "text": str(item)})
