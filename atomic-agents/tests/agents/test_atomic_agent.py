@@ -767,8 +767,8 @@ def test_backward_compatibility_no_breaking_changes(mock_instructor, mock_histor
 # Token Counting Tests
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_basic(mock_token_counter_class, mock_instructor, mock_history, mock_system_prompt_generator):
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_basic(mock_get_token_counter, mock_instructor, mock_history, mock_system_prompt_generator):
     """Test basic token counting functionality."""
     mock_history.get_history.return_value = [
         {"role": "user", "content": "Hello"},
@@ -777,9 +777,9 @@ def test_get_context_token_count_basic(mock_token_counter_class, mock_instructor
     mock_system_prompt_generator.generate_prompt.return_value = "You are a helpful assistant."
 
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
+    mock_get_token_counter.return_value = mock_counter_instance
     mock_counter_instance.count_context.return_value = TokenCountResult(
-        total=100, system_prompt=30, history=70, model="gpt-5-mini", max_tokens=8192, utilization=0.0122
+        total=100, system_prompt=30, history=70, tools=0, model="gpt-5-mini", max_tokens=8192, utilization=0.0122
     )
 
     config = AgentConfig(
@@ -795,22 +795,25 @@ def test_get_context_token_count_basic(mock_token_counter_class, mock_instructor
     assert result.total == 100
     assert result.system_prompt == 30
     assert result.history == 70
+    assert result.tools == 0
     assert result.model == "gpt-5-mini"
     assert result.max_tokens == 8192
     assert result.utilization is not None  # Should have utilization since max_tokens is known
     mock_counter_instance.count_context.assert_called_once()
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_includes_schema_overhead(mock_token_counter_class, mock_instructor, mock_history, mock_system_prompt_generator):
-    """Test that token counting includes the output schema overhead."""
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_includes_schema_overhead(mock_get_token_counter, mock_instructor, mock_history, mock_system_prompt_generator):
+    """Test that token counting includes the output schema overhead for JSON mode."""
+    from instructor import Mode
+
     mock_history.get_history.return_value = []
     mock_system_prompt_generator.generate_prompt.return_value = "System prompt"
 
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
+    mock_get_token_counter.return_value = mock_counter_instance
     mock_counter_instance.count_context.return_value = TokenCountResult(
-        total=50, system_prompt=50, history=0, model="gpt-5-mini"
+        total=50, system_prompt=50, history=0, tools=0, model="gpt-5-mini"
     )
 
     config = AgentConfig(
@@ -818,6 +821,7 @@ def test_get_context_token_count_includes_schema_overhead(mock_token_counter_cla
         model="gpt-5-mini",
         history=mock_history,
         system_prompt_generator=mock_system_prompt_generator,
+        mode=Mode.JSON,  # JSON mode appends schema to system message
     )
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
 
@@ -827,20 +831,22 @@ def test_get_context_token_count_includes_schema_overhead(mock_token_counter_cla
     call_args = mock_counter_instance.count_context.call_args
     system_messages = call_args.kwargs["system_messages"]
     assert len(system_messages) == 1
-    # System message should contain both the prompt AND the schema
+    # System message should contain both the prompt AND the schema (for JSON mode)
     assert "System prompt" in system_messages[0]["content"]
     assert "chat_message" in system_messages[0]["content"]  # Schema field from BasicChatOutputSchema
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_no_system_prompt(mock_token_counter_class, mock_instructor, mock_history):
-    """Test token counting when system_role is None (schema still included)."""
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_no_system_prompt(mock_get_token_counter, mock_instructor, mock_history):
+    """Test token counting when system_role is None (schema still included for JSON mode)."""
+    from instructor import Mode
+
     mock_history.get_history.return_value = [{"role": "user", "content": "Hello"}]
 
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
+    mock_get_token_counter.return_value = mock_counter_instance
     mock_counter_instance.count_context.return_value = TokenCountResult(
-        total=25, system_prompt=20, history=5, model="gpt-5-mini"
+        total=25, system_prompt=20, history=5, tools=0, model="gpt-5-mini"
     )
 
     config = AgentConfig(
@@ -848,27 +854,28 @@ def test_get_context_token_count_no_system_prompt(mock_token_counter_class, mock
         model="gpt-5-mini",
         history=mock_history,
         system_role=None,  # No system prompt
+        mode=Mode.JSON,  # JSON mode to test schema in system message
     )
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
 
     result = agent.get_context_token_count()
 
-    # Even without system prompt, schema should be included
+    # Even without system prompt, schema should be included (for JSON mode)
     call_args = mock_counter_instance.count_context.call_args
     system_messages = call_args.kwargs["system_messages"]
     assert len(system_messages) == 1  # Schema is added as system message
     assert "chat_message" in system_messages[0]["content"]  # Schema content
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_uses_configured_model(mock_token_counter_class, mock_instructor, mock_history, mock_system_prompt_generator):
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_uses_configured_model(mock_get_token_counter, mock_instructor, mock_history, mock_system_prompt_generator):
     """Test that token counting uses the agent's configured model."""
     mock_history.get_history.return_value = []
 
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
+    mock_get_token_counter.return_value = mock_counter_instance
     mock_counter_instance.count_context.return_value = TokenCountResult(
-        total=15, system_prompt=15, history=0, model="claude-3-opus-20240229"
+        total=15, system_prompt=15, history=0, tools=0, model="claude-3-opus-20240229"
     )
 
     config = AgentConfig(
@@ -885,13 +892,13 @@ def test_get_context_token_count_uses_configured_model(mock_token_counter_class,
     assert call_args.kwargs["model"] == "claude-3-opus-20240229"
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_returns_token_count_result(mock_token_counter_class, agent):
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_returns_token_count_result(mock_get_token_counter, agent):
     """Test that get_context_token_count returns a TokenCountResult."""
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
+    mock_get_token_counter.return_value = mock_counter_instance
     mock_counter_instance.count_context.return_value = TokenCountResult(
-        total=50, system_prompt=20, history=30, model="gpt-5-mini"
+        total=50, system_prompt=20, history=30, tools=0, model="gpt-5-mini"
     )
 
     result = agent.get_context_token_count()
@@ -900,17 +907,18 @@ def test_get_context_token_count_returns_token_count_result(mock_token_counter_c
     assert hasattr(result, "total")
     assert hasattr(result, "system_prompt")
     assert hasattr(result, "history")
+    assert hasattr(result, "tools")
     assert hasattr(result, "model")
     assert hasattr(result, "max_tokens")
     assert hasattr(result, "utilization")
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_hook_dispatch(mock_token_counter_class, agent):
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_hook_dispatch(mock_get_token_counter, agent):
     """Test that token:counted hook is dispatched."""
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
-    expected_result = TokenCountResult(total=100, system_prompt=30, history=70, model="gpt-5-mini")
+    mock_get_token_counter.return_value = mock_counter_instance
+    expected_result = TokenCountResult(total=100, system_prompt=30, history=70, tools=0, model="gpt-5-mini")
     mock_counter_instance.count_context.return_value = expected_result
 
     hook_called = []
@@ -927,13 +935,13 @@ def test_get_context_token_count_hook_dispatch(mock_token_counter_class, agent):
     assert hook_called[0].total == 100
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_hook_not_called_when_disabled(mock_token_counter_class, agent):
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_hook_not_called_when_disabled(mock_get_token_counter, agent):
     """Test that token:counted hook is not called when hooks are disabled."""
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
+    mock_get_token_counter.return_value = mock_counter_instance
     mock_counter_instance.count_context.return_value = TokenCountResult(
-        total=100, system_prompt=30, history=70, model="gpt-5-mini"
+        total=100, system_prompt=30, history=70, tools=0, model="gpt-5-mini"
     )
 
     hook_called = []
@@ -949,16 +957,16 @@ def test_get_context_token_count_hook_not_called_when_disabled(mock_token_counte
     assert len(hook_called) == 0
 
 
-@patch("atomic_agents.agents.atomic_agent.TokenCounter")
-def test_get_context_token_count_multimodal_content(mock_token_counter_class, mock_instructor):
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_multimodal_content(mock_get_token_counter, mock_instructor):
     """Test that multimodal content is properly serialized for token counting."""
     from instructor.processing.multimodal import Image
     from instructor import Mode
 
     mock_counter_instance = Mock()
-    mock_token_counter_class.return_value = mock_counter_instance
+    mock_get_token_counter.return_value = mock_counter_instance
     mock_counter_instance.count_context.return_value = TokenCountResult(
-        total=150, system_prompt=50, history=100, model="gpt-4-vision-preview"
+        total=150, system_prompt=50, history=100, tools=0, model="gpt-4-vision-preview"
     )
 
     # Create a multimodal input schema
