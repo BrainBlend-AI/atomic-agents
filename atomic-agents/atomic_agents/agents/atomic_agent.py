@@ -2,7 +2,7 @@ import instructor
 from instructor import Mode
 from instructor.processing.multimodal import Image, Audio, PDF
 from pydantic import BaseModel, Field
-from typing import Optional, Type, Generator, AsyncGenerator, get_args, get_origin, Dict, List, Callable, Any, Union
+from typing import Optional, Type, Generator, AsyncGenerator, get_args, get_origin, Dict, List, Callable, Any
 import logging
 from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.context.system_prompt_generator import (
@@ -10,7 +10,7 @@ from atomic_agents.context.system_prompt_generator import (
     SystemPromptGenerator,
 )
 from atomic_agents.base.base_io_schema import BaseIOSchema
-from atomic_agents.utils.token_counter import get_token_counter, TokenCountResult, TokenCountError
+from atomic_agents.utils.token_counter import get_token_counter, TokenCountResult
 import json
 
 from instructor.dsl.partial import PartialBase
@@ -690,7 +690,6 @@ if __name__ == "__main__":
     import instructor
     import asyncio
     from rich.live import Live
-    import json
 
     def _create_schema_table(title: str, schema: Type[BaseModel]) -> Table:
         """Create a table displaying schema information.

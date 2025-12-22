@@ -827,7 +827,7 @@ def test_get_context_token_count_includes_schema_overhead(
     )
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
 
-    result = agent.get_context_token_count()
+    agent.get_context_token_count()
 
     # Verify count_context was called with system message that includes schema
     call_args = mock_counter_instance.count_context.call_args
@@ -860,7 +860,7 @@ def test_get_context_token_count_no_system_prompt(mock_get_token_counter, mock_i
     )
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
 
-    result = agent.get_context_token_count()
+    agent.get_context_token_count()
 
     # Even without system prompt, schema should be included (for JSON mode)
     call_args = mock_counter_instance.count_context.call_args
@@ -932,7 +932,7 @@ def test_get_context_token_count_hook_dispatch(mock_get_token_counter, agent):
 
     agent.register_hook("token:counted", hook_handler)
 
-    result = agent.get_context_token_count()
+    agent.get_context_token_count()
 
     assert len(hook_called) == 1
     assert hook_called[0] == expected_result
@@ -965,7 +965,6 @@ def test_get_context_token_count_hook_not_called_when_disabled(mock_get_token_co
 def test_get_context_token_count_multimodal_content(mock_get_token_counter, mock_instructor):
     """Test that multimodal content is properly serialized for token counting."""
     from instructor.processing.multimodal import Image
-    from instructor import Mode
 
     mock_counter_instance = Mock()
     mock_get_token_counter.return_value = mock_counter_instance
@@ -993,7 +992,7 @@ def test_get_context_token_count_multimodal_content(mock_get_token_counter, mock
     agent.history.add_message("user", multimodal_input)
 
     # Get token count
-    result = agent.get_context_token_count()
+    agent.get_context_token_count()
 
     # Verify count_context was called
     assert mock_counter_instance.count_context.called
