@@ -57,6 +57,16 @@ while True:
     if user_input.lower() in ["/exit", "/quit"]:
         console.print("Exiting chat...")
         break
+    # Check if the user wants to see token count
+    if user_input.lower() == "/tokens":
+        token_info = agent.get_context_token_count()
+        console.print("[bold magenta]Token Usage:[/bold magenta]")
+        console.print(f"  Total: {token_info.total} tokens")
+        console.print(f"  System prompt: {token_info.system_prompt} tokens")
+        console.print(f"  History: {token_info.history} tokens")
+        if token_info.utilization:
+            console.print(f"  Context utilization: {token_info.utilization:.1%}")
+        continue
 
     # Process the user's input through the agent and get the response
     input_schema = BasicChatInputSchema(chat_message=user_input)

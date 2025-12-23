@@ -1,6 +1,8 @@
 import instructor
+from instructor import Mode
+from instructor.processing.multimodal import Image, Audio, PDF
 from pydantic import BaseModel, Field
-from typing import Optional, Type, Generator, AsyncGenerator, get_args, get_origin, Dict, List, Callable
+from typing import Optional, Type, Generator, AsyncGenerator, get_args, get_origin, Dict, List, Callable, Any
 import logging
 from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.context.system_prompt_generator import (
@@ -8,6 +10,8 @@ from atomic_agents.context.system_prompt_generator import (
     SystemPromptGenerator,
 )
 from atomic_agents.base.base_io_schema import BaseIOSchema
+from atomic_agents.utils.token_counter import get_token_counter, TokenCountResult
+import json
 
 from instructor.dsl.partial import PartialBase
 from jiter import from_json
@@ -73,6 +77,7 @@ class AgentConfig(BaseModel):
         description="The role of the assistant in the conversation. Use 'model' for Gemini, 'assistant' for OpenAI/Anthropic.",
     )
     model_config = {"arbitrary_types_allowed": True}
+    mode: Mode = Field(default=Mode.TOOLS, description="The Instructor mode used for structured outputs (TOOLS, JSON, etc.).")
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
 
 
@@ -167,6 +172,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.assistant_role = config.assistant_role
         self.initial_history = self.history.copy()
         self.current_user_input = None
+        self.mode = config.mode
         self.model_api_parameters = config.model_api_parameters or {}
 
         # Hook management attributes
@@ -223,18 +229,196 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         # No type info available
         return BasicChatOutputSchema
 
-    def _prepare_messages(self):
+    def _build_system_messages(self) -> List[Dict]:
+        """
+        Builds the system message(s) based on the configured system role.
+
+        Returns:
+            List[Dict]: A list containing the system message, or an empty list if system_role is None.
+        """
         if self.system_role is None:
-            self.messages = []
-        else:
-            self.messages = [
+            return []
+        return [
+            {
+                "role": self.system_role,
+                "content": self.system_prompt_generator.generate_prompt(),
+            }
+        ]
+
+    def _prepare_messages(self):
+        self.messages = self._build_system_messages()
+        self.messages += self.history.get_history()
+
+    def _build_tools_definition(self) -> Optional[List[Dict[str, Any]]]:
+        """
+        Build the tools definition that Instructor sends for TOOLS mode.
+
+        This uses Instructor's actual schema generation to create the exact
+        tools parameter that would be sent to the LLM for TOOLS mode.
+        For JSON modes, returns None as the schema is embedded in messages.
+
+        Returns:
+            Optional[List[Dict[str, Any]]]: Tools definition for TOOLS mode, or None for JSON modes.
+        """
+        from instructor.processing.schema import generate_openai_schema
+
+        # Only return tools for TOOLS-based modes
+        tools_modes = {Mode.TOOLS, Mode.TOOLS_STRICT, Mode.PARALLEL_TOOLS}
+        if self.mode in tools_modes:
+            return [
                 {
-                    "role": self.system_role,
-                    "content": self.system_prompt_generator.generate_prompt(),
+                    "type": "function",
+                    "function": generate_openai_schema(self.output_schema),
                 }
             ]
+        return None
 
-        self.messages += self.history.get_history()
+    def _build_schema_for_json_mode(self) -> str:
+        """
+        Build the schema context for JSON modes (appended to system message).
+
+        This matches exactly how Instructor formats the schema for JSON/MD_JSON modes.
+
+        Returns:
+            str: JSON schema string formatted as Instructor does.
+        """
+        from textwrap import dedent
+
+        schema = self.output_schema.model_json_schema()
+        return dedent(
+            f"""
+        As a genius expert, your task is to understand the content and provide
+        the parsed objects in json that match the following json_schema:
+
+        {json.dumps(schema, indent=2, ensure_ascii=False)}
+
+        Make sure to return an instance of the JSON, not the schema itself
+        """
+        ).strip()
+
+    def _serialize_history_for_token_count(self) -> List[Dict[str, Any]]:
+        """
+        Serialize conversation history for token counting, handling multimodal content.
+
+        This method converts instructor multimodal objects (Image, Audio, PDF) to the
+        OpenAI format that LiteLLM's token counter expects. Text content is also
+        converted to the proper multimodal text format when mixed with media.
+
+        Returns:
+            List[Dict[str, Any]]: History messages in LiteLLM-compatible format.
+        """
+        history = self.history.get_history()
+        serialized = []
+
+        for message in history:
+            content = message.get("content")
+
+            if isinstance(content, list):
+                # Multimodal content - convert to OpenAI format
+                serialized_content = []
+                for item in content:
+                    if isinstance(item, str):
+                        # Text content - wrap in OpenAI text format
+                        serialized_content.append({"type": "text", "text": item})
+                    elif isinstance(item, (Image, Audio, PDF)):
+                        # Multimodal object - use instructor's to_openai method
+                        try:
+                            serialized_content.append(item.to_openai(Mode.JSON))
+                        except Exception as e:
+                            # Log the error and use placeholder for token estimation
+                            logger = logging.getLogger(__name__)
+                            media_type = type(item).__name__
+                            logger.warning(
+                                f"Failed to serialize {media_type} for token counting: {e}. "
+                                f"Using placeholder for estimation."
+                            )
+                            serialized_content.append({"type": "text", "text": f"[{media_type.lower()} content]"})
+                    else:
+                        # Unknown type - convert to string
+                        serialized_content.append({"type": "text", "text": str(item)})
+                serialized.append({"role": message["role"], "content": serialized_content})
+            else:
+                # Simple text content - keep as is
+                serialized.append(message)
+
+        return serialized
+
+    def get_context_token_count(self) -> TokenCountResult:
+        """
+        Get the accurate token count for the current context.
+
+        This method computes the token count by serializing the context exactly
+        as Instructor does, including:
+        - System prompt
+        - Conversation history (with multimodal content serialized properly)
+        - Tools/schema overhead (using Instructor's actual schema generation)
+
+        For TOOLS mode: Uses the actual tools parameter that Instructor sends.
+        For JSON modes: Appends the schema to the system message as Instructor does.
+
+        Works with any model supported by LiteLLM including OpenAI, Anthropic,
+        Google, and 100+ other providers.
+
+        Returns:
+            TokenCountResult: A named tuple containing:
+                - total: Total tokens in the context (including schema overhead)
+                - system_prompt: Tokens in the system prompt
+                - history: Tokens in the conversation history
+                - tools: Tokens in the tools/function definitions (TOOLS mode only)
+                - model: The model used for counting
+                - max_tokens: Maximum context window (if known)
+                - utilization: Percentage of context used (if max_tokens known)
+
+        Example:
+            ```python
+            agent = AtomicAgent[InputSchema, OutputSchema](config)
+
+            # Get accurate token count at any time
+            result = agent.get_context_token_count()
+            print(f"Total: {result.total} tokens")
+            print(f"System: {result.system_prompt} tokens")
+            print(f"History: {result.history} tokens")
+            print(f"Tools: {result.tools} tokens")
+            if result.utilization:
+                print(f"Context usage: {result.utilization:.1%}")
+            ```
+
+        Note:
+            The 'token:counted' hook event is dispatched, allowing for
+            monitoring and logging of token usage.
+        """
+        counter = get_token_counter()
+
+        # Build system messages
+        system_messages = self._build_system_messages()
+
+        # Handle schema serialization based on mode
+        tools = self._build_tools_definition()
+
+        if tools is None:
+            # JSON mode - append schema to system message like Instructor does
+            schema_context = self._build_schema_for_json_mode()
+            if system_messages:
+                system_messages = [
+                    {
+                        "role": system_messages[0]["role"],
+                        "content": system_messages[0]["content"] + "\n\n" + schema_context,
+                    }
+                ]
+            else:
+                system_messages = [{"role": "system", "content": schema_context}]
+
+        result = counter.count_context(
+            model=self.model,
+            system_messages=system_messages,
+            history_messages=self._serialize_history_for_token_count(),
+            tools=tools,
+        )
+
+        # Dispatch hook for monitoring
+        self._dispatch_hook("token:counted", result)
+
+        return result
 
     def run(self, user_input: Optional[InputSchema] = None) -> OutputSchema:
         """
@@ -506,7 +690,6 @@ if __name__ == "__main__":
     import instructor
     import asyncio
     from rich.live import Live
-    import json
 
     def _create_schema_table(title: str, schema: Type[BaseModel]) -> Table:
         """Create a table displaying schema information.

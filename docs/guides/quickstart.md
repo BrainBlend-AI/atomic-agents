@@ -67,6 +67,50 @@ while True:
     console.print("Agent: ", response.chat_message)
 ```
 
+## Token Counting
+
+Monitor your context usage with the `get_context_token_count()` method. Token counts are computed accurately on-demand by serializing the context exactly as Instructor does, including the output schema overhead. This works with any provider (OpenAI, Anthropic, Google, Groq, etc.) and supports multimodal content (images, PDFs, audio):
+
+```python
+# Get accurate token count at any time - no need to make an API call first
+token_info = agent.get_context_token_count()
+print(f"Total tokens: {token_info.total}")
+print(f"System prompt (with schema): {token_info.system_prompt} tokens")
+print(f"History: {token_info.history} tokens")
+
+# Check context utilization (if model's max tokens is known)
+if token_info.max_tokens:
+    print(f"Max context: {token_info.max_tokens} tokens")
+if token_info.utilization:
+    print(f"Context utilization: {token_info.utilization:.1%}")
+```
+
+You can add a `/tokens` command to your chatbot for easy monitoring:
+
+```python
+while True:
+    user_input = console.input("[bold blue]You:[/bold blue] ")
+
+    if user_input.lower() in ["/exit", "/quit"]:
+        break
+
+    # Add token counting command
+    if user_input.lower() == "/tokens":
+        token_info = agent.get_context_token_count()
+        console.print(f"[bold magenta]Token Usage:[/bold magenta]")
+        console.print(f"  Total: {token_info.total} tokens")
+        console.print(f"  System prompt: {token_info.system_prompt} tokens")
+        console.print(f"  History: {token_info.history} tokens")
+        if token_info.utilization:
+            console.print(f"  Context utilization: {token_info.utilization:.1%}")
+        continue
+
+    # Process normal input
+    input_schema = BasicChatInputSchema(chat_message=user_input)
+    response = agent.run(input_schema)
+    console.print("Agent: ", response.chat_message)
+```
+
 ## Streaming Responses
 
 For a more interactive experience, you can use streaming with async processing:

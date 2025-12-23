@@ -197,6 +197,7 @@ source = { editable = "." }
 dependencies = [
     { name = "gitpython" },
     { name = "instructor" },
+    { name = "litellm" },
     { name = "mcp", extra = ["cli"] },
     { name = "pydantic" },
     { name = "pyfiglet" },
@@ -229,6 +230,7 @@ dev = [
 requires-dist = [
     { name = "gitpython", specifier = ">=3.1.43,<4.0.0" },
     { name = "instructor", specifier = "==1.13.0" },
+    { name = "litellm", specifier = ">=1.50.0,<2.0.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.6.0" },
     { name = "pydantic", specifier = ">=2.11.0,<3.0.0" },
     { name = "pyfiglet", specifier = ">=1.0.2,<2.0.0" },
