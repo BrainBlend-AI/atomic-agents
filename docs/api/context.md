@@ -1,5 +1,9 @@
 # Context
 
+```{seealso}
+For a comprehensive guide on memory management, multi-agent patterns, and best practices, see the **[Memory and Context Guide](/guides/memory)**.
+```
+
 ## Agent History
 
 The `ChatHistory` class manages conversation history and state for AI agents:

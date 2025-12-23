@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, os.path.abspath(".."))
 
 project = "Atomic Agents"
-copyright = "2024, Kenny Vaneetvelde"
+copyright = "2026, Kenny Vaneetvelde"
 author = "Kenny Vaneetvelde"
 version = "2.0.4"
 release = "2.0.4"
@@ -17,6 +17,7 @@ extensions = [
     "myst_parser",
     "sphinx_copybutton",
     "sphinx_design",
+    "sphinxcontrib.mermaid",
 ]
 
 templates_path = ["_templates"]

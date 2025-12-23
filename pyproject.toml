@@ -60,6 +60,7 @@ dev = [
     "sphinx-autobuild>=2024.2.4,<2025.0.0",
     "beautifulsoup4>=4.12.3,<5.0.0",
     "markdownify>=0.9.0,<1.0.0",
+    "sphinxcontrib-mermaid>=1.2.3",
 ]
 
 [tool.hatch.build.targets.wheel]
