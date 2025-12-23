@@ -7,6 +7,7 @@ This section contains detailed guides for working with Atomic Agents.
 :caption: Guides
 
 quickstart
+memory
 tools
 hooks
 orchestration
