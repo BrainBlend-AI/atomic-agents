@@ -12,6 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/BrainBlend-AI/atomic-agents?style=social)](https://github.com/BrainBlend-AI/atomic-agents/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/BrainBlend-AI/atomic-agents?style=social)](https://github.com/BrainBlend-AI/atomic-agents/network/members)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/BrainBlend-AI/atomic-agents)
 
 ## What is Atomic Agents?
 
