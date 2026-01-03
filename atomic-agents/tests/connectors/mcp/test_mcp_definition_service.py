@@ -562,3 +562,67 @@ async def test_fetch_prompts_from_session(caplog):
     assert pd.name == "welcome"
     # validate input_schema was constructed from arguments
     assert pd.input_schema["properties"]["name"]["description"] == "The user's name"
+
+
+@pytest.mark.asyncio
+async def test_fetch_tool_definitions_with_output_schema():
+    """Test that outputSchema is captured from MCP tools when available"""
+    sess = AsyncMock()
+    sess.initialize = AsyncMock()
+
+    # Create a mock tool with outputSchema
+    mock_tool = MagicMock()
+    mock_tool.name = "StructuredTool"
+    mock_tool.description = "A tool with structured output"
+    mock_tool.inputSchema = {
+        "type": "object",
+        "properties": {"query": {"type": "string", "description": "Search query"}},
+        "required": ["query"],
+    }
+    mock_tool.outputSchema = {
+        "type": "object",
+        "properties": {
+            "results": {"type": "array", "items": {"type": "string"}, "description": "Search results"},
+            "count": {"type": "integer", "description": "Number of results"},
+        },
+        "required": ["results", "count"],
+    }
+
+    mock_response = MagicMock()
+    mock_response.tools = [mock_tool]
+    sess.list_tools = AsyncMock(return_value=mock_response)
+
+    result = await MCPDefinitionService.fetch_tool_definitions_from_session(sess)
+
+    assert len(result) == 1
+    td = result[0]
+    assert td.name == "StructuredTool"
+    assert td.output_schema is not None
+    assert td.output_schema["properties"]["results"]["type"] == "array"
+    assert td.output_schema["properties"]["count"]["type"] == "integer"
+
+
+@pytest.mark.asyncio
+async def test_fetch_tool_definitions_without_output_schema():
+    """Test that output_schema is None when MCP tool doesn't provide outputSchema"""
+    sess = AsyncMock()
+    sess.initialize = AsyncMock()
+
+    # Create a mock tool without outputSchema
+    mock_tool = MagicMock()
+    mock_tool.name = "SimpleTool"
+    mock_tool.description = "A simple tool without structured output"
+    mock_tool.inputSchema = {"type": "object", "properties": {}}
+    # Simulate tool without outputSchema attribute
+    del mock_tool.outputSchema
+
+    mock_response = MagicMock()
+    mock_response.tools = [mock_tool]
+    sess.list_tools = AsyncMock(return_value=mock_response)
+
+    result = await MCPDefinitionService.fetch_tool_definitions_from_session(sess)
+
+    assert len(result) == 1
+    td = result[0]
+    assert td.name == "SimpleTool"
+    assert td.output_schema is None

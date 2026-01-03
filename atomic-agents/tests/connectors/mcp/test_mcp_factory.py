@@ -86,9 +86,83 @@ def test_fetch_mcp_tools_with_definitions_http(monkeypatch):
     # input_schema has only tool_name field
     Model = tool_cls.input_schema
     assert "tool_name" in Model.model_fields
-    # output_schema has result field
+    # output_schema has result field (generic schema)
     OutModel = tool_cls.output_schema
     assert "result" in OutModel.model_fields
+    # verify _has_typed_output_schema is False for generic schema
+    assert tool_cls._has_typed_output_schema is False
+
+
+def test_fetch_mcp_tools_with_typed_output_schema(monkeypatch):
+    """Test that tools with outputSchema get typed output models"""
+    input_schema = {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
+    output_schema = {
+        "type": "object",
+        "properties": {
+            "results": {"type": "array", "items": {"type": "string"}, "description": "Search results"},
+            "count": {"type": "integer", "description": "Number of results"},
+        },
+        "required": ["results", "count"],
+    }
+    definitions = [
+        MCPToolDefinition(
+            name="SearchTool", description="A tool with typed output", input_schema=input_schema, output_schema=output_schema
+        )
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+
+    assert len(tools) == 1
+    tool_cls = tools[0]
+
+    # verify class attributes
+    assert tool_cls.mcp_endpoint == "http://example.com"
+    assert tool_cls._has_typed_output_schema is True
+
+    # input_schema has tool_name and query fields
+    Model = tool_cls.input_schema
+    assert "tool_name" in Model.model_fields
+    assert "query" in Model.model_fields
+
+    # output_schema has typed fields instead of generic 'result'
+    OutModel = tool_cls.output_schema
+    assert "results" in OutModel.model_fields
+    assert "count" in OutModel.model_fields
+    # Should NOT have the generic 'result' field
+    assert "result" not in OutModel.model_fields
+    # Should NOT have the tool_name field (output schemas don't need it)
+    assert "tool_name" not in OutModel.model_fields
+
+
+def test_fetch_mcp_tools_mixed_output_schemas(monkeypatch):
+    """Test that tools with and without outputSchema are handled correctly together"""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    output_schema = {
+        "type": "object",
+        "properties": {"data": {"type": "string"}},
+        "required": ["data"],
+    }
+    definitions = [
+        MCPToolDefinition(name="GenericTool", description="No output schema", input_schema=input_schema),
+        MCPToolDefinition(
+            name="TypedTool", description="With output schema", input_schema=input_schema, output_schema=output_schema
+        ),
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+
+    assert len(tools) == 2
+
+    # First tool should have generic output
+    generic_tool = tools[0]
+    assert generic_tool._has_typed_output_schema is False
+    assert "result" in generic_tool.output_schema.model_fields
+
+    # Second tool should have typed output
+    typed_tool = tools[1]
+    assert typed_tool._has_typed_output_schema is True
+    assert "data" in typed_tool.output_schema.model_fields
+    assert "result" not in typed_tool.output_schema.model_fields
 
 
 def test_fetch_mcp_resources_with_definitions_stdio(monkeypatch):

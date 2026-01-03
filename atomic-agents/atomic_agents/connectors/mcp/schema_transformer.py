@@ -151,6 +151,7 @@ class SchemaTransformer:
         tool_name_literal: str,
         docstring: Optional[str] = None,
         attribute_type: str = MCPAttributeType.TOOL,
+        is_output_schema: bool = False,
     ) -> Type[BaseIOSchema]:
         """
         Dynamically create a Pydantic model from a JSON schema.
@@ -160,6 +161,8 @@ class SchemaTransformer:
             model_name: Name for the model
             tool_name_literal: Tool name to use for the Literal type
             docstring: Optional docstring for the model
+            attribute_type: Type of MCP attribute (tool, resource, prompt)
+            is_output_schema: If True, skip adding the tool_name literal field (output schemas don't need it)
 
         Returns:
             Pydantic model class
@@ -180,12 +183,13 @@ class SchemaTransformer:
                 f"Schema for {model_name} is not a typical object with properties. Fields might be empty beyond tool_name."
             )
 
-        # Create a proper Literal type for the attribute identifier field.
-        tool_name_type = cast(Type[str], Literal[tool_name_literal])
-        fields[f"{attribute_type}_name"] = (
-            tool_name_type,
-            Field(..., description=f"Required identifier for the {tool_name_literal} {attribute_type}."),
-        )
+        # Only add the attribute identifier field for input schemas
+        if not is_output_schema:
+            tool_name_type = cast(Type[str], Literal[tool_name_literal])
+            fields[f"{attribute_type}_name"] = (
+                tool_name_type,
+                Field(..., description=f"Required identifier for the {tool_name_literal} {attribute_type}."),
+            )
 
         # Create the model
         model = create_model(
