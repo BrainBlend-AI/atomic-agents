@@ -207,9 +207,7 @@ async def test_typed_output_schema_with_structured_content_dict(monkeypatch):
         "required": ["results", "count"],
     }
     definitions = [
-        MCPToolDefinition(
-            name="SearchTool", description="Search tool", input_schema=input_schema, output_schema=output_schema
-        )
+        MCPToolDefinition(name="SearchTool", description="Search tool", input_schema=input_schema, output_schema=output_schema)
     ]
     monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
     tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)

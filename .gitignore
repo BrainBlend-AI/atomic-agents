@@ -153,6 +153,8 @@ debug.log
 
 # AI tools
 .claude
+!.claude/skills/
+!.claude/skills/**
 CLAUDE.md
 CLAUDE.local.md
 .serena

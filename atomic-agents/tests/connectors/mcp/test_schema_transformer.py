@@ -218,9 +218,7 @@ class TestCreateModelFromSchema:
             },
             "required": ["results", "count"],
         }
-        model = SchemaTransformer.create_model_from_schema(
-            schema, "OutputModel", "my_tool", is_output_schema=True
-        )
+        model = SchemaTransformer.create_model_from_schema(schema, "OutputModel", "my_tool", is_output_schema=True)
 
         # Output schema should NOT have tool_name field
         assert "tool_name" not in model.model_fields
@@ -243,9 +241,7 @@ class TestCreateModelFromSchema:
             },
             "required": ["query"],
         }
-        model = SchemaTransformer.create_model_from_schema(
-            schema, "InputModel", "my_tool", is_output_schema=False
-        )
+        model = SchemaTransformer.create_model_from_schema(schema, "InputModel", "my_tool", is_output_schema=False)
 
         # Input schema SHOULD have tool_name field
         assert "tool_name" in model.model_fields
@@ -271,9 +267,7 @@ class TestCreateModelFromSchema:
 
         # Output schema for resource - should not have resource_name
         model = SchemaTransformer.create_model_from_schema(
-            schema, "ResourceOutput", "my_resource",
-            attribute_type=MCPAttributeType.RESOURCE,
-            is_output_schema=True
+            schema, "ResourceOutput", "my_resource", attribute_type=MCPAttributeType.RESOURCE, is_output_schema=True
         )
 
         assert "resource_name" not in model.model_fields
