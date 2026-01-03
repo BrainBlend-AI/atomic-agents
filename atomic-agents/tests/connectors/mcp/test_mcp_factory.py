@@ -86,9 +86,460 @@ def test_fetch_mcp_tools_with_definitions_http(monkeypatch):
     # input_schema has only tool_name field
     Model = tool_cls.input_schema
     assert "tool_name" in Model.model_fields
-    # output_schema has result field
+    # output_schema has result field (generic schema)
     OutModel = tool_cls.output_schema
     assert "result" in OutModel.model_fields
+    # verify _has_typed_output_schema is False for generic schema
+    assert tool_cls._has_typed_output_schema is False
+
+
+def test_fetch_mcp_tools_with_typed_output_schema(monkeypatch):
+    """Test that tools with outputSchema get typed output models"""
+    input_schema = {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
+    output_schema = {
+        "type": "object",
+        "properties": {
+            "results": {"type": "array", "items": {"type": "string"}, "description": "Search results"},
+            "count": {"type": "integer", "description": "Number of results"},
+        },
+        "required": ["results", "count"],
+    }
+    definitions = [
+        MCPToolDefinition(
+            name="SearchTool", description="A tool with typed output", input_schema=input_schema, output_schema=output_schema
+        )
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+
+    assert len(tools) == 1
+    tool_cls = tools[0]
+
+    # verify class attributes
+    assert tool_cls.mcp_endpoint == "http://example.com"
+    assert tool_cls._has_typed_output_schema is True
+
+    # input_schema has tool_name and query fields
+    Model = tool_cls.input_schema
+    assert "tool_name" in Model.model_fields
+    assert "query" in Model.model_fields
+
+    # output_schema has typed fields instead of generic 'result'
+    OutModel = tool_cls.output_schema
+    assert "results" in OutModel.model_fields
+    assert "count" in OutModel.model_fields
+    # Should NOT have the generic 'result' field
+    assert "result" not in OutModel.model_fields
+    # Should NOT have the tool_name field (output schemas don't need it)
+    assert "tool_name" not in OutModel.model_fields
+
+
+def test_fetch_mcp_tools_mixed_output_schemas(monkeypatch):
+    """Test that tools with and without outputSchema are handled correctly together"""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    output_schema = {
+        "type": "object",
+        "properties": {"data": {"type": "string"}},
+        "required": ["data"],
+    }
+    definitions = [
+        MCPToolDefinition(name="GenericTool", description="No output schema", input_schema=input_schema),
+        MCPToolDefinition(
+            name="TypedTool", description="With output schema", input_schema=input_schema, output_schema=output_schema
+        ),
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+
+    assert len(tools) == 2
+
+    # First tool should have generic output
+    generic_tool = tools[0]
+    assert generic_tool._has_typed_output_schema is False
+    assert "result" in generic_tool.output_schema.model_fields
+
+    # Second tool should have typed output
+    typed_tool = tools[1]
+    assert typed_tool._has_typed_output_schema is True
+    assert "data" in typed_tool.output_schema.model_fields
+    assert "result" not in typed_tool.output_schema.model_fields
+
+
+# =============================================================================
+# Tests for typed output schema result processing
+# =============================================================================
+
+
+class MockStructuredContentResult(BaseModel):
+    """Mock MCP result with structuredContent attribute (MCP spec primary path)"""
+
+    structuredContent: dict
+
+
+class MockContentItem(BaseModel):
+    """Mock content item with text attribute"""
+
+    text: str
+
+
+class MockContentItemWithData(BaseModel):
+    """Mock content item with data attribute"""
+
+    data: dict
+
+
+class MockContentResult(BaseModel):
+    """Mock MCP result with content array"""
+
+    content: list
+
+
+@pytest.mark.asyncio
+async def test_typed_output_schema_with_structured_content_dict(monkeypatch):
+    """Test result processing when tool returns BaseModel with structuredContent as dict"""
+    input_schema = {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
+    output_schema = {
+        "type": "object",
+        "properties": {
+            "results": {"type": "array", "items": {"type": "string"}},
+            "count": {"type": "integer"},
+        },
+        "required": ["results", "count"],
+    }
+    definitions = [
+        MCPToolDefinition(
+            name="SearchTool", description="Search tool", input_schema=input_schema, output_schema=output_schema
+        )
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+
+    tool_instance = tool_cls()
+    mock_result = MockStructuredContentResult(structuredContent={"results": ["a", "b"], "count": 2})
+
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+
+    class MockClientSession:
+        def __init__(self, *args):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            return mock_result
+
+    class MockHttpClient:
+        async def __aenter__(self):
+            return (None, None, None)
+
+        async def __aexit__(self, *args):
+            pass
+
+    monkeypatch.setattr(factory_module, "ClientSession", MockClientSession)
+    monkeypatch.setattr(factory_module, "streamablehttp_client", lambda *args, **kwargs: MockHttpClient())
+
+    InputSchema = tool_cls.input_schema
+    params = InputSchema(tool_name="SearchTool", query="test")
+
+    result = await tool_instance.arun(params)
+
+    assert result.results == ["a", "b"]
+    assert result.count == 2
+
+
+@pytest.mark.asyncio
+async def test_typed_output_schema_with_json_text_content(monkeypatch):
+    """Test result processing when tool returns content[0].text as JSON string"""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    output_schema = {
+        "type": "object",
+        "properties": {"data": {"type": "string"}},
+        "required": ["data"],
+    }
+    definitions = [
+        MCPToolDefinition(name="JsonTool", description="JSON tool", input_schema=input_schema, output_schema=output_schema)
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+
+    tool_instance = tool_cls()
+    mock_content_item = MockContentItem(text='{"data": "hello"}')
+    mock_result = MockContentResult(content=[mock_content_item])
+
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+
+    class MockClientSession:
+        def __init__(self, *args):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            return mock_result
+
+    class MockHttpClient:
+        async def __aenter__(self):
+            return (None, None, None)
+
+        async def __aexit__(self, *args):
+            pass
+
+    monkeypatch.setattr(factory_module, "ClientSession", MockClientSession)
+    monkeypatch.setattr(factory_module, "streamablehttp_client", lambda *args, **kwargs: MockHttpClient())
+
+    InputSchema = tool_cls.input_schema
+    params = InputSchema(tool_name="JsonTool")
+
+    result = await tool_instance.arun(params)
+
+    assert result.data == "hello"
+
+
+@pytest.mark.asyncio
+async def test_typed_output_schema_with_content_data_dict(monkeypatch):
+    """Test result processing when content item has .data attribute as dict"""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    output_schema = {
+        "type": "object",
+        "properties": {"value": {"type": "integer"}},
+        "required": ["value"],
+    }
+    definitions = [
+        MCPToolDefinition(name="DataTool", description="Data tool", input_schema=input_schema, output_schema=output_schema)
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+
+    tool_instance = tool_cls()
+    mock_content_item = MockContentItemWithData(data={"value": 42})
+    mock_result = MockContentResult(content=[mock_content_item])
+
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+
+    class MockClientSession:
+        def __init__(self, *args):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            return mock_result
+
+    class MockHttpClient:
+        async def __aenter__(self):
+            return (None, None, None)
+
+        async def __aexit__(self, *args):
+            pass
+
+    monkeypatch.setattr(factory_module, "ClientSession", MockClientSession)
+    monkeypatch.setattr(factory_module, "streamablehttp_client", lambda *args, **kwargs: MockHttpClient())
+
+    InputSchema = tool_cls.input_schema
+    params = InputSchema(tool_name="DataTool")
+
+    result = await tool_instance.arun(params)
+
+    assert result.value == 42
+
+
+@pytest.mark.asyncio
+async def test_typed_output_schema_with_raw_dict(monkeypatch):
+    """Test fallback when tool_result is plain dict"""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    output_schema = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}},
+        "required": ["name"],
+    }
+    definitions = [
+        MCPToolDefinition(name="DictTool", description="Dict tool", input_schema=input_schema, output_schema=output_schema)
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+
+    tool_instance = tool_cls()
+    mock_result = {"name": "test_value"}
+
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+
+    class MockClientSession:
+        def __init__(self, *args):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            return mock_result
+
+    class MockHttpClient:
+        async def __aenter__(self):
+            return (None, None, None)
+
+        async def __aexit__(self, *args):
+            pass
+
+    monkeypatch.setattr(factory_module, "ClientSession", MockClientSession)
+    monkeypatch.setattr(factory_module, "streamablehttp_client", lambda *args, **kwargs: MockHttpClient())
+
+    InputSchema = tool_cls.input_schema
+    params = InputSchema(tool_name="DictTool")
+
+    result = await tool_instance.arun(params)
+
+    assert result.name == "test_value"
+
+
+@pytest.mark.asyncio
+async def test_typed_output_schema_raises_on_unparseable_result(monkeypatch):
+    """Test that ValueError is raised when typed schema tool returns unparseable result"""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    output_schema = {
+        "type": "object",
+        "properties": {"data": {"type": "string"}},
+        "required": ["data"],
+    }
+    definitions = [
+        MCPToolDefinition(
+            name="FailingTool", description="Failing tool", input_schema=input_schema, output_schema=output_schema
+        )
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+
+    tool_instance = tool_cls()
+    # Return a string which can't be parsed as structured content
+    mock_result = "just a string, not structured"
+
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+
+    class MockClientSession:
+        def __init__(self, *args):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            return mock_result
+
+    class MockHttpClient:
+        async def __aenter__(self):
+            return (None, None, None)
+
+        async def __aexit__(self, *args):
+            pass
+
+    monkeypatch.setattr(factory_module, "ClientSession", MockClientSession)
+    monkeypatch.setattr(factory_module, "streamablehttp_client", lambda *args, **kwargs: MockHttpClient())
+
+    InputSchema = tool_cls.input_schema
+    params = InputSchema(tool_name="FailingTool")
+
+    with pytest.raises(RuntimeError) as exc_info:
+        await tool_instance.arun(params)
+
+    # The ValueError gets wrapped in RuntimeError by the outer exception handler
+    assert "unparseable result" in str(exc_info.value) or "FailingTool" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_typed_output_schema_handles_empty_content_array(monkeypatch):
+    """Test graceful handling when content array is empty"""
+    input_schema = {"type": "object", "properties": {}, "required": []}
+    output_schema = {
+        "type": "object",
+        "properties": {"data": {"type": "string"}},
+        "required": ["data"],
+    }
+    definitions = [
+        MCPToolDefinition(
+            name="EmptyContentTool", description="Empty content tool", input_schema=input_schema, output_schema=output_schema
+        )
+    ]
+    monkeypatch.setattr(MCPFactory, "_fetch_tool_definitions", lambda self: definitions)
+    tools = fetch_mcp_tools("http://example.com", MCPTransportType.HTTP_STREAM)
+    tool_cls = tools[0]
+
+    tool_instance = tool_cls()
+    # Empty content array - should fall through and raise error
+    mock_result = MockContentResult(content=[])
+
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+
+    class MockClientSession:
+        def __init__(self, *args):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def initialize(self):
+            pass
+
+        async def call_tool(self, name, arguments):
+            return mock_result
+
+    class MockHttpClient:
+        async def __aenter__(self):
+            return (None, None, None)
+
+        async def __aexit__(self, *args):
+            pass
+
+    monkeypatch.setattr(factory_module, "ClientSession", MockClientSession)
+    monkeypatch.setattr(factory_module, "streamablehttp_client", lambda *args, **kwargs: MockHttpClient())
+
+    InputSchema = tool_cls.input_schema
+    params = InputSchema(tool_name="EmptyContentTool")
+
+    # Should raise error since we can't extract structured content
+    with pytest.raises(RuntimeError) as exc_info:
+        await tool_instance.arun(params)
+
+    assert "EmptyContentTool" in str(exc_info.value)
 
 
 def test_fetch_mcp_resources_with_definitions_stdio(monkeypatch):
