@@ -162,7 +162,10 @@ class SchemaTransformer:
             tool_name_literal: Tool name to use for the Literal type
             docstring: Optional docstring for the model
             attribute_type: Type of MCP attribute (tool, resource, prompt)
-            is_output_schema: If True, skip adding the tool_name literal field (output schemas don't need it)
+            is_output_schema: If True, skip adding the tool_name/resource_name/prompt_name literal field.
+                Output schemas represent tool responses and don't need an identifier field since
+                the tool has already been selected and executed. Input schemas need the identifier
+                for discriminated unions when selecting among multiple tools in an orchestrator.
 
         Returns:
             Pydantic model class

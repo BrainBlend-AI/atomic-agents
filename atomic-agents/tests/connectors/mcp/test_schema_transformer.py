@@ -207,3 +207,74 @@ class TestCreateModelFromSchema:
         assert hasattr(objects_field.annotation, "__origin__") and objects_field.annotation.__origin__ is list
         inner_type = objects_field.annotation.__args__[0]
         assert inner_type != Any
+
+    def test_output_schema_no_tool_name_field(self):
+        """Test that output schemas don't include tool_name field when is_output_schema=True."""
+        schema = {
+            "type": "object",
+            "properties": {
+                "results": {"type": "array", "items": {"type": "string"}, "description": "Search results"},
+                "count": {"type": "integer", "description": "Number of results"},
+            },
+            "required": ["results", "count"],
+        }
+        model = SchemaTransformer.create_model_from_schema(
+            schema, "OutputModel", "my_tool", is_output_schema=True
+        )
+
+        # Output schema should NOT have tool_name field
+        assert "tool_name" not in model.model_fields
+        # But should have the defined fields
+        assert "results" in model.model_fields
+        assert "count" in model.model_fields
+        assert len(model.model_fields) == 2  # Only results and count, no tool_name
+
+        # Should be instantiable without tool_name
+        instance = model(results=["a", "b"], count=2)
+        assert instance.results == ["a", "b"]
+        assert instance.count == 2
+
+    def test_input_schema_has_tool_name_field(self):
+        """Test that input schemas include tool_name field when is_output_schema=False (default)."""
+        schema = {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query"},
+            },
+            "required": ["query"],
+        }
+        model = SchemaTransformer.create_model_from_schema(
+            schema, "InputModel", "my_tool", is_output_schema=False
+        )
+
+        # Input schema SHOULD have tool_name field
+        assert "tool_name" in model.model_fields
+        assert "query" in model.model_fields
+        assert len(model.model_fields) == 2  # query and tool_name
+
+        # Should require tool_name for instantiation
+        instance = model(tool_name="my_tool", query="test")
+        assert instance.tool_name == "my_tool"
+        assert instance.query == "test"
+
+    def test_output_schema_with_resource_attribute_type(self):
+        """Test that output schemas work with different attribute types."""
+        from atomic_agents.connectors.mcp.mcp_definition_service import MCPAttributeType
+
+        schema = {
+            "type": "object",
+            "properties": {
+                "data": {"type": "string", "description": "Some data"},
+            },
+            "required": ["data"],
+        }
+
+        # Output schema for resource - should not have resource_name
+        model = SchemaTransformer.create_model_from_schema(
+            schema, "ResourceOutput", "my_resource",
+            attribute_type=MCPAttributeType.RESOURCE,
+            is_output_schema=True
+        )
+
+        assert "resource_name" not in model.model_fields
+        assert "data" in model.model_fields
