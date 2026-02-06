@@ -19,6 +19,7 @@ The Atomic Forge includes several pre-built tools:
 - **Tavily Search**: AI-powered web search
 - **YouTube Transcript Scraper**: Extract transcripts from YouTube videos
 - **Webpage Scraper**: Extract content from web pages
+- **BoCha Search**: web search
 
 ## Using Tools
 
