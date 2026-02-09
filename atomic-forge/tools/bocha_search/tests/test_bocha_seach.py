@@ -11,7 +11,7 @@ from tool.bocha_search import (  # noqa: E402
     BoChaSearchToolInputSchema,
     BoChaSearchToolConfig,
     BoChaSearchToolOutputSchema,
-    BoChaSearchResultItemSchema,
+    # BoChaSearchResultItemSchema,
 )
 
 
