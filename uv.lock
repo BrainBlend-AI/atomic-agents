@@ -11,6 +11,7 @@ members = [
     "atomic-agents",
     "basic-multimodal",
     "basic-pdf-analysis",
+    "bocha-search",
     "calculator",
     "deep-research",
     "dspy-integration",
@@ -24,7 +25,6 @@ members = [
     "rag-chatbot",
     "searxng-search",
     "tavily-search",
-    "bocha_search",
     "web-search-agent",
     "webpage-scraper",
     "youtube-summarizer",
@@ -193,7 +193,7 @@ wheels = [
 
 [[package]]
 name = "atomic-agents"
-version = "2.6.0"
+version = "2.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "gitpython" },
@@ -442,6 +442,43 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/47/6d/a3a239e938960df1a662b93d6230d4f3e9b4a22982d060fc38c42f45a56b/black-24.10.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ddacb691cdcdf77b96f549cf9591701d8db36b2f19519373d60d31746068dbf2", size = 1760928, upload-time = "2024-10-07T19:24:15.233Z" },
     { url = "https://files.pythonhosted.org/packages/dd/cf/af018e13b0eddfb434df4d9cd1b2b7892bab119f7a20123e93f6910982e8/black-24.10.0-cp313-cp313-win_amd64.whl", hash = "sha256:680359d932801c76d2e9c9068d05c6b107f2584b2a5b88831c83962eb9984c1b", size = 1436875, upload-time = "2024-10-07T19:24:42.762Z" },
     { url = "https://files.pythonhosted.org/packages/8d/a7/4b27c50537ebca8bec139b872861f9d2bf501c5ec51fcf897cb924d9e264/black-24.10.0-py3-none-any.whl", hash = "sha256:3bb2b7a1f7b685f85b11fed1ef10f8a9148bceb49853e47a294a3dd963c1dd7d", size = 206898, upload-time = "2024-10-07T19:20:48.317Z" },
+]
+
+[[package]]
+name = "bocha-search"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/bocha_search" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "python-dotenv" },
+    { name = "rich" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.9.0,<4.0.0" },
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.5,<1.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0,<2.0.0" },
+    { name = "rich", specifier = ">=13.7.0,<14.0.0" },
 ]
 
 [[package]]
@@ -3976,43 +4013,6 @@ wheels = [
 name = "tavily-search"
 version = "1.0.0"
 source = { editable = "atomic-forge/tools/tavily_search" }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "atomic-agents" },
-    { name = "pydantic" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "coverage" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "python-dotenv" },
-    { name = "rich" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = ">=3.9.0,<4.0.0" },
-    { name = "atomic-agents", editable = "." },
-    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
-    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
-    { name = "pytest-asyncio", specifier = ">=0.23.5,<1.0.0" },
-    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
-    { name = "python-dotenv", specifier = ">=1.0.0,<2.0.0" },
-    { name = "rich", specifier = ">=13.7.0,<14.0.0" },
-]
-
-[[package]]
-name = "bocha-search"
-version = "1.0.0"
-source = { editable = "atomic-forge/tools/bocha_search" }
 dependencies = [
     { name = "aiohttp" },
     { name = "atomic-agents" },

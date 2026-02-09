@@ -13,7 +13,7 @@ readme = "README.md"
 authors = [
     { name = "Jintao Wei", email = "2797154930@qq.com" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 dependencies = [
     "atomic-agents",
     "pydantic>=2.10.3,<3.0.0",

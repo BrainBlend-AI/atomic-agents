@@ -1,8 +1,8 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Literal
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
+import logging
 import aiohttp
 from pydantic import Field
 
@@ -29,7 +29,7 @@ class BoChaSearchResultItemSchema(BaseIOSchema):
 
     name: str = Field(..., description="The title of the search result")
     url: str = Field(..., description="The URL of the search result")
-    snippet: str = Field(None, description="The content snippet of the search result")
+    snippet: Optional[str] = Field(None, description="The content snippet of the search result")
     query: Optional[str] = Field(None, description="The query used to obtain this search result")
 
 
@@ -45,13 +45,15 @@ class BoChaSearchToolOutputSchema(BaseIOSchema):
 class BoChaSearchToolConfig(BaseToolConfig):
 
     api_key: str = ""
-    freshness: str = "noLimit"
+    freshness: Literal["noLimit", "oneDay", "oneWeek", "oneMonth", "oneYear", "YYYY-MM-DD..YYYY-MM-DD", "YYYY-MM-DD"] = (
+        "noLimit"
+    )
     include: Optional[str] = None
     exclude: Optional[str] = None
     count: int = 10
 
 
-class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutputSchema]):
+class BoChaSearchTool(BaseTool[BoChaSearchToolInputSchema, BoChaSearchToolOutputSchema]):
     """
     Tool for performing searches using the BoCha search API.
 
@@ -71,7 +73,7 @@ class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutpu
                 Configuration for the tool, including API key, max results, and optional title and description overrides.
         """
         super().__init__(config)
-        self.api_key = config.api_key or os.getenv("BoCha_API_KEY", "")
+        self.api_key = config.api_key or os.getenv("BOCHA_API_KEY", "")
         self.count = config.count
         self.freshness = config.freshness
         self.include = config.include
@@ -87,9 +89,11 @@ class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutpu
             "query": query,
             "count": self.count,
             "freshness": self.freshness,
-            "include": self.include,
-            "exclude": self.exclude,
         }
+        if self.include is not None:
+            json_data["include"] = self.include
+        if self.exclude is not None:
+            json_data["exclude"] = self.exclude
 
         async with session.post("https://api.bochaai.com/v1/web-search", headers=headers, json=json_data) as response:
             if response.status != 200:
@@ -99,7 +103,10 @@ class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutpu
                 )
             data = await response.json()
 
-            results = data["data"]["webPages"]["value"]
+            results = []
+            webpages = data.get("data", {}).get("webPages", {})
+            if isinstance(webpages, dict):
+                results = webpages.get("value", [])
 
             # Add query information to each result
             for result in results:
@@ -107,17 +114,19 @@ class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutpu
 
             return {"results": results}
 
-    async def run_async(
-        self, params: BoChaSearchToolInputSchema, max_results: Optional[int] = None
-    ) -> BoChaSearchToolOutputSchema:
+    async def run_async(self, params: BoChaSearchToolInputSchema, count: Optional[int] = None) -> BoChaSearchToolOutputSchema:
         async with aiohttp.ClientSession() as session:
             # Fetch results for all queries
             tasks = [self._fetch_search_results(session, query) for query in params.queries]
-            raw_responses = await asyncio.gather(*tasks)
+            raw_responses = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Process results for each query
         processed_results = []
-        for response in raw_responses:
+        for query, response in zip(params.queries, raw_responses):
+            if isinstance(response, Exception):
+                # Log the failure, skip or handle as needed
+                logging.warning(f"Query '{query}' failed: {response}")
+                continue
             query_results = response["results"]
             query_processed = []
             for result in query_results:
@@ -134,12 +143,12 @@ class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutpu
                     print(f"Skipping result due to missing keys: {result}")
 
             # Limit results per query
-            query_processed = query_processed[: max_results or self.count]
+            query_processed = query_processed[: count or self.count]
             processed_results.extend(query_processed)
 
         return BoChaSearchToolOutputSchema(results=processed_results)
 
-    def run(self, params: BoChaSearchToolInputSchema, max_results: Optional[int] = None) -> BoChaSearchToolOutputSchema:
+    def run(self, params: BoChaSearchToolInputSchema, count: Optional[int] = None) -> BoChaSearchToolOutputSchema:
         """
         Runs the BoChaTool synchronously with the given parameters.
 
@@ -147,7 +156,7 @@ class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutpu
 
         Args:
             params (BoChaSearchToolInputSchema): The input parameters for the tool, adhering to the input schema.
-            max_results (Optional[int]): The maximum number of search results to return.
+            count (Optional[int]): The maximum number of search results to return.
 
         Returns:
             BoChaSearchToolOutputSchema: The output of the tool, adhering to the output schema.
@@ -161,7 +170,7 @@ class BoChaSearchTool(BaseTool[BoChaSearchResultItemSchema, BoChaSearchToolOutpu
                 asyncio.run,
                 self.run_async(
                     params,
-                    max_results,
+                    count,
                 ),
             ).result()
 
@@ -177,7 +186,7 @@ if __name__ == "__main__":
     load_dotenv()
     rich_console = Console()
 
-    search_tool_instance = BoChaSearchTool(config=BoChaSearchToolConfig(api_key="sk-**************", max_results=2))
+    search_tool_instance = BoChaSearchTool(config=BoChaSearchToolConfig(api_key=os.getenv("BOCHA_API_KEY"), count=2))
 
     # search_input = BoChaSearchToolInputSchema(queries=["北京天气怎么样？", "天津天气怎么样？", "杭州天气怎么样？"])
     search_input = BoChaSearchToolInputSchema(queries=["Python programming", "Machine learning"])

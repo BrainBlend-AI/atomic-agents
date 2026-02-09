@@ -7,7 +7,7 @@ The BoCha Search Tool is a powerful utility within the Atomic Agents ecosystem t
 - Python 3.9 or later
 - atomic-agents (See [here](/README.md) for installation instructions)
 - pydantic
-- requests
+- aiohttp
 
 ## Installation
 You can install the tool using any of the following options:
@@ -19,15 +19,15 @@ You can install the tool using any of the following options:
 
 ### Parameters
 
-- `api_url` (str): The api key of the BoCha user.
-- `max_results` (int, optional): The maximum number of search results to return.
+- `api_key` (str): The api key of the BoCha user.
+- `count` (int, optional): The maximum number of search results to return.
 
 ### Example
 
 ```python
 config = BoChaSearchToolConfig(
     api_key="my-api-key",
-    max_results=5
+    count=5
 )
 ```
 
@@ -53,14 +53,14 @@ Here's an example of how to use the BoCha Search Tool:
 
 ```python
 import os
-from tool.bocha_search import BoChaTool, BoChaSearchToolConfig
+from tool.bocha_search import BoChaSearchTool, BoChaSearchToolConfig, BoChaSearchToolInputSchema
 
 # Initialize the tool with your BoCha instance URL
-config = BoChaSearchToolConfig(api_key=os.getenv("BOCHA_API_KEY"), max_results=5)
-search_tool = BoChaTool(config=config)
+config = BoChaSearchToolConfig(api_key=os.getenv("BOCHA_API_KEY"), count=5)
+search_tool = BoChaSearchTool(config=config)
 
 # Define input data
-input_data = BoChaTool.input_schema(
+input_data = BoChaSearchToolInputSchema(
     queries=["Python programming", "Machine learning"],
 )
 
