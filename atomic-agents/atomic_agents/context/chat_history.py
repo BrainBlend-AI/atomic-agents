@@ -151,7 +151,7 @@ class ChatHistory:
                         exclude[field_name] = sub_exclude
             return all_objects, (exclude if exclude else None)
 
-        if isinstance(obj, list):
+        if isinstance(obj, (list, tuple)):
             all_objects = []
             exclude = {}
             for i, item in enumerate(obj):
@@ -174,7 +174,12 @@ class ChatHistory:
                 if objects:
                     all_objects.extend(objects)
                     exclude[k] = sub_exclude
-            return all_objects, (exclude if exclude else None)
+            if not all_objects:
+                return [], None
+            # If every value in the dict is fully multimodal, exclude the entire field
+            if len(exclude) == len(obj) and all(v is True for v in exclude.values()):
+                return all_objects, True
+            return all_objects, exclude
 
         return [], None
 
