@@ -153,9 +153,9 @@ def main():
     json_part = json.loads(history[0]["content"][0])
     assert "context" in json_part, "Nested AnalysisContext should be in the JSON"
     assert json_part["context"]["focus_area"] == "nutritional content"
-    assert any(isinstance(item, instructor.Image) for item in history[0]["content"]), (
-        "Image should be extracted into the content list"
-    )
+    assert any(
+        isinstance(item, instructor.Image) for item in history[0]["content"]
+    ), "Image should be extracted into the content list"
     print("Serialization OK — nested context preserved, nested image extracted.\n")
 
     # Reset history before the real run (the agent adds messages internally)
