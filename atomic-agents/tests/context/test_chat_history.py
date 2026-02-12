@@ -767,9 +767,7 @@ def test_extract_multimodal_info_nested_schema():
         text: str = Field(..., description="Text")
 
     img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
-    objs, spec = ChatHistory._extract_multimodal_info(
-        Outer(inner=Inner(image=img, label="test"), text="hello")
-    )
+    objs, spec = ChatHistory._extract_multimodal_info(Outer(inner=Inner(image=img, label="test"), text="hello"))
 
     assert objs == [img]
     # Exclude spec should be {"inner": {"image": True}}
@@ -786,9 +784,7 @@ def test_extract_multimodal_info_list_all_multimodal():
 
     img1 = instructor.Image(source="url1", media_type="image/jpeg", detail="low")
     img2 = instructor.Image(source="url2", media_type="image/jpeg", detail="low")
-    objs, spec = ChatHistory._extract_multimodal_info(
-        Schema(images=[img1, img2])
-    )
+    objs, spec = ChatHistory._extract_multimodal_info(Schema(images=[img1, img2]))
 
     assert objs == [img1, img2]
     # All items multimodal → field excluded entirely
@@ -804,9 +800,7 @@ def test_extract_multimodal_info_list_partial_multimodal():
         items: List[Union[str, instructor.Image]] = Field(..., description="Items")
 
     img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
-    objs, spec = ChatHistory._extract_multimodal_info(
-        Schema(items=["text", img])
-    )
+    objs, spec = ChatHistory._extract_multimodal_info(Schema(items=["text", img]))
 
     assert objs == [img]
     # Only index 1 is multimodal
@@ -824,9 +818,7 @@ def test_extract_multimodal_info_tuple_support():
 def test_extract_multimodal_info_dict_with_multimodal():
     """Dict values containing multimodal objects return correct exclude spec"""
     img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
-    objs, spec = ChatHistory._extract_multimodal_info(
-        {"key1": img, "key2": "text"}
-    )
+    objs, spec = ChatHistory._extract_multimodal_info({"key1": img, "key2": "text"})
 
     assert objs == [img]
     assert spec == {"key1": True}
@@ -836,9 +828,7 @@ def test_extract_multimodal_info_dict_all_multimodal():
     """Dict where all values are multimodal collapses to True"""
     img1 = instructor.Image(source="url1", media_type="image/jpeg", detail="low")
     img2 = instructor.Image(source="url2", media_type="image/jpeg", detail="low")
-    objs, spec = ChatHistory._extract_multimodal_info(
-        {"a": img1, "b": img2}
-    )
+    objs, spec = ChatHistory._extract_multimodal_info({"a": img1, "b": img2})
 
     assert objs == [img1, img2]
     assert spec is True
@@ -846,9 +836,7 @@ def test_extract_multimodal_info_dict_all_multimodal():
 
 def test_extract_multimodal_info_dict_no_multimodal():
     """Dict with no multimodal returns empty list and None"""
-    objs, spec = ChatHistory._extract_multimodal_info(
-        {"key1": "text", "key2": 42}
-    )
+    objs, spec = ChatHistory._extract_multimodal_info({"key1": "text", "key2": 42})
     assert objs == []
     assert spec is None
 
