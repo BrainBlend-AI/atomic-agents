@@ -97,63 +97,91 @@ class ChatHistory:
             either a single JSON string or a mixed array of JSON and multimodal objects.
 
         Note:
-            This method supports multimodal content by keeping multimodal objects
-            separate while generating cohesive JSON for text-based fields.
+            This method supports multimodal content at any nesting depth by
+            recursively extracting multimodal objects and using Pydantic's
+            model_dump_json(exclude=...) for proper serialization of remaining fields.
         """
         history = []
         for message in self.history:
             input_content = message.content
+            multimodal_objects, exclude_spec = self._extract_multimodal_info(input_content)
 
-            # Check if content has any multimodal fields
-            multimodal_objects = []
-            has_multimodal = False
-
-            # Extract multimodal content first
-            for field_name, field in input_content.__class__.model_fields.items():
-                field_value = getattr(input_content, field_name)
-
-                if isinstance(field_value, list):
-                    for item in field_value:
-                        if isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES):
-                            multimodal_objects.append(item)
-                            has_multimodal = True
-                elif isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
-                    multimodal_objects.append(field_value)
-                    has_multimodal = True
-
-            if has_multimodal:
-                # For multimodal content: create mixed array with JSON + multimodal objects
+            if multimodal_objects:
                 processed_content = []
-
-                # Add single cohesive JSON for all non-multimodal fields
-                non_multimodal_data = {}
-                for field_name, field in input_content.__class__.model_fields.items():
-                    field_value = getattr(input_content, field_name)
-
-                    if isinstance(field_value, list):
-                        # Only include non-multimodal items from lists
-                        non_multimodal_items = [
-                            item for item in field_value if not isinstance(item, INSTRUCTOR_MULTIMODAL_TYPES)
-                        ]
-                        if non_multimodal_items:
-                            non_multimodal_data[field_name] = non_multimodal_items
-                    elif not isinstance(field_value, INSTRUCTOR_MULTIMODAL_TYPES):
-                        non_multimodal_data[field_name] = field_value
-
-                # Add single JSON string if there are non-multimodal fields
-                if non_multimodal_data:
-                    processed_content.append(json.dumps(non_multimodal_data, ensure_ascii=False))
-
-                # Add all multimodal objects
+                content_json = input_content.model_dump_json(exclude=exclude_spec)
+                if content_json and content_json != "{}":
+                    processed_content.append(content_json)
                 processed_content.extend(multimodal_objects)
-
                 history.append({"role": message.role, "content": processed_content})
             else:
-                # No multimodal content: generate single cohesive JSON string
                 content_json = input_content.model_dump_json()
                 history.append({"role": message.role, "content": content_json})
 
         return history
+
+    @staticmethod
+    def _extract_multimodal_info(obj):
+        """
+        Recursively extract multimodal objects and build a Pydantic-compatible exclude spec.
+
+        Walks the object tree to find all Instructor multimodal types (Image, Audio, PDF)
+        at any nesting depth, collecting them into a flat list and building an exclude
+        specification that can be passed to model_dump_json(exclude=...).
+
+        Args:
+            obj: The object to inspect (BaseIOSchema, list, dict, or primitive).
+
+        Returns:
+            tuple: (multimodal_objects, exclude_spec) where:
+                - multimodal_objects: flat list of all multimodal objects found
+                - exclude_spec: Pydantic exclude dict, True (exclude entirely), or None
+        """
+        if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES):
+            return [obj], True
+
+        if hasattr(obj, "__class__") and hasattr(obj.__class__, "model_fields"):
+            all_objects = []
+            exclude = {}
+            for field_name in obj.__class__.model_fields:
+                if hasattr(obj, field_name):
+                    field_value = getattr(obj, field_name)
+                    objects, sub_exclude = ChatHistory._extract_multimodal_info(field_value)
+                    if objects:
+                        all_objects.extend(objects)
+                        exclude[field_name] = sub_exclude
+            return all_objects, (exclude if exclude else None)
+
+        if isinstance(obj, (list, tuple)):
+            all_objects = []
+            exclude = {}
+            for i, item in enumerate(obj):
+                objects, sub_exclude = ChatHistory._extract_multimodal_info(item)
+                if objects:
+                    all_objects.extend(objects)
+                    exclude[i] = sub_exclude
+            if not all_objects:
+                return [], None
+            # If every item in the list is fully multimodal, exclude the entire field
+            if len(exclude) == len(obj) and all(v is True for v in exclude.values()):
+                return all_objects, True
+            return all_objects, exclude
+
+        if isinstance(obj, dict):
+            all_objects = []
+            exclude = {}
+            for k, v in obj.items():
+                objects, sub_exclude = ChatHistory._extract_multimodal_info(v)
+                if objects:
+                    all_objects.extend(objects)
+                    exclude[k] = sub_exclude
+            if not all_objects:
+                return [], None
+            # If every value in the dict is fully multimodal, exclude the entire field
+            if len(exclude) == len(obj) and all(v is True for v in exclude.values()):
+                return all_objects, True
+            return all_objects, exclude
+
+        return [], None
 
     def copy(self) -> "ChatHistory":
         """

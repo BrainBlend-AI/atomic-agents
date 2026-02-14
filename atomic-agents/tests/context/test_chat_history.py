@@ -538,3 +538,330 @@ def test_process_multimodal_paths_comprehensive():
     assert loaded_content.images[0].source == Path("test/sample.jpg")
     assert isinstance(loaded_content.pdfs[0].source, Path)
     assert loaded_content.pdfs[0].source == Path("test/doc.pdf")
+
+
+def test_get_history_nested_pydantic_with_toplevel_multimodal(history):
+    """Issue #208: nested Pydantic model + top-level multimodal causes json.dumps TypeError"""
+
+    class ContextInfo(BaseIOSchema):
+        """Nested context info."""
+
+        label: str = Field(..., description="Label")
+        value: str = Field(..., description="Value")
+
+    class AgentInput(BaseIOSchema):
+        """Input with multimodal and nested schema."""
+
+        instruction: str = Field(..., description="Instruction text")
+        images: List[instructor.Image] = Field(..., description="Images")
+        context: ContextInfo = Field(..., description="Nested context")
+
+    mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
+    context = ContextInfo(label="example", value="nested")
+    content = AgentInput(instruction="Do something", images=[mock_image], context=context)
+
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert result[0]["role"] == "user"
+    assert isinstance(result[0]["content"], list)
+
+    json_part = json.loads(result[0]["content"][0])
+    assert json_part["instruction"] == "Do something"
+    assert json_part["context"] == {"label": "example", "value": "nested"}
+    assert "images" not in json_part
+    assert result[0]["content"][1] == mock_image
+
+
+def test_get_history_deeply_nested_multimodal_only(history):
+    """Issue #141: multimodal inside nested schema with no top-level multimodal"""
+
+    class Document(BaseIOSchema):
+        """PDF document with owner."""
+
+        pdf: instructor.multimodal.PDF = Field(..., description="The PDF data")
+        owner: str = Field(..., description="The PDF owner")
+
+    class InputSchema(BaseIOSchema):
+        """A list of documents to analyze."""
+
+        documents: List[Document] = Field(..., description="List of documents")
+        instruction: str = Field(..., description="What to do")
+
+    mock_pdf = instructor.multimodal.PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
+    content = InputSchema(
+        documents=[Document(pdf=mock_pdf, owner="Alice")],
+        instruction="Analyze these",
+    )
+
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+
+    json_part = json.loads(result[0]["content"][0])
+    assert json_part["instruction"] == "Analyze these"
+    assert json_part["documents"] == [{"owner": "Alice"}]
+    assert result[0]["content"][1] == mock_pdf
+
+
+def test_get_history_mixed_nested_and_toplevel_multimodal(history):
+    """Both nested and top-level multimodal content"""
+
+    class Attachment(BaseIOSchema):
+        """An attachment with an image."""
+
+        image: instructor.Image = Field(..., description="Attached image")
+        caption: str = Field(..., description="Caption")
+
+    class MessageInput(BaseIOSchema):
+        """Message with both nested and top-level multimodal."""
+
+        text: str = Field(..., description="Message text")
+        inline_image: instructor.Image = Field(..., description="Inline image")
+        attachment: Attachment = Field(..., description="An attachment")
+
+    img1 = instructor.Image(source="inline_url", media_type="image/jpeg", detail="low")
+    img2 = instructor.Image(source="attached_url", media_type="image/png", detail="low")
+    content = MessageInput(
+        text="Check this out",
+        inline_image=img1,
+        attachment=Attachment(image=img2, caption="See here"),
+    )
+
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+
+    assert len(result[0]["content"]) == 3  # JSON + 2 images
+    json_part = json.loads(result[0]["content"][0])
+    assert json_part["text"] == "Check this out"
+    assert json_part["attachment"] == {"caption": "See here"}
+    assert "inline_image" not in json_part
+    assert img1 in result[0]["content"]
+    assert img2 in result[0]["content"]
+
+
+def test_get_history_list_of_nested_schemas_with_multimodal(history):
+    """Multiple nested schemas each containing multimodal objects"""
+
+    class Document(BaseIOSchema):
+        """A document with PDF."""
+
+        pdf: instructor.multimodal.PDF = Field(..., description="The PDF")
+        title: str = Field(..., description="Document title")
+
+    class BatchInput(BaseIOSchema):
+        """Batch of documents."""
+
+        documents: List[Document] = Field(..., description="Documents to process")
+
+    pdf1 = instructor.multimodal.PDF(source="doc1.pdf", media_type="application/pdf", detail="low")
+    pdf2 = instructor.multimodal.PDF(source="doc2.pdf", media_type="application/pdf", detail="low")
+    content = BatchInput(
+        documents=[
+            Document(pdf=pdf1, title="First"),
+            Document(pdf=pdf2, title="Second"),
+        ]
+    )
+
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+
+    assert len(result[0]["content"]) == 3  # JSON + 2 PDFs
+    json_part = json.loads(result[0]["content"][0])
+    assert json_part["documents"] == [{"title": "First"}, {"title": "Second"}]
+    assert pdf1 in result[0]["content"]
+    assert pdf2 in result[0]["content"]
+
+
+def test_get_history_only_multimodal_fields(history):
+    """Schema where ALL fields are multimodal - JSON should be omitted"""
+
+    class ImagesOnly(BaseIOSchema):
+        """Only images."""
+
+        images: List[instructor.Image] = Field(..., description="Images")
+
+    img1 = instructor.Image(source="url1", media_type="image/jpeg", detail="low")
+    img2 = instructor.Image(source="url2", media_type="image/jpeg", detail="low")
+    content = ImagesOnly(images=[img1, img2])
+
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+    # No JSON string should be present since all fields are multimodal
+    assert len(result[0]["content"]) == 2
+    assert all(not isinstance(item, str) for item in result[0]["content"])
+    assert img1 in result[0]["content"]
+    assert img2 in result[0]["content"]
+
+
+def test_get_history_no_multimodal_unchanged(history):
+    """Non-multimodal schemas should work exactly as before"""
+
+    class SimpleInput(BaseIOSchema):
+        """Simple input."""
+
+        text: str = Field(..., description="Text")
+        count: int = Field(..., description="Count")
+
+    content = SimpleInput(text="hello", count=42)
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert result[0]["role"] == "user"
+    assert isinstance(result[0]["content"], str)
+    assert json.loads(result[0]["content"]) == {"text": "hello", "count": 42}
+
+
+# ---------------------------------------------------------------------------
+# Direct unit tests for _extract_multimodal_info
+# ---------------------------------------------------------------------------
+
+
+def test_extract_multimodal_info_plain_schema():
+    """No multimodal content returns empty list and None exclude spec"""
+
+    class Plain(BaseIOSchema):
+        """Plain schema."""
+
+        text: str = Field(..., description="Text")
+
+    objs, spec = ChatHistory._extract_multimodal_info(Plain(text="hello"))
+    assert objs == []
+    assert spec is None
+
+
+def test_extract_multimodal_info_toplevel_image():
+    """Top-level Image returns the object and True exclude spec"""
+    img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
+    objs, spec = ChatHistory._extract_multimodal_info(img)
+    assert objs == [img]
+    assert spec is True
+
+
+def test_extract_multimodal_info_nested_schema():
+    """Nested schema with multimodal returns correct exclude spec shape"""
+
+    class Inner(BaseIOSchema):
+        """Inner schema."""
+
+        image: instructor.Image = Field(..., description="Image")
+        label: str = Field(..., description="Label")
+
+    class Outer(BaseIOSchema):
+        """Outer schema."""
+
+        inner: Inner = Field(..., description="Inner")
+        text: str = Field(..., description="Text")
+
+    img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
+    objs, spec = ChatHistory._extract_multimodal_info(Outer(inner=Inner(image=img, label="test"), text="hello"))
+
+    assert objs == [img]
+    # Exclude spec should be {"inner": {"image": True}}
+    assert spec == {"inner": {"image": True}}
+
+
+def test_extract_multimodal_info_list_all_multimodal():
+    """List where every item is multimodal collapses to True"""
+
+    class Schema(BaseIOSchema):
+        """Schema with all-multimodal list."""
+
+        images: List[instructor.Image] = Field(..., description="Images")
+
+    img1 = instructor.Image(source="url1", media_type="image/jpeg", detail="low")
+    img2 = instructor.Image(source="url2", media_type="image/jpeg", detail="low")
+    objs, spec = ChatHistory._extract_multimodal_info(Schema(images=[img1, img2]))
+
+    assert objs == [img1, img2]
+    # All items multimodal → field excluded entirely
+    assert spec == {"images": True}
+
+
+def test_extract_multimodal_info_list_partial_multimodal():
+    """List with mixed content returns index-based exclude spec"""
+
+    class Schema(BaseIOSchema):
+        """Schema with mixed list."""
+
+        items: List[Union[str, instructor.Image]] = Field(..., description="Items")
+
+    img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
+    objs, spec = ChatHistory._extract_multimodal_info(Schema(items=["text", img]))
+
+    assert objs == [img]
+    # Only index 1 is multimodal
+    assert spec == {"items": {1: True}}
+
+
+def test_extract_multimodal_info_tuple_support():
+    """Tuples are handled identically to lists"""
+    img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
+    objs, spec = ChatHistory._extract_multimodal_info((img, "text"))
+    assert objs == [img]
+    assert spec == {0: True}
+
+
+def test_extract_multimodal_info_dict_with_multimodal():
+    """Dict values containing multimodal objects return correct exclude spec"""
+    img = instructor.Image(source="url", media_type="image/jpeg", detail="low")
+    objs, spec = ChatHistory._extract_multimodal_info({"key1": img, "key2": "text"})
+
+    assert objs == [img]
+    assert spec == {"key1": True}
+
+
+def test_extract_multimodal_info_dict_all_multimodal():
+    """Dict where all values are multimodal collapses to True"""
+    img1 = instructor.Image(source="url1", media_type="image/jpeg", detail="low")
+    img2 = instructor.Image(source="url2", media_type="image/jpeg", detail="low")
+    objs, spec = ChatHistory._extract_multimodal_info({"a": img1, "b": img2})
+
+    assert objs == [img1, img2]
+    assert spec is True
+
+
+def test_extract_multimodal_info_dict_no_multimodal():
+    """Dict with no multimodal returns empty list and None"""
+    objs, spec = ChatHistory._extract_multimodal_info({"key1": "text", "key2": 42})
+    assert objs == []
+    assert spec is None
+
+
+def test_get_history_dict_of_images(history):
+    """Dict[str, Image] field exercises the dict code path in get_history"""
+
+    class DictImageSchema(BaseIOSchema):
+        """Schema with dict of images."""
+
+        image_map: Dict[str, instructor.Image] = Field(..., description="Named images")
+        note: str = Field(..., description="A note")
+
+    img_a = instructor.Image(source="url_a", media_type="image/jpeg", detail="low")
+    img_b = instructor.Image(source="url_b", media_type="image/jpeg", detail="low")
+    content = DictImageSchema(image_map={"front": img_a, "back": img_b}, note="Two views")
+
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+    assert len(result[0]["content"]) == 3  # JSON + 2 images
+    json_part = json.loads(result[0]["content"][0])
+    assert json_part["note"] == "Two views"
+    assert "image_map" not in json_part
+    assert img_a in result[0]["content"]
+    assert img_b in result[0]["content"]
