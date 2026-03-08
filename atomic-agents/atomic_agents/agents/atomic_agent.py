@@ -481,14 +481,16 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             stream=True,
         )
 
+        last_response = None
         for partial_response in response_stream:
+            last_response = partial_response
             yield partial_response
 
-        full_response_content = self.output_schema(**partial_response.model_dump())
-        self.history.add_message(self.assistant_role, full_response_content)
-        self._prepare_messages()
-
-        return full_response_content
+        if last_response:
+            full_response_content = self.output_schema(**last_response.model_dump())
+            self.history.add_message(self.assistant_role, full_response_content)
+            self._prepare_messages()
+            return full_response_content
 
     async def run_async(self, user_input: Optional[InputSchema] = None) -> OutputSchema:
         """
