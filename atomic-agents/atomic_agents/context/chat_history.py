@@ -204,12 +204,12 @@ class ChatHistory:
         """
         return self.current_turn_id
 
-    def delete_turn_id(self, turn_id: int):
+    def delete_turn_id(self, turn_id: str):
         """
         Delete messages from the history by its turn ID.
 
         Args:
-            turn_id (int): The turn ID of the message to delete.
+            turn_id (str): The turn ID of the message to delete.
 
         Returns:
             str: A success message with the deleted turn ID.
