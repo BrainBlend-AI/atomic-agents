@@ -132,6 +132,35 @@ class TestTokenCounter:
         result = counter.get_max_tokens("gpt-4")
 
         assert result == 8192
+        mock_get_model_info.assert_called_once_with("gpt-4")
+
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_falls_back_when_max_input_tokens_is_none(self, mock_get_model_info):
+        mock_get_model_info.return_value = {"max_input_tokens": None, "max_tokens": 8192}
+
+        counter = TokenCounter()
+        result = counter.get_max_tokens("gpt-4")
+
+        assert result == 8192
+
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_zero_input_tokens_returns_zero(self, mock_get_model_info):
+        """Ensure max_input_tokens=0 is not confused with 'missing'."""
+        mock_get_model_info.return_value = {"max_input_tokens": 0, "max_tokens": 4096}
+
+        counter = TokenCounter()
+        result = counter.get_max_tokens("custom-model")
+
+        assert result == 0
+
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_both_keys_missing(self, mock_get_model_info):
+        mock_get_model_info.return_value = {"model_name": "some-model"}
+
+        counter = TokenCounter()
+        result = counter.get_max_tokens("some-model")
+
+        assert result is None
 
     @patch("litellm.get_model_info")
     def test_get_max_tokens_unknown_model(self, mock_get_model_info):

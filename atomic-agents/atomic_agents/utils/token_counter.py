@@ -154,7 +154,8 @@ class TokenCounter:
         try:
             info = get_model_info(model)
             # Use max_input_tokens (context window) not max_tokens (output limit)
-            return info.get("max_input_tokens") or info.get("max_tokens")
+            max_input = info.get("max_input_tokens")
+            return max_input if max_input is not None else info.get("max_tokens")
         except Exception as e:
             logger.warning(f"Could not determine max tokens for model '{model}': {e}")
             return None
