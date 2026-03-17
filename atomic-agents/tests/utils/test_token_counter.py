@@ -114,19 +114,57 @@ class TestTokenCounter:
         # Should wrap text in a message
         mock_token_counter.assert_called_once_with(model="gpt-4", messages=[{"role": "user", "content": "Hello world"}])
 
-    @patch("litellm.get_max_tokens")
-    def test_get_max_tokens(self, mock_get_max_tokens):
-        mock_get_max_tokens.return_value = 8192
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens(self, mock_get_model_info):
+        mock_get_model_info.return_value = {"max_input_tokens": 128000, "max_tokens": 16384}
+
+        counter = TokenCounter()
+        result = counter.get_max_tokens("gpt-4")
+
+        assert result == 128000
+        mock_get_model_info.assert_called_once_with("gpt-4")
+
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_falls_back_to_max_tokens(self, mock_get_model_info):
+        mock_get_model_info.return_value = {"max_tokens": 8192}
 
         counter = TokenCounter()
         result = counter.get_max_tokens("gpt-4")
 
         assert result == 8192
-        mock_get_max_tokens.assert_called_once_with("gpt-4")
+        mock_get_model_info.assert_called_once_with("gpt-4")
 
-    @patch("litellm.get_max_tokens")
-    def test_get_max_tokens_unknown_model(self, mock_get_max_tokens):
-        mock_get_max_tokens.side_effect = Exception("Unknown model")
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_falls_back_when_max_input_tokens_is_none(self, mock_get_model_info):
+        mock_get_model_info.return_value = {"max_input_tokens": None, "max_tokens": 8192}
+
+        counter = TokenCounter()
+        result = counter.get_max_tokens("gpt-4")
+
+        assert result == 8192
+
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_zero_input_tokens_returns_zero(self, mock_get_model_info):
+        """Ensure max_input_tokens=0 is not confused with 'missing'."""
+        mock_get_model_info.return_value = {"max_input_tokens": 0, "max_tokens": 4096}
+
+        counter = TokenCounter()
+        result = counter.get_max_tokens("custom-model")
+
+        assert result == 0
+
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_both_keys_missing(self, mock_get_model_info):
+        mock_get_model_info.return_value = {"model_name": "some-model"}
+
+        counter = TokenCounter()
+        result = counter.get_max_tokens("some-model")
+
+        assert result is None
+
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_unknown_model(self, mock_get_model_info):
+        mock_get_model_info.side_effect = Exception("Unknown model")
 
         counter = TokenCounter()
         result = counter.get_max_tokens("unknown-model")
@@ -162,11 +200,11 @@ class TestTokenCounter:
 
         assert "model is required" in str(exc_info.value)
 
-    @patch("litellm.get_max_tokens")
+    @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
-    def test_count_context(self, mock_token_counter, mock_get_max_tokens):
+    def test_count_context(self, mock_token_counter, mock_get_model_info):
         mock_token_counter.side_effect = [30, 70]  # system, then history
-        mock_get_max_tokens.return_value = 8192
+        mock_get_model_info.return_value = {"max_input_tokens": 8192, "max_tokens": 4096}
 
         counter = TokenCounter()
         result = counter.count_context(
@@ -183,12 +221,12 @@ class TestTokenCounter:
         assert result.max_tokens == 8192
         assert result.utilization == pytest.approx(100 / 8192)
 
-    @patch("litellm.get_max_tokens")
+    @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
-    def test_count_context_with_tools(self, mock_token_counter, mock_get_max_tokens):
+    def test_count_context_with_tools(self, mock_token_counter, mock_get_model_info):
         # system=30, history=70, empty_with_tools=60, empty_without_tools=10 -> tools=50
         mock_token_counter.side_effect = [30, 70, 60, 10]
-        mock_get_max_tokens.return_value = 8192
+        mock_get_model_info.return_value = {"max_input_tokens": 8192, "max_tokens": 4096}
 
         counter = TokenCounter()
         tools = [{"type": "function", "function": {"name": "test_fn"}}]
@@ -205,11 +243,11 @@ class TestTokenCounter:
         assert result.total == 150  # 30 + 70 + 50
         assert result.model == "gpt-4"
 
-    @patch("litellm.get_max_tokens")
+    @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
-    def test_count_context_empty_system(self, mock_token_counter, mock_get_max_tokens):
+    def test_count_context_empty_system(self, mock_token_counter, mock_get_model_info):
         mock_token_counter.return_value = 50
-        mock_get_max_tokens.return_value = 4096
+        mock_get_model_info.return_value = {"max_input_tokens": 4096, "max_tokens": 2048}
 
         counter = TokenCounter()
         result = counter.count_context(
@@ -224,11 +262,11 @@ class TestTokenCounter:
         assert result.model == "gpt-3.5-turbo"
         assert result.max_tokens == 4096
 
-    @patch("litellm.get_max_tokens")
+    @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
-    def test_count_context_no_max_tokens(self, mock_token_counter, mock_get_max_tokens):
+    def test_count_context_no_max_tokens(self, mock_token_counter, mock_get_model_info):
         mock_token_counter.side_effect = [20, 30]
-        mock_get_max_tokens.return_value = None  # Unknown model
+        mock_get_model_info.side_effect = Exception("Unknown model")
 
         counter = TokenCounter()
         result = counter.count_context(
@@ -263,12 +301,12 @@ class TestTokenCounter:
         # Verify all models were called
         assert mock_token_counter.call_count == len(models)
 
-    @patch("litellm.get_max_tokens")
+    @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
-    def test_count_context_division_by_zero_prevention(self, mock_token_counter, mock_get_max_tokens):
+    def test_count_context_division_by_zero_prevention(self, mock_token_counter, mock_get_model_info):
         """Test that division by zero is prevented when max_tokens is 0."""
         mock_token_counter.side_effect = [20, 30]
-        mock_get_max_tokens.return_value = 0  # Edge case: max_tokens = 0
+        mock_get_model_info.return_value = {"max_input_tokens": 0, "max_tokens": 0}  # Edge case
 
         counter = TokenCounter()
         result = counter.count_context(
@@ -281,12 +319,12 @@ class TestTokenCounter:
         assert result.max_tokens == 0
         assert result.utilization is None  # Should be None, not raise ZeroDivisionError
 
-    @patch("litellm.get_max_tokens")
+    @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
-    def test_count_context_empty_history(self, mock_token_counter, mock_get_max_tokens):
+    def test_count_context_empty_history(self, mock_token_counter, mock_get_model_info):
         """Test counting context with empty history messages."""
         mock_token_counter.return_value = 30  # Only system
-        mock_get_max_tokens.return_value = 4096
+        mock_get_model_info.return_value = {"max_input_tokens": 4096, "max_tokens": 2048}
 
         counter = TokenCounter()
         result = counter.count_context(

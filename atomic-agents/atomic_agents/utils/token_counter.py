@@ -147,12 +147,15 @@ class TokenCounter:
             raise TypeError(f"model must be a string, got {type(model).__name__}")
 
         try:
-            from litellm import get_max_tokens
+            from litellm import get_model_info
         except ImportError as e:
             raise ImportError("litellm is required for token counting. " "Install it with: pip install litellm") from e
 
         try:
-            return get_max_tokens(model)
+            info = get_model_info(model)
+            # Use max_input_tokens (context window) not max_tokens (output limit)
+            max_input = info.get("max_input_tokens")
+            return max_input if max_input is not None else info.get("max_tokens")
         except Exception as e:
             logger.warning(f"Could not determine max tokens for model '{model}': {e}")
             return None
