@@ -290,6 +290,8 @@ For a complete list of examples, see the [examples directory](/atomic-examples/)
 
 ## 🚀 Version 2.0 Released!
 
+[![What's New in V2.0](https://img.youtube.com/vi/ro-pM2bPmr0/0.jpg)](https://www.youtube.com/watch?v=ro-pM2bPmr0)
+
 **Atomic Agents v2.0 is here with major improvements!** This release includes breaking changes that significantly improve the developer experience:
 
 ### Key Changes in v2.0:
