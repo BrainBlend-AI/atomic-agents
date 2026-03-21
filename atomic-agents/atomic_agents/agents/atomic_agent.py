@@ -249,6 +249,19 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.messages = self._build_system_messages()
         self.messages += self.history.get_history()
 
+    def _get_completion_kwargs(self) -> Dict[str, Any]:
+        """
+        Build kwargs for Instructor completion calls.
+
+        Instructor defaults `strict=True`, which forces enum fields to receive enum
+        instances instead of allowing Pydantic's normal coercion from strings. We
+        default to `strict=None` here so the output schema's own Pydantic behavior
+        applies unless callers explicitly override it via `model_api_parameters`.
+        """
+        completion_kwargs = dict(self.model_api_parameters)
+        completion_kwargs.setdefault("strict", None)
+        return completion_kwargs
+
     def _build_tools_definition(self) -> Optional[List[Dict[str, Any]]]:
         """
         Build the tools definition that Instructor sends for TOOLS mode.
@@ -443,7 +456,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             messages=self.messages,
             model=self.model,
             response_model=self.output_schema,
-            **self.model_api_parameters,
+            **self._get_completion_kwargs(),
         )
         self.history.add_message(self.assistant_role, response)
         self._prepare_messages()
@@ -477,7 +490,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             model=self.model,
             messages=self.messages,
             response_model=self.output_schema,
-            **self.model_api_parameters,
+            **self._get_completion_kwargs(),
             stream=True,
         )
 
@@ -515,7 +528,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self._prepare_messages()
 
         response = await self.client.chat.completions.create(
-            model=self.model, messages=self.messages, response_model=self.output_schema, **self.model_api_parameters
+            model=self.model, messages=self.messages, response_model=self.output_schema, **self._get_completion_kwargs()
         )
 
         self.history.add_message(self.assistant_role, response)
@@ -544,7 +557,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             model=self.model,
             messages=self.messages,
             response_model=self.output_schema,
-            **self.model_api_parameters,
+            **self._get_completion_kwargs(),
             stream=True,
         )
 
