@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import Mock, call, patch
+from enum import Enum
 from pydantic import BaseModel, Field
+from pydantic import ValidationError
 import instructor
 from atomic_agents import (
     BaseIOSchema,
@@ -146,6 +148,73 @@ def test_initialization_without_max_tokens(mock_instructor, mock_history, mock_s
     )
     agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
     assert agent.model_api_parameters["max_tokens"] == 1024
+
+
+def test_run_uses_pydantic_default_strictness_for_enum_output(mock_history, mock_system_prompt_generator):
+    class Topic(Enum):
+        FOOD = "food"
+        OTHER = "other"
+
+    class EnumOutputSchema(BaseIOSchema):
+        """Output schema with an enum field for validation tests."""
+
+        topic: Topic = Field(...)
+
+    enum_instructor = Mock(spec=instructor.Instructor)
+    enum_instructor.chat = Mock()
+    enum_instructor.chat.completions = Mock()
+
+    def mock_create(*args, **kwargs):
+        return kwargs["response_model"].model_validate({"topic": "food"}, strict=kwargs["strict"])
+
+    enum_instructor.chat.completions.create.side_effect = mock_create
+
+    config = AgentConfig(
+        client=enum_instructor,
+        model="gpt-5-mini",
+        history=mock_history,
+        system_prompt_generator=mock_system_prompt_generator,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, EnumOutputSchema](config)
+
+    result = agent.run()
+
+    assert result.topic is Topic.FOOD
+    assert enum_instructor.chat.completions.create.call_args.kwargs["strict"] is None
+
+
+def test_run_respects_explicit_strict_override_for_enum_output(mock_history, mock_system_prompt_generator):
+    class Topic(Enum):
+        FOOD = "food"
+        OTHER = "other"
+
+    class EnumOutputSchema(BaseIOSchema):
+        """Output schema with an enum field for validation tests."""
+
+        topic: Topic = Field(...)
+
+    enum_instructor = Mock(spec=instructor.Instructor)
+    enum_instructor.chat = Mock()
+    enum_instructor.chat.completions = Mock()
+
+    def mock_create(*args, **kwargs):
+        return kwargs["response_model"].model_validate({"topic": "food"}, strict=kwargs["strict"])
+
+    enum_instructor.chat.completions.create.side_effect = mock_create
+
+    config = AgentConfig(
+        client=enum_instructor,
+        model="gpt-5-mini",
+        history=mock_history,
+        system_prompt_generator=mock_system_prompt_generator,
+        model_api_parameters={"strict": True},
+    )
+    agent = AtomicAgent[BasicChatInputSchema, EnumOutputSchema](config)
+
+    with pytest.raises(ValidationError):
+        agent.run()
+
+    assert enum_instructor.chat.completions.create.call_args.kwargs["strict"] is True
 
 
 def test_initialization_system_role_equals_developer(mock_instructor, mock_history, mock_system_prompt_generator):
