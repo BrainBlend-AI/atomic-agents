@@ -71,6 +71,17 @@ def setup_client(provider):
         model = "mistral/ministral-8b"
         model_api_parameters = {}
         assistant_role = "assistant"
+    elif provider == "7" or provider == "minimax":
+        from openai import OpenAI as MiniMaxClient
+
+        api_key = os.getenv("MINIMAX_API_KEY")
+        client = instructor.from_openai(
+            MiniMaxClient(base_url="https://api.minimax.io/v1", api_key=api_key),
+            mode=instructor.Mode.JSON,
+        )
+        model = "MiniMax-M2.7"
+        model_api_parameters = {}
+        assistant_role = "assistant"
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -78,7 +89,7 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider from one in the list below.
-providers_list = ["openai", "anthropic", "groq", "ollama", "gemini", "openrouter"]
+providers_list = ["openai", "anthropic", "groq", "ollama", "gemini", "openrouter", "minimax"]
 y = "bold yellow"
 b = "bold blue"
 g = "bold green"
