@@ -32,9 +32,7 @@ def _make_minimax_agent(model="MiniMax-M2.7", **agent_kwargs):
         api_key=os.environ["MINIMAX_API_KEY"],
     )
     client = instructor.from_openai(raw, mode=instructor.Mode.JSON)
-    config = AgentConfig(
-        client=client, model=model, mode=instructor.Mode.JSON, **agent_kwargs
-    )
+    config = AgentConfig(client=client, model=model, mode=instructor.Mode.JSON, **agent_kwargs)
     return AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
 
 
@@ -65,6 +63,7 @@ class TestMiniMaxLiveChat:
 
         class AnalysisOutput(BaseIOSchema):
             """Analysis output schema."""
+
             sentiment: str = Field(..., description="One of: positive, negative, neutral")
             confidence: float = Field(..., description="Confidence score between 0 and 1")
 
@@ -73,13 +72,9 @@ class TestMiniMaxLiveChat:
             api_key=os.environ["MINIMAX_API_KEY"],
         )
         client = instructor.from_openai(raw, mode=instructor.Mode.JSON)
-        config = AgentConfig(
-            client=client, model="MiniMax-M2.7", mode=instructor.Mode.JSON
-        )
+        config = AgentConfig(client=client, model="MiniMax-M2.7", mode=instructor.Mode.JSON)
         agent = AtomicAgent[BasicChatInputSchema, AnalysisOutput](config)
 
-        response = agent.run(
-            BasicChatInputSchema(chat_message="I love this product, it's amazing!")
-        )
+        response = agent.run(BasicChatInputSchema(chat_message="I love this product, it's amazing!"))
         assert response.sentiment in ("positive", "negative", "neutral")
         assert 0 <= response.confidence <= 1

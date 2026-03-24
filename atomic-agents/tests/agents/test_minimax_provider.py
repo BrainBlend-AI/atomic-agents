@@ -17,9 +17,7 @@ def _create_minimax_client(api_key="test-key"):
     """Create a MiniMax client via OpenAI-compatible interface."""
     from openai import OpenAI
 
-    return instructor.from_openai(
-        OpenAI(base_url="https://api.minimax.io/v1", api_key=api_key)
-    )
+    return instructor.from_openai(OpenAI(base_url="https://api.minimax.io/v1", api_key=api_key))
 
 
 class TestMiniMaxClientSetup:
@@ -29,9 +27,7 @@ class TestMiniMaxClientSetup:
         """Test that MiniMax client can be created with correct base_url."""
         from openai import OpenAI
 
-        raw_client = OpenAI(
-            base_url="https://api.minimax.io/v1", api_key="test-key"
-        )
+        raw_client = OpenAI(base_url="https://api.minimax.io/v1", api_key="test-key")
         assert raw_client.base_url == "https://api.minimax.io/v1/"
 
     def test_minimax_instructor_wrapping(self):
@@ -89,9 +85,7 @@ class TestMiniMaxAgentBehavior:
         mock = Mock(spec=instructor.Instructor)
         mock.chat = Mock()
         mock.chat.completions = Mock()
-        mock.chat.completions.create = Mock(
-            return_value=BasicChatOutputSchema(chat_message="MiniMax response")
-        )
+        mock.chat.completions.create = Mock(return_value=BasicChatOutputSchema(chat_message="MiniMax response"))
         mock_response = BasicChatOutputSchema(chat_message="MiniMax response")
         mock_iter = Mock()
         mock_iter.__iter__ = Mock(return_value=iter([mock_response]))
@@ -174,18 +168,25 @@ class TestMiniMaxProviderSetup:
     def test_setup_client_minimax_by_number(self):
         """Test setup_client with provider number '7'."""
         import sys
-        sys.path.insert(0, os.path.join(
-            os.path.dirname(__file__),
-            "..", "..", "..", "atomic-examples", "quickstart", "quickstart",
-        ))
+
+        sys.path.insert(
+            0,
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "..",
+                "atomic-examples",
+                "quickstart",
+                "quickstart",
+            ),
+        )
         # We can't import the example directly (it has top-level console input),
         # but we can verify the pattern works
         from openai import OpenAI
 
         api_key = "test-minimax-key"
-        raw_client = OpenAI(
-            base_url="https://api.minimax.io/v1", api_key=api_key
-        )
+        raw_client = OpenAI(base_url="https://api.minimax.io/v1", api_key=api_key)
         client = instructor.from_openai(raw_client)
         assert isinstance(client, instructor.Instructor)
 
