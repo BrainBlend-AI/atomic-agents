@@ -80,7 +80,7 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
         self.exclude_domains = config.exclude_domains
         self.include_answer = False  # Add this property to control whether to include the answer
 
-    async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str) -> dict:
+    async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str, max_results: int) -> dict:
         headers = {
             "accept": "/",
             "content-type": "application/json",
@@ -95,7 +95,7 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
             "search_depth": self.search_depth,
             "include_domains": self.include_domains,
             "exclude_domains": self.exclude_domains,
-            "max_results": self.max_results,
+            "max_results": max_results,
             "include_answer": self.include_answer,  # Add the include_answer flag to the API request
         }
 
@@ -119,9 +119,11 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
     async def run_async(
         self, params: TavilySearchToolInputSchema, max_results: Optional[int] = None
     ) -> TavilySearchToolOutputSchema:
+        effective_max_results = self.max_results if max_results is None else max_results
+
         async with aiohttp.ClientSession() as session:
             # Fetch results for all queries
-            tasks = [self._fetch_search_results(session, query) for query in params.queries]
+            tasks = [self._fetch_search_results(session, query, effective_max_results) for query in params.queries]
             raw_responses = await asyncio.gather(*tasks)
 
         # Process results for each query
@@ -148,7 +150,7 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
                     print(f"Skipping result due to missing keys: {result}")
 
             # Limit results per query
-            query_processed = query_processed[: max_results or self.max_results]
+            query_processed = query_processed[:effective_max_results]
             processed_results.extend(query_processed)
 
         return TavilySearchToolOutputSchema(results=processed_results)
