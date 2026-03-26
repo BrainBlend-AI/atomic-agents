@@ -29,27 +29,17 @@ class TavilySearchResultItemSchema(BaseIOSchema):
 
     title: str = Field(..., description="The title of the search result")
     url: str = Field(..., description="The URL of the search result")
-    content: str = Field(
-        None, description="The content snippet of the search result"
-    )
+    content: str = Field(None, description="The content snippet of the search result")
     score: float = Field(..., description="The score of the search result")
-    raw_content: Optional[str] = Field(
-        None, description="The raw content of the search result"
-    )
-    query: Optional[str] = Field(
-        ..., description="The query used to obtain this search result"
-    )
-    answer: Optional[str] = Field(
-        ..., description="The answer to the query provided by Tavily"
-    )
+    raw_content: Optional[str] = Field(None, description="The raw content of the search result")
+    query: Optional[str] = Field(..., description="The query used to obtain this search result")
+    answer: Optional[str] = Field(..., description="The answer to the query provided by Tavily")
 
 
 class TavilySearchToolOutputSchema(BaseIOSchema):
     """This schema represents the output of the Tavily search tool."""
 
-    results: List[TavilySearchResultItemSchema] = Field(
-        ..., description="List of search result items"
-    )
+    results: List[TavilySearchResultItemSchema] = Field(..., description="List of search result items")
 
 
 ##############
@@ -63,9 +53,7 @@ class TavilySearchToolConfig(BaseToolConfig):
     exclude_domains: Optional[List[str]] = None
 
 
-class TavilySearchTool(
-    BaseTool[TavilySearchToolInputSchema, TavilySearchToolOutputSchema]
-):
+class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOutputSchema]):
     """
     Tool for performing searches using the Tavily search API.
 
@@ -76,9 +64,7 @@ class TavilySearchTool(
         api_key (str): The API key for the Tavily API.
     """
 
-    def __init__(
-        self, config: TavilySearchToolConfig = TavilySearchToolConfig()
-    ):
+    def __init__(self, config: TavilySearchToolConfig = TavilySearchToolConfig()):
         """
         Initializes the TavilySearchTool.
 
@@ -94,9 +80,7 @@ class TavilySearchTool(
         self.exclude_domains = config.exclude_domains
         self.include_answer = False
 
-    async def _fetch_search_results(
-        self, session: aiohttp.ClientSession, query: str, max_results: int
-    ) -> dict:
+    async def _fetch_search_results(self, session: aiohttp.ClientSession, query: str, max_results: int) -> dict:
         headers = {
             "accept": "/",
             "content-type": "application/json",
@@ -119,9 +103,7 @@ class TavilySearchTool(
             "include_answer": self.include_answer,
         }
 
-        async with session.post(
-            "https://api.tavily.com/search", headers=headers, json=json_data
-        ) as response:
+        async with session.post("https://api.tavily.com/search", headers=headers, json=json_data) as response:
             if response.status != 200:
                 error_message = await response.text()
                 raise Exception(
@@ -144,17 +126,10 @@ class TavilySearchTool(
         params: TavilySearchToolInputSchema,
         max_results: Optional[int] = None,
     ) -> TavilySearchToolOutputSchema:
-        effective_max_results = (
-            self.max_results if max_results is None else max_results
-        )
+        effective_max_results = self.max_results if max_results is None else max_results
 
         async with aiohttp.ClientSession() as session:
-            tasks = [
-                self._fetch_search_results(
-                    session, query, effective_max_results
-                )
-                for query in params.queries
-            ]
+            tasks = [self._fetch_search_results(session, query, effective_max_results) for query in params.queries]
             raw_responses = await asyncio.gather(*tasks)
 
         processed_results = []
@@ -164,10 +139,7 @@ class TavilySearchTool(
 
             query_processed = []
             for result in query_results:
-                if all(
-                    key in result
-                    for key in ["title", "url", "content", "score"]
-                ):
+                if all(key in result for key in ["title", "url", "content", "score"]):
                     query_processed.append(
                         TavilySearchResultItemSchema(
                             title=result["title"],

@@ -19,9 +19,7 @@ def tool(mock_config):
 
 class TestTavilySearchTool:
     @pytest.mark.asyncio
-    async def test_fetch_search_results_respects_max_results_override(
-        self, tool
-    ):
+    async def test_fetch_search_results_respects_max_results_override(self, tool):
         """Regression test: max_results override must propagate to the API call, not be ignored."""
         mock_session = AsyncMock()
         mock_response = AsyncMock()
@@ -45,16 +43,12 @@ class TestTavilySearchTool:
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
 
-        await tool._fetch_search_results(
-            mock_session, "test query", max_results=2
-        )
+        await tool._fetch_search_results(mock_session, "test query", max_results=2)
 
         # The key assertion: the API must have been called with max_results=2, not self.max_results=5
         call_args = mock_session.post.call_args
         json_data = call_args.kwargs["json"]
-        assert (
-            json_data["max_results"] == 2
-        ), "max_results override was ignored in API call"
+        assert json_data["max_results"] == 2, "max_results override was ignored in API call"
 
     @pytest.mark.asyncio
     async def test_run_async_respects_max_results_override(self, tool):
@@ -75,9 +69,7 @@ class TestTavilySearchTool:
                                 "content": "...",
                                 "score": 1.0,
                             }
-                            for i in range(
-                                max_override + 3
-                            )  # Return MORE than requested
+                            for i in range(max_override + 3)  # Return MORE than requested
                         ],
                         "answer": "test answer",
                     }
@@ -129,9 +121,7 @@ class TestTavilySearchTool:
         await tool.run_async(params)  # No max_results override
 
         for call in mock_session.post.call_args_list:
-            assert (
-                call.kwargs["json"]["max_results"] == 5
-            )  # Should use config default (5)
+            assert call.kwargs["json"]["max_results"] == 5  # Should use config default (5)
 
     def test_init_defaults(self):
         """Default config should set max_results to 5."""
