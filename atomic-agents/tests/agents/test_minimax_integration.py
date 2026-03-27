@@ -15,7 +15,6 @@ from atomic_agents import (
     BasicChatOutputSchema,
     BaseIOSchema,
 )
-from atomic_agents.context import ChatHistory, SystemPromptGenerator
 
 pytestmark = pytest.mark.skipif(
     not os.getenv("MINIMAX_API_KEY"),
