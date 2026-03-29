@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import instructor
 from atomic_agents import (
     AtomicAgent,
@@ -10,7 +10,7 @@ from atomic_agents import (
     BasicChatInputSchema,
     BasicChatOutputSchema,
 )
-from atomic_agents.context import ChatHistory, SystemPromptGenerator
+from atomic_agents.context import SystemPromptGenerator
 
 
 def _create_minimax_client(api_key="test-key"):
