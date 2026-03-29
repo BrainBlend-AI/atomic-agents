@@ -76,6 +76,14 @@ class AgentConfig(BaseModel):
         default="assistant",
         description="The role of the assistant in the conversation. Use 'model' for Gemini, 'assistant' for OpenAI/Anthropic.",
     )
+    tool_result_role: Optional[str] = Field(
+        default=None,
+        description=(
+            "The role to use for mid-conversation tool results and context injections. "
+            "Defaults to 'user' when assistant_role is 'model' (Gemini), otherwise 'system'. "
+            "Set explicitly to override auto-detection."
+        ),
+    )
     model_config = {"arbitrary_types_allowed": True}
     mode: Mode = Field(default=Mode.TOOLS, description="The Instructor mode used for structured outputs (TOOLS, JSON, etc.).")
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
@@ -170,6 +178,12 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.system_prompt_generator = config.system_prompt_generator or SystemPromptGenerator()
         self.system_role = config.system_role
         self.assistant_role = config.assistant_role
+        if config.tool_result_role is not None:
+            self.tool_result_role = config.tool_result_role
+        else:
+            # Auto-detect: Gemini drops mid-conversation "system" messages,
+            # so default to "user" for Gemini backends (identified by assistant_role="model")
+            self.tool_result_role = "user" if config.assistant_role == "model" else "system"
         self.initial_history = self.history.copy()
         self.current_user_input = None
         self.mode = config.mode
@@ -184,6 +198,21 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Resets the history to its initial state.
         """
         self.history = self.initial_history.copy()
+
+    def add_tool_result(self, content: BaseIOSchema) -> None:
+        """
+        Adds a tool result or context injection to the chat history using the
+        backend-appropriate role.
+
+        This method should be used instead of ``history.add_message("system", ...)``
+        when injecting tool execution results, resource contents, or other mid-conversation
+        context into the agent's history. It automatically uses the correct role for the
+        configured backend (e.g. ``"user"`` for Gemini, ``"system"`` for OpenAI/Anthropic).
+
+        Args:
+            content (BaseIOSchema): The tool result or context to inject.
+        """
+        self.history.add_message(self.tool_result_role, content)
 
     @property
     def input_schema(self) -> Type[BaseIOSchema]:
@@ -247,7 +276,21 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
     def _prepare_messages(self):
         self.messages = self._build_system_messages()
-        self.messages += self.history.get_history()
+        history = self.history.get_history()
+        # Remap "system" role messages in history when the backend doesn't support
+        # mid-conversation system messages (e.g. Gemini). The initial system prompt
+        # is built separately via _build_system_messages() and is unaffected.
+        if self.tool_result_role != "system":
+            logger = logging.getLogger(__name__)
+            for msg in history:
+                if msg["role"] == "system":
+                    logger.debug(
+                        "Remapping mid-conversation 'system' message to '%s' "
+                        "(backend does not support mid-conversation system messages).",
+                        self.tool_result_role,
+                    )
+                    msg["role"] = self.tool_result_role
+        self.messages += history
 
     def _get_completion_kwargs(self) -> Dict[str, Any]:
         """

@@ -249,7 +249,7 @@ def main():
                         result_message = MCPOrchestratorInputSchema(
                             query=(f"Tool {tool_name} executed with result: " f"{tool_output.result}")
                         )
-                        orchestrator_agent.history.add_message("system", result_message)
+                        orchestrator_agent.add_tool_result(result_message)
 
                     ResourceClass = resource_schema_to_class_map.get(schema_type)
                     if ResourceClass:
@@ -266,7 +266,7 @@ def main():
                         result_message = MCPOrchestratorInputSchema(
                             query=(f"Resource {resource_name} read with content: {resource_output.content}")
                         )
-                        orchestrator_agent.history.add_message("system", result_message)
+                        orchestrator_agent.add_tool_result(result_message)
 
                     PromptClass = prompt_schema_to_class_map.get(schema_type)
                     if PromptClass:
@@ -283,7 +283,7 @@ def main():
                         result_message = MCPOrchestratorInputSchema(
                             query=(f'Prompt {prompt_name} generated successfully. Content: "{prompt_output.content}"')
                         )
-                        orchestrator_agent.history.add_message("system", result_message)
+                        orchestrator_agent.add_tool_result(result_message)
 
                     if not schema_type_valid:
                         raise ValueError(f"Unknown schema type '" f"{schema_type.__name__}" f"' returned by orchestrator")

@@ -1087,3 +1087,115 @@ def test_get_context_token_count_multimodal_content(mock_get_token_counter, mock
     image_entry = next(item for item in content if item.get("type") == "image_url")
     assert "image_url" in image_entry
     assert image_entry["image_url"]["url"] == "https://example.com/test.png"
+
+
+# --- Tests for tool_result_role and Gemini system message remapping (issue #221) ---
+
+
+def test_tool_result_role_defaults_to_system_for_openai(mock_instructor, mock_system_prompt_generator):
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        system_prompt_generator=mock_system_prompt_generator,
+        assistant_role="assistant",
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    assert agent.tool_result_role == "system"
+
+
+def test_tool_result_role_defaults_to_user_for_gemini(mock_instructor, mock_system_prompt_generator):
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gemini-2.0-flash",
+        system_prompt_generator=mock_system_prompt_generator,
+        assistant_role="model",
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    assert agent.tool_result_role == "user"
+
+
+def test_tool_result_role_explicit_override(mock_instructor, mock_system_prompt_generator):
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gemini-2.0-flash",
+        system_prompt_generator=mock_system_prompt_generator,
+        assistant_role="model",
+        tool_result_role="system",
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    assert agent.tool_result_role == "system"
+
+
+def test_add_tool_result_uses_correct_role(mock_instructor, mock_system_prompt_generator):
+    history = ChatHistory()
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gemini-2.0-flash",
+        system_prompt_generator=mock_system_prompt_generator,
+        assistant_role="model",
+        history=history,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    content = BasicChatInputSchema(chat_message="Tool result data")
+    agent.add_tool_result(content)
+
+    messages = history.get_history()
+    assert len(messages) == 1
+    assert messages[0]["role"] == "user"
+
+
+def test_add_tool_result_uses_system_for_openai(mock_instructor, mock_system_prompt_generator):
+    history = ChatHistory()
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        system_prompt_generator=mock_system_prompt_generator,
+        history=history,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    content = BasicChatInputSchema(chat_message="Tool result data")
+    agent.add_tool_result(content)
+
+    messages = history.get_history()
+    assert len(messages) == 1
+    assert messages[0]["role"] == "system"
+
+
+def test_prepare_messages_remaps_system_to_user_for_gemini(mock_instructor, mock_system_prompt_generator):
+    history = ChatHistory()
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gemini-2.0-flash",
+        system_prompt_generator=mock_system_prompt_generator,
+        assistant_role="model",
+        history=history,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    # Simulate legacy pattern: add_message("system", ...) directly on history
+    history.add_message("system", BasicChatInputSchema(chat_message="Tool output"))
+    agent._prepare_messages()
+
+    # The system prompt message (first) should keep its role,
+    # but mid-conversation "system" messages in history should be remapped to "user"
+    history_messages = [m for m in agent.messages if m.get("content") != mock_system_prompt_generator.generate_prompt()]
+    assert len(history_messages) == 1
+    assert history_messages[0]["role"] == "user"
+
+
+def test_prepare_messages_keeps_system_for_openai(mock_instructor, mock_system_prompt_generator):
+    history = ChatHistory()
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        system_prompt_generator=mock_system_prompt_generator,
+        history=history,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    history.add_message("system", BasicChatInputSchema(chat_message="Tool output"))
+    agent._prepare_messages()
+
+    history_messages = [m for m in agent.messages if m.get("content") != mock_system_prompt_generator.generate_prompt()]
+    assert len(history_messages) == 1
+    assert history_messages[0]["role"] == "system"
