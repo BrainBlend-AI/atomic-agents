@@ -363,7 +363,7 @@ def execute_orchestrator_loop(
 
         # Add result to history
         result_message = OrchestratorInputSchema(query=f"Tool '{tool_name}' executed. Result: {tool_output.result}")
-        orchestrator.history.add_message("system", result_message)
+        orchestrator.add_tool_result(result_message)
 
         # Continue the loop
         output = orchestrator.run()
@@ -453,7 +453,7 @@ def execute_orchestrator_loop_parallel(
                 prompt_msg = OrchestratorInputSchema(
                     query="All tool results are now available. Please provide your final answer using FinalResponseSchema."
                 )
-                orchestrator.history.add_message("system", prompt_msg)
+                orchestrator.add_tool_result(prompt_msg)
                 output = orchestrator.run()
                 actions = output.actions
                 continue  # Re-check for FinalResponseSchema
@@ -520,7 +520,7 @@ def execute_orchestrator_loop_parallel(
 
         # Add results to history
         result_message = OrchestratorInputSchema(query=result_text)
-        orchestrator.history.add_message("system", result_message)
+        orchestrator.add_tool_result(result_message)
 
         # Continue the loop
         output = orchestrator.run()

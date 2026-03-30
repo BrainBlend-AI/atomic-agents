@@ -174,7 +174,7 @@ if __name__ == "__main__":
         history = orchestrator_agent.history
         orchestrator_agent = orchestrator_agent_final
         orchestrator_agent.history = history
-        orchestrator_agent.history.add_message("system", response)
+        orchestrator_agent.add_tool_result(response)
         final_answer = orchestrator_agent.run(input_schema)
         console.print(f"\n[bold blue]Final Answer:[/bold blue] {final_answer.final_answer}")
         # Reset the agent to the original
