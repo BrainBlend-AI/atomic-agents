@@ -25,7 +25,7 @@ def setup_client(provider):
         api_key = os.getenv("OPENAI_API_KEY")
         client = instructor.from_openai(OpenAI(api_key=api_key))
         model = "gpt-5-mini"
-        model_api_parameters = {"reasoning_effort": "low"}
+        model_api_parameters = {"reasoning_effort": "low", "max_tokens": 2048}
         assistant_role = "assistant"
     elif provider == "2" or provider == "anthropic":
         from anthropic import Anthropic
@@ -33,7 +33,7 @@ def setup_client(provider):
         api_key = os.getenv("ANTHROPIC_API_KEY")
         client = instructor.from_anthropic(Anthropic(api_key=api_key))
         model = "claude-3-5-haiku-20241022"
-        model_api_parameters = {}
+        model_api_parameters = {"max_tokens": 2048}
         assistant_role = "assistant"
     elif provider == "3" or provider == "groq":
         from groq import Groq
@@ -41,7 +41,7 @@ def setup_client(provider):
         api_key = os.getenv("GROQ_API_KEY")
         client = instructor.from_groq(Groq(api_key=api_key), mode=instructor.Mode.JSON)
         model = "mixtral-8x7b-32768"
-        model_api_parameters = {}
+        model_api_parameters = {"max_tokens": 2048}
         assistant_role = "assistant"
     elif provider == "4" or provider == "ollama":
         from openai import OpenAI as OllamaClient
@@ -50,26 +50,26 @@ def setup_client(provider):
             OllamaClient(base_url="http://localhost:11434/v1", api_key="ollama"), mode=instructor.Mode.JSON
         )
         model = "llama3"
-        model_api_parameters = {}
+        model_api_parameters = {"max_tokens": 2048}
         assistant_role = "assistant"
     elif provider == "5" or provider == "gemini":
-        from openai import OpenAI
+        import google.genai
 
         api_key = os.getenv("GEMINI_API_KEY")
-        client = instructor.from_openai(
-            OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/"),
-            mode=instructor.Mode.JSON,
+        client = instructor.from_genai(
+            google.genai.Client(api_key=api_key),
+            mode=instructor.Mode.GENAI_TOOLS,
         )
-        model = "gpt-5-mini"
-        model_api_parameters = {"reasoning_effort": "low"}
-        assistant_role = "model"  # Gemini uses "model" role instead of "assistant"
+        model = "gemini-2.5-flash"
+        model_api_parameters = {}
+        assistant_role = "model"
     elif provider == "6" or provider == "openrouter":
         from openai import OpenAI as OpenRouterClient
 
         api_key = os.getenv("OPENROUTER_API_KEY")
         client = instructor.from_openai(OpenRouterClient(base_url="https://openrouter.ai/api/v1", api_key=api_key))
         model = "mistral/ministral-8b"
-        model_api_parameters = {}
+        model_api_parameters = {"max_tokens": 2048}
         assistant_role = "assistant"
     elif provider == "7" or provider == "minimax":
         from openai import OpenAI as MiniMaxClient
@@ -80,7 +80,7 @@ def setup_client(provider):
             mode=instructor.Mode.JSON,
         )
         model = "MiniMax-M2.7"
-        model_api_parameters = {}
+        model_api_parameters = {"max_tokens": 2048}
         assistant_role = "assistant"
     else:
         raise ValueError(f"Unsupported provider: {provider}")
@@ -114,7 +114,7 @@ agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
         model=model,
         history=history,
         assistant_role=assistant_role,
-        model_api_parameters={**model_api_parameters, "max_tokens": 2048},
+        model_api_parameters=model_api_parameters,
     )
 )
 
