@@ -5,7 +5,7 @@ from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
 from atomic_agents.context import SystemPromptGenerator
 from dotenv import load_dotenv
 from google import genai
-from instructor.multimodal import PDF
+from instructor.processing.multimodal import PDF
 from pydantic import Field
 
 

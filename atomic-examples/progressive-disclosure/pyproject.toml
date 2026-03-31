@@ -19,7 +19,7 @@ dependencies = [
     "pd-math-server",
     "pd-text-server",
     "pd-data-server",
-    "instructor==1.13.0",
+    "instructor==1.14.5",
     "pydantic>=2.10.3,<3.0.0",
     "rich>=13.0.0",
     "openai>=2.0.0,<3.0.0",

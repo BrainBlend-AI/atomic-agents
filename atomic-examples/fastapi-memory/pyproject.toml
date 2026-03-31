@@ -18,7 +18,7 @@ dependencies = [
     "atomic-agents",
     "fastapi>=0.115.14,<1.0.0",
     "uvicorn>=0.32.1,<1.0.0",
-    "instructor==1.13.0",
+    "instructor==1.14.5",
     "openai>=2.0.0,<3.0.0",
     "pydantic>=2.10.3,<3.0.0",
     "httpx>=0.28.1,<1.0.0",

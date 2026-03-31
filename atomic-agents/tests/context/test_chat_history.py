@@ -51,8 +51,8 @@ class MockMultimodalSchema(BaseIOSchema):
 
     instruction_text: str = Field(..., description="The instruction text")
     images: List[instructor.Image] = Field(..., description="The images to analyze")
-    pdfs: List[instructor.multimodal.PDF] = Field(..., description="The PDFs to analyze")
-    audio: instructor.multimodal.Audio = Field(..., description="The audio to analyze")
+    pdfs: List[instructor.processing.multimodal.PDF] = Field(..., description="The PDFs to analyze")
+    audio: instructor.processing.multimodal.Audio = Field(..., description="The audio to analyze")
 
 
 class ColorEnum(str, Enum):
@@ -218,8 +218,8 @@ def test_dump_and_load_multimodal_data(history):
 
     base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     test_image = instructor.Image.from_path(path=os.path.join(base_path, "files/image_sample.jpg"))
-    test_pdf = instructor.multimodal.PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
-    test_audio = instructor.multimodal.Audio.from_path(path=os.path.join(base_path, "files/audio_sample.mp3"))
+    test_pdf = instructor.processing.multimodal.PDF.from_path(path=os.path.join(base_path, "files/pdf_sample.pdf"))
+    test_audio = instructor.processing.multimodal.Audio.from_path(path=os.path.join(base_path, "files/audio_sample.mp3"))
 
     # multimodal message
     history.add_message(
@@ -361,8 +361,8 @@ def test_get_history_with_multimodal_content(history):
     """Test that get_history correctly handles multimodal content"""
     # Create mock multimodal objects
     mock_image = instructor.Image(source="test_url", media_type="image/jpeg", detail="low")
-    mock_pdf = instructor.multimodal.PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
-    mock_audio = instructor.multimodal.Audio(source="test_audio_url", media_type="audio/mp3", detail="low")
+    mock_pdf = instructor.processing.multimodal.PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
+    mock_audio = instructor.processing.multimodal.Audio(source="test_audio_url", media_type="audio/mp3", detail="low")
 
     # Add a multimodal message
     history.add_message(
@@ -454,7 +454,7 @@ def test_process_multimodal_paths_comprehensive():
     image_file = instructor.Image(source="test/image.jpg", media_type="image/jpeg")
     image_url = instructor.Image(source="https://example.com/image.jpg", media_type="image/jpeg")
     image_data = instructor.Image(source="data:image/jpeg;base64,xyz", media_type="image/jpeg")
-    pdf_file = instructor.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")
+    pdf_file = instructor.processing.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")
 
     history._process_multimodal_paths(image_file)
     history._process_multimodal_paths(image_url)
@@ -521,8 +521,8 @@ def test_process_multimodal_paths_comprehensive():
         MockMultimodalSchema(
             instruction_text="Process this file",
             images=[instructor.Image(source="test/sample.jpg", media_type="image/jpeg")],
-            pdfs=[instructor.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")],
-            audio=instructor.multimodal.Audio(source="test/audio.mp3", media_type="audio/mp3"),
+            pdfs=[instructor.processing.multimodal.PDF(source="test/doc.pdf", media_type="application/pdf")],
+            audio=instructor.processing.multimodal.Audio(source="test/audio.mp3", media_type="audio/mp3"),
         ),
     )
 
@@ -580,7 +580,7 @@ def test_get_history_deeply_nested_multimodal_only(history):
     class Document(BaseIOSchema):
         """PDF document with owner."""
 
-        pdf: instructor.multimodal.PDF = Field(..., description="The PDF data")
+        pdf: instructor.processing.multimodal.PDF = Field(..., description="The PDF data")
         owner: str = Field(..., description="The PDF owner")
 
     class InputSchema(BaseIOSchema):
@@ -589,7 +589,7 @@ def test_get_history_deeply_nested_multimodal_only(history):
         documents: List[Document] = Field(..., description="List of documents")
         instruction: str = Field(..., description="What to do")
 
-    mock_pdf = instructor.multimodal.PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
+    mock_pdf = instructor.processing.multimodal.PDF(source="test_pdf_url", media_type="application/pdf", detail="low")
     content = InputSchema(
         documents=[Document(pdf=mock_pdf, owner="Alice")],
         instruction="Analyze these",
@@ -652,7 +652,7 @@ def test_get_history_list_of_nested_schemas_with_multimodal(history):
     class Document(BaseIOSchema):
         """A document with PDF."""
 
-        pdf: instructor.multimodal.PDF = Field(..., description="The PDF")
+        pdf: instructor.processing.multimodal.PDF = Field(..., description="The PDF")
         title: str = Field(..., description="Document title")
 
     class BatchInput(BaseIOSchema):
@@ -660,8 +660,8 @@ def test_get_history_list_of_nested_schemas_with_multimodal(history):
 
         documents: List[Document] = Field(..., description="Documents to process")
 
-    pdf1 = instructor.multimodal.PDF(source="doc1.pdf", media_type="application/pdf", detail="low")
-    pdf2 = instructor.multimodal.PDF(source="doc2.pdf", media_type="application/pdf", detail="low")
+    pdf1 = instructor.processing.multimodal.PDF(source="doc1.pdf", media_type="application/pdf", detail="low")
+    pdf2 = instructor.processing.multimodal.PDF(source="doc2.pdf", media_type="application/pdf", detail="low")
     content = BatchInput(
         documents=[
             Document(pdf=pdf1, title="First"),
