@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "instructor==1.13.0",
+    "instructor==1.14.5",
     "pydantic>=2.11.0,<3.0.0",
     "rich>=13.7.1,<14.0.0",
     "gitpython>=3.1.43,<4.0.0",

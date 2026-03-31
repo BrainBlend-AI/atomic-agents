@@ -4,7 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 
-from instructor.multimodal import PDF, Image, Audio
+from instructor.processing.multimodal import PDF, Image, Audio
 from pydantic import BaseModel, Field
 
 from atomic_agents.base.base_io_schema import BaseIOSchema

@@ -63,7 +63,7 @@ class BasicChatOutputSchema(BaseIOSchema):
 
 
 class AgentConfig(BaseModel):
-    client: instructor.client.Instructor = Field(..., description="Client for interacting with the language model.")
+    client: instructor.core.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[SystemPromptGenerator] = Field(
@@ -487,7 +487,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             OutputSchema: The response from the chat agent.
         """
         assert not isinstance(
-            self.client, instructor.client.AsyncInstructor
+            self.client, instructor.core.client.AsyncInstructor
         ), "The run method is not supported for async clients. Use run_async instead."
         if user_input:
             self.history.initialize_turn()
@@ -520,7 +520,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             OutputSchema: The final response from the chat agent.
         """
         assert not isinstance(
-            self.client, instructor.client.AsyncInstructor
+            self.client, instructor.core.client.AsyncInstructor
         ), "The run_stream method is not supported for async clients. Use run_async instead."
         if user_input:
             self.history.initialize_turn()
@@ -562,7 +562,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             NotAsyncIterableError: If used as an async generator (in an async for loop).
                                    Use run_async_stream() method instead for streaming responses.
         """
-        assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
+        assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
@@ -588,7 +588,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Yields:
             OutputSchema: Partial responses from the chat agent.
         """
-        assert isinstance(self.client, instructor.client.AsyncInstructor), "The run_async method is for async clients."
+        assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input

@@ -20,7 +20,7 @@ dependencies = [
     "pydantic>=2.10.3,<3.0.0",
     "google-api-python-client>=2.101.0,<3.0.0",
     "youtube-transcript-api>=1.1.1,<2.0.0",
-    "instructor==1.13.0",
+    "instructor==1.14.5",
     "python-dotenv>=1.0.1,<2.0.0",
 ]
 
