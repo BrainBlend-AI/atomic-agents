@@ -18,17 +18,17 @@ Or using uv (recommended):
 uv add atomic-agents
 ```
 
-You also need to install your LLM provider:
+You also need to install your LLM provider. OpenAI is included by default. For other providers, use instructor extras:
 
 ```bash
-# For OpenAI
-pip install openai
-
 # For Anthropic
-pip install anthropic
+pip install instructor[anthropic]
 
 # For Groq
-pip install groq
+pip install instructor[groq]
+
+# For Gemini
+pip install instructor[google-genai]
 ```
 
 ### What Python version is required?

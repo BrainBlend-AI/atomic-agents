@@ -18,9 +18,6 @@ dependencies = [
     "atomic-agents",
     "instructor==1.14.5",
     "openai>=2.0.0,<3.0.0",
-    "groq>=0.11.0,<1.0.0",
-    "mistralai>=1.1.0,<2.0.0",
-    "anthropic>=0.39.0,<1.0.0",
 ]
 
 [tool.uv.sources]

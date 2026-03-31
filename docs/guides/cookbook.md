@@ -293,7 +293,7 @@ Multi-Provider Agent Recipe
 Agent that can use different LLM providers based on configuration.
 
 Requirements:
-- pip install atomic-agents openai anthropic groq
+- pip install atomic-agents instructor[anthropic,groq]
 - Set API keys for providers you want to use
 """
 

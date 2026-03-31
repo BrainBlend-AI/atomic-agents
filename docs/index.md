@@ -56,11 +56,15 @@ Or using uv (recommended):
 uv add atomic-agents
 ```
 
-Make sure you also install the provider you want to use. For example, to use OpenAI and Groq:
+Make sure you also install the provider you want to use. Provider SDKs are available as instructor extras:
 
 ```bash
-pip install openai groq
+pip install instructor[groq]        # for Groq
+pip install instructor[anthropic]   # for Anthropic
+pip install instructor[google-genai] # for Gemini
 ```
+
+OpenAI is included by default.
 
 This also installs the CLI *Atomic Assembler*, which can be used to download Tools (and soon also Agents and Pipelines).
 
