@@ -14,12 +14,14 @@ from tool.fia_signals import (  # noqa: E402
 
 # --- Fixtures ---
 
+
 @pytest.fixture
 def tool():
     return FIASignalsTool(config=FIASignalsToolConfig())
 
 
 # --- Input Schema Tests ---
+
 
 def test_input_schema_tool_field():
     schema = FIASignalsToolInputSchema.model_json_schema()
@@ -42,6 +44,7 @@ def test_input_schema_optional_fields():
 
 # --- Tool instantiation ---
 
+
 def test_tool_instantiation():
     tool = FIASignalsTool()
     assert tool.api_key is None
@@ -54,20 +57,21 @@ def test_tool_with_config():
 
 # --- Mocked API tests ---
 
-@pytest.mark.parametrize("tool_name,endpoint", [
-    ("market_regime", "/v1/intelligence/regime/free"),
-    ("defi_yields", "/v1/yield/rates"),
-    ("gas_prices", "/v1/gas/prices"),
-    ("solana_trending", "/v1/solana/trending"),
-])
+
+@pytest.mark.parametrize(
+    "tool_name,endpoint",
+    [
+        ("market_regime", "/v1/intelligence/regime/free"),
+        ("defi_yields", "/v1/yield/rates"),
+        ("gas_prices", "/v1/gas/prices"),
+        ("solana_trending", "/v1/solana/trending"),
+    ],
+)
 def test_tool_free_endpoints(tool, tool_name, endpoint):
     mock_response = {"test": "data", "regime": "TRENDING_UP"}
 
     with patch("tool.fia_signals.requests.get") as mock_get:
-        mock_get.return_value = MagicMock(
-            ok=True, status_code=200,
-            json=MagicMock(return_value=mock_response)
-        )
+        mock_get.return_value = MagicMock(ok=True, status_code=200, json=MagicMock(return_value=mock_response))
         mock_get.return_value.raise_for_status = MagicMock()
 
         result = tool.run(FIASignalsToolInputSchema(tool=tool_name))
@@ -81,10 +85,7 @@ def test_crypto_signals_default_symbol(tool):
     mock_response = {"signal": "BUY", "rsi": 45.2}
 
     with patch("tool.fia_signals.requests.get") as mock_get:
-        mock_get.return_value = MagicMock(
-            ok=True, status_code=200,
-            json=MagicMock(return_value=mock_response)
-        )
+        mock_get.return_value = MagicMock(ok=True, status_code=200, json=MagicMock(return_value=mock_response))
         mock_get.return_value.raise_for_status = MagicMock()
 
         result = tool.run(FIASignalsToolInputSchema(tool="crypto_signals"))
@@ -99,10 +100,7 @@ def test_crypto_signals_custom_symbol(tool):
     mock_response = {"signal": "SELL", "rsi": 68.1}
 
     with patch("tool.fia_signals.requests.get") as mock_get:
-        mock_get.return_value = MagicMock(
-            ok=True, status_code=200,
-            json=MagicMock(return_value=mock_response)
-        )
+        mock_get.return_value = MagicMock(ok=True, status_code=200, json=MagicMock(return_value=mock_response))
         mock_get.return_value.raise_for_status = MagicMock()
 
         result = tool.run(FIASignalsToolInputSchema(tool="crypto_signals", symbol="DOGE"))
@@ -119,10 +117,7 @@ def test_wallet_risk_no_address_raises(tool):
 
 
 def test_wallet_risk_returns_x402_info(tool):
-    result = tool.run(FIASignalsToolInputSchema(
-        tool="wallet_risk",
-        address="0x1234567890abcdef1234567890abcdef12345678"
-    ))
+    result = tool.run(FIASignalsToolInputSchema(tool="wallet_risk", address="0x1234567890abcdef1234567890abcdef12345678"))
 
     assert result.tool == "wallet_risk"
     assert "x402" in result.data["gateway"]
@@ -131,13 +126,11 @@ def test_wallet_risk_returns_x402_info(tool):
 
 # --- Error handling ---
 
+
 def test_api_error_raises(tool):
     with patch("tool.fia_signals.requests.get") as mock_get:
         mock_get.return_value = MagicMock(
-            ok=False, status_code=500,
-            raise_for_status=MagicMock(
-                side_effect=Exception("500 Server Error")
-            )
+            ok=False, status_code=500, raise_for_status=MagicMock(side_effect=Exception("500 Server Error"))
         )
         with pytest.raises(Exception):
             tool.run(FIASignalsToolInputSchema(tool="market_regime"))

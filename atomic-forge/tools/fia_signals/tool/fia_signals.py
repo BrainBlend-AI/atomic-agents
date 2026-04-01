@@ -27,12 +27,8 @@ class FIASignalsToolInputSchema(BaseIOSchema):
         "solana_trending",
         "wallet_risk",
     ] = Field(..., description="The Fía Signals tool to call.")
-    symbol: Optional[str] = Field(
-        None, description="Crypto symbol (e.g. BTC, ETH) for crypto_signals tool."
-    )
-    address: Optional[str] = Field(
-        None, description="Wallet address for wallet_risk tool."
-    )
+    symbol: Optional[str] = Field(None, description="Crypto symbol (e.g. BTC, ETH) for crypto_signals tool.")
+    address: Optional[str] = Field(None, description="Wallet address for wallet_risk tool.")
 
 
 ####################
@@ -180,9 +176,7 @@ class FIASignalsTool(BaseTool[FIASignalsToolInputSchema, FIASignalsToolOutputSch
 
         raise ValueError(f"Unknown tool: {tool}")
 
-    async def run_async(
-        self, params: FIASignalsToolInputSchema
-    ) -> FIASignalsToolOutputSchema:
+    async def run_async(self, params: FIASignalsToolInputSchema) -> FIASignalsToolOutputSchema:
         """
         Runs the Fía Signals tool asynchronously.
 
