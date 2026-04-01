@@ -1199,3 +1199,164 @@ def test_prepare_messages_keeps_system_for_openai(mock_instructor, mock_system_p
     history_messages = [m for m in agent.messages if m.get("content") != mock_system_prompt_generator.generate_prompt()]
     assert len(history_messages) == 1
     assert history_messages[0]["role"] == "system"
+
+
+# --- max_context_tokens and _trim_context tests ---
+
+
+def test_trim_context_no_op_when_max_context_tokens_unset(mock_instructor, mock_system_prompt_generator):
+    """When max_context_tokens is None, _trim_context returns without any action."""
+    history = ChatHistory()
+    history.add_message("user", BasicChatInputSchema(chat_message="Hello"))
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=history,
+        system_prompt_generator=mock_system_prompt_generator,
+        # max_context_tokens not set — default None
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    # Should not raise, should not modify history
+    agent._trim_context()
+    assert history.get_message_count() == 1
+
+
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_trim_context_no_op_when_within_limit(mock_get_token_counter, mock_instructor, mock_system_prompt_generator):
+    """When context is within max_context_tokens, history is not modified."""
+    history = ChatHistory()
+    history.add_message("user", BasicChatInputSchema(chat_message="Hello"))
+
+    mock_counter_instance = Mock()
+    mock_get_token_counter.return_value = mock_counter_instance
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=100, system_prompt=30, history=70, tools=0, model="gpt-5-mini", max_tokens=8192, utilization=0.01
+    )
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=history,
+        system_prompt_generator=mock_system_prompt_generator,
+        max_context_tokens=200,  # well above current 100
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    agent._trim_context()
+
+    # History untouched
+    assert history.get_message_count() == 1
+    # delete_turn_id never called
+    mock_counter_instance.count_context.assert_called_once()
+
+
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_trim_context_trims_oldest_turn_when_over_limit(mock_get_token_counter, mock_instructor, mock_system_prompt_generator):
+    """When context exceeds max_context_tokens, oldest turn is removed."""
+    history = ChatHistory()
+
+    # Turn 1 (user message)
+    history.initialize_turn()
+    history.add_message("user", BasicChatInputSchema(chat_message="First request"))
+
+    # Turn 2 (user message)
+    history.initialize_turn()
+    history.add_message("user", BasicChatInputSchema(chat_message="Second request"))
+
+    turn1_id = history.history[0].turn_id
+
+    mock_counter_instance = Mock()
+    mock_get_token_counter.return_value = mock_counter_instance
+    # First call: over limit; Second call: within limit after one turn removed
+    mock_counter_instance.count_context.side_effect = [
+        TokenCountResult(
+            total=500, system_prompt=100, history=400, tools=0, model="gpt-5-mini", max_tokens=8192, utilization=0.06
+        ),
+        TokenCountResult(
+            total=150, system_prompt=100, history=50, tools=0, model="gpt-5-mini", max_tokens=8192, utilization=0.018
+        ),
+    ]
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=history,
+        system_prompt_generator=mock_system_prompt_generator,
+        max_context_tokens=200,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+    agent._trim_context()
+
+    # Turn 1 should be gone; Turn 2 remains
+    assert history.get_message_count() == 1
+    remaining = history.history[0]
+    assert remaining.content.chat_message == "Second request"
+    assert remaining.turn_id != turn1_id
+
+
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_trim_context_raises_when_single_turn_exceeds_limit(
+    mock_get_token_counter, mock_instructor, mock_system_prompt_generator
+):
+    """When even one turn exceeds max_context_tokens, ValueError is raised."""
+    history = ChatHistory()
+    history.initialize_turn()
+    history.add_message("user", BasicChatInputSchema(chat_message="Very long message that exceeds the limit"))
+
+    mock_counter_instance = Mock()
+    mock_get_token_counter.return_value = mock_counter_instance
+    # Even after trimming all turns, still over limit
+    mock_counter_instance.count_context.return_value = TokenCountResult(
+        total=500, system_prompt=400, history=100, tools=0, model="gpt-5-mini", max_tokens=8192, utilization=0.06
+    )
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=history,
+        system_prompt_generator=mock_system_prompt_generator,
+        max_context_tokens=100,  # artificially low
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    with pytest.raises(ValueError, match="max_context_tokens.*smaller than the minimum"):
+        agent._trim_context()
+
+
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_trim_context_called_before_user_message_in_run(mock_get_token_counter, mock_instructor, mock_system_prompt_generator):
+    """_trim_context runs before the new user message is added to history."""
+    history = ChatHistory()
+
+    # Existing turn in history
+    history.initialize_turn()
+    history.add_message("user", BasicChatInputSchema(chat_message="Old message"))
+
+    mock_counter_instance = Mock()
+    mock_get_token_counter.return_value = mock_counter_instance
+    mock_counter_instance.count_context.side_effect = [
+        TokenCountResult(
+            total=500, system_prompt=100, history=400, tools=0, model="gpt-5-mini", max_tokens=8192, utilization=0.06
+        ),
+        TokenCountResult(
+            total=50, system_prompt=100, history=0, tools=0, model="gpt-5-mini", max_tokens=8192, utilization=0.006
+        ),
+    ]
+
+    config = AgentConfig(
+        client=mock_instructor,
+        model="gpt-5-mini",
+        history=history,
+        system_prompt_generator=mock_system_prompt_generator,
+        max_context_tokens=200,
+    )
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config)
+
+    # Mock chat completion
+    mock_instructor.chat.completions.create.return_value = BasicChatOutputSchema(chat_message="Response")
+
+    agent.run(BasicChatInputSchema(chat_message="New message"))
+
+    # Old turn was trimmed BEFORE new message was added
+    assert history.get_message_count() == 2  # assistant response + new user message
+    assert history.history[0].content.chat_message == "New message"  # new message is first
