@@ -19,7 +19,8 @@ The Atomic Forge includes several pre-built tools:
 - **Tavily Search**: AI-powered web search
 - **YouTube Transcript Scraper**: Extract transcripts from YouTube videos
 - **Webpage Scraper**: Extract content from web pages
-- **BoCha Search**: web search
+- **BoCha Search**: Web search
+- **Fía Signals**: Crypto market intelligence — market regime, trading signals, DeFi yields, gas prices, Solana trending tokens, and wallet risk scoring
 
 ## Using Tools
 
