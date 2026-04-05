@@ -87,6 +87,14 @@ class AgentConfig(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
     mode: Mode = Field(default=Mode.TOOLS, description="The Instructor mode used for structured outputs (TOOLS, JSON, etc.).")
     model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
+    max_context_tokens: Optional[int] = Field(
+        None,
+        description=(
+            "Maximum tokens for the full context (system prompt + history + tools). "
+            "When exceeded, oldest conversation turns are automatically trimmed to stay within limit. "
+            "Uses LiteLLM's provider-agnostic token counter — works with any supported model."
+        ),
+    )
 
 
 class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
@@ -112,6 +120,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         current_user_input (Optional[InputSchema]): The current user input being processed.
         model_api_parameters (dict): Additional parameters passed to the API provider.
             - Use this for parameters like 'temperature', 'max_tokens', etc.
+        max_context_tokens (Optional[int]): Maximum tokens for the full context. When exceeded,
+            oldest conversation turns are automatically trimmed. Uses LiteLLM's token counter.
 
     Hook System:
         The AtomicAgent integrates with Instructor's hook system to provide comprehensive monitoring
@@ -188,6 +198,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self.current_user_input = None
         self.mode = config.mode
         self.model_api_parameters = config.model_api_parameters or {}
+        self.max_context_tokens = config.max_context_tokens
 
         # Hook management attributes
         self._hook_handlers: Dict[str, List[Callable]] = {}
@@ -273,6 +284,62 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
                 "content": self.system_prompt_generator.generate_prompt(),
             }
         ]
+
+    def _trim_context(self) -> None:
+        """
+        Trim oldest conversation turns to stay within max_context_tokens limit.
+
+        Called before building the messages list. Uses the full context token count
+        (system prompt + history + tools) via get_context_token_count().
+        Removes oldest turns one at a time until the context fits within the limit.
+
+        Turn-preserving: always removes complete turns, never individual messages.
+
+        Raises:
+            ValueError: If a single turn itself exceeds max_context_tokens.
+        """
+        if self.max_context_tokens is None:
+            return
+
+        result = self.get_context_token_count()
+        total_tokens = result.total
+
+        if total_tokens <= self.max_context_tokens:
+            return
+
+        logger = logging.getLogger(__name__)
+
+        # Collect unique turn_ids in order (oldest first)
+        turn_ids_ordered = []
+        seen = set()
+        for msg in self.history.history:
+            if msg.turn_id and msg.turn_id not in seen:
+                turn_ids_ordered.append(msg.turn_id)
+                seen.add(msg.turn_id)
+
+        # Remove oldest turns until within limit
+        for turn_id in turn_ids_ordered:
+            if total_tokens <= self.max_context_tokens:
+                break
+
+            self.history.delete_turn_id(turn_id)
+            new_result = self.get_context_token_count()
+            removed = total_tokens - new_result.total
+            total_tokens = new_result.total
+            logger.warning(
+                "Context exceeded max_context_tokens (%d). " "Trimmed turn '%s' (%d tokens). New total: %d.",
+                self.max_context_tokens,
+                turn_id,
+                removed,
+                total_tokens,
+            )
+
+        if total_tokens > self.max_context_tokens:
+            raise ValueError(
+                f"max_context_tokens ({self.max_context_tokens}) is smaller than the "
+                f"minimum required for a single turn ({total_tokens} tokens). "
+                "Increase max_context_tokens or reduce system prompt size."
+            )
 
     def _prepare_messages(self):
         self.messages = self._build_system_messages()
@@ -489,6 +556,10 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         assert not isinstance(
             self.client, instructor.core.client.AsyncInstructor
         ), "The run method is not supported for async clients. Use run_async instead."
+
+        # Trim history BEFORE adding new user message to protect the new input
+        self._trim_context()
+
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
@@ -522,6 +593,9 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         assert not isinstance(
             self.client, instructor.core.client.AsyncInstructor
         ), "The run_stream method is not supported for async clients. Use run_async instead."
+
+        self._trim_context()
+
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
@@ -563,6 +637,9 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
                                    Use run_async_stream() method instead for streaming responses.
         """
         assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
+
+        self._trim_context()
+
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
@@ -589,6 +666,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             OutputSchema: Partial responses from the chat agent.
         """
         assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
+        self._trim_context()
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
