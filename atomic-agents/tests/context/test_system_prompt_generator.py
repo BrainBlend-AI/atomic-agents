@@ -1,5 +1,5 @@
 from atomic_agents.context import (
-    SystemPromptGenerator, 
+    SystemPromptGenerator,
     BaseDynamicContextProvider,
     BaseSystemPromptGenerator,
 )
@@ -132,6 +132,7 @@ def test_generate_prompt_with_empty_context_provider():
 # EXTRA INFORMATION AND CONTEXT"""
 
     assert generator.generate_prompt() == expected_prompt
+
 
 def test_base_system_prompt_generator_repr():
     class Impl(BaseSystemPromptGenerator):

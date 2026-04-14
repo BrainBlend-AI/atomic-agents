@@ -12,13 +12,10 @@ class BaseDynamicContextProvider(ABC):
 
     def __repr__(self) -> str:
         return self.get_info()
-    
+
 
 class BaseSystemPromptGenerator(ABC):
-    def __init__(
-            self,
-            context_providers: Optional[Dict[str, BaseDynamicContextProvider]] = None
-    ):
+    def __init__(self, context_providers: Optional[Dict[str, BaseDynamicContextProvider]] = None):
         self.context_providers = context_providers or {}
 
     @abstractmethod
