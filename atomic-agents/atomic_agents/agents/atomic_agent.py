@@ -8,6 +8,7 @@ from atomic_agents.context.chat_history import ChatHistory
 from atomic_agents.context.system_prompt_generator import (
     BaseDynamicContextProvider,
     SystemPromptGenerator,
+    BaseSystemPromptGenerator,
 )
 from atomic_agents.base.base_io_schema import BaseIOSchema
 from atomic_agents.utils.token_counter import get_token_counter, TokenCountResult
@@ -66,7 +67,7 @@ class AgentConfig(BaseModel):
     client: instructor.core.client.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
-    system_prompt_generator: Optional[SystemPromptGenerator] = Field(
+    system_prompt_generator: Optional[BaseSystemPromptGenerator] = Field(
         default=None, description="Component for generating system prompts."
     )
     system_role: Optional[str] = Field(

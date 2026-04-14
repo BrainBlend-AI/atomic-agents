@@ -1,4 +1,8 @@
-from atomic_agents.context import SystemPromptGenerator, BaseDynamicContextProvider
+from atomic_agents.context import (
+    SystemPromptGenerator, 
+    BaseDynamicContextProvider,
+    BaseSystemPromptGenerator,
+)
 
 
 class MockContextProvider(BaseDynamicContextProvider):
@@ -128,3 +132,11 @@ def test_generate_prompt_with_empty_context_provider():
 # EXTRA INFORMATION AND CONTEXT"""
 
     assert generator.generate_prompt() == expected_prompt
+
+def test_base_system_prompt_generator_repr():
+    class Impl(BaseSystemPromptGenerator):
+        def generate_prompt(self) -> str:
+            return "X"
+
+    impl = Impl()
+    assert repr(impl) == "X"

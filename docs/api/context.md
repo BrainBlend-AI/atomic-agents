@@ -104,6 +104,54 @@ generator = SystemPromptGenerator(
 prompt = generator.generate_prompt()
 ```
 
+### Custom System Prompt Generator
+
+If you prefer to have more control over the system prompt generator you can create a custom system prompt generator by inheriting from `BaseSystemPromptGenerator`:
+
+```python
+from pathlib import Path
+from typing import Dict, Optional, Union
+
+from atomic_agents.context import BaseDynamicContextProvider, BaseSystemPromptGenerator
+
+
+# Define custom generator class
+class MarkdownFileSystemPromptGenerator(BaseSystemPromptGenerator):
+
+    def __init__(
+        self,
+        md_file: Union[Path, str],
+        context_providers: Optional[Dict[str, BaseDynamicContextProvider]] = None,
+    ):
+        super().__init__(context_providers=context_providers)
+
+        path = Path(md_file)
+        if not path.exists():
+            raise FileNotFoundError(f"System prompt file not found: {md_file}")
+
+        self.system_prompt = path.read_text(encoding="utf-8")
+
+    def generate_prompt(self) -> str:
+        prompt_parts = [self.system_prompt]
+
+        if self.context_providers:
+            prompt_parts.append("# EXTRA INFORMATION AND CONTEXT")
+            for provider in self.context_providers.values():
+                info = provider.get_info()
+                if info:
+                    prompt_parts.append(f"## {provider.title}")
+                    prompt_parts.append(info)
+                    prompt_parts.append("")
+
+        return "\n".join(prompt_parts).strip()
+
+# Create generator
+generator = MarkdownFileSystemPromptGenerator("path/to/system_prompt.md")
+
+# Generate prompt
+prompt = generator.generate_prompt()
+```
+
 ### Dynamic Context Providers
 
 Context providers inject dynamic information into prompts:
