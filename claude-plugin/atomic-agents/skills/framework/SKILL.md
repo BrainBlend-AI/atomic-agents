@@ -104,6 +104,12 @@ Follow these defaults unless the project says otherwise. The reference files go 
 
 Scaffolding a brand-new project (fresh directory, `pyproject.toml`, first agent) is handled by the sibling skill `new-app`. Suggest it when the user says "new project", "start from scratch", or equivalent.
 
+## When the user wants to understand an existing codebase
+
+Delegate to the `atomic-explorer` subagent when the project has more than a handful of atomic-agents files and the user asks to "explore", "map", "understand how X works", or similar. The subagent reads the relevant files in isolated context and returns a compact architecture map (agents, tools, schemas, context providers, orchestration, essential-reading list). Invoke via the `Task` tool with the scope (project root, module path, or feature) in the prompt.
+
+For a small project (a single `main.py` + one or two agents), reading the files directly in the main thread is fine — the isolation upside is thin.
+
 ## When the user wants a review
 
 Delegate to the `atomic-reviewer` subagent — do not review in the main thread. The subagent runs in isolated context with read-only tools, keeping the review's file exploration out of the parent conversation. Invoke it via the `Task` tool with the scope (diff, paths, or module) in the prompt. Review findings return as a single structured report the parent thread can act on.

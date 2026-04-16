@@ -4,13 +4,14 @@ A Claude Code plugin that gives Claude deep, just-in-time knowledge of the [Atom
 
 ## What you get
 
-Two skills + one subagent, loaded on demand:
+Two skills + two subagents, loaded on demand:
 
 - **`framework` skill** — auto-triggered when Claude sees atomic-agents code. Orients Claude on the framework and exposes eleven focused reference files (schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, testing). Progressive disclosure keeps the parent context lean.
 - **`new-app` skill** — slash-invokable scaffolder (`/atomic-agents:new-app`). Four short questions and produces a runnable project with the right `pyproject.toml`, environment file, and first agent.
+- **`atomic-explorer` subagent** — auto-triggered (or `Task`-invoked) when you ask to explore, map, or understand an existing atomic-agents codebase. Reads the project in isolated context and returns a compact architecture map (agents, tools, schemas, context providers, orchestration, essential-reading list) without polluting the parent thread with every file it had to open to build that map.
 - **`atomic-reviewer` subagent** — auto-triggered (or `Task`-invoked) when you ask for a review, audit, or check of atomic-agents code. Runs in isolated context with read-only tools so the file-exploration load never pollutes the parent thread. Focuses only on framework-specific concerns (BaseIOSchema invariants, Instructor wrapping, per-provider role and mode, context-provider I/O hygiene, orchestration hazards, common API misuses). Returns a single confidence-filtered structured report. Complements generic code review; does not replace it.
 
-This follows the hybrid pattern Anthropic themselves ship: reference skills for knowledge that should inform the main thread, specialist subagents for discrete verification tasks.
+This follows the hybrid pattern Anthropic themselves ship: reference skills for knowledge that should inform the main thread, specialist subagents for discrete read-heavy tasks whose output is a summary.
 
 ## Install
 
@@ -46,6 +47,8 @@ Read the `framework` skill's `SKILL.md` if you want to see the routing table and
 ## Typical flows
 
 **Writing new atomic-agents code.** Open your project. Claude notices imports from `atomic_agents`, loads the `framework` skill, and pulls in `references/schemas.md`, `references/agents.md`, etc. as the conversation progresses.
+
+**Understanding a codebase you inherited.** Ask "help me understand how the agents in this project work" or "map this codebase." The `atomic-explorer` subagent fires, reads the relevant files in its own context, and returns a compact architecture map with file:line references — the parent thread skips the file-by-file slog.
 
 **Before committing.** Ask "review my changes for atomic-agents issues." The `atomic-reviewer` subagent fires (or Claude invokes it via the `Task` tool), reads the diff in its own context, and returns a confidence-filtered list of framework-specific issues with ready-to-apply fixes.
 

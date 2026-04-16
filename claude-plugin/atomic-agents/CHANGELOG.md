@@ -17,9 +17,14 @@ Full rewrite to match 2026 Claude Code plugin conventions. Reference knowledge l
 - Skill descriptions rewritten in third person with concrete trigger terms, per Anthropic's skill authoring best practices.
 - Plugin manifest trimmed to the core fields Anthropic's own plugins use (name, description, author, homepage, repository, license, version).
 
-### Retained as a subagent
+### Retained / added as subagents
+
+Two tasks met the subagent rubric — read-heavy work whose output is a summary the parent thread benefits from receiving without the exploration load:
 
 - **`atomic-reviewer`** — code review runs in an isolated subagent context with read-only tools (`Glob`, `Grep`, `LS`, `Read`, `NotebookRead`, `TodoWrite`). This matches Anthropic's canonical example in their subagents documentation (`code-reviewer` with no `Write`/`Edit`) and the pattern used in `plugin-dev`, `feature-dev`, and `pr-review-toolkit`. Keeping review in a subagent prevents the file-exploration load from polluting the parent conversation, enables tool-level restriction, and leaves the door open to the parallel-review-lens pattern later. Rewritten for the 2026 API (top-level imports, PEP 695 `BaseTool` generics, `MCPTransportType.HTTP_STREAM`, five hook events, etc.).
+- **`atomic-explorer`** — architectural mapping of existing atomic-agents codebases runs in an isolated subagent with the same read-only tool set. Catalogs agents, tools, schemas, context providers, and orchestration patterns; traces data flow; returns a compact summary with file:line references and an essential-reading list. Analogous to Anthropic's `code-explorer` in `feature-dev`. For small projects (a single `main.py` + one or two agents), the main thread handles exploration directly.
+
+The other three original subagents (`atomic-architect`, `schema-designer`, and the legacy scaffolder) were not restored: architect and schema-designer produce *artifacts* the user wants in the parent thread to iterate on, which is anti-pattern for subagents. Scaffolding is now the `new-app` slash-invokable skill.
 
 ### Fixed
 
