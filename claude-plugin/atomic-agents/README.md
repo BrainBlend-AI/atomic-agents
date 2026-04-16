@@ -4,13 +4,13 @@ A Claude Code plugin that gives Claude deep, just-in-time knowledge of the [Atom
 
 ## What you get
 
-Three skills, loaded on demand:
+Two skills + one subagent, loaded on demand:
 
-- **`framework`** — auto-triggered when Claude sees atomic-agents code. Gives Claude an orientation to the framework, decision guidance, and eight focused reference files it can pull into context as the task requires (schemas, agents, tools, context providers, prompts, orchestration, providers, project structure, testing).
-- **`review`** — auto-triggered when you ask for a review, audit, or check of atomic-agents code. Focuses only on framework-specific concerns (correct imports, `BaseIOSchema` docstring invariant, Instructor wrapping, per-provider role and mode, context-provider I/O hygiene, orchestration hazards). Complements generic code review; does not replace it.
-- **`new-app`** — slash-invokable scaffolder (`/atomic-agents:new-app`). Asks four short questions and produces a runnable project with the right `pyproject.toml`, environment file, and first agent.
+- **`framework` skill** — auto-triggered when Claude sees atomic-agents code. Orients Claude on the framework and exposes eleven focused reference files (schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, testing). Progressive disclosure keeps the parent context lean.
+- **`new-app` skill** — slash-invokable scaffolder (`/atomic-agents:new-app`). Four short questions and produces a runnable project with the right `pyproject.toml`, environment file, and first agent.
+- **`atomic-reviewer` subagent** — auto-triggered (or `Task`-invoked) when you ask for a review, audit, or check of atomic-agents code. Runs in isolated context with read-only tools so the file-exploration load never pollutes the parent thread. Focuses only on framework-specific concerns (BaseIOSchema invariants, Instructor wrapping, per-provider role and mode, context-provider I/O hygiene, orchestration hazards, common API misuses). Returns a single confidence-filtered structured report. Complements generic code review; does not replace it.
 
-No subagents, no rigid multi-phase workflow. Skills load what they need, when they need it.
+This follows the hybrid pattern Anthropic themselves ship: reference skills for knowledge that should inform the main thread, specialist subagents for discrete verification tasks.
 
 ## Install
 
@@ -47,7 +47,7 @@ Read the `framework` skill's `SKILL.md` if you want to see the routing table and
 
 **Writing new atomic-agents code.** Open your project. Claude notices imports from `atomic_agents`, loads the `framework` skill, and pulls in `references/schemas.md`, `references/agents.md`, etc. as the conversation progresses.
 
-**Before committing.** Ask "review my changes for atomic-agents issues." The `review` skill fires, produces a confidence-filtered list of framework-specific issues with ready-to-apply fixes.
+**Before committing.** Ask "review my changes for atomic-agents issues." The `atomic-reviewer` subagent fires (or Claude invokes it via the `Task` tool), reads the diff in its own context, and returns a confidence-filtered list of framework-specific issues with ready-to-apply fixes.
 
 **Starting from nothing.** Run `/atomic-agents:new-app my-project`. Four questions, one scaffolded project, one runnable agent.
 

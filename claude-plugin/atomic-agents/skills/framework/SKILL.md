@@ -104,7 +104,9 @@ Follow these defaults unless the project says otherwise. The reference files go 
 
 Scaffolding a brand-new project (fresh directory, `pyproject.toml`, first agent) is handled by the sibling skill `new-app`. Suggest it when the user says "new project", "start from scratch", or equivalent.
 
-When reviewing or auditing existing code, the sibling skill `review` applies the Atomic-Agents-specific checklist.
+## When the user wants a review
+
+Delegate to the `atomic-reviewer` subagent — do not review in the main thread. The subagent runs in isolated context with read-only tools, keeping the review's file exploration out of the parent conversation. Invoke it via the `Task` tool with the scope (diff, paths, or module) in the prompt. Review findings return as a single structured report the parent thread can act on.
 
 ## Versioning and compatibility
 
@@ -126,4 +128,4 @@ When reviewing or auditing existing code, the sibling skill `review` applies the
 - `MCPTransportType.STREAMABLE_HTTP` — the correct value is `HTTP_STREAM`.
 - `ChatHistory.load(...)` called as a classmethod — it is an instance method that mutates self.
 
-For deeper guidance load the relevant reference file above. For code-review runs, switch to the `review` skill.
+For deeper guidance load the relevant reference file above. For code-review runs, delegate to the `atomic-reviewer` subagent.

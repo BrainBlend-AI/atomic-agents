@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - 2026-04-16
 
-Full rewrite to match 2026 Claude Code plugin conventions. The plugin is now skills-only, with progressive-disclosure references instead of heavyweight subagents and rigid multi-phase commands.
+Full rewrite to match 2026 Claude Code plugin conventions. Reference knowledge lives in skills with progressive-disclosure references; code review lives in an isolated-context subagent. This mirrors Anthropic's own plugin pattern (`plugin-dev`, `feature-dev`, `pr-review-toolkit`).
 
 ### Changed
 
-- Replaced four subagents (`atomic-architect`, `atomic-explorer`, `atomic-reviewer`, `schema-designer`) with two auto-triggered skills (`framework`, `review`) and one slash-invokable scaffolder (`new-app`).
+- Replaced three over-broad subagents (`atomic-architect`, `atomic-explorer`, `schema-designer`) with a single `framework` skill that exposes progressive-disclosure references. The retained subagent (`atomic-reviewer`) was rewritten; see below.
 - Retired the `/atomic-create`, `/atomic-agent`, `/atomic-tool` slash commands. The `framework` skill loads automatically when the user works in atomic-agents code; the `new-app` skill handles greenfield scaffolding via `/atomic-agents:new-app`.
 - `skills/` directories now follow the standard Anthropic layout: a top-level `SKILL.md` plus a `references/` subdirectory loaded on demand.
 - Skill descriptions rewritten in third person with concrete trigger terms, per Anthropic's skill authoring best practices.
-- Plugin manifest trimmed to the core fields Anthropic's own plugins use (name, description, author, homepage, repository, license).
+- Plugin manifest trimmed to the core fields Anthropic's own plugins use (name, description, author, homepage, repository, license, version).
+
+### Retained as a subagent
+
+- **`atomic-reviewer`** — code review runs in an isolated subagent context with read-only tools (`Glob`, `Grep`, `LS`, `Read`, `NotebookRead`, `TodoWrite`). This matches Anthropic's canonical example in their subagents documentation (`code-reviewer` with no `Write`/`Edit`) and the pattern used in `plugin-dev`, `feature-dev`, and `pr-review-toolkit`. Keeping review in a subagent prevents the file-exploration load from polluting the parent conversation, enables tool-level restriction, and leaves the door open to the parallel-review-lens pattern later. Rewritten for the 2026 API (top-level imports, PEP 695 `BaseTool` generics, `MCPTransportType.HTTP_STREAM`, five hook events, etc.).
 
 ### Fixed
 

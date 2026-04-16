@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "atomic-agents",
-      "description": "Skills for building and reviewing applications with the Atomic Agents Python framework. Progressive-disclosure references for schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, and testing — plus a reviewer skill and a new-app scaffolder.",
+      "description": "Skills and a reviewer subagent for building, scaffolding, and auditing applications with the Atomic Agents Python framework. Progressive-disclosure references for schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, and testing — plus an isolated-context reviewer subagent and a new-app scaffolder.",
       "version": "2.0.0",
       "author": {
         "name": "BrainBlend AI",
