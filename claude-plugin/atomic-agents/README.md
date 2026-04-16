@@ -15,13 +15,43 @@ This follows the hybrid pattern Anthropic themselves ship: reference skills for 
 
 ## Install
 
-### Claude Code marketplace
+### Recommended — from the BrainBlend marketplace
 
 ```
-/plugin install atomic-agents@<marketplace-name>
+/plugin marketplace add BrainBlend-AI/atomic-agents
+/plugin install atomic-agents@brainblend-plugins
 ```
 
-### Local
+This path gets you the latest version immediately. We control the marketplace, so pushes to `main` in this repo reach users on the next `/plugin marketplace update` (and auto-update is on by default for git-hosted marketplaces you've explicitly added).
+
+### From the official Anthropic marketplace
+
+```
+/plugin install atomic-agents@claude-plugins-official
+```
+
+> **Note (April 2026)**: The entry in the official marketplace currently uses a source type that silently drops the plugin's subdirectory `path`, causing the plugin to load empty (zero agents, zero skills). Tracking fix at [anthropics/claude-plugins-official#1436](https://github.com/anthropics/claude-plugins-official/issues/1436). Until that's applied, use the BrainBlend marketplace above.
+
+### Team projects (declarative)
+
+To require this plugin for everyone who opens a given repo, add it to the project's `.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "brainblend-plugins": {
+      "source": { "source": "github", "repo": "BrainBlend-AI/atomic-agents" }
+    }
+  },
+  "enabledPlugins": {
+    "atomic-agents@brainblend-plugins": true
+  }
+}
+```
+
+Claude Code prompts each teammate to install on first trust of the folder.
+
+### Local dev
 
 ```bash
 claude --plugin-dir /path/to/atomic-agents/claude-plugin/atomic-agents
