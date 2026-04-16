@@ -5,44 +5,50 @@ All notable changes to the Atomic Agents Claude Code Plugin will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-12-21
+## [2.0.0] - 2026-04-16
+
+Full rewrite to match 2026 Claude Code plugin conventions. The plugin is now skills-only, with progressive-disclosure references instead of heavyweight subagents and rigid multi-phase commands.
+
+### Changed
+
+- Replaced four subagents (`atomic-architect`, `atomic-explorer`, `atomic-reviewer`, `schema-designer`) with two auto-triggered skills (`framework`, `review`) and one slash-invokable scaffolder (`new-app`).
+- Retired the `/atomic-create`, `/atomic-agent`, `/atomic-tool` slash commands. The `framework` skill loads automatically when the user works in atomic-agents code; the `new-app` skill handles greenfield scaffolding via `/atomic-agents:new-app`.
+- `skills/` directories now follow the standard Anthropic layout: a top-level `SKILL.md` plus a `references/` subdirectory loaded on demand.
+- Skill descriptions rewritten in third person with concrete trigger terms, per Anthropic's skill authoring best practices.
+- Plugin manifest trimmed to the core fields Anthropic's own plugins use (name, description, author, homepage, repository, license).
+
+### Fixed
+
+- Corrected all framework imports to the current top-level paths (`from atomic_agents import ...`, `from atomic_agents.context import ...`). Previous version referenced retired `atomic_agents.lib.*` and `atomic_agents.agents.base_agent` paths.
+- Updated `BaseTool` examples to use PEP 695 generics (`class MyTool(BaseTool[In, Out])`) instead of the removed `input_schema = ...` / `output_schema = ...` class-attribute pattern.
+- Updated default model references to current-generation models.
+- Documented Gemini `assistant_role="model"` requirement, Anthropic `max_tokens` requirement, and per-provider Instructor `Mode` — previously missing or inaccurate.
 
 ### Added
 
-#### Agents
-- **atomic-explorer** - Analyzes existing Atomic Agents applications by tracing configurations, schemas, tools, and orchestration patterns
-- **atomic-architect** - Designs application architectures with pattern selection and implementation blueprints
-- **atomic-reviewer** - Reviews code for bugs, anti-patterns, security issues with confidence-based filtering
-- **schema-designer** - Generates well-structured Pydantic schemas with proper validation
+- `framework/references/testing.md` — new dedicated testing guide (pytest, async, streaming, integration gates).
+- `framework/references/providers.md` — covers OpenAI, Anthropic, Groq, Ollama, Gemini, OpenRouter, MiniMax with correct modes and roles.
+- `framework/references/memory.md` — `ChatHistory` turn model, persistence, overflow, multi-agent memory patterns (shared, independent, agent-to-agent messaging addressing GH issue #58, supervisor-worker).
+- `framework/references/hooks.md` — the five events, telemetry, validation-error inspection, retry patterns, production logging.
+- Orchestration guide includes the search+execute pattern for large tool surfaces, with per-pattern pointers to working `atomic-examples/` projects.
+- Inline links from reference files to real example projects (`hooks-example`, `deep-research`, `progressive-disclosure`, `orchestration-agent`, `mcp-agent`, `quickstart`).
+- `tools.md` distinguishes in-project tools from distributable Forge tools and links to `atomic-forge/guides/tool_structure.md`.
+- MCP interop coverage in `framework/references/tools.md`.
 
-#### Commands
-- **/atomic-create** - 7-phase guided workflow for creating complete Atomic Agents applications
-  - Discovery, Exploration, Clarification, Architecture, Implementation, Review, Summary phases
-  - Parallel agent deployment for comprehensive analysis
-  - User approval gates at critical decision points
-- **/atomic-agent** - Quick scaffolding for new agents with schemas and configuration
-- **/atomic-tool** - Quick scaffolding for new tools with error handling patterns
+### Fixed (post-review)
 
-#### Skills
-- **atomic-schemas** - BaseIOSchema patterns, field definitions, validators, type constraints
-- **atomic-agents** - Agent configuration, ChatHistory, provider setup, execution methods
-- **atomic-tools** - BaseTool development, configuration, error handling, orchestration
-- **atomic-context** - Context providers, dynamic prompt injection, RAG patterns
-- **atomic-prompts** - SystemPromptGenerator structure, prompt engineering best practices
-- **atomic-structure** - Project organization patterns from simple to complex applications
+- `agents.md`: `ChatHistory.load(saved)` is an instance method, not a classmethod. `dump()` returns a JSON **string**, not "JSON-serializable data". Added missing `completion:kwargs` hook event. `TokenCountResult` now lists all seven fields (`total`, `system_prompt`, `history`, `tools`, `model`, `max_tokens`, `utilization`).
+- `tools.md`: `MCPTransportType.STREAMABLE_HTTP` does not exist — correct value is `HTTP_STREAM` (alongside `SSE` and `STDIO`). Async tools expose `run_async`, not `arun`.
+- `new-app/SKILL.md`: explicit `AgentConfig.mode` per provider (must match the Instructor factory `mode`).
+- All SKILL.md bodies and reference files converted from second-person "you" to imperative/third-person per Anthropic's skill-authoring guide (quoted prompt strings and template placeholders retained as-is).
+- `framework` skill description trimmed from 574 chars to 343 chars using a hybrid short-lead + compact-trigger form for better discoverability.
 
-### Framework Support
-- Full coverage of Atomic Agents core components
-- Support for multiple LLM providers (OpenAI, Anthropic, Groq, Ollama)
-- Patterns for synchronous, asynchronous, and streaming execution
-- Multi-agent orchestration patterns (sequential, parallel, router, supervisor)
+### Removed
 
----
+- `agents/` directory — no subagents.
+- `commands/` directory — slash commands are now skills with `disable-model-invocation: true` where user-only invocation is desired.
+- Per-skill `examples/` directories — Anthropic's skill-authoring guide recommends `references/` over `examples/` for progressive disclosure.
 
-## [Unreleased]
+## [1.0.0] - 2025-12-21
 
-### Planned
-- Hook for automatic schema validation on file save
-- MCP server integration for external tool discovery
-- Additional skills for advanced patterns (MCP, testing, deployment)
-- Example templates for common application types
+Initial release with subagents (`atomic-explorer`, `atomic-architect`, `atomic-reviewer`, `schema-designer`), three slash commands (`/atomic-create`, `/atomic-agent`, `/atomic-tool`), and six progressive-disclosure skills.

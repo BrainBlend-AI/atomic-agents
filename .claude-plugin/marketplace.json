@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "atomic-agents",
-      "description": "Comprehensive development workflow for building well-organized Atomic Agents applications with specialized agents for schema design, architecture planning, code review, and tool development",
-      "version": "1.0.0",
+      "description": "Skills for building and reviewing applications with the Atomic Agents Python framework. Progressive-disclosure references for schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, and testing — plus a reviewer skill and a new-app scaffolder.",
+      "version": "2.0.0",
       "author": {
         "name": "BrainBlend AI",
         "email": "support@brainblend.ai"
