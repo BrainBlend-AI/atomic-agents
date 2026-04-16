@@ -41,6 +41,7 @@ Work through the categories below in order. Raise an issue only at ≥75% confid
 
 - Constructed with explicit generic parameters: `AtomicAgent[In, Out](config=...)`.
 - `AgentConfig.client` is an Instructor-wrapped client (`instructor.from_openai(...)`, `instructor.from_anthropic(...)`, etc.), not a raw provider SDK client.
+  - **Scope**: this rule applies *only* to clients passed to `AgentConfig.client` — i.e., anything an `AtomicAgent` uses for chat/completions. It does **not** apply to provider-SDK calls for capabilities the framework does not cover: embeddings (`client.embeddings.create`), image generation, audio (TTS/STT), moderation, fine-tuning management, etc. Using a raw `openai` / `anthropic` / `groq` client for those is correct, not a violation. Do not flag such calls.
 - `model` is appropriate for the task (not a reasoning model for trivial work, not a weak model for hard reasoning).
 - `history` is present when multi-turn state is needed; absent when each call is independent.
 - `assistant_role="model"` for Gemini, `"assistant"` elsewhere.
@@ -96,6 +97,11 @@ Work through the categories below in order. Raise an issue only at ≥75% confid
 - `MCPTransportType.STREAMABLE_HTTP` referenced — the correct value is `HTTP_STREAM` (alongside `SSE`, `STDIO`).
 - Async tool defined as `async def arun(...)` — the framework calls `run_async`, not `arun`.
 - Legacy import paths (`atomic_agents.lib.base.*`, `atomic_agents.agents.base_agent`) — these were retired; import from the top-level `atomic_agents` package or from `atomic_agents.context`.
+
+**Methods that are NOT misuses** — do not flag these; the reviewer has historically confabulated bugs here that do not exist:
+
+- `ChatHistory.initialize_turn()` only rotates the internal `current_turn_id` (a UUID). It does **not** append a system prompt, add a message, or otherwise mutate `history`. Calling it repeatedly is a no-op with respect to message content. The `add_message(...)` → `initialize_turn()` at end-of-turn pattern (including when replaying history) is correct usage, not a bug.
+- Using a raw provider SDK client (e.g. `openai.OpenAI()`) for embeddings, image generation, audio, or moderation — see scope note under section 2. Not a violation.
 
 ### 10. Testing
 

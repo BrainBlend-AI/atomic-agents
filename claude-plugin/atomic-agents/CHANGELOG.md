@@ -5,6 +5,15 @@ All notable changes to the Atomic Agents Claude Code Plugin will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-04-16
+
+Bug-fix release addressing two recurring false positives from `atomic-reviewer` reported in [issue #238](https://github.com/BrainBlend-AI/atomic-agents/issues/238).
+
+### Fixed
+
+- **Reviewer no longer flags raw provider-SDK use for embeddings, image generation, audio, or moderation as a framework violation.** The "Instructor-wrapped client" rule now carries an explicit scope note: it applies only to clients passed to `AgentConfig.client`. The framework doesn't expose embeddings/image/audio/moderation APIs, so using the provider SDK directly for those capabilities is correct usage, not a rule break. Scope note added to `agents/atomic-reviewer.md` section 2 and `skills/framework/SKILL.md` anti-patterns.
+- **Reviewer no longer confabulates a bug for `ChatHistory.initialize_turn()`.** The method only rotates `current_turn_id` (a UUID) — it does not append a system prompt, add a message, or mutate `history`. Added an explicit "methods that are NOT misuses" block to `agents/atomic-reviewer.md` section 9 documenting both non-misuses so Claude doesn't invent them.
+
 ## [2.0.0] - 2026-04-16
 
 Full rewrite to match 2026 Claude Code plugin conventions. Reference knowledge lives in skills with progressive-disclosure references; code review lives in an isolated-context subagent. This mirrors Anthropic's own plugin pattern (`plugin-dev`, `feature-dev`, `pr-review-toolkit`).
