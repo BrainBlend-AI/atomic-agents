@@ -10,7 +10,7 @@
     {
       "name": "atomic-agents",
       "description": "Skills plus explorer and reviewer subagents for building, scaffolding, understanding, and auditing applications with the Atomic Agents Python framework. Progressive-disclosure references for schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, and testing — plus isolated-context subagents for codebase mapping and code review, and a new-app scaffolder.",
-      "version": "2.0.0",
+      "version": "2.0.1",
       "author": {
         "name": "BrainBlend AI",
         "email": "support@brainblend.ai"

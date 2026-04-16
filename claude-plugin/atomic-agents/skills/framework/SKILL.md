@@ -126,7 +126,7 @@ Delegate to the `atomic-reviewer` subagent — do not review in the main thread.
 - Plain `BaseModel` instead of `BaseIOSchema`.
 - Missing docstrings on `BaseIOSchema` subclasses (framework raises at import).
 - `Field(..., description="...")` missing — Instructor leans on descriptions for prompt generation.
-- Raw provider client (not wrapped in Instructor).
+- Raw provider client passed as `AgentConfig.client` (must be wrapped in Instructor). Raw SDK use for embeddings, image generation, audio, or moderation is fine — the framework only covers structured chat/completions.
 - Hardcoded API keys instead of env vars.
 - Unbounded `ChatHistory` on long-running sessions.
 - Blocking I/O inside `BaseDynamicContextProvider.get_info()` — it runs on every `agent.run()`.
