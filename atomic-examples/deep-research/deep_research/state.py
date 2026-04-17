@@ -65,7 +65,7 @@ class ResearchState:
     started_at: datetime = field(default_factory=datetime.utcnow)
 
     def learnings_for(self, sub_topic: str) -> list[Learning]:
-        return [l for l in self.learnings if l.sub_topic == sub_topic]
+        return [learning for learning in self.learnings if learning.sub_topic == sub_topic]
 
     def register_source(self, url: str, title: str) -> Source:
         """Register a source if new, return the (new or existing) record.

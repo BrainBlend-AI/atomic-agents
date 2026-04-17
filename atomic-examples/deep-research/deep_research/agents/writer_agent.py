@@ -71,7 +71,8 @@ writer_agent = AtomicAgent[WriterInput, WriterOutput](
                 "  1. Read the research state (sources and learnings) from the system context.",
                 "  2. Organise the report with one section per sub-topic, in a logical order.",
                 "  3. Every factual sentence cites the source(s) it's based on using [S1] / [S2, S4] markers.",
-                "  4. End with a '## Sources' section. Format each entry as a bullet list: `- [Sn]: <title> — <url>`. Do NOT append a trailing [Sn] after the URL.",
+                "  4. End with a '## Sources' section. Format each entry as "
+                "`- [Sn]: <title> — <url>`. Do NOT append a trailing [Sn] after the URL.",
                 "In 'verify' mode:",
                 "  1. Read the draft provided in the input.",
                 "  2. Remove any sentence that carries a citation marker not present in the research state's sources.",

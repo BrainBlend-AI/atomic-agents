@@ -42,13 +42,13 @@ class ResearchStateProvider(BaseDynamicContextProvider):
             lines.append("")
             lines.append("### Learnings so far (grouped by sub-topic)")
             seen_topics: list[str] = []
-            for l in self.state.learnings:
-                if l.sub_topic not in seen_topics:
-                    seen_topics.append(l.sub_topic)
+            for learning in self.state.learnings:
+                if learning.sub_topic not in seen_topics:
+                    seen_topics.append(learning.sub_topic)
             for sub_topic in seen_topics:
                 lines.append(f"**{sub_topic}**")
-                for l in self.state.learnings_for(sub_topic):
-                    lines.append(f"- {l.text} [{l.source_id}]")
+                for learning in self.state.learnings_for(sub_topic):
+                    lines.append(f"- {learning.text} [{learning.source_id}]")
 
         return "\n".join(lines)
 
