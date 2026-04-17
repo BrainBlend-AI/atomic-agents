@@ -1,12 +1,17 @@
 """
 Deep-research orchestrator.
 
-Reads like a recipe: plan → (per sub-topic) search → scrape → extract →
-reflect → (maybe loop) → write. Each step is a call to a single-purpose
-agent (see ``deep_research/agents/``) that reads from and contributes to
-the shared ``ResearchState`` (see ``state.py``).
+Reads like a recipe. First turn: plan → (per sub-topic) search → scrape →
+extract → reflect → (maybe loop) → write. Follow-up turns in chat mode:
+decider routes to either another research pass (plan → research → qa)
+or straight to qa against the accumulated state.
 
-Run:  ``python -m deep_research "your question here"``
+Each step is a call to a single-purpose agent (see ``deep_research/agents/``)
+that reads from and contributes to the shared ``ResearchState``.
+
+Run:
+  ``python -m deep_research "your question here"``    # one-shot report
+  ``python -m deep_research``                         # interactive chat
 """
 
 import sys
@@ -14,9 +19,13 @@ import sys
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
+from rich.table import Table
+from rich import box
 
+from deep_research.agents.decider_agent import DeciderInput, decider_agent
 from deep_research.agents.extractor_agent import ExtractorInput, extractor_agent
 from deep_research.agents.planner_agent import PlannerInput, planner_agent
+from deep_research.agents.qa_agent import QAInput, qa_agent
 from deep_research.agents.reflector_agent import ReflectorInput, reflector_agent
 from deep_research.agents.writer_agent import WriterInput, writer_agent
 from deep_research.config import ChatConfig, ResearchBudget
@@ -34,37 +43,42 @@ from deep_research.tools.webpage_scraper import (
 
 console = Console()
 
+# How many new sub-topics a follow-up research pass may add. Kept small so
+# chat follow-ups don't balloon into full extra reports.
+FOLLOW_UP_SUB_TOPICS = 2
+
 
 def wire_context_providers(state: ResearchState) -> None:
-    """Register the state + current-date providers on every agent that needs them.
+    """Register the state + current-date providers on every agent.
 
-    The planner is the only agent that runs before any state exists, so
-    it gets only the date. All others see the live ``ResearchState``.
+    All agents — including the planner and the chat-mode pair (decider, qa) —
+    see the live ``ResearchState``. The planner's state awareness is what
+    lets follow-up re-plans extend coverage instead of duplicating it.
     """
     state_provider = ResearchStateProvider("Research State", state)
     date_provider = CurrentDateProvider("Current Date")
 
-    planner_agent.register_context_provider("current_date", date_provider)
-
-    for agent in (extractor_agent, reflector_agent, writer_agent):
+    for agent in (planner_agent, extractor_agent, reflector_agent, writer_agent, decider_agent, qa_agent):
         agent.register_context_provider("current_date", date_provider)
         agent.register_context_provider("research_state", state_provider)
 
 
-def plan_research(state: ResearchState) -> None:
-    """Run the planner once to fill in ``state.plan``."""
-    console.rule("[bold cyan]1. Plan")
-    result = planner_agent.run(PlannerInput(question=state.question, num_sub_topics=ResearchBudget.num_sub_topics))
+def plan_research(state: ResearchState, num_sub_topics: int = ResearchBudget.num_sub_topics) -> list[SubTopic]:
+    """Run the planner, append new sub-topics to ``state.plan``, return just the new ones."""
+    before = len(state.plan)
+    result = planner_agent.run(PlannerInput(question=state.question, num_sub_topics=num_sub_topics))
     state.agent_calls += 1
 
     for st in result.sub_topics:
         state.plan.append(SubTopic(name=st.name, initial_queries=list(st.initial_queries)))
         state.queries_seen.update(st.initial_queries)
 
-    for i, st in enumerate(state.plan, 1):
+    new_sub_topics = state.plan[before:]
+    for i, st in enumerate(new_sub_topics, 1):
         console.print(f"  [bold]{i}. {st.name}[/bold]")
         for q in st.initial_queries:
             console.print(f"     • [dim]{q}[/dim]")
+    return new_sub_topics
 
 
 def search_and_scrape(
@@ -187,30 +201,16 @@ def write_report(state: ResearchState) -> tuple[str, str]:
     return verified.headline, verified.report
 
 
-def run(question: str) -> None:
-    """Top-level pipeline. Reads like an outline of what 'deep research' means in this project."""
-    console.print(
-        Panel.fit(
-            f"[bold]Deep Research[/bold]\n{question}",
-            border_style="blue",
-        )
-    )
+def run_initial_pipeline(question: str, state: ResearchState, search: SearXNGSearchTool, scraper: WebpageScraperTool) -> None:
+    """First-turn pipeline: plan → research → write. Populates and prints state."""
+    console.print(Panel.fit(f"[bold]Deep Research[/bold]\n{question}", border_style="blue"))
+    state.question = question
 
-    state = ResearchState(question=question)
-    wire_context_providers(state)
-
-    search = SearXNGSearchTool(
-        SearXNGSearchToolConfig(
-            base_url=ChatConfig.searxng_base_url,
-            max_results=ResearchBudget.search_results_per_query,
-        )
-    )
-    scraper = WebpageScraperTool()
-
-    plan_research(state)
+    console.rule("[bold cyan]1. Plan")
+    new_sub_topics = plan_research(state)
 
     console.rule("[bold cyan]2. Research")
-    for sub_topic in state.plan:
+    for sub_topic in new_sub_topics:
         research_sub_topic(sub_topic, state, search, scraper)
 
     headline, report = write_report(state)
@@ -218,7 +218,116 @@ def run(question: str) -> None:
     console.rule("[bold green]Report")
     console.print(Panel(f"[bold]{headline}[/bold]", border_style="green"))
     console.print(Markdown(report))
+    _print_stats(state)
 
+
+def run(question: str) -> None:
+    """One-shot entrypoint: plan, research, write, print the report. No chat loop."""
+    state = ResearchState(question=question)
+    wire_context_providers(state)
+
+    search, scraper = _build_tools()
+    run_initial_pipeline(question, state, search, scraper)
+
+
+# --- Chat loop ---------------------------------------------------------------
+
+
+def display_qa_answer(answer: str, follow_ups: list[str]) -> None:
+    console.print("\n")
+    console.print(Panel(Markdown(answer), title="[bold blue]Answer[/bold blue]", border_style="blue", padding=(1, 2)))
+
+    if follow_ups:
+        table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED, title="[bold]Follow-up Questions[/bold]")
+        table.add_column("№", style="dim", width=4)
+        table.add_column("Question", style="green")
+        for i, q in enumerate(follow_ups, 1):
+            table.add_row(str(i), q)
+        console.print("\n")
+        console.print(table)
+
+
+def answer_from_state(question: str, state: ResearchState) -> None:
+    """Q&A pass against the current ResearchState. Used on follow-ups."""
+    result = qa_agent.run(QAInput(question=question))
+    state.agent_calls += 1
+    display_qa_answer(result.answer, result.follow_up_questions)
+
+
+def research_follow_up(question: str, state: ResearchState, search: SearXNGSearchTool, scraper: WebpageScraperTool) -> None:
+    """Follow-up that needs new material: plan a few new sub-topics scoped to the follow-up, research them, then QA."""
+    state.question = question  # the planner / providers read the live question
+
+    console.rule("[bold cyan]Extending research")
+    new_sub_topics = plan_research(state, num_sub_topics=FOLLOW_UP_SUB_TOPICS)
+    for sub_topic in new_sub_topics:
+        research_sub_topic(sub_topic, state, search, scraper)
+
+    answer_from_state(question, state)
+
+
+def handle_follow_up(user_message: str, state: ResearchState, search: SearXNGSearchTool, scraper: WebpageScraperTool) -> None:
+    """Route a single follow-up turn through decider → either research+QA or QA alone."""
+    decision = decider_agent.run(DeciderInput(user_message=user_message))
+    state.agent_calls += 1
+
+    title = "Performing new research" if decision.needs_research else "Answering from existing state"
+    border = "yellow" if decision.needs_research else "green"
+    console.print("\n")
+    console.print(Panel(decision.reasoning, title=f"[bold {border}]{title}[/bold {border}]", border_style=border))
+
+    if decision.needs_research:
+        research_follow_up(user_message, state, search, scraper)
+    else:
+        answer_from_state(user_message, state)
+
+
+def chat_loop() -> None:
+    """REPL wrapper around the pipeline.
+
+    First turn runs the full plan → research → write pipeline and prints the
+    report. Every turn after that hands off to the decider, which routes to
+    either another research pass (plan new sub-topics, research them, then QA)
+    or straight to QA against the accumulated state. Type /exit to quit.
+    """
+    state = ResearchState(question="")
+    wire_context_providers(state)
+    search, scraper = _build_tools()
+
+    console.print(Panel.fit("[bold blue]Deep Research — chat mode[/bold blue]\nType /exit to quit.", border_style="blue"))
+
+    first_turn = True
+    while True:
+        prompt = "[bold blue]Your question:[/bold blue] " if first_turn else "[bold blue]Follow-up:[/bold blue] "
+        user_message = console.input("\n" + prompt).strip()
+        if not user_message:
+            continue
+        if user_message.lower() in ("/exit", "/quit"):
+            console.print("\n[bold]Goodbye.[/bold]")
+            return
+
+        if first_turn:
+            run_initial_pipeline(user_message, state, search, scraper)
+            first_turn = False
+        else:
+            handle_follow_up(user_message, state, search, scraper)
+
+
+# --- Internals ---------------------------------------------------------------
+
+
+def _build_tools() -> tuple[SearXNGSearchTool, WebpageScraperTool]:
+    search = SearXNGSearchTool(
+        SearXNGSearchToolConfig(
+            base_url=ChatConfig.searxng_base_url,
+            max_results=ResearchBudget.search_results_per_query,
+        )
+    )
+    scraper = WebpageScraperTool()
+    return search, scraper
+
+
+def _print_stats(state: ResearchState) -> None:
     console.print(
         f"\n[dim]Stats: {state.agent_calls} agent calls, {len(state.sources)} sources, "
         f"{len(state.learnings)} learnings.[/dim]"
@@ -227,7 +336,7 @@ def run(question: str) -> None:
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if not args:
-        console.print('[red]Usage:[/red] python -m deep_research "your question"')
-        sys.exit(1)
-    run(" ".join(args))
+    if args:
+        run(" ".join(args))
+    else:
+        chat_loop()
