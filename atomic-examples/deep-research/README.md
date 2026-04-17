@@ -1,6 +1,19 @@
 # Deep Research Agent
 
-This directory contains the Deep Research Agent example for the Atomic Agents project. This example demonstrates how to create an intelligent research assistant that performs web searches and provides detailed answers with relevant follow-up questions.
+A didactic example of a proper deep-research pipeline built out of small, single-purpose Atomic Agents.
+
+Unlike a typical "search-and-summarise" agent — generate one set of queries, fetch results, write an answer — this example iterates: it plans sub-topics, researches each one across multiple depth levels, reflects on whether each has enough coverage, and produces a report where every claim is tied to a registered source.
+
+## Pipeline
+
+1. **Plan.** A `PlannerAgent` breaks the question into 3–5 durable sub-topics, each seeded with a handful of queries.
+2. **Research** (per sub-topic, up to N iterations):
+   - Search (SearXNG) and scrape the top new URLs.
+   - `ExtractorAgent` pulls atomic, citable claims from each scraped page.
+   - `ReflectorAgent` decides whether the sub-topic has enough material, or emits follow-up queries for the next iteration.
+3. **Write.** `WriterAgent` drafts a cited report from the accumulated state, then runs a second pass over its own draft to strip any sentence whose citation doesn't correspond to a real source.
+
+Every agent has a single responsibility and reads / contributes to a shared `ResearchState` object. The loop itself lives in `main.py` as plain Python — no megagent, no hidden control flow.
 
 ## Getting Started
 
@@ -26,51 +39,49 @@ This directory contains the Deep Research Agent example for the Atomic Agents pr
    SEARXNG_BASE_URL=http://localhost:8080
    SEARXNG_API_KEY=your_searxng_secret_key
    ```
-   
-   **Important**: To find your SearXNG secret key, check the `secret_key` value in your SearXNG `settings.yml` file, typically located at `/etc/searxng/settings.yml` or in the SearXNG installation directory.
 
 5. **Set up SearXNG:**
-   - Install SearXNG from the [official repository](https://github.com/searxng/searxng)
-   - Default configuration expects SearXNG at `http://localhost:8080`
+   - Install from the [official repository](https://github.com/searxng/searxng).
+   - Default configuration expects SearXNG at `http://localhost:8080`.
+   - JSON output must be enabled in `settings.yml` (look for the `formats:` key).
 
-6. **Run the Deep Research Agent:**
+6. **Run a research query:**
    ```bash
-   uv run python deep_research/main.py
+   uv run python -m deep_research "What is the current state of fusion energy research?"
    ```
 
-## File Explanation
+## File Layout
 
-### 1. Agents (`agents/`)
+```
+deep_research/
+├── config.py              # Model + connectivity + research budgets
+├── state.py               # ResearchState dataclass — the one source of truth
+├── context_providers.py   # Renders state into agent system prompts
+├── agents/
+│   ├── planner_agent.py    # Question → sub-topics (with initial queries)
+│   ├── extractor_agent.py  # One scraped source → atomic claims
+│   ├── reflector_agent.py  # Sub-topic state → sufficient? + next queries
+│   └── writer_agent.py     # Full state → cited report (draft + verify passes)
+├── tools/
+│   ├── searxng_search.py
+│   └── webpage_scraper.py
+└── main.py                 # Plain orchestrator: plan → research → write
+```
 
-- **ChoiceAgent** (`choice_agent.py`): Determines when new searches are needed
-- **QueryAgent** (`query_agent.py`): Generates optimized search queries
-- **QuestionAnsweringAgent** (`qa_agent.py`): Processes information and generates responses
+## Budgets
 
-### 2. Tools (`tools/`)
+All limits live in `ResearchBudget` inside `config.py`. Tune to taste:
 
-- **SearXNG Search** (`searxng_search.py`): Performs web searches across multiple engines
-- **Webpage Scraper** (`webpage_scraper.py`): Extracts and processes web content
+| Knob | Default | Meaning |
+|---|---|---|
+| `num_sub_topics` | 4 | Plan width |
+| `max_depth_per_sub_topic` | 2 | Max iterations per sub-topic; reflector can stop earlier |
+| `search_results_per_query` | 5 | SearXNG page size |
+| `scrape_top_n_per_iteration` | 3 | New URLs scraped per iteration |
+| `hard_call_cap` | 80 | Global safety net on total agent calls |
 
-### 3. Main (`main.py`)
-
-The entry point for the Deep Research Agent application. It orchestrates the research process:
-- Deciding when to perform new searches
-- Generating and executing search queries
-- Processing information and providing answers
-- Suggesting relevant follow-up questions
-
-## Example Usage
-
-The agent can handle various research queries and provides:
-- Detailed answers based on current web information
-- Relevant citations and sources
-- Specific follow-up questions for deeper exploration
-- Context-aware responses that build on previous interactions
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit a pull request with your improvements.
+Worst-case run: roughly 50 agent calls and 24 scrapes.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](../../LICENSE) file for details.
+MIT — see the [LICENSE](../../LICENSE) file.
