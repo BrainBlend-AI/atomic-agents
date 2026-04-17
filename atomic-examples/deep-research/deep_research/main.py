@@ -54,9 +54,7 @@ def wire_context_providers(state: ResearchState) -> None:
 def plan_research(state: ResearchState) -> None:
     """Run the planner once to fill in ``state.plan``."""
     console.rule("[bold cyan]1. Plan")
-    result = planner_agent.run(
-        PlannerInput(question=state.question, num_sub_topics=ResearchBudget.num_sub_topics)
-    )
+    result = planner_agent.run(PlannerInput(question=state.question, num_sub_topics=ResearchBudget.num_sub_topics))
     state.agent_calls += 1
 
     for st in result.sub_topics:
@@ -80,9 +78,7 @@ def search_and_scrape(
     Skips URLs we've already scraped in a previous iteration. Registers
     every new URL as a ``Source`` so downstream claims can cite by ID.
     """
-    results = search.run(
-        SearXNGSearchToolInputSchema(queries=queries, category="general")
-    )
+    results = search.run(SearXNGSearchToolInputSchema(queries=queries, category="general"))
 
     scraped: list[tuple[str, str]] = []
     for r in results.results:
@@ -117,9 +113,7 @@ def extract_claims(sub_topic: SubTopic, scraped: list[tuple[str, str]], state: R
         state.agent_calls += 1
 
         for claim in result.claims:
-            state.learnings.append(
-                Learning(text=claim, source_id=source_id, sub_topic=sub_topic.name)
-            )
+            state.learnings.append(Learning(text=claim, source_id=source_id, sub_topic=sub_topic.name))
             new_claim_count += 1
     return new_claim_count
 
@@ -184,25 +178,23 @@ def write_report(state: ResearchState) -> tuple[str, str]:
     """Draft the report, then run a cheap verification pass over it. Returns (headline, report)."""
     console.rule("[bold cyan]3. Write")
 
-    draft = writer_agent.run(
-        WriterInput(question=state.question, mode="draft", draft="")
-    )
+    draft = writer_agent.run(WriterInput(question=state.question, mode="draft", draft=""))
     state.agent_calls += 1
     console.print("  [dim]draft written, verifying citations…[/dim]")
 
-    verified = writer_agent.run(
-        WriterInput(question=state.question, mode="verify", draft=draft.report)
-    )
+    verified = writer_agent.run(WriterInput(question=state.question, mode="verify", draft=draft.report))
     state.agent_calls += 1
     return verified.headline, verified.report
 
 
 def run(question: str) -> None:
     """Top-level pipeline. Reads like an outline of what 'deep research' means in this project."""
-    console.print(Panel.fit(
-        f"[bold]Deep Research[/bold]\n{question}",
-        border_style="blue",
-    ))
+    console.print(
+        Panel.fit(
+            f"[bold]Deep Research[/bold]\n{question}",
+            border_style="blue",
+        )
+    )
 
     state = ResearchState(question=question)
     wire_context_providers(state)
@@ -236,6 +228,6 @@ def run(question: str) -> None:
 if __name__ == "__main__":
     args = sys.argv[1:]
     if not args:
-        console.print("[red]Usage:[/red] python -m deep_research \"your question\"")
+        console.print('[red]Usage:[/red] python -m deep_research "your question"')
         sys.exit(1)
     run(" ".join(args))
