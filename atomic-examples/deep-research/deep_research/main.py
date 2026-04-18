@@ -41,6 +41,14 @@ from deep_research.tools.webpage_scraper import (
     WebpageScraperToolInputSchema,
 )
 
+# Rich renders unicode liberally (→, bullets, box-drawing). On Windows the
+# default stdout/stderr encoding is cp1252, so piping or redirecting output
+# crashes on any non-cp1252 character. Reconfigure to utf-8 with a safe
+# fallback so the example runs anywhere.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 console = Console()
 
 # How many new sub-topics a follow-up research pass may add. Kept small so
@@ -255,11 +263,19 @@ def answer_from_state(question: str, state: ResearchState) -> None:
 
 
 def research_follow_up(question: str, state: ResearchState, search: SearXNGSearchTool, scraper: WebpageScraperTool) -> None:
-    """Follow-up that needs new material: plan a few new sub-topics scoped to the follow-up, research them, then QA."""
+    """Follow-up that needs new material: plan up to ``FOLLOW_UP_SUB_TOPICS`` new sub-topics, research them, then QA.
+
+    The planner sees the existing ``ResearchState`` via its context provider
+    and is expected to propose only angles not yet covered. If it returns
+    zero new sub-topics we print a visible warning so the user knows the
+    QA answer rests on existing material, not new research.
+    """
     state.question = question  # the planner / providers read the live question
 
     console.rule("[bold cyan]Extending research")
     new_sub_topics = plan_research(state, num_sub_topics=FOLLOW_UP_SUB_TOPICS)
+    if not new_sub_topics:
+        console.print("[yellow]Planner returned no new sub-topics — answering from existing state.[/yellow]")
     for sub_topic in new_sub_topics:
         research_sub_topic(sub_topic, state, search, scraper)
 
@@ -268,6 +284,10 @@ def research_follow_up(question: str, state: ResearchState, search: SearXNGSearc
 
 def handle_follow_up(user_message: str, state: ResearchState, search: SearXNGSearchTool, scraper: WebpageScraperTool) -> None:
     """Route a single follow-up turn through decider → either research+QA or QA alone."""
+    if state.agent_calls >= ResearchBudget.hard_call_cap:
+        console.print("[red]Hard call cap reached — cannot process follow-up.[/red]")
+        return
+
     decision = decider_agent.run(DeciderInput(user_message=user_message))
     state.agent_calls += 1
 
@@ -299,21 +319,52 @@ def chat_loop() -> None:
     first_turn = True
     while True:
         prompt = "[bold blue]Your question:[/bold blue] " if first_turn else "[bold blue]Follow-up:[/bold blue] "
-        user_message = console.input("\n" + prompt).strip()
+        try:
+            user_message = console.input("\n" + prompt).strip()
+        except (KeyboardInterrupt, EOFError):
+            # Clean exit on Ctrl+C / Ctrl+D instead of a Rich traceback.
+            console.print("\n[bold]Goodbye.[/bold]")
+            return
+
         if not user_message:
             continue
         if user_message.lower() in ("/exit", "/quit"):
             console.print("\n[bold]Goodbye.[/bold]")
             return
 
-        if first_turn:
-            run_initial_pipeline(user_message, state, search, scraper)
-            first_turn = False
-        else:
-            handle_follow_up(user_message, state, search, scraper)
+        # Keep the REPL alive on turn-level failures (malformed structured
+        # output, transient tool errors, etc.) instead of dropping the user's
+        # accumulated ResearchState.
+        try:
+            if first_turn:
+                run_initial_pipeline(user_message, state, search, scraper)
+                first_turn = False
+            else:
+                handle_follow_up(user_message, state, search, scraper)
+        except KeyboardInterrupt:
+            _safe_print("Interrupted — returning to prompt.", style="yellow")
+        except Exception as exc:
+            _safe_print(f"Turn failed: {exc.__class__.__name__}: {exc}", style="red")
+            _safe_print("Accumulated research state is preserved; try a different question.", style="dim")
 
 
 # --- Internals ---------------------------------------------------------------
+
+
+def _safe_print(message: str, style: str = "") -> None:
+    """Print an error/status message without risking a recursive Rich failure.
+
+    The chat loop's error handler must not itself raise — if Rich's own render
+    path is what failed (e.g. a Windows encoding error), falling back to a
+    plain builtin ``print`` keeps the REPL alive.
+    """
+    try:
+        console.print(f"\n[{style}]{message}[/{style}]" if style else f"\n{message}")
+    except Exception:
+        try:
+            print(f"\n{message}", flush=True)
+        except Exception:
+            pass
 
 
 def _build_tools() -> tuple[SearXNGSearchTool, WebpageScraperTool]:

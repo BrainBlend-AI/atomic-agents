@@ -26,7 +26,7 @@ from deep_research.config import ChatConfig
 class QAInput(BaseIOSchema):
     """Input schema for the QAAgent."""
 
-    question: str = Field(..., description="The user's question or follow-up.")
+    question: str = Field(..., min_length=1, description="The user's question or follow-up.")
 
 
 class QAOutput(BaseIOSchema):
@@ -34,6 +34,7 @@ class QAOutput(BaseIOSchema):
 
     answer: str = Field(
         ...,
+        min_length=1,
         description=(
             "Markdown-formatted answer. Every factual sentence must end with a [Sn] citation marker "
             "referencing a source from the research state."
@@ -41,6 +42,8 @@ class QAOutput(BaseIOSchema):
     )
     follow_up_questions: list[str] = Field(
         ...,
+        min_length=2,
+        max_length=3,
         description="2–3 natural follow-up questions the user might want to ask next.",
     )
 
@@ -62,10 +65,12 @@ qa_agent = AtomicAgent[QAInput, QAOutput](
                 "Suggest 2–3 follow-up questions that naturally extend the conversation.",
             ],
             output_instructions=[
+                "Every factual sentence must end with one or more [Sn] citation markers.",
+                "Drop any sentence you cannot cite from the state — do not invent or infer claims.",
                 "Only cite source IDs that actually exist in the research state.",
-                "If you cannot answer from the state, say so briefly rather than inventing claims.",
+                "If the state doesn't support an answer at all, say so briefly rather than producing uncited prose.",
                 "Keep the answer tight — a few short paragraphs, not a full report.",
-                "Follow-up questions should be self-contained and phrased as the user would ask them.",
+                "Return 2–3 self-contained follow-up questions, phrased as the user would ask them.",
             ],
         ),
     )

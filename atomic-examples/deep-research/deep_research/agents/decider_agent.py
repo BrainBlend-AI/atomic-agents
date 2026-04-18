@@ -24,7 +24,7 @@ from deep_research.config import ChatConfig
 class DeciderInput(BaseIOSchema):
     """Input schema for the DeciderAgent."""
 
-    user_message: str = Field(..., description="The user's latest question or follow-up.")
+    user_message: str = Field(..., min_length=1, description="The user's latest question or follow-up.")
 
 
 class DeciderOutput(BaseIOSchema):
@@ -32,6 +32,7 @@ class DeciderOutput(BaseIOSchema):
 
     reasoning: str = Field(
         ...,
+        min_length=1,
         description="One short paragraph: what's already in the state, what's missing, and why that tips the decision.",
     )
     needs_research: bool = Field(
@@ -47,7 +48,7 @@ decider_agent = AtomicAgent[DeciderInput, DeciderOutput](
     AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
-        model_api_parameters={"reasoning_effort": ChatConfig.reasoning_effort, "temperature": 0.1},
+        model_api_parameters={"reasoning_effort": ChatConfig.reasoning_effort},
         system_prompt_generator=SystemPromptGenerator(
             background=[
                 "You are a routing agent. Given the user's latest message and the current ResearchState "

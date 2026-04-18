@@ -1,13 +1,12 @@
 """
 PlannerAgent — decomposes a research question into durable sub-topics.
 
-Sub-topics are the *breadth* axis of the pipeline. They are decided once
-by the planner and stay fixed; only the queries *within* a sub-topic
-iterate as we learn more. Keeping the plan small and durable makes the
-final report easy to organise section-by-section.
-
-The planner runs before any state exists, so it takes only the raw
-question and does not register any context providers.
+Sub-topics are the *breadth* axis of the pipeline. On the first turn
+the planner produces the whole plan. In chat mode, follow-up turns that
+need new research re-invoke the planner with the same state visible via
+``ResearchStateProvider``; the planner is expected to propose new
+sub-topics that extend coverage rather than duplicate what's already
+been researched.
 """
 
 import instructor
@@ -75,6 +74,8 @@ planner_agent = AtomicAgent[PlannerInput, PlannerOutput](
                 "Sub-topic names must be short (2–6 words).",
                 "Initial queries must read like search-engine input, not natural-language sentences.",
                 "Do not duplicate sub-topics or queries across the plan.",
+                "If the research state already contains learnings on some angle, "
+                "propose sub-topics that fill different gaps instead of revisiting covered ground.",
             ],
         ),
     )
