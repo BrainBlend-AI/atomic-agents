@@ -106,18 +106,19 @@ prompt = generator.generate_prompt()
 
 ### Custom System Prompt Generator
 
-If you prefer to have more control over the system prompt generator you can create a custom system prompt generator by inheriting from `BaseSystemPromptGenerator`:
+If you require finer control over system prompt construction, subclass `BaseSystemPromptGenerator` and implement `generate_prompt()`. This approach is useful when prompt content should be maintained in a human-readable format (e.g., Markdown or text file) to allow review or editing by non-developers.
 
 ```python
 from pathlib import Path
 from typing import Dict, Optional, Union
 
-from atomic_agents.context import BaseDynamicContextProvider, BaseSystemPromptGenerator
+from atomic_agents.context import (
+    BaseDynamicContextProvider, 
+    BaseSystemPromptGenerator
+)
 
 
-# Define custom generator class
 class MarkdownFileSystemPromptGenerator(BaseSystemPromptGenerator):
-
     def __init__(
         self,
         md_file: Union[Path, str],
@@ -132,23 +133,22 @@ class MarkdownFileSystemPromptGenerator(BaseSystemPromptGenerator):
         self.system_prompt = path.read_text(encoding="utf-8")
 
     def generate_prompt(self) -> str:
-        prompt_parts = [self.system_prompt]
+        return f"{self.system_prompt}\n\n{self._build_context_string()}"
 
-        if self.context_providers:
-            prompt_parts.append("# EXTRA INFORMATION AND CONTEXT")
-            for provider in self.context_providers.values():
-                info = provider.get_info()
-                if info:
-                    prompt_parts.append(f"## {provider.title}")
-                    prompt_parts.append(info)
-                    prompt_parts.append("")
+    def _build_context_string(self) -> str:
+        if not self.context_providers:
+            return ""
 
-        return "\n".join(prompt_parts).strip()
+        context_sections = ["# Additional Context"]
+        for provider in self.context_providers.values():
+            info = provider.get_info()
+            if info:
+                context_sections.append(f"## {provider.title}")
+                context_sections.append(info)
+                context_sections.append("")
+        return "\n".join(context_sections).strip()
 
-# Create generator
 generator = MarkdownFileSystemPromptGenerator("path/to/system_prompt.md")
-
-# Generate prompt
 prompt = generator.generate_prompt()
 ```
 

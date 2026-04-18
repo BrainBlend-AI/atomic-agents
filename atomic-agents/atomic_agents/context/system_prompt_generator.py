@@ -23,7 +23,9 @@ class BaseSystemPromptGenerator(ABC):
         pass
 
     def __repr__(self) -> str:
-        return self.generate_prompt()
+        return (
+            f"{self.__class__.__name__} (providers={list(self.context_providers)})"
+        )
 
 
 class SystemPromptGenerator(BaseSystemPromptGenerator):

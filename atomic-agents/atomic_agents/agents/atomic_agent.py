@@ -68,7 +68,10 @@ class AgentConfig(BaseModel):
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[BaseSystemPromptGenerator] = Field(
-        default=None, description="Component for generating system prompts."
+        default=None, description=(
+            "Component for generating system prompts. "
+            "Defaults to SystemPromptGenerator if no subclass of BaseSystemPromptGenerator is passed."
+        )
     )
     system_role: Optional[str] = Field(
         default="system", description="The role of the system in the conversation. None means no system prompt."
@@ -114,7 +117,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         client: Client for interacting with the language model.
         model (str): The model to use for generating responses.
         history (ChatHistory): History component for storing chat history.
-        system_prompt_generator (SystemPromptGenerator): Component for generating system prompts.
+        system_prompt_generator (BaseSystemPromptGenerator): Component for generating system prompts.
         system_role (Optional[str]): The role of the system in the conversation. None means no system prompt.
         assistant_role (str): The role of the assistant in the conversation. Use 'model' for Gemini, 'assistant' for OpenAI/Anthropic.
         initial_history (ChatHistory): Initial state of the history.
