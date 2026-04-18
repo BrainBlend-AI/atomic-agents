@@ -68,10 +68,11 @@ class AgentConfig(BaseModel):
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[ChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[BaseSystemPromptGenerator] = Field(
-        default=None, description=(
+        default=None,
+        description=(
             "Component for generating system prompts. "
             "Defaults to SystemPromptGenerator if no subclass of BaseSystemPromptGenerator is passed."
-        )
+        ),
     )
     system_role: Optional[str] = Field(
         default="system", description="The role of the system in the conversation. None means no system prompt."

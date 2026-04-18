@@ -12,8 +12,8 @@ from atomic_agents import (
     BasicChatOutputSchema,
 )
 from atomic_agents.context import (
-    ChatHistory, 
-    SystemPromptGenerator, 
+    ChatHistory,
+    SystemPromptGenerator,
     BaseDynamicContextProvider,
     BaseSystemPromptGenerator,
 )
@@ -1396,17 +1396,20 @@ def test_trim_context_called_before_user_message_in_run(mock_get_token_counter, 
 # --- Test BaseSystemPromptGenerator integration ---
 
 
-def test_custom_system_prompt_generator_reaches_agent(mock_instructor, mock_custom_system_prompt_generator, mock_context_provider):
-        
-        agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
-            AgentConfig(
-                client=mock_instructor,
-                model="gpt-5-mini",
-                system_prompt_generator=mock_custom_system_prompt_generator,
-            ))
+def test_custom_system_prompt_generator_reaches_agent(
+    mock_instructor, mock_custom_system_prompt_generator, mock_context_provider
+):
 
-        agent.register_context_provider("test_provider", mock_context_provider)
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](
+        AgentConfig(
+            client=mock_instructor,
+            model="gpt-5-mini",
+            system_prompt_generator=mock_custom_system_prompt_generator,
+        )
+    )
 
-        assert agent.system_prompt_generator == mock_custom_system_prompt_generator
-        assert agent._build_system_messages() == [{'content': "Custom Prompt", 'role': 'system'}]
-        assert agent.system_prompt_generator.context_providers == {'test_provider': mock_context_provider}
+    agent.register_context_provider("test_provider", mock_context_provider)
+
+    assert agent.system_prompt_generator == mock_custom_system_prompt_generator
+    assert agent._build_system_messages() == [{"content": "Custom Prompt", "role": "system"}]
+    assert agent.system_prompt_generator.context_providers == {"test_provider": mock_context_provider}
