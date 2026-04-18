@@ -2,6 +2,7 @@ from .chat_history import Message, ChatHistory
 from .system_prompt_generator import (
     BaseDynamicContextProvider,
     SystemPromptGenerator,
+    BaseSystemPromptGenerator,
 )
 
 __all__ = [
@@ -9,4 +10,5 @@ __all__ = [
     "ChatHistory",
     "SystemPromptGenerator",
     "BaseDynamicContextProvider",
+    "BaseSystemPromptGenerator",
 ]

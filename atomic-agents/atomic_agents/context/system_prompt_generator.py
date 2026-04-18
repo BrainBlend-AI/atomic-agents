@@ -14,7 +14,19 @@ class BaseDynamicContextProvider(ABC):
         return self.get_info()
 
 
-class SystemPromptGenerator:
+class BaseSystemPromptGenerator(ABC):
+    def __init__(self, context_providers: Optional[Dict[str, BaseDynamicContextProvider]] = None):
+        self.context_providers = context_providers or {}
+
+    @abstractmethod
+    def generate_prompt(self) -> str:
+        pass
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} (providers={list(self.context_providers)})"
+
+
+class SystemPromptGenerator(BaseSystemPromptGenerator):
     def __init__(
         self,
         background: Optional[List[str]] = None,
@@ -22,10 +34,10 @@ class SystemPromptGenerator:
         output_instructions: Optional[List[str]] = None,
         context_providers: Optional[Dict[str, BaseDynamicContextProvider]] = None,
     ):
+        super().__init__(context_providers=context_providers)
         self.background = background or ["This is a conversation with a helpful and friendly AI assistant."]
         self.steps = steps or []
         self.output_instructions = output_instructions or []
-        self.context_providers = context_providers or {}
 
         self.output_instructions.extend(
             [

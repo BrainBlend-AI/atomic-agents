@@ -1,4 +1,12 @@
-from atomic_agents.context import SystemPromptGenerator, BaseDynamicContextProvider
+from typing import Dict, Optional
+
+import pytest
+
+from atomic_agents.context import (
+    SystemPromptGenerator,
+    BaseDynamicContextProvider,
+    BaseSystemPromptGenerator,
+)
 
 
 class MockContextProvider(BaseDynamicContextProvider):
@@ -8,6 +16,15 @@ class MockContextProvider(BaseDynamicContextProvider):
 
     def get_info(self) -> str:
         return self._info
+
+
+class MockSystemPromptGenerator(BaseSystemPromptGenerator):
+    def __init__(self, system_prompt: str, context_providers: Optional[Dict[str, BaseDynamicContextProvider]] = None):
+        super().__init__(context_providers)
+        self.system_prompt = system_prompt
+
+    def generate_prompt(self):
+        return self.system_prompt
 
 
 def test_system_prompt_generator_default_initialization():
@@ -128,3 +145,33 @@ def test_generate_prompt_with_empty_context_provider():
 # EXTRA INFORMATION AND CONTEXT"""
 
     assert generator.generate_prompt() == expected_prompt
+
+
+def test_base_system_prompt_generator_repr():
+    mock_context_provider = MockContextProvider("Mock Provider", "Test")
+    mock_generator = MockSystemPromptGenerator(
+        context_providers={"mock_provider": mock_context_provider}, system_prompt="Test prompt"
+    )
+
+    assert repr(mock_generator) == "MockSystemPromptGenerator (providers=['mock_provider'])"
+
+
+def test_custom_system_prompt_generator():
+    mock_context_provider = MockContextProvider("Mock Provider", "Test")
+    mock_generator = MockSystemPromptGenerator(
+        context_providers={"mock_provider": mock_context_provider}, system_prompt="Test prompt"
+    )
+
+    assert mock_generator.context_providers == {"mock_provider": mock_context_provider}
+    assert mock_generator.system_prompt == "Test prompt"
+
+
+def test_system_prompt_generator_with_no_generate_prompt():
+    with pytest.raises(TypeError):
+        BaseSystemPromptGenerator()
+
+
+def test_base_system_prompt_generator_with_no_context_providers():
+    generator = MockSystemPromptGenerator(system_prompt="Test prompt")
+    assert generator.context_providers == {}
+    assert repr(generator) == "MockSystemPromptGenerator (providers=[])"
