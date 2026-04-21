@@ -82,6 +82,15 @@ def setup_client(provider):
         model = "MiniMax-M2.7"
         model_api_parameters = {"max_tokens": 2048}
         assistant_role = "assistant"
+    elif provider == "8" or provider == "manifest":
+        from openai import OpenAI as ManifestClient
+
+        api_key = os.getenv("MANIFEST_API_KEY")
+        base_url = os.getenv("MANIFEST_BASE_URL", "https://app.manifest.build/v1")
+        client = instructor.from_openai(ManifestClient(base_url=base_url, api_key=api_key))
+        model = "auto"
+        model_api_parameters = {"max_tokens": 2048}
+        assistant_role = "assistant"
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -89,7 +98,7 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider from one in the list below.
-providers_list = ["openai", "anthropic", "groq", "ollama", "gemini", "openrouter", "minimax"]
+providers_list = ["openai", "anthropic", "groq", "ollama", "gemini", "openrouter", "minimax", "manifest"]
 y = "bold yellow"
 b = "bold blue"
 g = "bold green"

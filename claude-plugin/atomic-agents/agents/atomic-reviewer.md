@@ -45,7 +45,7 @@ Work through the categories below in order. Raise an issue only at ≥75% confid
 - `model` is appropriate for the task (not a reasoning model for trivial work, not a weak model for hard reasoning).
 - `history` is present when multi-turn state is needed; absent when each call is independent.
 - `assistant_role="model"` for Gemini, `"assistant"` elsewhere.
-- `AgentConfig.mode` matches the Instructor factory mode (`Mode.TOOLS` for OpenAI/Anthropic, `Mode.JSON` for Groq/Ollama/MiniMax, `Mode.GENAI_TOOLS` for Gemini).
+- `AgentConfig.mode` matches the Instructor factory mode (`Mode.TOOLS` for OpenAI/Anthropic/OpenRouter/Manifest, `Mode.JSON` for Groq/Ollama/MiniMax, `Mode.GENAI_TOOLS` for Gemini).
 - Provider-specific required params: `max_tokens` in `model_api_parameters` for Anthropic; `reasoning_effort` for reasoning models when intended.
 
 ### 3. Tools (`BaseTool`)

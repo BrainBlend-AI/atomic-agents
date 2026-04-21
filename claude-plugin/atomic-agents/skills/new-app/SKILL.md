@@ -16,7 +16,7 @@ This skill is opinionated. Produce a complete, tested skeleton the user can run 
 Ask these questions in one message, not one-at-a-time. Skip any the user already answered (including via `$ARGUMENTS`).
 
 1. **Project name** — used as both directory name and package name. Default from `$ARGUMENTS` if provided. Normalize to `kebab-case` for the directory and `snake_case` for the package.
-2. **LLM provider** — OpenAI / Anthropic / Groq / Ollama / Gemini / OpenRouter / MiniMax. Default: OpenAI.
+2. **LLM provider** — OpenAI / Anthropic / Groq / Ollama / Gemini / OpenRouter / MiniMax / Manifest. Default: OpenAI.
 3. **Agent type** — a rough one-liner. Shapes the default `SystemPromptGenerator` content and the starter schema pair. Defaults to a generic chat agent.
 4. **Tooling** — `uv` (default, because the repo uses uv) or `pip + venv`.
 
@@ -88,6 +88,7 @@ Per-provider AgentConfig knobs — match the Instructor factory mode on `AgentCo
 - **Groq / Ollama / MiniMax**: `mode=Mode.JSON` (Instructor factory also uses `Mode.JSON`).
 - **Gemini**: `assistant_role="model"` and `mode=Mode.GENAI_TOOLS` (Instructor factory uses `Mode.GENAI_TOOLS`).
 - **OpenRouter**: `mode=Mode.TOOLS`.
+- **Manifest**: `mode=Mode.TOOLS`.
 
 ### `README.md`
 

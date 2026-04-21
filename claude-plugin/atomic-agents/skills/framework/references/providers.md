@@ -28,6 +28,7 @@ Model IDs in this file are illustrative. Provider model names change often — c
 | Gemini | `instructor.from_genai(google.genai.Client(...), mode=Mode.GENAI_TOOLS)` | `Mode.GENAI_TOOLS` | `"model"` | Native |
 | OpenRouter | `instructor.from_openai(OpenAI(base_url=..., api_key=...))` | `Mode.TOOLS` | `"assistant"` | OpenAI-compatible |
 | MiniMax | `instructor.from_openai(OpenAI(base_url=..., api_key=...), mode=Mode.JSON)` | `Mode.JSON` | `"assistant"` | OpenAI-compatible |
+| Manifest | `instructor.from_openai(OpenAI(base_url=..., api_key=...))` | `Mode.TOOLS` | `"assistant"` | OpenAI-compatible |
 
 The `mode` value is passed to `AgentConfig(mode=...)` **and** sometimes to the Instructor factory itself. Match them.
 
@@ -139,12 +140,30 @@ model = "MiniMax-M2.7"
 api_params = {"max_tokens": 2048}
 ```
 
+## Manifest (smart LLM router)
+
+```python
+import os, instructor
+from openai import OpenAI
+
+client = instructor.from_openai(OpenAI(
+    base_url=os.environ.get("MANIFEST_BASE_URL", "https://app.manifest.build/v1"),
+    api_key=os.environ["MANIFEST_API_KEY"],
+))
+model = "auto"
+api_params = {"max_tokens": 2048}
+# In AgentConfig: mode=Mode.TOOLS
+```
+
+Manifest is a smart router that scores each request across 23 dimensions and routes it to the cheapest model capable of handling it. The `"auto"` model lets Manifest pick automatically. Cloud: `https://app.manifest.build/v1`. Self-hosted: `http://localhost:3001/v1`.
+
 ## Picking a model
 
 - **Drafting / simple chat** — `gpt-5-mini`, `claude-haiku-4-5`, or a Groq Llama for cost.
 - **Tool use, multi-agent routing** — `gpt-5` or `claude-sonnet-4-6`.
 - **Hardest reasoning** — `claude-opus-4-6` or reasoning-tier OpenAI models.
 - **Local / offline** — Ollama with `llama3.1` or a code-specialized variant.
+- **Cost optimization** — Manifest with `"auto"` to route each request to the cheapest capable model.
 
 The framework is indifferent to provider choice — schemas and hooks behave the same. Swap `model` and the provider wiring, leave the rest alone.
 

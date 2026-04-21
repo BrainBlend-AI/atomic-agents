@@ -5,6 +5,12 @@ All notable changes to the Atomic Agents Claude Code Plugin will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-04-20
+
+### Added
+
+- **Manifest provider support.** Added [Manifest](https://manifest.build/) (smart LLM router) as an officially documented provider. Manifest scores each request and routes it to the cheapest capable model. Integration uses the OpenAI-compatible pattern (`instructor.from_openai` with custom `base_url`). Updated provider matrix, quickstart example, docs, and added unit tests.
+
 ## [2.0.1] - 2026-04-16
 
 Bug-fix release addressing two recurring false positives from `atomic-reviewer` reported in [issue #238](https://github.com/BrainBlend-AI/atomic-agents/issues/238).

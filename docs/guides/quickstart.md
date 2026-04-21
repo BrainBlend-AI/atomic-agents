@@ -373,13 +373,22 @@ def setup_client(provider):
         )
         model = "mistral/ministral-8b"
 
+    elif provider == "manifest":
+        from openai import OpenAI as ManifestClient
+        api_key = os.getenv("MANIFEST_API_KEY")
+        base_url = os.getenv("MANIFEST_BASE_URL", "https://app.manifest.build/v1")
+        client = instructor.from_openai(
+            ManifestClient(base_url=base_url, api_key=api_key)
+        )
+        model = "auto"
+
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
     return client, model
 
 # Prompt for provider choice
-provider = console.input("Choose a provider (openai/anthropic/groq/ollama/gemini/openrouter): ").lower()
+provider = console.input("Choose a provider (openai/anthropic/groq/ollama/gemini/openrouter/manifest): ").lower()
 
 # Set up client and model
 client, model = setup_client(provider)
@@ -402,6 +411,7 @@ The framework supports multiple providers through Instructor:
 - **Groq**: Fast inference for open models
 - **Ollama**: Local models (requires Ollama running)
 - **Gemini**: Google's Gemini models
+- **Manifest**: Smart LLM router for cost optimization
 
 Each provider requires its own API key (except Ollama) which should be set in environment variables:
 
@@ -420,6 +430,9 @@ export GEMINI_API_KEY="your-gemini-key"
 
 # OpenRouter
 export OPENROUTER_API_KEY="your-openrouter-key"
+
+# Manifest
+export MANIFEST_API_KEY="your-manifest-key"
 ```
 
 ## Running the Examples
