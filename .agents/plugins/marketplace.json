@@ -8,7 +8,7 @@
       "name": "atomic-agents",
       "source": {
         "type": "local",
-        "path": "../../claude-plugin/atomic-agents"
+        "path": "../../.claude-plugin/atomic-agents"
       },
       "policy": {
         "installation": "AVAILABLE"
