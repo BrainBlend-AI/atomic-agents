@@ -15,7 +15,7 @@
         "name": "BrainBlend AI",
         "email": "support@brainblend.ai"
       },
-      "source": "./.claude-plugin/atomic-agents",
+      "source": "./claude-plugin/atomic-agents",
       "category": "development",
       "homepage": "https://github.com/BrainBlend-AI/atomic-agents",
       "repository": "https://github.com/BrainBlend-AI/atomic-agents",
