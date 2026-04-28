@@ -1,0 +1,19 @@
+{
+  "name": "brainblend-plugins",
+  "interface": {
+    "displayName": "BrainBlend AI Plugins"
+  },
+  "plugins": [
+    {
+      "name": "atomic-agents",
+      "source": {
+        "type": "local",
+        "path": "../../claude-plugin/atomic-agents"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "development"
+    }
+  ]
+}
