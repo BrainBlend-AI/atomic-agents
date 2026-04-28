@@ -50,7 +50,6 @@ Built on [Instructor](https://github.com/jxnl/instructor) and [Pydantic](https:/
   - [Atomic Forge \& CLI](#atomic-forge--cli)
     - [Running the CLI](#running-the-cli)
   - [Project Structure](#project-structure)
-  - [AI Coding Assistant Support](#ai-coding-assistant-support)
   - [Provider \& Model Compatibility](#provider--model-compatibility)
   - [Contributing](#contributing)
   - [License](#license)
@@ -375,24 +374,6 @@ To install all workspace packages (examples and tools):
 ```bash
 uv sync --all-packages
 ```
-
-## AI Coding Assistant Support
-
-Atomic Agents ships with first-class support for all major AI coding assistants. Project context lives in [`AGENTS.md`](AGENTS.md) — the universal standard read natively by most tools — with thin per-tool configs layered on top.
-
-| Tool | Config | Plugin / Skills |
-|------|--------|-----------------|
-| **Claude Code** | `CLAUDE.md` → `@AGENTS.md` | [BrainBlend marketplace](https://github.com/BrainBlend-AI/atomic-agents) or [Anthropic official marketplace](https://github.com/anthropics/claude-plugins-official) |
-| **Codex** | `AGENTS.md` (native) | `.agents/plugins/marketplace.json` |
-| **Gemini CLI** | `GEMINI.md` → `@AGENTS.md`, `.gemini/settings.json` | `.gemini/skills/` |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | — |
-| **Cursor** | `AGENTS.md` (native) | `.claude/skills/` (native legacy path) |
-| **Windsurf** | `.windsurf/rules/atomic-agents.md` | — |
-| **Kiro** | `.kiro/steering/atomic-agents.md` | — |
-| **Continue.dev** | `.continue/rules/atomic-agents.md` | — |
-| **OpenCode** | `.opencode/plugins/atomic-agents.ts` | — |
-
-The `release` skill (for repo maintainers) is symlinked into `.gemini/skills/release` and `.codex/skills/release` from the canonical `.claude/skills/release` source.
 
 ## Provider & Model Compatibility
 
