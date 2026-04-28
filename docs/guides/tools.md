@@ -1,18 +1,149 @@
 # Tools Guide
 
-Atomic Agents uses a unique approach to tools through the **Atomic Forge** system. Rather than bundling all tools into a single package, tools are designed to be standalone, modular components that you can download and integrate into your project as needed.
+In Atomic Agents, **tools are not a magic parameter on the agent.** This is the single most common point of confusion for users coming from frameworks like LangChain, CrewAI, or PydanticAI, where you would write:
 
-## Philosophy
+```python
+# ❌ This is NOT how Atomic Agents works
+agent = Agent(tools=[calculator, search])
+```
 
-The Atomic Forge approach provides several key benefits:
+There is no `tools=[...]` argument anywhere in the framework, and that is **intentional**. This guide explains the philosophy and shows the two patterns you will use in practice.
 
-1. **Full Control**: You have complete ownership and control over each tool you download. Want to modify a tool's behavior? You can change it without impacting other users.
-2. **Dependency Management**: Since tools live in your codebase, you have better control over dependencies.
-3. **Lightweight**: Download only the tools you need, avoiding unnecessary dependencies. For example, you don't need Sympy if you're not using the Calculator tool.
+## Philosophy: tools are atomic components, not framework citizens
 
-## Available Tools
+A tool in Atomic Agents is just an object with:
 
-The Atomic Forge includes several pre-built tools:
+- A typed `input_schema` (a `BaseIOSchema`)
+- A typed `output_schema` (a `BaseIOSchema`)
+- A `run()` method that takes one and returns the other
+
+It does not know about agents, prompts, memory, or any LLM. **You** decide when to call it. That control is the whole point — you can read the call site, set a breakpoint on it, and reason about cost and latency the same way you reason about any other function call.
+
+This buys you three things other frameworks struggle with:
+
+1. **Determinism where you want it.** If the next step is "always run the search tool," you just call it. No LLM, no prompt overhead, no chance of the model deciding to skip it.
+2. **A real call graph.** Tools are functions. Stack traces, profiler output, and code search work normally. There is no opaque agent loop hiding the dispatch.
+3. **No coupling.** A tool is reusable in non-agent code. The same `CalculatorTool` instance works in a script, a FastAPI handler, or a unit test, with no agent involved.
+
+## The two patterns
+
+In practice, every tool call in Atomic Agents falls into one of two patterns. Pick based on whether *you* know which tool to call, or whether the *LLM* needs to decide.
+
+### Pattern 1: Direct call (you know which tool to use)
+
+When the workflow is fixed — "first generate a query, then run the search, then summarize" — call the tool directly. This is the default. It's faster, cheaper, more debuggable, and harder for an LLM to derail.
+
+```python
+from atomic_agents import AtomicAgent, AgentConfig
+from my_tools.search import SearXNGSearchTool, SearXNGSearchToolConfig
+
+# 1. Agent generates structured search queries.
+#    Notice: query_agent's output_schema IS SearXNGSearchTool's input_schema.
+query_agent = AtomicAgent[QueryAgentInputSchema, SearXNGSearchTool.input_schema](
+    AgentConfig(client=client, model="gpt-4o-mini", ...)
+)
+
+# 2. Tool is just an object you instantiate.
+search_tool = SearXNGSearchTool(config=SearXNGSearchToolConfig(base_url="..."))
+
+# 3. You wire them together with normal Python — no framework glue.
+queries = query_agent.run(QueryAgentInputSchema(instruction="Find recent papers on..."))
+results = search_tool.run(queries)  # output of agent IS input of tool
+```
+
+The schema alignment between `query_agent`'s `output_schema` and `SearXNGSearchTool.input_schema` is what makes this composable: the agent literally cannot produce something the tool cannot accept, because they share the same Pydantic schema.
+
+Use this pattern when:
+- The order of operations is known at build time.
+- You care about latency and cost (no extra LLM call to "decide").
+- You want the call site to show up in stack traces and code search.
+- The tool is non-optional — skipping it would be a bug.
+
+### Pattern 2: Choice agent (LLM picks the tool)
+
+When the workflow genuinely depends on the user's input — "if it's math, use the calculator; if it's a fact lookup, search the web" — let an LLM pick. The mechanism is a normal agent whose `output_schema` is a **`Union` of tool input schemas**. Instructor will validate the model's response against the union, so the agent can only return well-formed input for one of your tools.
+
+```python
+from typing import Union
+from pydantic import Field
+from atomic_agents import AtomicAgent, AgentConfig, BaseIOSchema
+from atomic_agents.context import SystemPromptGenerator
+
+from my_tools.search import SearXNGSearchToolInputSchema
+from my_tools.calculator import CalculatorToolInputSchema
+
+
+class OrchestratorInput(BaseIOSchema):
+    """User's question."""
+    chat_message: str = Field(..., description="The user's input message.")
+
+
+class OrchestratorOutput(BaseIOSchema):
+    """Orchestrator picks ONE tool input schema from the union."""
+    tool_parameters: Union[SearXNGSearchToolInputSchema, CalculatorToolInputSchema] = Field(
+        ..., description="Parameters for the selected tool."
+    )
+
+
+orchestrator = AtomicAgent[OrchestratorInput, OrchestratorOutput](
+    AgentConfig(
+        client=client,
+        model="gpt-4o-mini",
+        system_prompt_generator=SystemPromptGenerator(
+            background=[
+                "You route the user's request to the right tool.",
+                "Use the search tool for factual questions and current events.",
+                "Use the calculator for mathematical expressions.",
+            ],
+            output_instructions=[
+                "Return only the parameters for the chosen tool.",
+            ],
+        ),
+    )
+)
+
+# YOU still dispatch on the type the LLM picked — there's no hidden routing.
+result = orchestrator.run(OrchestratorInput(chat_message=user_input))
+
+if isinstance(result.tool_parameters, SearXNGSearchToolInputSchema):
+    tool_output = search_tool.run(result.tool_parameters)
+elif isinstance(result.tool_parameters, CalculatorToolInputSchema):
+    tool_output = calculator_tool.run(result.tool_parameters)
+```
+
+The `isinstance` dispatch is deliberate. It keeps tool selection visible and traceable — adding a tool means adding a `Union` member, a system-prompt line, and an `isinstance` branch, all in one file.
+
+Use this pattern when:
+- The tool to call genuinely depends on natural-language input.
+- The set of candidate tools is small (a handful, not dozens — Union grows the prompt).
+- You want the LLM's reasoning for the choice to be inspectable (extend the output schema with a `reasoning: str` field).
+
+A complete, runnable version of this pattern lives in [`atomic-examples/orchestration-agent`](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/orchestration-agent). The [Orchestration guide](orchestration.md) covers tool-selection, multi-agent pipelines, dynamic routing, and parallel execution in more depth.
+
+## Picking a pattern
+
+| Question | Pattern 1 (Direct) | Pattern 2 (Choice agent) |
+|---|---|---|
+| Is the next tool always the same? | ✅ | |
+| Does the choice depend on free-form user input? | | ✅ |
+| Latency budget tight? | ✅ | (extra LLM round-trip) |
+| Want full debuggability? | ✅ | (still good — choice is in the schema) |
+| Tool is required for correctness? | ✅ | |
+| Tool set growing past ~5–7? | (still works) | (consider hierarchical routing instead) |
+
+When in doubt, start with Pattern 1. Add a choice agent only when you actually have a routing problem that input data can't answer.
+
+## The Atomic Forge: where tools live
+
+Tools themselves are distributed via the **Atomic Forge** — a registry of standalone, modular tool packages that you download into your project. The Forge approach gives you:
+
+1. **Full Control**: You own the tool's source. Modify behavior locally without forking the framework.
+2. **Dependency Management**: Tools live in your codebase, so their dependencies are yours to pin.
+3. **Lightweight**: Download only what you use. No Sympy unless you use the calculator; no requests unless you use a search tool.
+
+### Available tools
+
+The Atomic Forge ships with several pre-built tools:
 
 - **Calculator**: Perform mathematical calculations
 - **SearXNG Search**: Search the web using SearXNG
@@ -22,25 +153,19 @@ The Atomic Forge includes several pre-built tools:
 - **BoCha Search**: Web search
 - **Fía Signals**: Crypto market intelligence — market regime, trading signals, DeFi yields, gas prices, Solana trending tokens, and wallet risk scoring
 
-## Using Tools
+### Downloading a tool
 
-### 1. Download Tools
-
-Use the Atomic Assembler CLI to download tools:
+Use the Atomic Assembler CLI to download tools into your project:
 
 ```bash
 atomic
 ```
 
-This will present a menu where you can select and download tools. Each tool includes:
-- Input/Output schemas
-- Usage examples
-- Dependencies
-- Installation instructions
+This presents a menu to select and download tools. Each tool ships with input/output schemas, usage examples, dependencies, and installation instructions.
 
-### 2. Tool Structure
+### Tool layout
 
-Each tool follows a standard structure:
+Each downloaded tool follows a standard structure:
 
 ```
 tool_name/
@@ -59,38 +184,34 @@ tool_name/
     │   test_some_util_file.py
 ```
 
-### 3. Using a Tool
+### Calling a downloaded tool
 
-Here's an example of using a downloaded tool:
+Once a tool is in your project, it's just a Python class:
 
 ```python
 from calculator.tool.calculator import (
     CalculatorTool,
     CalculatorInputSchema,
-    CalculatorToolConfig
+    CalculatorToolConfig,
 )
 
-# Initialize the tool
-calculator = CalculatorTool(
-    config=CalculatorToolConfig()
-)
+calculator = CalculatorTool(config=CalculatorToolConfig())
 
-# Use the tool
-result = calculator.run(
-    CalculatorInputSchema(
-        expression="2 + 2"
-    )
-)
+result = calculator.run(CalculatorInputSchema(expression="2 + 2"))
 print(f"Result: {result.value}")  # Result: 4
 ```
 
-## Creating Custom Tools
+This is Pattern 1 in its simplest form: you call `.run()` directly, no agent involved. The tool is reusable in any Python context — agent, script, test, web handler.
 
-You can create your own tools by following these guidelines:
+## Creating custom tools
 
-### 1. Basic Structure
+Build your own tool by subclassing `BaseTool` with input/output schemas and a config.
+
+### Basic structure
 
 ```python
+import os
+from pydantic import Field
 from atomic_agents import BaseTool, BaseToolConfig, BaseIOSchema
 
 ################
@@ -98,7 +219,7 @@ from atomic_agents import BaseTool, BaseToolConfig, BaseIOSchema
 ################
 
 class MyToolInputSchema(BaseIOSchema):
-    """Define what your tool accepts as input"""
+    """Define what your tool accepts as input."""
     value: str = Field(..., description="Input value to process")
 
 #####################
@@ -106,7 +227,7 @@ class MyToolInputSchema(BaseIOSchema):
 #####################
 
 class MyToolOutputSchema(BaseIOSchema):
-    """Define what your tool returns"""
+    """Define what your tool returns."""
     result: str = Field(..., description="Processed result")
 
 #################
@@ -114,10 +235,10 @@ class MyToolOutputSchema(BaseIOSchema):
 #################
 
 class MyToolConfig(BaseToolConfig):
-    """Tool configuration options"""
+    """Tool configuration options."""
     api_key: str = Field(
         default=os.getenv("MY_TOOL_API_KEY"),
-        description="API key for the service"
+        description="API key for the service",
     )
 
 #####################
@@ -125,7 +246,7 @@ class MyToolConfig(BaseToolConfig):
 #####################
 
 class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
-    """Main tool implementation"""
+    """Main tool implementation."""
     input_schema = MyToolInputSchema
     output_schema = MyToolOutputSchema
 
@@ -134,33 +255,32 @@ class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
         self.api_key = config.api_key
 
     def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
-        # Implement your tool's logic here
         result = self.process_input(params.value)
         return MyToolOutputSchema(result=result)
 ```
 
-### 2. Best Practices
+### Best practices
 
-- **Single Responsibility**: Each tool should do one thing well
-- **Clear Interfaces**: Use explicit input/output schemas
-- **Error Handling**: Validate inputs and handle errors gracefully
-- **Documentation**: Include clear usage examples and requirements
-- **Tests**: Write comprehensive tests for your tool
-- **Dependencies**: Manually create `requirements.txt` with only runtime dependencies
+- **Single responsibility**: Each tool should do one thing well.
+- **Clear interfaces**: Use explicit input/output schemas with `Field(..., description=...)` — those descriptions become the LLM's prompt when the tool is reached via Pattern 2.
+- **Error handling**: Validate inputs and return structured errors via the output schema rather than raising opaquely.
+- **Documentation**: Include clear usage examples and runtime requirements.
+- **Tests**: Tools are pure Python — test them like any other function, no agent needed.
+- **Dependencies**: Manually maintain `requirements.txt` with only runtime dependencies.
 
-### 3. Tool Requirements
+### Tool requirements
 
-- Must inherit from appropriate base classes:
-  - Input/Output schemas from `BaseIOSchema`
+- Inherit from the appropriate base classes:
+  - Input/output schemas from `BaseIOSchema`
   - Configuration from `BaseToolConfig`
-  - Tool class from `BaseTool`
-- Must include proper documentation
-- Must include tests
-- Must follow the standard directory structure
+  - Tool class from `BaseTool[Input, Output]`
+- Include proper documentation and usage examples
+- Include tests for the tool's pure logic
+- Follow the standard directory structure if shipping via the Atomic Forge
 
-## Next Steps
+## Next steps
 
-1. Browse available tools in the [Atomic Forge repository](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-forge)
-2. Try downloading and using different tools via the CLI
-3. Consider creating your own tools following the guidelines
-4. Share your tools with the community through pull requests
+1. Browse available tools in the [Atomic Forge directory](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-forge).
+2. Try Pattern 1 by chaining a query agent into a search tool — the [README's "Chaining Schemas" example](https://github.com/BrainBlend-AI/atomic-agents#chaining-schemas-and-agents) is a good starting point.
+3. Try Pattern 2 by running the [orchestration-agent example](https://github.com/BrainBlend-AI/atomic-agents/tree/main/atomic-examples/orchestration-agent).
+4. Build your own tool and contribute it back via the Atomic Forge.
