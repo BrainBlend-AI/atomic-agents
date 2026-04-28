@@ -1,6 +1,0 @@
----
-description: Atomic Agents monorepo conventions
-alwaysApply: true
----
-
-See AGENTS.md for full project context, architecture, and development commands.

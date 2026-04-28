@@ -15,11 +15,8 @@
     "shortDescription": "Build modular AI agents with Pydantic and Instructor.",
     "longDescription": "Progressive-disclosure reference for schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, and testing — plus a new-app scaffolder.",
     "developerName": "BrainBlend AI",
-    "category": "development",
+    "category": "Development",
     "websiteURL": "https://github.com/BrainBlend-AI/atomic-agents"
   },
-  "skills": [
-    "../skills/framework",
-    "../skills/new-app"
-  ]
+  "skills": "./skills/"
 }

@@ -7,13 +7,13 @@
     {
       "name": "atomic-agents",
       "source": {
-        "type": "local",
+        "source": "local",
         "path": "../../.claude-plugin/atomic-agents"
       },
       "policy": {
         "installation": "AVAILABLE"
       },
-      "category": "development"
+      "category": "Development"
     }
   ]
 }
