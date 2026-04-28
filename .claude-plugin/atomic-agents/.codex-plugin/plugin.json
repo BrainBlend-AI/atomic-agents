@@ -1,0 +1,22 @@
+{
+  "name": "atomic-agents",
+  "version": "2.0.1",
+  "description": "Skills for building, scaffolding, understanding, and auditing applications with the Atomic Agents Python framework.",
+  "author": {
+    "name": "BrainBlend AI",
+    "email": "support@brainblendai.com"
+  },
+  "homepage": "https://github.com/BrainBlend-AI/atomic-agents",
+  "repository": "https://github.com/BrainBlend-AI/atomic-agents",
+  "license": "MIT",
+  "keywords": ["atomic-agents", "ai-agents", "llm", "pydantic", "instructor", "multi-agent", "orchestration"],
+  "interface": {
+    "displayName": "Atomic Agents",
+    "shortDescription": "Build modular AI agents with Pydantic and Instructor.",
+    "longDescription": "Progressive-disclosure reference for schemas, agents, tools, context providers, prompts, orchestration, memory, hooks, providers, project structure, and testing — plus a new-app scaffolder.",
+    "developerName": "BrainBlend AI",
+    "category": "Development",
+    "websiteURL": "https://github.com/BrainBlend-AI/atomic-agents"
+  },
+  "skills": "./skills/"
+}
