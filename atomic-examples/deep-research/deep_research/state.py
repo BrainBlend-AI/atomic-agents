@@ -10,15 +10,15 @@ The state holds three kinds of data:
 
 - The plan: durable sub-topics the planner produced.
 - Accumulated findings: sources we've seen and learnings extracted from them.
-- Deduplication sets: queries and URLs we've already touched, so the
-  query agent and search loop don't re-do work.
+- Deduplication sets: queries and URLs already touched, so the search
+  loop and the planner don't re-do work on follow-up turns.
 
 Source IDs (``S1``, ``S2``, ...) are assigned when a source is first
 registered and are used throughout the pipeline as citation anchors.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -55,14 +55,14 @@ class ResearchState:
     learnings: list[Learning] = field(default_factory=list)
     sources: list[Source] = field(default_factory=list)
 
-    # Dedup sets — keep the search loop and query agent from repeating themselves.
+    # Dedup sets — keep the search loop and the planner from repeating themselves.
     queries_seen: set[str] = field(default_factory=set)
     urls_seen: set[str] = field(default_factory=set)
 
-    # Budget counter — see config.HARD_CALL_CAP.
+    # Budget counter — see ResearchBudget.hard_call_cap.
     agent_calls: int = 0
 
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def learnings_for(self, sub_topic: str) -> list[Learning]:
         return [learning for learning in self.learnings if learning.sub_topic == sub_topic]

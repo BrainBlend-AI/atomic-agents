@@ -111,6 +111,7 @@ def search_and_scrape(
 
         page = scraper.run(WebpageScraperToolInputSchema(url=r.url, include_links=False))
         if page.error or not page.content.strip():
+            console.print(f"    [dim]skip {r.url}: {page.error or 'empty content'}[/dim]")
             continue
 
         source = state.register_source(url=r.url, title=r.title or page.metadata.title)
@@ -200,10 +201,12 @@ def write_report(state: ResearchState) -> tuple[str, str]:
     """Draft the report, then run a cheap verification pass over it. Returns (headline, report)."""
     console.rule("[bold cyan]3. Write")
 
+    writer_agent.reset_history()
     draft = writer_agent.run(WriterInput(question=state.question, mode="draft", draft=""))
     state.agent_calls += 1
     console.print("  [dim]draft written, verifying citations…[/dim]")
 
+    writer_agent.reset_history()
     verified = writer_agent.run(WriterInput(question=state.question, mode="verify", draft=draft.report))
     state.agent_calls += 1
     return verified.headline, verified.report
@@ -337,8 +340,8 @@ def chat_loop() -> None:
         # accumulated ResearchState.
         try:
             if first_turn:
-                run_initial_pipeline(user_message, state, search, scraper)
                 first_turn = False
+                run_initial_pipeline(user_message, state, search, scraper)
             else:
                 handle_follow_up(user_message, state, search, scraper)
         except KeyboardInterrupt:

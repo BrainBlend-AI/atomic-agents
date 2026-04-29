@@ -2,17 +2,17 @@
 Context providers for the deep-research pipeline.
 
 Context providers are how runtime state reaches an agent's system prompt.
-Here we use one provider that renders the shared ``ResearchState`` (see
-``state.py``) so the extractor, reflector, and writer all see a
-consistent, up-to-date picture without having to plumb data through
-their input schemas.
+We use one provider that renders the shared ``ResearchState`` (see
+``state.py``) so every agent sees a consistent, up-to-date picture without
+having to plumb data through its input schema.
 
-The planner and query agents deliberately don't use this provider — the
-planner runs before any state exists, and the query agent only needs
-what can fit cleanly into its input schema.
+All six agents register the same ``ResearchStateProvider``. The planner
+uses it on follow-up turns to extend coverage instead of duplicating it;
+on the very first turn the state is empty and the provider renders a
+short "no research yet" stub.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from atomic_agents.context import BaseDynamicContextProvider
 
@@ -60,4 +60,4 @@ class CurrentDateProvider(BaseDynamicContextProvider):
         super().__init__(title=title)
 
     def get_info(self) -> str:
-        return datetime.utcnow().strftime("Today is %A, %B %d, %Y.")
+        return datetime.now(timezone.utc).strftime("Today is %A, %B %d, %Y.")

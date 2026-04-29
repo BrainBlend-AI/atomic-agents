@@ -50,22 +50,30 @@ Every agent has a single responsibility and reads / contributes to a shared `Res
    uv run python -m deep_research "What is the current state of fusion energy research?"
    ```
 
+## Modes
+
+- **One-shot** (`python -m deep_research "your question"`): plan → research → write, prints a cited report and exits.
+- **Chat** (`python -m deep_research`): same first turn, then a REPL where each follow-up is routed by a `DeciderAgent` to either another research pass + Q&A or straight Q&A against the existing state.
+
 ## File Layout
 
 ```
 deep_research/
-├── config.py              # Model + connectivity + research budgets
-├── state.py               # ResearchState dataclass — the one source of truth
-├── context_providers.py   # Renders state into agent system prompts
+├── __main__.py             # python -m deep_research entrypoint
+├── main.py                 # Plain orchestrator: plan → research → write (+ chat loop)
+├── config.py               # Model + connectivity + research budgets
+├── state.py                # ResearchState dataclass — the one source of truth
+├── context_providers.py    # Renders state + current date into agent system prompts
 ├── agents/
 │   ├── planner_agent.py    # Question → sub-topics (with initial queries)
 │   ├── extractor_agent.py  # One scraped source → atomic claims
 │   ├── reflector_agent.py  # Sub-topic state → sufficient? + next queries
-│   └── writer_agent.py     # Full state → cited report (draft + verify passes)
-├── tools/
-│   ├── searxng_search.py
-│   └── webpage_scraper.py
-└── main.py                 # Plain orchestrator: plan → research → write
+│   ├── writer_agent.py     # Full state → cited report (draft + verify passes)
+│   ├── decider_agent.py    # Chat mode: research more, or answer from state?
+│   └── qa_agent.py         # Chat mode: cited answer from existing state
+└── tools/
+    ├── searxng_search.py
+    └── webpage_scraper.py
 ```
 
 ## Budgets
@@ -80,7 +88,7 @@ All limits live in `ResearchBudget` inside `config.py`. Tune to taste:
 | `scrape_top_n_per_iteration` | 3 | New URLs scraped per iteration |
 | `hard_call_cap` | 80 | Global safety net on total agent calls |
 
-Worst-case run: roughly 50 agent calls and 24 scrapes.
+Worst-case first turn with defaults: 1 plan + 4×2×(1 extract×3 sources + 1 reflect) = 33 agent calls + 2 writer passes ≈ **35 agent calls, 24 scrapes**. Chat follow-ups add a decider call plus either Q&A or another research pass; the `hard_call_cap` of 80 leaves headroom.
 
 ## License
 
