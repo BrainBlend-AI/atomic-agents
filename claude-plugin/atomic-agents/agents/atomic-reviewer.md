@@ -42,11 +42,12 @@ Work through the categories below in order. Raise an issue only at ≥75% confid
 - Constructed with explicit generic parameters: `AtomicAgent[In, Out](config=...)`.
 - `AgentConfig.client` is an Instructor-wrapped client (`instructor.from_openai(...)`, `instructor.from_anthropic(...)`, etc.), not a raw provider SDK client.
   - **Scope**: this rule applies *only* to clients passed to `AgentConfig.client` — i.e., anything an `AtomicAgent` uses for chat/completions. It does **not** apply to provider-SDK calls for capabilities the framework does not cover: embeddings (`client.embeddings.create`), image generation, audio (TTS/STT), moderation, fine-tuning management, etc. Using a raw `openai` / `anthropic` / `groq` client for those is correct, not a violation. Do not flag such calls.
-- `model` is appropriate for the task (not a reasoning model for trivial work, not a weak model for hard reasoning).
 - `history` is present when multi-turn state is needed; absent when each call is independent.
 - `assistant_role="model"` for Gemini, `"assistant"` elsewhere.
 - `AgentConfig.mode` matches the Instructor factory mode (`Mode.TOOLS` for OpenAI/Anthropic, `Mode.JSON` for Groq/Ollama/MiniMax, `Mode.GENAI_TOOLS` for Gemini).
-- Provider-specific required params: `max_tokens` in `model_api_parameters` for Anthropic; `reasoning_effort` for reasoning models when intended.
+- Provider-specific required params present where the *framework* requires them: e.g. `max_tokens` in `model_api_parameters` for Anthropic.
+
+**Do not flag model identifiers.** You cannot know which model names or API parameters are valid — your training data is older than the current model catalogue. Specifically: do not claim a `model="..."` string "doesn't exist," "is a typo," or "isn't a real model"; do not claim a `model_api_parameters` key like `reasoning_effort` is unsupported by a given model; do not pair-validate model name against parameter set. If the caller wants a model audit, they will ask. This is the single largest source of false positives historically — treat any urge to comment on the model string as a signal to move on.
 
 ### 3. Tools (`BaseTool`)
 
@@ -102,6 +103,7 @@ Work through the categories below in order. Raise an issue only at ≥75% confid
 
 - `ChatHistory.initialize_turn()` only rotates the internal `current_turn_id` (a UUID). It does **not** append a system prompt, add a message, or otherwise mutate `history`. Calling it repeatedly is a no-op with respect to message content. The `add_message(...)` → `initialize_turn()` at end-of-turn pattern (including when replaying history) is correct usage, not a bug.
 - Using a raw provider SDK client (e.g. `openai.OpenAI()`) for embeddings, image generation, audio, or moderation — see scope note under section 2. Not a violation.
+- Any claim about the *validity*, *existence*, or *capabilities* of a `model="..."` string or a `model_api_parameters` key. Your model knowledge is stale. See section 2.
 
 ### 10. Testing
 
