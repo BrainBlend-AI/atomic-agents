@@ -68,7 +68,9 @@ Use the template from `framework/references/project-structure.md`.
 
 Produce a runnable REPL. Load `.env`, instantiate the provider client per `framework/references/providers.md`, build an agent, wire a `ChatHistory` with a seed assistant message, loop on `console.input(...)`.
 
-When a custom agent type was requested, build custom `InputSchema` / `OutputSchema` subclasses with field `description=` populated. Otherwise use `BasicChatInputSchema` / `BasicChatOutputSchema`.
+For the agent itself, follow the workflow from the `atomic-agents:create-atomic-agent` skill — same canonical imports, same per-provider `mode` matrix, same `SystemPromptGenerator` shape.
+
+When a custom agent type was requested, build custom `InputSchema` / `OutputSchema` subclasses with field `description=` populated, following the `atomic-agents:create-atomic-schema` skill. Otherwise use `BasicChatInputSchema` / `BasicChatOutputSchema`.
 
 Always use the canonical imports:
 
@@ -115,9 +117,10 @@ After scaffolding, tell the user:
 1. How to set their key (`cp .env.example .env`).
 2. How to run (`uv run python -m <project_name>.main`).
 3. Next steps, picked from:
-   - Replace the starter schemas with domain-specific ones — see `framework/references/schemas.md`.
-   - Add a tool — see `framework/references/tools.md`.
-   - Add a context provider — see `framework/references/context-providers.md`.
+   - Replace the starter schemas with domain-specific ones — use the `atomic-agents:create-atomic-schema` skill.
+   - Add another agent — use the `atomic-agents:create-atomic-agent` skill.
+   - Add a tool — use the `atomic-agents:create-atomic-tool` skill.
+   - Add a context provider (time, user, RAG, session) — use the `atomic-agents:create-atomic-context-provider` skill.
    - Split into multiple agents — see `framework/references/orchestration.md`.
 4. A pointer to `framework` (auto-triggered) and `review` (auto-triggered before commit).
 

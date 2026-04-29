@@ -64,6 +64,19 @@ print(reply.chat_message)
 
 `AtomicAgent` and `BaseTool` use PEP 695 generics — the type parameters carry runtime information, so write them explicitly and keep them accurate. Full runnable version: `atomic-examples/quickstart/quickstart/1_0_basic_chatbot.py`.
 
+## Targeted creation skills
+
+For the four most common authoring tasks, dedicated atomic skills give a step-by-step workflow (clarify → write → verify → hand off) instead of just reference material. Prefer them when the user is actively building something specific.
+
+| User intent | Atomic skill |
+|---|---|
+| "create a schema" / "design the input/output schema" | `atomic-agents:create-atomic-schema` |
+| "create an agent" / "add another agent" / "wire up an `AtomicAgent`" | `atomic-agents:create-atomic-agent` |
+| "add a tool" / "wrap an API as a tool" / "build a `BaseTool`" | `atomic-agents:create-atomic-tool` |
+| "add a context provider" / "inject X into the prompt" / "wire up RAG" | `atomic-agents:create-atomic-context-provider` |
+
+These skills auto-trigger on the matching phrasing. The reference files below are what they (and you) load for deeper material.
+
 ## Decision routing
 
 Pick the reference file that matches the task. Each is loaded only when read.
@@ -82,7 +95,7 @@ Pick the reference file that matches the task. Each is loaded only when read.
 | Decide the project layout or `pyproject.toml` | [references/project-structure.md](references/project-structure.md) |
 | Write tests for agents and tools | [references/testing.md](references/testing.md) |
 
-When a concept is unclear, start from the user's verb: *create a schema* → schemas, *hook up a weather API* → tools, *inject user name into prompt* → context providers, *route between agents* → orchestration.
+When a concept is unclear, start from the user's verb: *create a schema* → `create-atomic-schema` skill, *hook up a weather API* → `create-atomic-tool` skill, *inject user name into prompt* → `create-atomic-context-provider` skill, *route between agents* → orchestration reference.
 
 ## Working style
 
