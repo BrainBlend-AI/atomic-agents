@@ -13,11 +13,19 @@ Please use the [Atomic Assembler CLI](../README.md) as mentioned in the main [RE
 ## Tools
 The Atomic Forge project includes the following tools:
 
+- [arXiv Search](/atomic-forge/tools/arxiv_search/README.md) — search the free arXiv public API for academic papers.
+- [BoCha Search](/atomic-forge/tools/bocha_search/README.md)
 - [Calculator](/atomic-forge/tools/calculator/README.md)
+- [DateTime](/atomic-forge/tools/datetime_tool/README.md) — timezone-aware now/parse/convert/shift/diff.
+- [Fía Signals](/atomic-forge/tools/fia_signals/README.md)
+- [Hacker News Search](/atomic-forge/tools/hackernews_search/README.md) — search HN stories, comments, Show HN, Ask HN via the free Algolia API.
+- [PDF Reader](/atomic-forge/tools/pdf_reader/README.md) — extract text and metadata from a local or remote PDF, with page-range filtering.
 - [SearXNG Search](/atomic-forge/tools/searxng_search/README.md)
 - [Tavily Search](/atomic-forge/tools/tavily_search/README.md)
-- [YouTube Transcript Scraper](/atomic-forge/tools/youtube_transcript_scraper/README.md)
 - [Webpage Scraper](/atomic-forge/tools/webpage_scraper/README.md)
+- [Weather](/atomic-forge/tools/weather/README.md) — current conditions and forecast via the free Open-Meteo API.
+- [Wikipedia Search](/atomic-forge/tools/wikipedia_search/README.md) — search Wikipedia in any language edition (no API key).
+- [YouTube Transcript Scraper](/atomic-forge/tools/youtube_transcript_scraper/README.md)
 
 ## Creating Custom Tools
 Creating your own tools is easy! See the [Creating Tools](/atomic-forge/guides/tool_structure.md) guide for more information.

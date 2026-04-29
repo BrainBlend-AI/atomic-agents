@@ -8,26 +8,33 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "arxiv-search",
     "atomic-agents",
     "basic-multimodal",
     "basic-pdf-analysis",
     "bocha-search",
     "calculator",
+    "datetime-tool",
     "deep-research",
     "dspy-integration",
     "example-client",
     "example-mcp-server",
     "fastapi-memory",
+    "fia-signals",
+    "hackernews-search",
     "hooks-example",
     "nested-multimodal",
     "orchestration-agent",
+    "pdf-reader",
     "progressive-disclosure",
     "quickstart",
     "rag-chatbot",
     "searxng-search",
     "tavily-search",
+    "weather-tool",
     "web-search-agent",
     "webpage-scraper",
+    "wikipedia-search",
     "youtube-summarizer",
     "youtube-to-recipe",
     "youtube-transcript-scraper",
@@ -181,6 +188,39 @@ wheels = [
 ]
 
 [[package]]
+name = "arxiv-search"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/arxiv_search" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.9.0,<4.0.0" },
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.5,<1.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
+]
+
+[[package]]
 name = "asyncer"
 version = "0.0.8"
 source = { registry = "https://pypi.org/simple" }
@@ -194,7 +234,7 @@ wheels = [
 
 [[package]]
 name = "atomic-agents"
-version = "2.7.4"
+version = "2.7.5"
 source = { editable = "." }
 dependencies = [
     { name = "gitpython" },
@@ -868,6 +908,37 @@ wheels = [
 ]
 
 [[package]]
+name = "datetime-tool"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/datetime_tool" }
+dependencies = [
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+    { name = "tzdata" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+    { name = "tzdata", specifier = ">=2024.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
+]
+
+[[package]]
 name = "deep-research"
 version = "0.1.0"
 source = { editable = "atomic-examples/deep-research" }
@@ -1209,6 +1280,45 @@ wheels = [
 ]
 
 [[package]]
+name = "fia-signals"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/fia_signals" }
+dependencies = [
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+    { name = "requests" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "httpx" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "python-dotenv" },
+    { name = "rich" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+    { name = "requests", specifier = ">=2.28.0,<3.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "httpx", specifier = ">=0.28.0,<1.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.5,<1.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0,<2.0.0" },
+    { name = "rich", specifier = ">=13.7.0,<14.0.0" },
+]
+
+[[package]]
 name = "filelock"
 version = "3.20.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1516,6 +1626,39 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1d/17/afa56379f94ad0fe8defd37d6eb3f89a25404ffc71d4d848893d270325fc/h2-4.3.0.tar.gz", hash = "sha256:6c59efe4323fa18b47a632221a1888bd7fde6249819beda254aeca909f221bf1", size = 2152026, upload-time = "2025-08-23T18:12:19.778Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/69/b2/119f6e6dcbd96f9069ce9a2665e0146588dc9f88f29549711853645e736a/h2-4.3.0-py3-none-any.whl", hash = "sha256:c438f029a25f7945c69e0ccf0fb951dc3f73a5f6412981daee861431b70e2bdd", size = 61779, upload-time = "2025-08-23T18:12:17.779Z" },
+]
+
+[[package]]
+name = "hackernews-search"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/hackernews_search" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.9.0,<4.0.0" },
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.5,<1.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
 ]
 
 [[package]]
@@ -2731,6 +2874,41 @@ dependencies = [
 requires-dist = [{ name = "fastmcp", specifier = ">=2.0.0" }]
 
 [[package]]
+name = "pdf-reader"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/pdf_reader" }
+dependencies = [
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+    { name = "pypdf" },
+    { name = "requests" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "reportlab" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+    { name = "pypdf", specifier = ">=5.1.0,<7.0.0" },
+    { name = "requests", specifier = ">=2.32.3,<3.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
+    { name = "reportlab", specifier = ">=4.0.0,<5.0.0" },
+]
+
+[[package]]
 name = "pdoc3"
 version = "0.11.6"
 source = { registry = "https://pypi.org/simple" }
@@ -3257,6 +3435,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pypdf"
+version = "6.10.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7b/3f/9f2167401c2e94833ca3b69535bad89e533b5de75fefe4197a2c224baec2/pypdf-6.10.2.tar.gz", hash = "sha256:7d09ce108eff6bf67465d461b6ef352dcb8d84f7a91befc02f904455c6eea11d", size = 5315679, upload-time = "2026-04-15T16:37:36.978Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/d6/1d5c60cc17bbdf37c1552d9c03862fc6d32c5836732a0415b2d637edc2d0/pypdf-6.10.2-py3-none-any.whl", hash = "sha256:aa53be9826655b51c96741e5d7983ca224d898ac0a77896e64636810517624aa", size = 336308, upload-time = "2026-04-15T16:37:34.851Z" },
+]
+
+[[package]]
 name = "pyperclip"
 version = "1.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3552,6 +3739,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/f9/8bd6b656592f925b6845fcbb4d57603a3ac2fb2373344ffa1ed70aa6820a/regex-2025.11.3-cp313-cp313t-win32.whl", hash = "sha256:9ddc42e68114e161e51e272f667d640f97e84a2b9ef14b7477c53aac20c2d59a", size = 268792, upload-time = "2025-11-03T21:32:44.13Z" },
     { url = "https://files.pythonhosted.org/packages/e5/87/0e7d603467775ff65cd2aeabf1b5b50cc1c3708556a8b849a2fa4dd1542b/regex-2025.11.3-cp313-cp313t-win_amd64.whl", hash = "sha256:7a7c7fdf755032ffdd72c77e3d8096bdcb0eb92e89e17571a196f03d88b11b3c", size = 280214, upload-time = "2025-11-03T21:32:45.853Z" },
     { url = "https://files.pythonhosted.org/packages/8d/d0/2afc6f8e94e2b64bfb738a7c2b6387ac1699f09f032d363ed9447fd2bb57/regex-2025.11.3-cp313-cp313t-win_arm64.whl", hash = "sha256:df9eb838c44f570283712e7cff14c16329a9f0fb19ca492d21d4b7528ee6821e", size = 271469, upload-time = "2025-11-03T21:32:48.026Z" },
+]
+
+[[package]]
+name = "reportlab"
+version = "4.4.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "charset-normalizer" },
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/57/28bfbf0a775b618b6e4d854ef8dd3f5c8988e5d614d8898703502a35f61c/reportlab-4.4.10.tar.gz", hash = "sha256:5cbbb34ac3546039d0086deb2938cdec06b12da3cdb836e813258eb33cd28487", size = 3714962, upload-time = "2026-02-12T10:45:21.325Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/2e/e1798b8b248e1517e74c6cdf10dd6edd485044e7edf46b5f11ffcc5a0add/reportlab-4.4.10-py3-none-any.whl", hash = "sha256:5abc815746ae2bc44e7ff25db96814f921349ca814c992c7eac3c26029bf7c24", size = 1955400, upload-time = "2026-02-12T10:45:18.828Z" },
 ]
 
 [[package]]
@@ -4352,6 +4552,37 @@ wheels = [
 ]
 
 [[package]]
+name = "weather-tool"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/weather" }
+dependencies = [
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+    { name = "requests" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+    { name = "requests", specifier = ">=2.32.3,<3.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
+]
+
+[[package]]
 name = "web-search-agent"
 version = "1.0.0"
 source = { editable = "atomic-examples/web-search-agent" }
@@ -4458,6 +4689,39 @@ name = "wget"
 version = "3.2"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/47/6a/62e288da7bcda82b935ff0c6cfe542970f04e29c756b0e147251b2fb251f/wget-3.2.zip", hash = "sha256:35e630eca2aa50ce998b9b1a127bb26b30dfee573702782aa982f875e3f16061", size = 10857, upload-time = "2015-10-22T15:26:37.51Z" }
+
+[[package]]
+name = "wikipedia-search"
+version = "1.0.0"
+source = { editable = "atomic-forge/tools/wikipedia_search" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "atomic-agents" },
+    { name = "pydantic" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.9.0,<4.0.0" },
+    { name = "atomic-agents", editable = "." },
+    { name = "pydantic", specifier = ">=2.10.3,<3.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", specifier = ">=7.6.1,<8.0.0" },
+    { name = "pytest", specifier = ">=8.3.3,<9.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.5,<1.0.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0,<6.0.0" },
+]
 
 [[package]]
 name = "xmltodict"

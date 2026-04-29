@@ -182,7 +182,7 @@ Full client-side example: `atomic-examples/mcp-agent/example-client/`. A matchin
 
 ## Prebuilt tools (Atomic Forge)
 
-The `atomic-forge` workspace ships production-ready tools: calculator, SearXNG, Tavily, Bocha, YouTube transcript scraper, webpage scraper, and more. Install into a project with:
+The `atomic-forge` workspace ships production-ready tools: arXiv search, Bocha, calculator, datetime, Fía Signals, Hacker News search, PDF reader, SearXNG, Tavily, weather (Open-Meteo), webpage scraper, Wikipedia search, and YouTube transcript scraper. Install into a project with:
 
 ```bash
 atomic download calculator

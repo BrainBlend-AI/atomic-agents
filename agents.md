@@ -99,10 +99,18 @@ Each example is self-contained and demonstrates specific patterns and capabiliti
 **Philosophy:** Tools are NOT bundled with the framework. Instead, users download individual tools for full control and customization.
 
 **Available Tools:**
+- `arxiv_search/` - Academic paper search via the public arXiv API
+- `bocha_search/` - BoCha web search
 - `calculator/` - Mathematical computation tool
+- `datetime_tool/` - Timezone-aware now / parse / convert / shift / diff
+- `fia_signals/` - Crypto market intelligence (regime, signals, yields, gas, trending, wallet risk)
+- `hackernews_search/` - Hacker News search via the free Algolia API
+- `pdf_reader/` - PDF text + metadata extraction (local file or URL, page-range support)
 - `searxng_search/` - Privacy-focused search integration
 - `tavily_search/` - Tavily API search tool
+- `weather/` - Current conditions and daily/hourly forecast via Open-Meteo (no key)
 - `webpage_scraper/` - Web scraping capabilities
+- `wikipedia_search/` - Wikipedia search in any language edition (no key)
 - `youtube_transcript_scraper/` - YouTube transcript extraction
 
 **Benefits:**

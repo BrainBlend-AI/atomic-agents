@@ -314,8 +314,18 @@ If you're upgrading from v1.x, please read our comprehensive [**Upgrade Guide**]
 
 Atomic Forge is a collection of tools that can be used with Atomic Agents to extend its functionality. Current tools include:
 
+- arXiv Search
+- BoCha Search
 - Calculator
+- DateTime
+- Fía Signals
+- Hacker News Search
+- PDF Reader
 - SearXNG Search
+- Tavily Search
+- Webpage Scraper
+- Weather
+- Wikipedia Search
 - YouTube Transcript Scraper
 
 For more information on using and creating tools, see the [Atomic Forge README](/atomic-forge/README.md).

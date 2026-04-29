@@ -145,13 +145,19 @@ Tools themselves are distributed via the **Atomic Forge** — a registry of stan
 
 The Atomic Forge ships with several pre-built tools:
 
+- **arXiv Search**: Search arXiv for academic papers (free public API)
+- **BoCha Search**: Web search
 - **Calculator**: Perform mathematical calculations
+- **DateTime**: Timezone-aware now / parse / convert / shift / diff (no key required)
+- **Fía Signals**: Crypto market intelligence — market regime, trading signals, DeFi yields, gas prices, Solana trending tokens, and wallet risk scoring
+- **Hacker News Search**: Search HN stories, comments, Show HN, Ask HN, polls (free Algolia API)
+- **PDF Reader**: Extract text and metadata from local or remote PDFs, with page-range filtering
 - **SearXNG Search**: Search the web using SearXNG
 - **Tavily Search**: AI-powered web search
-- **YouTube Transcript Scraper**: Extract transcripts from YouTube videos
+- **Weather**: Current conditions and daily/hourly forecasts via Open-Meteo (no key required)
 - **Webpage Scraper**: Extract content from web pages
-- **BoCha Search**: Web search
-- **Fía Signals**: Crypto market intelligence — market regime, trading signals, DeFi yields, gas prices, Solana trending tokens, and wallet risk scoring
+- **Wikipedia Search**: Search Wikipedia in any language edition (no key required)
+- **YouTube Transcript Scraper**: Extract transcripts from YouTube videos
 
 ### Downloading a tool
 
