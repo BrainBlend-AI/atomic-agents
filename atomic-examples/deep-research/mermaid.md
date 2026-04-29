@@ -44,24 +44,3 @@ flowchart TD
     class U,Reply terminator;
 ```
 
-```mermaid
-graph LR
-    %% Shared state — every agent reads from / contributes to ResearchState
-    State[(ResearchState — plan, sources, learnings, dedup sets)]
-
-    Planner[PlannerAgent] -->|appends sub-topics| State
-    Extractor[ExtractorAgent] -->|appends learnings tagged with source_id| State
-    Reflector[ReflectorAgent] -.->|reads| State
-    Writer[WriterAgent] -.->|reads| State
-    Decider[DeciderAgent] -.->|reads| State
-    QA[QAAgent] -.->|reads| State
-
-    State -. ResearchStateProvider .-> Planner & Extractor & Reflector & Writer & Decider & QA
-    Date[(CurrentDateProvider)] -.-> Planner & Extractor & Reflector & Writer & Decider & QA
-
-    classDef agent fill:#4CAF50,stroke:#2E7D32,color:#fff;
-    classDef state fill:#F44336,stroke:#C62828,color:#fff;
-
-    class Planner,Extractor,Reflector,Writer,Decider,QA agent;
-    class State,Date state;
-```
