@@ -1,63 +1,77 @@
+"""
+QAAgent — answers a user's question directly from the accumulated ResearchState.
+
+The writer produces long-form cited reports; the QA agent is the
+conversational counterpart, for when the decider has ruled that the
+state already contains enough material to answer. Its job is a tight,
+cited reply plus a few follow-up questions to keep the conversation
+moving.
+
+Like the writer, every factual sentence must end with a ``[Sn]``
+citation marker referencing a source in the state. Uncited factual
+claims are not allowed — if the state doesn't support the answer, the
+decider should have routed to a new research pass instead.
+"""
+
 import instructor
 import openai
 from pydantic import Field
-from atomic_agents import BaseIOSchema, AtomicAgent, AgentConfig
+
+from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema
 from atomic_agents.context import SystemPromptGenerator
 
 from deep_research.config import ChatConfig
 
 
-class QuestionAnsweringAgentInputSchema(BaseIOSchema):
-    """This is the input schema for the QuestionAnsweringAgent."""
+class QAInput(BaseIOSchema):
+    """Input schema for the QAAgent."""
 
-    question: str = Field(..., description="The question to answer.")
+    question: str = Field(..., min_length=1, description="The user's question or follow-up.")
 
 
-class QuestionAnsweringAgentOutputSchema(BaseIOSchema):
-    """This is the output schema for the QuestionAnsweringAgent."""
+class QAOutput(BaseIOSchema):
+    """Output schema for the QAAgent."""
 
-    answer: str = Field(..., description="The answer to the question.")
+    answer: str = Field(
+        ...,
+        min_length=1,
+        description=(
+            "Markdown-formatted answer. Every factual sentence must end with a [Sn] citation marker "
+            "referencing a source from the research state."
+        ),
+    )
     follow_up_questions: list[str] = Field(
         ...,
-        description=(
-            "Specific questions about the topic that would help the user learn more details about the subject matter. "
-            "For example, if discussing a Nobel Prize winner, suggest questions about their research, impact, or "
-            "related scientific concepts."
-        ),
+        min_length=2,
+        max_length=3,
+        description="2–3 natural follow-up questions the user might want to ask next.",
     )
 
 
-question_answering_agent = AtomicAgent[QuestionAnsweringAgentInputSchema, QuestionAnsweringAgentOutputSchema](
+qa_agent = AtomicAgent[QAInput, QAOutput](
     AgentConfig(
         client=instructor.from_openai(openai.OpenAI(api_key=ChatConfig.api_key)),
         model=ChatConfig.model,
         model_api_parameters={"reasoning_effort": ChatConfig.reasoning_effort},
         system_prompt_generator=SystemPromptGenerator(
             background=[
-                "You are an expert question answering agent focused on providing factual information and encouraging deeper topic exploration.",
-                "For general greetings or non-research questions, provide relevant questions about the system's capabilities and research functions.",
+                "You are a research assistant. You answer user questions using ONLY the sources and learnings "
+                "already present in the research state (provided in your system context).",
+                "You are the conversational counterpart to the long-form writer — shorter, tighter, same citation rules.",
             ],
             steps=[
-                "Analyze the question and identify the core topic",
-                "Answer the question using available information",
-                "For topic-specific questions, generate follow-up questions that explore deeper aspects of the same topic",
-                "For general queries about the system, suggest questions about research capabilities and functionality",
+                "Read the research state — sources and learnings — from the system context.",
+                "Compose a concise markdown answer grounded in the learnings. Cite each factual sentence as [Sn].",
+                "Suggest 2–3 follow-up questions that naturally extend the conversation.",
             ],
             output_instructions=[
-                "Answer in a direct, informative manner",
-                "NEVER generate generic conversational follow-ups like 'How are you?' or 'What would you like to know?'",
-                "For topic questions, follow-up questions MUST be about specific aspects of that topic",
-                "For system queries, follow-up questions should be about specific research capabilities",
-                "Example good follow-ups for a Nobel Prize question:",
-                "- What specific discoveries led to their Nobel Prize?",
-                "- How has their research influenced their field?",
-                "- What other scientists collaborated on this research?",
-                "Example good follow-ups for system queries:",
-                "- What types of sources do you use for research?",
-                "- How do you verify information accuracy?",
-                "- What are the limitations of your search capabilities?",
+                "Every factual sentence must end with one or more [Sn] citation markers.",
+                "Drop any sentence you cannot cite from the state — do not invent or infer claims.",
+                "Only cite source IDs that actually exist in the research state.",
+                "If the state doesn't support an answer at all, say so briefly rather than producing uncited prose.",
+                "Keep the answer tight — a few short paragraphs, not a full report.",
+                "Return 2–3 self-contained follow-up questions, phrased as the user would ask them.",
             ],
         ),
-        model_api_parameters={"temperature": 0.1},
     )
 )

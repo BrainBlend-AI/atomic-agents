@@ -1,68 +1,46 @@
 ```mermaid
 flowchart TD
-    %% Decision Flow Diagram
-    subgraph DecisionFlow["Research Decision Flow"]
-        Start([User Question]) --> B{Need Search?}
-        B -->|Yes| C[Generate Search Queries]
-        C --> D[Perform Web Search]
-        D --> E[Scrape Webpages]
-        E --> F[Update Context]
-        F --> G[Generate Answer]
-        B -->|No| G
-        G --> H[Show Answer & Follow-ups]
-        H --> End([End])
+    %% Pipeline overview — first turn
+    Start([User question]) --> P[PlannerAgent]
+    P -->|sub-topics + initial queries| Loop
+
+    subgraph Loop["Per sub-topic — bounded by max_depth_per_sub_topic"]
+        S[SearXNG search] --> Sc[Webpage scraper]
+        Sc --> E[ExtractorAgent]
+        E -->|claims tagged with source_id| R{ReflectorAgent}
+        R -->|sufficient = true| Done
+        R -->|next_queries| S
     end
 
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef decision fill:#ff9800,stroke:#f57c00,color:#fff;
-    classDef process fill:#4caf50,stroke:#388e3c,color:#fff;
-    classDef terminator fill:#9c27b0,stroke:#7b1fa2,color:#fff;
+    Done --> W1[WriterAgent — draft]
+    W1 --> W2[WriterAgent — verify]
+    W2 --> Out([Cited markdown report])
 
-    class B decision;
-    class C,D,E,F,G process;
-    class Start,End terminator;
+    classDef agent fill:#4CAF50,stroke:#2E7D32,color:#fff;
+    classDef tool fill:#FF9800,stroke:#EF6C00,color:#fff;
+    classDef terminator fill:#9C27B0,stroke:#6A1B9A,color:#fff;
 
+    class P,E,W1,W2 agent;
+    class R agent;
+    class S,Sc tool;
+    class Start,Out,Done terminator;
 ```
 
 ```mermaid
-graph TD
-    %% System Architecture Diagram
-    subgraph Agents["AI Agents"]
-        CA[ChoiceAgent]
-        QA[QueryAgent]
-        AA[AnswerAgent]
-    end
+flowchart TD
+    %% Chat-mode routing — every turn after the first
+    U([Follow-up message]) --> D{DeciderAgent}
+    D -->|needs_research = true| Plan[PlannerAgent — extend coverage]
+    Plan --> Research[Search → Scrape → Extract → Reflect]
+    Research --> QA[QAAgent]
+    D -->|needs_research = false| QA
+    QA --> Reply([Cited answer + follow-ups])
 
-    subgraph Tools["External Tools"]
-        ST[SearXNG Search]
-        WS[Webpage Scraper]
-    end
-
-    subgraph Context["Context Providers"]
-        SC[Scraped Content]
-        CD[Current Date]
-    end
-
-    %% Connections
-    User -->|Question| CA
-    CA -->|Search Request| QA
-    QA -->|Queries| ST
-    ST -->|URLs| WS
-    WS -->|Content| SC
-    SC -.->|Context| CA & QA & AA
-    CD -.->|Date Info| CA & QA & AA
-    CA -->|Direct Answer| AA
-    AA -->|Response| User
-
-    %% Styling
     classDef agent fill:#4CAF50,stroke:#2E7D32,color:#fff;
-    classDef tool fill:#FF9800,stroke:#EF6C00,color:#fff;
-    classDef context fill:#F44336,stroke:#C62828,color:#fff;
-    classDef user fill:#9C27B0,stroke:#6A1B9A,color:#fff;
+    classDef terminator fill:#9C27B0,stroke:#6A1B9A,color:#fff;
 
-    class CA,QA,AA agent;
-    class ST,WS tool;
-    class SC,CD context;
-    class User user;
-
+    class D,Plan,QA agent;
+    class Research agent;
+    class U,Reply terminator;
 ```
+

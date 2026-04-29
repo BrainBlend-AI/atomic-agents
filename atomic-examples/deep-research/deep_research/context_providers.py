@@ -1,33 +1,63 @@
-from dataclasses import dataclass
-from datetime import datetime
-from typing import List
+"""
+Context providers for the deep-research pipeline.
+
+Context providers are how runtime state reaches an agent's system prompt.
+We use one provider that renders the shared ``ResearchState`` (see
+``state.py``) so every agent sees a consistent, up-to-date picture without
+having to plumb data through its input schema.
+
+All six agents register the same ``ResearchStateProvider``. The planner
+uses it on follow-up turns to extend coverage instead of duplicating it;
+on the very first turn the state is empty and the provider renders a
+short "no research yet" stub.
+"""
+
+from datetime import datetime, timezone
+
 from atomic_agents.context import BaseDynamicContextProvider
 
-
-@dataclass
-class ContentItem:
-    content: str
-    url: str
+from deep_research.state import ResearchState
 
 
-class ScrapedContentContextProvider(BaseDynamicContextProvider):
+class ResearchStateProvider(BaseDynamicContextProvider):
+    """Renders the current plan, sources, and learnings for agents that need full context."""
+
+    def __init__(self, title: str, state: ResearchState):
+        super().__init__(title=title)
+        self.state = state
+
+    def get_info(self) -> str:
+        if not self.state.sources and not self.state.learnings:
+            return "No research has been done yet."
+
+        lines: list[str] = []
+
+        if self.state.sources:
+            lines.append("### Sources")
+            for s in self.state.sources:
+                lines.append(f"[{s.id}] {s.title}")
+                lines.append(f"      {s.url}")
+
+        if self.state.learnings:
+            lines.append("")
+            lines.append("### Learnings so far (grouped by sub-topic)")
+            seen_topics: list[str] = []
+            for learning in self.state.learnings:
+                if learning.sub_topic not in seen_topics:
+                    seen_topics.append(learning.sub_topic)
+            for sub_topic in seen_topics:
+                lines.append(f"**{sub_topic}**")
+                for learning in self.state.learnings_for(sub_topic):
+                    lines.append(f"- {learning.text} [{learning.source_id}]")
+
+        return "\n".join(lines)
+
+
+class CurrentDateProvider(BaseDynamicContextProvider):
+    """So agents don't get confused about what counts as 'recent'."""
+
     def __init__(self, title: str):
         super().__init__(title=title)
-        self.content_items: List[ContentItem] = []
 
     def get_info(self) -> str:
-        return "\n\n".join(
-            [
-                f"Source {idx}:\nURL: {item.url}\nContent:\n{item.content}\n{'-' * 80}"
-                for idx, item in enumerate(self.content_items, 1)
-            ]
-        )
-
-
-class CurrentDateContextProvider(BaseDynamicContextProvider):
-    def __init__(self, title: str, date_format: str = "%A %B %d, %Y"):
-        super().__init__(title=title)
-        self.date_format = date_format
-
-    def get_info(self) -> str:
-        return f"The current date in the format {self.date_format} is {datetime.now().strftime(self.date_format)}."
+        return datetime.now(timezone.utc).strftime("Today is %A, %B %d, %Y.")
