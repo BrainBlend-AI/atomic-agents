@@ -1,16 +1,62 @@
 import json
 import logging
 import os
+import re
 import shutil
 import tempfile
+import unicodedata
 from pathlib import Path
 
 import git
 import yaml
 
-from atomic_assembler.constants import DEFAULT_SOURCES, GITHUB_BRANCH, TOOLS_SUBFOLDER, ForgeSource
+from atomic_assembler.constants import DEFAULT_SOURCES, GITHUB_BRANCH, TOOLS_SUBFOLDER, ForgeSource, validate_source_url
 
 SOURCES_CONFIG_PATH = Path.home() / ".atomic-assembler" / "sources.json"
+_TERMINAL_ESCAPE_SEQUENCE = re.compile(r"\x1b\](?:[^\x07\x1b]|\x1b(?!\\))*(?:\x07|\x1b\\|$)|\x1b\[[0-?]*[ -/]*[@-~]")
+
+
+def display_safe_text(value: str) -> str:
+    without_escape_sequences = _TERMINAL_ESCAPE_SEQUENCE.sub("", value)
+    return "".join(
+        (
+            " "
+            if unicodedata.category(character).startswith("C") or unicodedata.category(character) in {"Zl", "Zp"}
+            else character
+        )
+        for character in without_escape_sequences
+    ).strip()
+
+
+def _validated_index_text(value: object, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"Forge index tool {field_name} must be a string")
+    safe_value = display_safe_text(value)
+    if not safe_value:
+        raise ValueError(f"Forge index tool {field_name} must contain displayable text")
+    return safe_value
+
+
+def _validate_tool_symlink(tool_directory: Path, symlink: Path) -> None:
+    link_target = Path(os.readlink(symlink))
+    try:
+        resolved_target = (symlink.parent / link_target).resolve()
+        resolved_target.relative_to(tool_directory)
+    except (OSError, RuntimeError, ValueError):
+        relative_link = display_safe_text(str(symlink.relative_to(tool_directory)))
+        raise ValueError(f"Tool contains an unsafe symlink: {relative_link}") from None
+    if link_target.is_absolute():
+        relative_link = display_safe_text(str(symlink.relative_to(tool_directory)))
+        raise ValueError(f"Tool contains an unsafe symlink: {relative_link}")
+
+
+def _validate_tool_symlinks(tool_path: str | Path) -> None:
+    tool_directory = Path(tool_path).resolve()
+    for directory, directory_names, file_names in os.walk(tool_directory, followlinks=False):
+        for name in [*directory_names, *file_names]:
+            candidate = Path(directory, name)
+            if candidate.is_symlink():
+                _validate_tool_symlink(tool_directory, candidate)
 
 
 def source_config_path() -> Path:
@@ -54,6 +100,7 @@ def save_sources(sources: list[ForgeSource], config_path: Path | None = None) ->
 
 class GithubRepoCloner:
     def __init__(self, base_url: str, branch: str = GITHUB_BRANCH, tools_path: str = TOOLS_SUBFOLDER):
+        validate_source_url(base_url)
         self.repo_url = base_url
         self.branch = branch
         self.temp_dir = tempfile.mkdtemp()
@@ -62,6 +109,7 @@ class GithubRepoCloner:
         self.tools_path = os.path.join(self.repo_path, tools_path)
 
     def clone(self):
+        validate_source_url(self.repo_url)
         try:
             _ = git.Repo.clone_from(self.repo_url, self.repo_path, branch=self.branch)
             logging.info(f"Repository cloned to {self.repo_path} on branch {self.branch}")
@@ -129,23 +177,26 @@ class AtomicToolManager:
             if not isinstance(tool_path, str) or not tool_path:
                 raise ValueError(f"Forge index tool path must be a non-empty string: {index_path}")
 
+            safe_tool_path = display_safe_text(tool_path)
             relative_tool_path = Path(tool_path)
             if relative_tool_path.is_absolute() or ".." in relative_tool_path.parts:
-                raise ValueError(f"Forge index tool path must stay within configured tools directory: {tool_path}")
+                raise ValueError(f"Forge index tool path must stay within configured tools directory: {safe_tool_path}")
 
             resolved_tool_path = (index_path.parent / relative_tool_path).resolve()
             try:
                 resolved_tool_path.relative_to(tools_directory)
             except ValueError as error:
-                raise ValueError(f"Forge index tool path must stay within configured tools directory: {tool_path}") from error
+                raise ValueError(
+                    f"Forge index tool path must stay within configured tools directory: {safe_tool_path}"
+                ) from error
             if not resolved_tool_path.is_dir():
-                raise NotADirectoryError(f"Forge index tool path is not a directory: {tool_path}")
+                raise NotADirectoryError(f"Forge index tool path is not a directory: {safe_tool_path}")
 
             indexed_tools.append(
                 {
-                    "name": tool["name"],
+                    "name": _validated_index_text(tool.get("name"), "name"),
                     "path": str(resolved_tool_path),
-                    "description": tool.get("description", "No description available."),
+                    "description": _validated_index_text(tool.get("description", "No description available."), "description"),
                 }
             )
         return indexed_tools
@@ -181,7 +232,8 @@ class AtomicToolManager:
         if os.path.exists(destination):
             raise FileExistsError(f"Destination already exists: {destination}")
 
-        shutil.copytree(tool_path, destination, ignore=shutil.ignore_patterns(".coveragerc", "uv.lock"))
+        _validate_tool_symlinks(tool_path)
+        shutil.copytree(tool_path, destination, symlinks=True, ignore=shutil.ignore_patterns(".coveragerc", "uv.lock"))
         logging.info(f"Tool successfully copied to {destination}")
         return str(destination)
 

@@ -27,6 +27,22 @@ def test_github_repo_cloner_uses_configured_branch(monkeypatch):
     assert cloned["branch"] == "feature/test"
 
 
+def test_github_repo_cloner_rejects_credentials_before_clone(monkeypatch):
+    clone_called = False
+
+    def clone_from(repo_url, repo_path, branch):
+        nonlocal clone_called
+        clone_called = True
+
+    monkeypatch.setattr("atomic_assembler.utils.git.Repo.clone_from", clone_from)
+
+    with pytest.raises(ValueError) as error:
+        GithubRepoCloner("https://example.com/forge.git?access_token=diagnostic-secret")
+
+    assert "diagnostic-secret" not in str(error.value)
+    assert not clone_called
+
+
 def test_copy_atomic_tool_keeps_dependency_metadata(tmp_path):
     tool_path = tmp_path / "example_tool"
     tool_path.mkdir()
@@ -42,6 +58,43 @@ def test_copy_atomic_tool_keeps_dependency_metadata(tmp_path):
     assert (copied_path / "requirements.txt").is_file()
     assert not (copied_path / "uv.lock").exists()
     assert not (copied_path / ".coveragerc").exists()
+
+
+@pytest.mark.parametrize(
+    ("link_path", "link_target"),
+    [
+        (Path("escape.txt"), Path("..", "outside.txt")),
+        (Path("nested", "escape.txt"), Path("..", "..", "outside.txt")),
+    ],
+)
+def test_copy_atomic_tool_rejects_symlinks_that_escape_tool_directory(tmp_path, link_path, link_target):
+    outside_file = tmp_path / "outside.txt"
+    outside_file.write_text("sensitive")
+    tool_path = tmp_path / "example_tool"
+    tool_path.mkdir()
+    symlink = tool_path / link_path
+    symlink.parent.mkdir(parents=True, exist_ok=True)
+    symlink.symlink_to(link_target)
+    destination = tmp_path / "downloaded"
+
+    with pytest.raises(ValueError, match="unsafe symlink"):
+        AtomicToolManager.copy_atomic_tool_to_destination(tool_path, destination)
+
+    assert not destination.exists()
+
+
+def test_copy_atomic_tool_preserves_safe_relative_symlink(tmp_path):
+    tool_path = tmp_path / "example_tool"
+    tool_path.mkdir()
+    (tool_path / "target.txt").write_text("tool data")
+    (tool_path / "link.txt").symlink_to("target.txt")
+    destination = tmp_path / "downloaded"
+
+    AtomicToolManager.copy_atomic_tool_to_destination(tool_path, destination)
+
+    copied_link = destination / "link.txt"
+    assert copied_link.is_symlink()
+    assert copied_link.readlink() == Path("target.txt")
 
 
 def test_build_parser_parses_download_destination_and_source_commands():
@@ -94,6 +147,37 @@ def test_add_source_rejects_url_with_userinfo(tmp_path, monkeypatch, capsys):
     assert "https://***@example.com/forge.git" in error
 
 
+@pytest.mark.parametrize(
+    ("url", "secret", "redacted_url"),
+    [
+        ("https://example.com/forge.git?access_token=query-secret", "query-secret", "https://example.com/forge.git?***"),
+        ("https://example.com/forge.git#token=fragment-secret", "fragment-secret", "https://example.com/forge.git#***"),
+    ],
+)
+def test_add_source_rejects_url_credentials_outside_userinfo(tmp_path, monkeypatch, capsys, url, secret, redacted_url):
+    config_path = tmp_path / ".atomic-assembler" / "sources.json"
+    monkeypatch.setattr(assembler_utils, "SOURCES_CONFIG_PATH", config_path)
+
+    assert assembler_main.add_source("team", url, "main", "tools") == 1
+
+    assert not config_path.exists()
+    error = capsys.readouterr().err
+    assert secret not in error
+    assert redacted_url in error
+
+
+def test_save_sources_revalidates_url_before_persistence(tmp_path):
+    config_path = tmp_path / "sources.json"
+    source = ForgeSource("team", "https://example.com/forge.git", "main", "tools")
+    object.__setattr__(source, "url", "https://example.com/forge.git?access_token=stored-secret")
+
+    with pytest.raises(ValueError) as error:
+        save_sources([source], config_path)
+
+    assert "stored-secret" not in str(error.value)
+    assert not config_path.exists()
+
+
 def test_load_sources_rejects_legacy_userinfo_without_exposing_credentials(tmp_path):
     config_path = tmp_path / "sources.json"
     config_path.write_text(
@@ -116,6 +200,23 @@ def test_load_sources_rejects_legacy_userinfo_without_exposing_credentials(tmp_p
     assert "https://***@example.com/forge.git" in str(error.value)
 
 
+@pytest.mark.parametrize(
+    ("url", "secret"),
+    [
+        ("https://example.com/forge.git?access_token=query-secret", "query-secret"),
+        ("https://example.com/forge.git#token=fragment-secret", "fragment-secret"),
+    ],
+)
+def test_load_sources_rejects_legacy_url_credentials_without_exposing_them(tmp_path, url, secret):
+    config_path = tmp_path / "sources.json"
+    config_path.write_text(json.dumps([{"name": "team", "url": url, "branch": "main", "tools_path": "tools"}]))
+
+    with pytest.raises(ValueError) as error:
+        load_sources(config_path)
+
+    assert secret not in str(error.value)
+
+
 def test_list_sources_redacts_userinfo(monkeypatch, capsys):
     source = ForgeSource("team", "https://example.com/forge.git", "main", "tools")
     object.__setattr__(source, "url", "https://user:super-secret@example.com/forge.git")
@@ -127,6 +228,25 @@ def test_list_sources_redacts_userinfo(monkeypatch, capsys):
     assert "super-secret" not in output
     assert "https://***@example.com/forge.git" in output
     assert redact_source_url(source.url) in output
+
+
+@pytest.mark.parametrize(
+    ("url", "secret", "redacted_url"),
+    [
+        ("https://example.com/forge.git?access_token=query-secret", "query-secret", "https://example.com/forge.git?***"),
+        ("https://example.com/forge.git#token=fragment-secret", "fragment-secret", "https://example.com/forge.git#***"),
+    ],
+)
+def test_list_sources_redacts_url_credentials_outside_userinfo(monkeypatch, capsys, url, secret, redacted_url):
+    source = ForgeSource("team", "https://example.com/forge.git", "main", "tools")
+    object.__setattr__(source, "url", url)
+    monkeypatch.setattr(assembler_main, "load_sources", lambda: [source])
+
+    assert assembler_main.list_sources() == 0
+
+    output = capsys.readouterr().out
+    assert secret not in output
+    assert redacted_url in output
 
 
 def test_get_forge_tools_falls_back_to_tool_directories(tmp_path):
@@ -185,6 +305,39 @@ def test_list_tools_reads_each_source_and_labels_tools(tmp_path, capsys):
         "official/calculator - calculator for tests",
         "team/internal-search - internal-search for tests",
     ]
+
+
+def test_list_index_metadata_cannot_emit_terminal_sequences(tmp_path, capsys):
+    source = create_git_forge(
+        tmp_path,
+        "official",
+        "calculator",
+        index_name="\x1b]52;c;clipboard\x07calculator\x1b[31m",
+        description="\x1b[31mred\x1b[0m\nsecond line",
+    )
+
+    assert assembler_main.list_tools([source]) == 0
+
+    output = capsys.readouterr().out
+    assert output == "official/calculator - red second line\n"
+    assert "\x1b" not in output
+    assert "\x07" not in output
+
+
+def test_download_error_index_name_cannot_emit_terminal_sequences(tmp_path, capsys):
+    source = create_git_forge(
+        tmp_path,
+        "official",
+        "calculator",
+        index_name="\x1b]52;c;clipboard\x07calculator\x1b[31m",
+    )
+
+    assert assembler_main.download_tool("missing", str(tmp_path / "downloaded"), [source]) == 1
+
+    output = capsys.readouterr().err
+    assert "official/calculator" in output
+    assert "\x1b" not in output
+    assert "\x07" not in output
 
 
 def test_download_tool_from_second_source(tmp_path, capsys):
@@ -247,7 +400,7 @@ def test_list_tools_returns_failure_when_all_sources_fail(tmp_path, capsys):
     assert "Could not read source 'second'" in captured.err
 
 
-def create_git_forge(tmp_path, name, tool_name):
+def create_git_forge(tmp_path, name, tool_name, index_name=None, description=None):
     forge_root = tmp_path / name
     tool_path = forge_root / "atomic-forge" / "tools" / tool_name
     (tool_path / "tool").mkdir(parents=True)
@@ -262,9 +415,9 @@ def create_git_forge(tmp_path, name, tool_name):
                 "name": name,
                 "tools": [
                     {
-                        "name": tool_name,
+                        "name": index_name or tool_name,
                         "path": f"tools/{tool_name}",
-                        "description": f"{tool_name} for tests",
+                        "description": description or f"{tool_name} for tests",
                     }
                 ],
             }

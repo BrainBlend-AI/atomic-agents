@@ -25,9 +25,25 @@ def redact_source_url(url: str) -> str:
     except ValueError:
         return "<redacted source URL>"
     _userinfo, separator, host = parsed_url.netloc.rpartition("@")
-    if not separator:
-        return url
-    return urlunsplit(parsed_url._replace(netloc=f"***@{host}"))
+    return urlunsplit(
+        parsed_url._replace(
+            netloc=f"***@{host}" if separator else parsed_url.netloc,
+            query="***" if parsed_url.query else "",
+            fragment="***" if parsed_url.fragment else "",
+        )
+    )
+
+
+def validate_source_url(url: str) -> None:
+    try:
+        parsed_url = urlsplit(url)
+    except ValueError as error:
+        raise ValueError("Forge source URL is invalid: <redacted source URL>") from error
+    if "@" in parsed_url.netloc or parsed_url.query or parsed_url.fragment:
+        raise ValueError(
+            f"Forge source URLs cannot include userinfo, query parameters, or fragments: {redact_source_url(url)}. "
+            "Use Git credential helpers for private source access."
+        )
 
 
 @dataclass(frozen=True)
@@ -40,13 +56,10 @@ class ForgeSource:
     tools_path: str
 
     def __post_init__(self) -> None:
-        if source_url_has_userinfo(self.url):
-            raise ValueError(
-                f"Forge source URLs cannot include userinfo: {redact_source_url(self.url)}. "
-                "Use Git credential helpers for private source access."
-            )
+        validate_source_url(self.url)
 
     def to_dict(self) -> dict[str, str]:
+        validate_source_url(self.url)
         return {
             "name": self.name,
             "url": self.url,

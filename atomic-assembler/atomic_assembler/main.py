@@ -6,7 +6,7 @@ from pathlib import Path
 
 from atomic_assembler.app import AtomicAssembler
 from atomic_assembler.constants import ForgeSource, redact_source_url
-from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner, load_sources, save_sources
+from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner, display_safe_text, load_sources, save_sources
 
 
 def setup_logging(enable_logging: bool):
@@ -78,7 +78,7 @@ def list_tools(sources: list[ForgeSource] | None = None) -> int:
     for failure in failures:
         print(failure, file=sys.stderr)
     for tool in tools:
-        print(f"{tool['source']}/{tool['name']} - {tool['description']}")
+        print(f"{tool['source']}/{display_safe_text(tool['name'])} - {display_safe_text(tool['description'])}")
     return 0 if successful_sources else 1
 
 
@@ -121,11 +121,11 @@ def download_tool(name: str, destination: str | None, sources: list[ForgeSource]
 
         matches = matching_tools(tool_name, tools)
         if not matches:
-            available_tools = ", ".join(f"{tool['source']}/{tool['name']}" for tool in tools)
+            available_tools = ", ".join(f"{tool['source']}/{display_safe_text(tool['name'])}" for tool in tools)
             print(f"Unknown tool '{name}'. Available tools: {available_tools}", file=sys.stderr)
             return 1
         if len(matches) > 1:
-            choices = ", ".join(f"{tool['source']}/{tool['name']}" for tool in matches)
+            choices = ", ".join(f"{tool['source']}/{display_safe_text(tool['name'])}" for tool in matches)
             print(f"Tool '{tool_name}' exists in multiple sources. Use <source>/<name>: {choices}", file=sys.stderr)
             return 1
 
@@ -143,7 +143,7 @@ def download_tool(name: str, destination: str | None, sources: list[ForgeSource]
         for cloner in cloners:
             cloner.cleanup()
 
-    print(f"Downloaded {tool['source']}/{tool['name']} to {copied_path}")
+    print(f"Downloaded {tool['source']}/{display_safe_text(tool['name'])} to {copied_path}")
     print(f"Install dependencies with: pip install -r {Path(copied_path) / 'requirements.txt'}")
     return 0
 
