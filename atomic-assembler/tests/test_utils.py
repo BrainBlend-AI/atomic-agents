@@ -157,6 +157,15 @@ def test_add_source_accepts_ssh_uri(tmp_path, monkeypatch):
     assert load_sources(config_path) == [*DEFAULT_SOURCES, ForgeSource("team", source_url, "main", "tools")]
 
 
+def test_add_source_accepts_scp_style_ssh_url(tmp_path, monkeypatch):
+    config_path = tmp_path / ".atomic-assembler" / "sources.json"
+    monkeypatch.setattr(assembler_utils, "SOURCES_CONFIG_PATH", config_path)
+    source_url = "git@github.com:eigenwise/atomic-agents.git"
+
+    assert assembler_main.add_source("team", source_url, "main", "tools") == 0
+    assert load_sources(config_path) == [*DEFAULT_SOURCES, ForgeSource("team", source_url, "main", "tools")]
+
+
 def test_add_source_rejects_ssh_password_without_exposing_it(tmp_path, monkeypatch, capsys):
     config_path = tmp_path / ".atomic-assembler" / "sources.json"
     monkeypatch.setattr(assembler_utils, "SOURCES_CONFIG_PATH", config_path)
@@ -272,6 +281,60 @@ def test_list_sources_redacts_url_credentials_outside_userinfo(monkeypatch, caps
     output = capsys.readouterr().out
     assert secret not in output
     assert redacted_url in output
+
+
+@pytest.mark.parametrize("control", ["\x1b]52;c;clipboard\x07", "\x1b[31m", "\N{RIGHT-TO-LEFT OVERRIDE}"])
+def test_source_management_output_cannot_emit_terminal_controls(monkeypatch, capsys, control):
+    source = ForgeSource(
+        f"team{control}",
+        f"https://example.com/forge{control}.git",
+        f"main{control}",
+        f"tools{control}",
+    )
+    monkeypatch.setattr(assembler_main, "load_sources", lambda: [source])
+
+    assert assembler_main.list_sources() == 0
+
+    output = capsys.readouterr().out
+    assert control not in output
+    assert "\x1b" not in output
+    assert "\x07" not in output
+    assert "\N{RIGHT-TO-LEFT OVERRIDE}" not in output
+
+
+@pytest.mark.parametrize("control", ["\x1b]52;c;clipboard\x07", "\x1b[31m", "\N{RIGHT-TO-LEFT OVERRIDE}"])
+def test_rejected_source_url_cannot_emit_terminal_controls(tmp_path, monkeypatch, capsys, control):
+    config_path = tmp_path / ".atomic-assembler" / "sources.json"
+    monkeypatch.setattr(assembler_utils, "SOURCES_CONFIG_PATH", config_path)
+
+    assert (
+        assembler_main.add_source("team", f"https://example.com/forge{control}.git?access_token=secret", "main", "tools") == 1
+    )
+
+    output = capsys.readouterr().err
+    assert "secret" not in output
+    assert control not in output
+    assert "\x1b" not in output
+    assert "\x07" not in output
+    assert "\N{RIGHT-TO-LEFT OVERRIDE}" not in output
+
+
+@pytest.mark.parametrize("control", ["\x1b]52;c;clipboard\x07", "\x1b[31m", "\N{RIGHT-TO-LEFT OVERRIDE}"])
+def test_source_errors_cannot_emit_terminal_controls(monkeypatch, capsys, control):
+    source = ForgeSource(f"team{control}", "https://example.com/forge.git", "main", "tools")
+
+    def raise_source_error(_source):
+        raise RuntimeError(f"unavailable{control}")
+
+    monkeypatch.setattr(assembler_main, "source_tools", raise_source_error)
+
+    assert assembler_main.list_tools([source]) == 1
+
+    output = capsys.readouterr().err
+    assert control not in output
+    assert "\x1b" not in output
+    assert "\x07" not in output
+    assert "\N{RIGHT-TO-LEFT OVERRIDE}" not in output
 
 
 def test_get_forge_tools_falls_back_to_tool_directories(tmp_path):
@@ -407,6 +470,28 @@ def test_download_default_destination_and_success_output_hide_tool_path_controls
     assert control_sequence not in output
     assert "\x1b" not in output
     assert "\x07" not in output
+
+
+@pytest.mark.parametrize("control", ["\x1b]52;c;clipboard\x07", "\x1b[31m", "\N{RIGHT-TO-LEFT OVERRIDE}"])
+def test_tool_source_qualification_cannot_emit_terminal_controls(tmp_path, capsys, control):
+    source = create_git_forge(tmp_path, "team", "calculator")
+    object.__setattr__(source, "name", f"team{control}")
+
+    assert assembler_main.list_tools([source]) == 0
+
+    list_output = capsys.readouterr().out
+    assert control not in list_output
+    assert "\x1b" not in list_output
+    assert "\x07" not in list_output
+    assert "\N{RIGHT-TO-LEFT OVERRIDE}" not in list_output
+
+    assert assembler_main.download_tool("calculator", str(tmp_path / "downloaded"), [source]) == 0
+
+    download_output = capsys.readouterr().out
+    assert control not in download_output
+    assert "\x1b" not in download_output
+    assert "\x07" not in download_output
+    assert "\N{RIGHT-TO-LEFT OVERRIDE}" not in download_output
 
 
 def test_download_tool_requires_source_qualification_for_ambiguous_names(tmp_path, capsys):

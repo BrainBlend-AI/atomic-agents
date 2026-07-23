@@ -78,7 +78,9 @@ def list_tools(sources: list[ForgeSource] | None = None) -> int:
     for failure in failures:
         print(failure, file=sys.stderr)
     for tool in tools:
-        print(f"{tool['source']}/{display_safe_text(tool['name'])} - {display_safe_text(tool['description'])}")
+        print(
+            f"{display_safe_text(tool['source'])}/{display_safe_text(tool['name'])} - {display_safe_text(tool['description'])}"
+        )
     return 0 if successful_sources else 1
 
 
@@ -98,7 +100,7 @@ def download_tool(name: str, destination: str | None, sources: list[ForgeSource]
     if separator:
         selected_sources = [source for source in configured_sources if source.name == source_name]
         if not selected_sources:
-            print(f"Unknown source '{source_name}'.", file=sys.stderr)
+            print(f"Unknown source '{display_safe_text(source_name)}'.", file=sys.stderr)
             return 1
     else:
         selected_sources = configured_sources
@@ -121,12 +123,17 @@ def download_tool(name: str, destination: str | None, sources: list[ForgeSource]
 
         matches = matching_tools(tool_name, tools)
         if not matches:
-            available_tools = ", ".join(f"{tool['source']}/{display_safe_text(tool['name'])}" for tool in tools)
-            print(f"Unknown tool '{name}'. Available tools: {available_tools}", file=sys.stderr)
+            available_tools = ", ".join(
+                f"{display_safe_text(tool['source'])}/{display_safe_text(tool['name'])}" for tool in tools
+            )
+            print(f"Unknown tool '{display_safe_text(name)}'. Available tools: {available_tools}", file=sys.stderr)
             return 1
         if len(matches) > 1:
-            choices = ", ".join(f"{tool['source']}/{display_safe_text(tool['name'])}" for tool in matches)
-            print(f"Tool '{tool_name}' exists in multiple sources. Use <source>/<name>: {choices}", file=sys.stderr)
+            choices = ", ".join(f"{display_safe_text(tool['source'])}/{display_safe_text(tool['name'])}" for tool in matches)
+            print(
+                f"Tool '{display_safe_text(tool_name)}' exists in multiple sources. Use <source>/<name>: {choices}",
+                file=sys.stderr,
+            )
             return 1
 
         tool = matches[0]
@@ -143,7 +150,9 @@ def download_tool(name: str, destination: str | None, sources: list[ForgeSource]
         for cloner in cloners:
             cloner.cleanup()
 
-    print(f"Downloaded {tool['source']}/{display_safe_text(tool['name'])} to {display_safe_text(copied_path)}")
+    print(
+        f"Downloaded {display_safe_text(tool['source'])}/{display_safe_text(tool['name'])} to {display_safe_text(copied_path)}"
+    )
     print(f"Install dependencies with: pip install -r {display_safe_text(str(Path(copied_path) / 'requirements.txt'))}")
     return 0
 
@@ -155,7 +164,12 @@ def list_sources() -> int:
         print(display_safe_text(f"Could not load Atomic Forge sources: {error}"), file=sys.stderr)
         return 1
     for source in sources:
-        print(f"{source.name} {redact_source_url(source.url)} {source.branch} {source.tools_path}")
+        print(
+            " ".join(
+                display_safe_text(value)
+                for value in (source.name, redact_source_url(source.url), source.branch, source.tools_path)
+            )
+        )
     return 0
 
 
@@ -169,15 +183,15 @@ def add_source(name: str, url: str, branch: str, tools_path: str) -> int:
         print(display_safe_text(f"Could not load Atomic Forge sources: {error}"), file=sys.stderr)
         return 1
     if any(source.name == name for source in sources):
-        print(f"Source already exists: {name}", file=sys.stderr)
+        print(f"Source already exists: {display_safe_text(name)}", file=sys.stderr)
         return 1
     try:
         source = ForgeSource(name, url, branch, tools_path)
     except ValueError as error:
-        print(error, file=sys.stderr)
+        print(display_safe_text(str(error)), file=sys.stderr)
         return 1
     save_sources([*sources, source])
-    print(f"Added source '{name}'.")
+    print(f"Added source '{display_safe_text(name)}'.")
     return 0
 
 
@@ -189,10 +203,10 @@ def remove_source(name: str) -> int:
         return 1
     remaining_sources = [source for source in sources if source.name != name]
     if len(remaining_sources) == len(sources):
-        print(f"Unknown source '{name}'.", file=sys.stderr)
+        print(f"Unknown source '{display_safe_text(name)}'.", file=sys.stderr)
         return 1
     save_sources(remaining_sources)
-    print(f"Removed source '{name}'.")
+    print(f"Removed source '{display_safe_text(name)}'.")
     return 0
 
 

@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -10,6 +12,19 @@ TITLE_FONT: str = "big"
 TOOLS_SUBFOLDER: str = "atomic-forge/tools"
 GITHUB_BASE_URL: str = "https://github.com/eigenwise/atomic-agents.git"
 GITHUB_BRANCH: str = "main"
+_TERMINAL_ESCAPE_SEQUENCE = re.compile(r"\x1b\](?:[^\x07\x1b]|\x1b(?!\\))*(?:\x07|\x1b\\|$)|\x1b\[[0-?]*[ -/]*[@-~]")
+
+
+def _display_safe_source_url(url: str) -> str:
+    without_escape_sequences = _TERMINAL_ESCAPE_SEQUENCE.sub("", url)
+    return "".join(
+        (
+            " "
+            if unicodedata.category(character).startswith("C") or unicodedata.category(character) in {"Zl", "Zp"}
+            else character
+        )
+        for character in without_escape_sequences
+    ).strip()
 
 
 def source_url_has_userinfo(url: str) -> bool:
@@ -30,11 +45,15 @@ def redact_source_url(url: str) -> str:
     except ValueError:
         return "<redacted source URL>"
     _userinfo, separator, host = parsed_url.netloc.rpartition("@")
-    return urlunsplit(
-        parsed_url._replace(
-            netloc=parsed_url.netloc if _has_ssh_host_user(parsed_url) else f"***@{host}" if separator else parsed_url.netloc,
-            query="***" if parsed_url.query else "",
-            fragment="***" if parsed_url.fragment else "",
+    return _display_safe_source_url(
+        urlunsplit(
+            parsed_url._replace(
+                netloc=(
+                    parsed_url.netloc if _has_ssh_host_user(parsed_url) else f"***@{host}" if separator else parsed_url.netloc
+                ),
+                query="***" if parsed_url.query else "",
+                fragment="***" if parsed_url.fragment else "",
+            )
         )
     )
 
