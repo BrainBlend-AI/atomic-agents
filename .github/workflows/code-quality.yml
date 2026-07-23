@@ -40,6 +40,11 @@ jobs:
           uv sync
           uv run pip list  # Verify installation
 
+      - name: Verify Forge Index
+        run: |
+          uv run python atomic-forge/scripts/generate_index.py
+          git diff --exit-code -- atomic-forge/index.json
+
       - name: Verify Black Installation
         run: |
           uv run which black || echo "Black not found"
