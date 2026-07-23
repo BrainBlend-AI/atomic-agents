@@ -146,6 +146,35 @@ def test_get_forge_tools_falls_back_to_tool_directories(tmp_path):
     ]
 
 
+@pytest.mark.parametrize(
+    ("indexed_path", "error_type", "error_message"),
+    [
+        ("/outside", ValueError, "stay within configured tools directory"),
+        ("../outside", ValueError, "stay within configured tools directory"),
+        ("tools/../tools/calculator", ValueError, "stay within configured tools directory"),
+        ("tools/missing", NotADirectoryError, "not a directory"),
+        ("tools/not-a-tool.txt", NotADirectoryError, "not a directory"),
+    ],
+)
+def test_get_indexed_forge_tools_rejects_unsafe_tool_paths(tmp_path, indexed_path, error_type, error_message):
+    tools_path = tmp_path / "atomic-forge" / "tools"
+    (tools_path / "calculator").mkdir(parents=True)
+    (tools_path / "not-a-tool.txt").write_text("not a tool")
+    index_path = tools_path.parent / "index.json"
+    index_path.write_text(
+        json.dumps(
+            {
+                "schema": 1,
+                "name": "test",
+                "tools": [{"name": "calculator", "path": indexed_path}],
+            }
+        )
+    )
+
+    with pytest.raises(error_type, match=error_message):
+        AtomicToolManager.get_indexed_forge_tools(tmp_path, tools_path)
+
+
 def test_list_tools_reads_each_source_and_labels_tools(tmp_path, capsys):
     official = create_git_forge(tmp_path, "official", "calculator")
     team = create_git_forge(tmp_path, "team", "internal-search")

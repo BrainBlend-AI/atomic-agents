@@ -98,16 +98,7 @@ class AtomicToolManager:
     def get_forge_tools(repo_path: str, tools_path: str) -> list[dict]:
         index_path = Path(tools_path).parent / "index.json"
         if index_path.is_file():
-            with index_path.open(encoding="utf-8") as file:
-                index = json.load(file)
-            return [
-                {
-                    "name": tool["name"],
-                    "path": str(index_path.parent / tool["path"]),
-                    "description": tool.get("description", "No description available."),
-                }
-                for tool in index["tools"]
-            ]
+            return AtomicToolManager.get_indexed_forge_tools(repo_path, tools_path)
 
         return [
             {
@@ -127,14 +118,37 @@ class AtomicToolManager:
             index = json.load(file)
         if not isinstance(index.get("tools"), list):
             raise ValueError(f"Forge index has no tools list: {index_path}")
-        return [
-            {
-                "name": tool["name"],
-                "path": str(index_path.parent / tool["path"]),
-                "description": tool.get("description", "No description available."),
-            }
-            for tool in index["tools"]
-        ]
+
+        tools_directory = Path(tools_path).resolve()
+        if not tools_directory.is_dir():
+            raise NotADirectoryError(f"Configured tools directory is not a directory: {tools_path}")
+
+        indexed_tools = []
+        for tool in index["tools"]:
+            tool_path = tool.get("path") if isinstance(tool, dict) else None
+            if not isinstance(tool_path, str) or not tool_path:
+                raise ValueError(f"Forge index tool path must be a non-empty string: {index_path}")
+
+            relative_tool_path = Path(tool_path)
+            if relative_tool_path.is_absolute() or ".." in relative_tool_path.parts:
+                raise ValueError(f"Forge index tool path must stay within configured tools directory: {tool_path}")
+
+            resolved_tool_path = (index_path.parent / relative_tool_path).resolve()
+            try:
+                resolved_tool_path.relative_to(tools_directory)
+            except ValueError as error:
+                raise ValueError(f"Forge index tool path must stay within configured tools directory: {tool_path}") from error
+            if not resolved_tool_path.is_dir():
+                raise NotADirectoryError(f"Forge index tool path is not a directory: {tool_path}")
+
+            indexed_tools.append(
+                {
+                    "name": tool["name"],
+                    "path": str(resolved_tool_path),
+                    "description": tool.get("description", "No description available."),
+                }
+            )
+        return indexed_tools
 
     @staticmethod
     def get_tool_description(tool_path: str) -> str:
