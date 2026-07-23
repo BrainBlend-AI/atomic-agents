@@ -13,6 +13,7 @@ For deep material (MCP interop, distributing as a standalone package, advanced e
 
 - **This skill**: the user is creating a specific tool — wrapping an API, building a calculator, scraping a page, querying a DB.
 - **`framework` skill**: questions about Atomic Agents in general, or the user is doing something other than authoring a tool.
+- **`find-forge-tools` skill**: the user needs a capability and should check configured Forge sources for an existing tool first.
 
 ## Phase 1 — Clarify
 
