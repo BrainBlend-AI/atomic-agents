@@ -84,7 +84,7 @@ class AtomicToolManager:
             shutil.copytree(
                 tool_path,
                 local_tool_path,
-                ignore=shutil.ignore_patterns("requirements.txt", "pyproject.toml", ".coveragerc", "uv.lock"),
+                ignore=shutil.ignore_patterns(".coveragerc", "uv.lock"),
             )
             logging.info(f"Tool successfully copied to {local_tool_path}")
             return local_tool_path
