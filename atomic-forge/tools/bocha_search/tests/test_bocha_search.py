@@ -197,7 +197,7 @@ async def test_bocha_search_tool_concurrent_queries(mock_aiohttp_session):
 @pytest.mark.asyncio
 async def test_bocha_search_tool_config_params_real_case_cn(mock_aiohttp_session):
     """Test that config params freshness/include/exclude are included in request payload with Chinese websites"""
-    mock_api_key = os.getenv("BOCHA_API_KEY")
+    mock_api_key = "KEY"
 
     # Tool configuration with domestic websites
     tool = BoChaSearchTool(
