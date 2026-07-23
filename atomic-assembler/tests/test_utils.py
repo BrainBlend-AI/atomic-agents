@@ -2,10 +2,11 @@ import json
 from pathlib import Path
 
 import git
+import pytest
 
 from atomic_assembler import main as assembler_main
 from atomic_assembler import utils as assembler_utils
-from atomic_assembler.constants import DEFAULT_SOURCES, ForgeSource
+from atomic_assembler.constants import DEFAULT_SOURCES, ForgeSource, redact_source_url
 from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner, load_sources, save_sources
 
 
@@ -79,6 +80,53 @@ def test_source_commands_create_and_update_config(tmp_path, monkeypatch, capsys)
     assert assembler_main.remove_source("team") == 0
     assert load_sources(config_path) == list(DEFAULT_SOURCES)
     assert "Added source 'team'." in capsys.readouterr().out
+
+
+def test_add_source_rejects_url_with_userinfo(tmp_path, monkeypatch, capsys):
+    config_path = tmp_path / ".atomic-assembler" / "sources.json"
+    monkeypatch.setattr(assembler_utils, "SOURCES_CONFIG_PATH", config_path)
+
+    assert assembler_main.add_source("team", "https://user:super-secret@example.com/forge.git", "main", "tools") == 1
+
+    assert not config_path.exists()
+    error = capsys.readouterr().err
+    assert "super-secret" not in error
+    assert "https://***@example.com/forge.git" in error
+
+
+def test_load_sources_rejects_legacy_userinfo_without_exposing_credentials(tmp_path):
+    config_path = tmp_path / "sources.json"
+    config_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "team",
+                    "url": "https://user:super-secret@example.com/forge.git",
+                    "branch": "main",
+                    "tools_path": "tools",
+                }
+            ]
+        )
+    )
+
+    with pytest.raises(ValueError) as error:
+        load_sources(config_path)
+
+    assert "super-secret" not in str(error.value)
+    assert "https://***@example.com/forge.git" in str(error.value)
+
+
+def test_list_sources_redacts_userinfo(monkeypatch, capsys):
+    source = ForgeSource("team", "https://example.com/forge.git", "main", "tools")
+    object.__setattr__(source, "url", "https://user:super-secret@example.com/forge.git")
+    monkeypatch.setattr(assembler_main, "load_sources", lambda: [source])
+
+    assert assembler_main.list_sources() == 0
+
+    output = capsys.readouterr().out
+    assert "super-secret" not in output
+    assert "https://***@example.com/forge.git" in output
+    assert redact_source_url(source.url) in output
 
 
 def test_get_forge_tools_falls_back_to_tool_directories(tmp_path):

@@ -5,7 +5,7 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from atomic_assembler.app import AtomicAssembler
-from atomic_assembler.constants import ForgeSource
+from atomic_assembler.constants import ForgeSource, redact_source_url
 from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner, load_sources, save_sources
 
 
@@ -153,7 +153,7 @@ def list_sources() -> int:
         print(f"Could not load Atomic Forge sources: {error}", file=sys.stderr)
         return 1
     for source in sources:
-        print(f"{source.name} {source.url} {source.branch} {source.tools_path}")
+        print(f"{source.name} {redact_source_url(source.url)} {source.branch} {source.tools_path}")
     return 0
 
 
@@ -169,7 +169,12 @@ def add_source(name: str, url: str, branch: str, tools_path: str) -> int:
     if any(source.name == name for source in sources):
         print(f"Source already exists: {name}", file=sys.stderr)
         return 1
-    save_sources([*sources, ForgeSource(name, url, branch, tools_path)])
+    try:
+        source = ForgeSource(name, url, branch, tools_path)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 1
+    save_sources([*sources, source])
     print(f"Added source '{name}'.")
     return 0
 

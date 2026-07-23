@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlsplit, urlunsplit
 
 PRIMARY_COLOR: str = "#AAAA00"
 SECONDARY_COLOR: str = "#AA00AA"
@@ -11,6 +12,24 @@ GITHUB_BASE_URL: str = "https://github.com/eigenwise/atomic-agents.git"
 GITHUB_BRANCH: str = "main"
 
 
+def source_url_has_userinfo(url: str) -> bool:
+    try:
+        return "@" in urlsplit(url).netloc
+    except ValueError:
+        return False
+
+
+def redact_source_url(url: str) -> str:
+    try:
+        parsed_url = urlsplit(url)
+    except ValueError:
+        return "<redacted source URL>"
+    _userinfo, separator, host = parsed_url.netloc.rpartition("@")
+    if not separator:
+        return url
+    return urlunsplit(parsed_url._replace(netloc=f"***@{host}"))
+
+
 @dataclass(frozen=True)
 class ForgeSource:
     """A git repository that exposes an Atomic Forge tool index."""
@@ -19,6 +38,13 @@ class ForgeSource:
     url: str
     branch: str
     tools_path: str
+
+    def __post_init__(self) -> None:
+        if source_url_has_userinfo(self.url):
+            raise ValueError(
+                f"Forge source URLs cannot include userinfo: {redact_source_url(self.url)}. "
+                "Use Git credential helpers for private source access."
+            )
 
     def to_dict(self) -> dict[str, str]:
         return {
