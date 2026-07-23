@@ -123,6 +123,21 @@ def test_download_tool_from_second_source(tmp_path, capsys):
     assert "Downloaded team/internal-search" in capsys.readouterr().out
 
 
+def test_download_tool_defaults_to_tool_directory_in_current_working_directory(tmp_path, monkeypatch, capsys):
+    source = create_git_forge(tmp_path, "official", "calculator")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(assembler_main, "load_sources", lambda: [source])
+    monkeypatch.setattr("sys.argv", ["atomic", "download", "calculator"])
+
+    assert assembler_main.main() == 0
+
+    destination = tmp_path / "calculator"
+    assert (destination / "tool" / "calculator.py").is_file()
+    assert (destination / "pyproject.toml").is_file()
+    assert (destination / "requirements.txt").is_file()
+    assert "Downloaded official/calculator" in capsys.readouterr().out
+
+
 def test_download_tool_requires_source_qualification_for_ambiguous_names(tmp_path, capsys):
     official = create_git_forge(tmp_path, "official", "calculator")
     team = create_git_forge(tmp_path, "team", "calculator")

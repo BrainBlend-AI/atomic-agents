@@ -128,7 +128,7 @@ def download_tool(name: str, destination: str | None, sources: list[ForgeSource]
             return 1
 
         tool = matches[0]
-        target = Path(destination) if destination else Path(tool["path"]).name
+        target = Path(destination) if destination else Path.cwd() / Path(tool["path"]).name
         if target.exists():
             print(f"Destination already exists: {target}", file=sys.stderr)
             return 1
