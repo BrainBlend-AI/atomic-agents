@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import git
@@ -145,6 +146,30 @@ def test_add_source_rejects_url_with_userinfo(tmp_path, monkeypatch, capsys):
     error = capsys.readouterr().err
     assert "super-secret" not in error
     assert "https://***@example.com/forge.git" in error
+
+
+def test_add_source_accepts_ssh_uri(tmp_path, monkeypatch):
+    config_path = tmp_path / ".atomic-assembler" / "sources.json"
+    monkeypatch.setattr(assembler_utils, "SOURCES_CONFIG_PATH", config_path)
+    source_url = "ssh://git@github.com/eigenwise/atomic-agents.git"
+
+    assert assembler_main.add_source("team", source_url, "main", "tools") == 0
+    assert load_sources(config_path) == [*DEFAULT_SOURCES, ForgeSource("team", source_url, "main", "tools")]
+
+
+def test_add_source_rejects_ssh_password_without_exposing_it(tmp_path, monkeypatch, capsys):
+    config_path = tmp_path / ".atomic-assembler" / "sources.json"
+    monkeypatch.setattr(assembler_utils, "SOURCES_CONFIG_PATH", config_path)
+
+    assert (
+        assembler_main.add_source("team", "ssh://git:super-secret@github.com/eigenwise/atomic-agents.git", "main", "tools")
+        == 1
+    )
+
+    assert not config_path.exists()
+    error = capsys.readouterr().err
+    assert "super-secret" not in error
+    assert "ssh://***@github.com/eigenwise/atomic-agents.git" in error
 
 
 @pytest.mark.parametrize(
@@ -366,6 +391,22 @@ def test_download_tool_defaults_to_tool_directory_in_current_working_directory(t
     assert (destination / "pyproject.toml").is_file()
     assert (destination / "requirements.txt").is_file()
     assert "Downloaded official/calculator" in capsys.readouterr().out
+
+
+def test_download_default_destination_and_success_output_hide_tool_path_controls(tmp_path, monkeypatch, capsys):
+    control_sequence = "\N{RIGHT-TO-LEFT OVERRIDE}" if os.name == "nt" else "\x1b]52;c;clipboard\x07"
+    tool_directory_name = f"calculator{control_sequence}clipboard"
+    source = create_git_forge(tmp_path, "official", tool_directory_name, index_name="calculator")
+    monkeypatch.chdir(tmp_path)
+
+    assert assembler_main.download_tool("calculator", None, [source]) == 0
+
+    assert (tmp_path / tool_directory_name / "tool" / f"{tool_directory_name}.py").is_file()
+    output = capsys.readouterr().out
+    assert "Downloaded official/calculator" in output
+    assert control_sequence not in output
+    assert "\x1b" not in output
+    assert "\x07" not in output
 
 
 def test_download_tool_requires_source_qualification_for_ambiguous_names(tmp_path, capsys):

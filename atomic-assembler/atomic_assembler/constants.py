@@ -14,9 +14,14 @@ GITHUB_BRANCH: str = "main"
 
 def source_url_has_userinfo(url: str) -> bool:
     try:
-        return "@" in urlsplit(url).netloc
+        parsed_url = urlsplit(url)
     except ValueError:
         return False
+    return "@" in parsed_url.netloc and not _has_ssh_host_user(parsed_url)
+
+
+def _has_ssh_host_user(parsed_url) -> bool:
+    return parsed_url.scheme.lower() == "ssh" and bool(parsed_url.username) and parsed_url.password is None
 
 
 def redact_source_url(url: str) -> str:
@@ -27,7 +32,7 @@ def redact_source_url(url: str) -> str:
     _userinfo, separator, host = parsed_url.netloc.rpartition("@")
     return urlunsplit(
         parsed_url._replace(
-            netloc=f"***@{host}" if separator else parsed_url.netloc,
+            netloc=parsed_url.netloc if _has_ssh_host_user(parsed_url) else f"***@{host}" if separator else parsed_url.netloc,
             query="***" if parsed_url.query else "",
             fragment="***" if parsed_url.fragment else "",
         )
@@ -39,7 +44,7 @@ def validate_source_url(url: str) -> None:
         parsed_url = urlsplit(url)
     except ValueError as error:
         raise ValueError("Forge source URL is invalid: <redacted source URL>") from error
-    if "@" in parsed_url.netloc or parsed_url.query or parsed_url.fragment:
+    if source_url_has_userinfo(url) or parsed_url.query or parsed_url.fragment:
         raise ValueError(
             f"Forge source URLs cannot include userinfo, query parameters, or fragments: {redact_source_url(url)}. "
             "Use Git credential helpers for private source access."
