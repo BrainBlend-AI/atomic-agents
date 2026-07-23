@@ -81,6 +81,9 @@ jobs:
       - name: Install Forge test dependencies
         run: uv sync --all-packages
 
+      - name: Run Forge conformance suite
+        run: uv run pytest atomic-forge/conformance
+
       - name: Run every Forge test suite
         run: |
           for tool in atomic-forge/tools/*; do
