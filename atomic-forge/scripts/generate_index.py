@@ -50,7 +50,7 @@ def build_index() -> dict[str, object]:
 
 
 def main() -> None:
-    INDEX_PATH.write_text(json.dumps(build_index(), indent=2) + "\n", encoding="utf-8")
+    INDEX_PATH.write_text(json.dumps(build_index(), indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 if __name__ == "__main__":
