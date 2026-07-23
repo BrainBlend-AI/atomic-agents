@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import shutil
@@ -43,55 +44,80 @@ class AtomicToolManager:
 
     @staticmethod
     def get_atomic_tools(tools_path: str) -> list[dict]:
-        """
-        Get a list of atomic tools from the given tools path.
-
-        Args:
-            tools_path (str): The path to the directory containing atomic tools.
-
-        Returns:
-            list[dict]: A list of dictionaries containing tool information.
-        """
         tools = []
-        for item in os.listdir(tools_path):
+        for item in sorted(os.listdir(tools_path)):
             item_path = os.path.join(tools_path, item)
             if os.path.isdir(item_path):
-                # Convert snake_case to Title Case
-                tool_name = " ".join(word.capitalize() for word in item.split("_"))
                 tools.append(
                     {
-                        "name": tool_name,
+                        "name": " ".join(word.capitalize() for word in item.split("_")),
                         "path": item_path,
                     }
                 )
         return tools
 
     @staticmethod
+    def get_forge_tools(repo_path: str, tools_path: str) -> list[dict]:
+        index_path = Path(repo_path) / "atomic-forge" / "index.json"
+        if index_path.is_file():
+            with index_path.open(encoding="utf-8") as file:
+                index = json.load(file)
+            return [
+                {
+                    "name": tool["name"],
+                    "path": str(Path(repo_path) / "atomic-forge" / tool["path"]),
+                    "description": tool.get("description", "No description available."),
+                }
+                for tool in index["tools"]
+            ]
+
+        return [
+            {
+                "name": Path(tool["path"]).name.replace("_", "-"),
+                "path": tool["path"],
+                "description": AtomicToolManager.get_tool_description(tool["path"]),
+            }
+            for tool in AtomicToolManager.get_atomic_tools(tools_path)
+        ]
+
+    @staticmethod
+    def get_tool_description(tool_path: str) -> str:
+        try:
+            readme = Path(tool_path, "README.md").read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return "No description available."
+
+        for line in readme.splitlines():
+            description = line.strip()
+            if description and not description.startswith("#"):
+                return description
+        return "No description available."
+
+    @staticmethod
     def copy_atomic_tool(tool_path, destination):
         logging.info(f"copy_atomic_tool called with tool_path: {tool_path}, destination: {destination}")
         try:
-            tool_name = os.path.basename(tool_path)
-            local_tool_path = os.path.join(destination, tool_name)
-            logging.info(f"Copying tool from {tool_path} to {local_tool_path}")
-
-            if not os.path.exists(tool_path):
-                logging.error(f"Source path does not exist: {tool_path}")
-                raise FileNotFoundError(f"Source path does not exist: {tool_path}")
-
-            if not os.path.exists(destination):
-                logging.error(f"Destination path does not exist: {destination}")
-                raise FileNotFoundError(f"Destination path does not exist: {destination}")
-
-            shutil.copytree(
-                tool_path,
-                local_tool_path,
-                ignore=shutil.ignore_patterns(".coveragerc", "uv.lock"),
-            )
-            logging.info(f"Tool successfully copied to {local_tool_path}")
-            return local_tool_path
+            local_tool_path = os.path.join(destination, os.path.basename(tool_path))
+            return AtomicToolManager.copy_atomic_tool_to_destination(tool_path, local_tool_path)
         except Exception as e:
             logging.error(f"Error copying tool: {str(e)}", exc_info=True)
             raise Exception(f"Error copying tool: {e}")
+
+    @staticmethod
+    def copy_atomic_tool_to_destination(tool_path, destination):
+        logging.info(f"Copying tool from {tool_path} to {destination}")
+        if not os.path.exists(tool_path):
+            raise FileNotFoundError(f"Source path does not exist: {tool_path}")
+        if os.path.exists(destination):
+            raise FileExistsError(f"Destination already exists: {destination}")
+
+        shutil.copytree(
+            tool_path,
+            destination,
+            ignore=shutil.ignore_patterns(".coveragerc", "uv.lock"),
+        )
+        logging.info(f"Tool successfully copied to {destination}")
+        return str(destination)
 
     @staticmethod
     def load_env_file(file_path: Path) -> dict:
