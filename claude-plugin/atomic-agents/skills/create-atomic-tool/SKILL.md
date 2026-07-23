@@ -209,14 +209,25 @@ result = tool.run(call)
 
 ## Phase 6 — Verify
 
-For a forge package, run the package smoke test and the forge conformance suite from the repository root:
+For an in-project tool, run a self-contained smoke test from the project root:
 
 ```bash
 uv run python -c "from <project>.tools.<tool_name>_tool import <ToolName>Tool, <ToolName>Input; t = <ToolName>Tool(); print(t.run(<ToolName>Input(...)))"
+```
+
+For a standalone Forge package, keep the package contract from `../framework/references/tools.md`: `pyproject.toml`, `README.md`, `requirements.txt`, `tool/`, and `tests/`. Run its own tests from the package root so the smoke test uses the package's declared dependencies:
+
+```bash
+uv run pytest tests
+```
+
+Only run the repository conformance suite after contributing the package to Forge. First place it under `atomic-forge/tools/<tool_name>` and regenerate `atomic-forge/index.json`, then run:
+
+```bash
 uv run pytest atomic-forge/conformance
 ```
 
-The conformance suite must pass against the generated package before handoff. It checks the required forge layout, clean imports, schema and config contracts, explicit `BaseTool` generics, runtime dependency parity, and index metadata. If imports fail with the docstring error, add the docstring on the schema. If `self.input_schema` is `None`, the generic parameters are missing — write `class FooTool(BaseTool[FooInput, FooOutput]):`, not `class FooTool(BaseTool)`.
+The conformance suite checks the required forge layout, clean imports, schema and config contracts, explicit `BaseTool` generics, runtime dependency parity, and index metadata. If imports fail with the docstring error, add the docstring on the schema. If `self.input_schema` is `None`, the generic parameters are missing — write `class FooTool(BaseTool[FooInput, FooOutput]):`, not `class FooTool(BaseTool)`.
 
 ## Phase 7 — Hand off
 
@@ -227,7 +238,7 @@ Tell the user:
 - Optional next steps:
   - The agent that calls it → `create-atomic-agent` skill.
   - Multi-agent wiring around the tool → `../framework/references/orchestration.md`.
-  - MCP interop or packaging the tool for distribution → `../framework/references/tools.md`.
+  - MCP interop, Forge package structure, or discovering/downloading Forge tools → `../framework/references/tools.md`.
 
 ## Anti-patterns
 
