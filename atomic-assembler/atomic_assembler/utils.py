@@ -3,27 +3,70 @@ import logging
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import git
 import yaml
-from pathlib import Path
-from atomic_assembler.constants import GITHUB_BRANCH, TOOLS_SUBFOLDER
+
+from atomic_assembler.constants import DEFAULT_SOURCES, GITHUB_BRANCH, TOOLS_SUBFOLDER, ForgeSource
+
+SOURCES_CONFIG_PATH = Path.home() / ".atomic-assembler" / "sources.json"
+
+
+def source_config_path() -> Path:
+    return SOURCES_CONFIG_PATH
+
+
+def load_sources(config_path: Path | None = None) -> list[ForgeSource]:
+    config_path = config_path or source_config_path()
+    if not config_path.is_file():
+        return list(DEFAULT_SOURCES)
+
+    with config_path.open(encoding="utf-8") as file:
+        configured_sources = json.load(file)
+    if isinstance(configured_sources, dict):
+        configured_sources = configured_sources.get("sources")
+    if not isinstance(configured_sources, list):
+        raise ValueError("sources.json must contain a list of sources")
+
+    sources = []
+    for source in configured_sources:
+        if not isinstance(source, dict):
+            raise ValueError("Each configured source must be an object")
+        try:
+            name = source["name"]
+            url = source["url"]
+        except KeyError as error:
+            raise ValueError(f"Configured source is missing {error.args[0]}") from error
+        branch = source.get("branch", GITHUB_BRANCH)
+        tools_path = source.get("tools_path", TOOLS_SUBFOLDER)
+        if not all(isinstance(value, str) and value for value in (name, url, branch, tools_path)):
+            raise ValueError("Configured source fields must be non-empty strings")
+        sources.append(ForgeSource(name, url, branch, tools_path))
+    return sources
+
+
+def save_sources(sources: list[ForgeSource], config_path: Path | None = None) -> None:
+    config_path = config_path or source_config_path()
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(json.dumps([source.to_dict() for source in sources], indent=2) + "\n", encoding="utf-8")
 
 
 class GithubRepoCloner:
-    def __init__(self, base_url: str, branch: str = GITHUB_BRANCH):
+    def __init__(self, base_url: str, branch: str = GITHUB_BRANCH, tools_path: str = TOOLS_SUBFOLDER):
         self.repo_url = base_url
         self.branch = branch
         self.temp_dir = tempfile.mkdtemp()
-        self.repo_path = os.path.join(self.temp_dir, os.path.basename(base_url).replace(".git", ""))
-        self.tools_path = os.path.join(self.repo_path, TOOLS_SUBFOLDER)
+        repo_name = Path(base_url.rstrip("/")).name.removesuffix(".git")
+        self.repo_path = os.path.join(self.temp_dir, repo_name)
+        self.tools_path = os.path.join(self.repo_path, tools_path)
 
     def clone(self):
         try:
             _ = git.Repo.clone_from(self.repo_url, self.repo_path, branch=self.branch)
             logging.info(f"Repository cloned to {self.repo_path} on branch {self.branch}")
-        except git.GitCommandError as e:
-            logging.error(f"Failed to clone repository: {e}")
+        except git.GitCommandError as error:
+            logging.error(f"Failed to clone repository: {error}")
             raise
 
     def cleanup(self):
@@ -35,12 +78,12 @@ class AtomicToolManager:
     def read_tool_config(tool_path):
         config_path = os.path.join(tool_path, "config.yaml")
         try:
-            with open(config_path, "r") as f:
-                return yaml.safe_load(f)
+            with open(config_path, "r") as file:
+                return yaml.safe_load(file)
         except FileNotFoundError:
             return None
-        except Exception as e:
-            return f"Error reading config file: {e}"
+        except Exception as error:
+            return f"Error reading config file: {error}"
 
     @staticmethod
     def get_atomic_tools(tools_path: str) -> list[dict]:
@@ -48,24 +91,19 @@ class AtomicToolManager:
         for item in sorted(os.listdir(tools_path)):
             item_path = os.path.join(tools_path, item)
             if os.path.isdir(item_path):
-                tools.append(
-                    {
-                        "name": " ".join(word.capitalize() for word in item.split("_")),
-                        "path": item_path,
-                    }
-                )
+                tools.append({"name": " ".join(word.capitalize() for word in item.split("_")), "path": item_path})
         return tools
 
     @staticmethod
     def get_forge_tools(repo_path: str, tools_path: str) -> list[dict]:
-        index_path = Path(repo_path) / "atomic-forge" / "index.json"
+        index_path = Path(tools_path).parent / "index.json"
         if index_path.is_file():
             with index_path.open(encoding="utf-8") as file:
                 index = json.load(file)
             return [
                 {
                     "name": tool["name"],
-                    "path": str(Path(repo_path) / "atomic-forge" / tool["path"]),
+                    "path": str(index_path.parent / tool["path"]),
                     "description": tool.get("description", "No description available."),
                 }
                 for tool in index["tools"]
@@ -78,6 +116,24 @@ class AtomicToolManager:
                 "description": AtomicToolManager.get_tool_description(tool["path"]),
             }
             for tool in AtomicToolManager.get_atomic_tools(tools_path)
+        ]
+
+    @staticmethod
+    def get_indexed_forge_tools(repo_path: str, tools_path: str) -> list[dict]:
+        index_path = Path(tools_path).parent / "index.json"
+        if not index_path.is_file():
+            raise FileNotFoundError(f"Missing forge index: {index_path}")
+        with index_path.open(encoding="utf-8") as file:
+            index = json.load(file)
+        if not isinstance(index.get("tools"), list):
+            raise ValueError(f"Forge index has no tools list: {index_path}")
+        return [
+            {
+                "name": tool["name"],
+                "path": str(index_path.parent / tool["path"]),
+                "description": tool.get("description", "No description available."),
+            }
+            for tool in index["tools"]
         ]
 
     @staticmethod
@@ -99,9 +155,9 @@ class AtomicToolManager:
         try:
             local_tool_path = os.path.join(destination, os.path.basename(tool_path))
             return AtomicToolManager.copy_atomic_tool_to_destination(tool_path, local_tool_path)
-        except Exception as e:
-            logging.error(f"Error copying tool: {str(e)}", exc_info=True)
-            raise Exception(f"Error copying tool: {e}")
+        except Exception as error:
+            logging.error(f"Error copying tool: {error}", exc_info=True)
+            raise Exception(f"Error copying tool: {error}") from error
 
     @staticmethod
     def copy_atomic_tool_to_destination(tool_path, destination):
@@ -111,17 +167,12 @@ class AtomicToolManager:
         if os.path.exists(destination):
             raise FileExistsError(f"Destination already exists: {destination}")
 
-        shutil.copytree(
-            tool_path,
-            destination,
-            ignore=shutil.ignore_patterns(".coveragerc", "uv.lock"),
-        )
+        shutil.copytree(tool_path, destination, ignore=shutil.ignore_patterns(".coveragerc", "uv.lock"))
         logging.info(f"Tool successfully copied to {destination}")
         return str(destination)
 
     @staticmethod
     def load_env_file(file_path: Path) -> dict:
-        """Load environment variables from a .env file."""
         env_vars = {}
         if file_path.exists():
             with open(file_path, "r") as file:
@@ -134,20 +185,11 @@ class AtomicToolManager:
 
     @staticmethod
     def read_readme(tool_path: str) -> str:
-        """
-        Read the README.md file from the tool directory.
-
-        Args:
-            tool_path (str): The path to the tool directory.
-
-        Returns:
-            str: The contents of the README.md file, or an error message if not found.
-        """
         readme_path = os.path.join(tool_path, "README.md")
         try:
-            with open(readme_path, "r", encoding="utf-8") as f:
-                return f.read()
+            with open(readme_path, "r", encoding="utf-8") as file:
+                return file.read()
         except FileNotFoundError:
             return "README.md not found for this tool."
-        except Exception as e:
-            return f"Error reading README.md: {str(e)}"
+        except Exception as error:
+            return f"Error reading README.md: {error}"
