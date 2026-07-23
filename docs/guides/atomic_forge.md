@@ -42,11 +42,14 @@ python atomic-forge/scripts/generate_index.py
 
 The generator reads each tool's `pyproject.toml` and writes the Forge `index.json`. Commit both the tools and the generated index. A private Forge uses the same layout and does not need a registry service.
 
-Add it to your local source list with a name and Git URL:
+Add it to your local source list with a name and Git URL. For the standalone layout above, pass the root `tools/` directory explicitly:
 
 ```bash
-atomic sources add company https://git.example.com/company/atomic-forge.git
+atomic sources add company https://git.example.com/company/atomic-forge.git \
+  --tools-path tools
 ```
+
+Omitting `--tools-path` uses the official repository layout, where tools live under `atomic-forge/tools`.
 
 For a non-default branch or tools directory, pass the shipped options:
 
