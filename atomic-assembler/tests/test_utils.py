@@ -224,7 +224,7 @@ def test_download_tool_requires_source_qualification_for_ambiguous_names(tmp_pat
     assert "Use <source>/<name>" in capsys.readouterr().err
 
 
-def test_list_tools_skips_bad_source(tmp_path, capsys):
+def test_list_tools_returns_success_with_partial_source_failure(tmp_path, capsys):
     official = create_git_forge(tmp_path, "official", "calculator")
     missing = ForgeSource("missing", (tmp_path / "missing").as_uri(), "main", "atomic-forge/tools")
 
@@ -233,6 +233,18 @@ def test_list_tools_skips_bad_source(tmp_path, capsys):
     captured = capsys.readouterr()
     assert "official/calculator" in captured.out
     assert "Could not read source 'missing'" in captured.err
+
+
+def test_list_tools_returns_failure_when_all_sources_fail(tmp_path, capsys):
+    first_missing = ForgeSource("first", (tmp_path / "first").as_uri(), "main", "atomic-forge/tools")
+    second_missing = ForgeSource("second", (tmp_path / "second").as_uri(), "main", "atomic-forge/tools")
+
+    assert assembler_main.list_tools([first_missing, second_missing]) == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "Could not read source 'first'" in captured.err
+    assert "Could not read source 'second'" in captured.err
 
 
 def create_git_forge(tmp_path, name, tool_name):

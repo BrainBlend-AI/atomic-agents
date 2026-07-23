@@ -55,20 +55,22 @@ def source_tools(source: ForgeSource) -> list[dict]:
         cloner.cleanup()
 
 
-def get_forge_tools(sources: list[ForgeSource] | None = None) -> tuple[list[dict], list[str]]:
+def get_forge_tools(sources: list[ForgeSource] | None = None) -> tuple[list[dict], list[str], int]:
     tools = []
     failures = []
+    successful_sources = 0
     for source in sources or load_sources():
         try:
             tools.extend(source_tools(source))
+            successful_sources += 1
         except Exception as error:
             failures.append(f"Could not read source '{source.name}': {error}")
-    return tools, failures
+    return tools, failures, successful_sources
 
 
 def list_tools(sources: list[ForgeSource] | None = None) -> int:
     try:
-        tools, failures = get_forge_tools(sources)
+        tools, failures, successful_sources = get_forge_tools(sources)
     except Exception as error:
         print(f"Could not load Atomic Forge sources: {error}", file=sys.stderr)
         return 1
@@ -77,7 +79,7 @@ def list_tools(sources: list[ForgeSource] | None = None) -> int:
         print(failure, file=sys.stderr)
     for tool in tools:
         print(f"{tool['source']}/{tool['name']} - {tool['description']}")
-    return 0
+    return 0 if successful_sources else 1
 
 
 def matching_tools(name: str, tools: list[dict]) -> list[dict]:
