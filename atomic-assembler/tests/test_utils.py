@@ -1,6 +1,23 @@
 from pathlib import Path
 
-from atomic_assembler.utils import AtomicToolManager
+from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner
+
+
+def test_github_repo_cloner_uses_configured_branch(monkeypatch):
+    cloned = {}
+
+    def clone_from(repo_url, repo_path, branch):
+        cloned.update(repo_url=repo_url, repo_path=repo_path, branch=branch)
+
+    monkeypatch.setattr("atomic_assembler.utils.git.Repo.clone_from", clone_from)
+    cloner = GithubRepoCloner("https://github.com/example/tools.git", branch="feature/test")
+
+    try:
+        cloner.clone()
+    finally:
+        cloner.cleanup()
+
+    assert cloned["branch"] == "feature/test"
 
 
 def test_copy_atomic_tool_keeps_dependency_metadata(tmp_path):
