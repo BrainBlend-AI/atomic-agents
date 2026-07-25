@@ -1,6 +1,6 @@
 # Key Modules
 
-*Last Updated: 2026-07-05*
+*Last Updated: 2026-07-23*
 
 ## Core framework — `atomic-agents/atomic_agents/`
 
@@ -46,18 +46,20 @@
 
 ### atomic-assembler (CLI)
 - **Location:** `atomic-assembler/atomic_assembler/`
-- **Purpose:** Textual TUI to browse and install forge tools into a user project.
-- **Key files:** `main.py` (`main()`; argparse `--enable-logging`, `--version`), `app.py`
-  (`AtomicAssembler(App)`), `screens/` (`main_menu`, `atomic_tool_explorer`, `file_explorer`,
-  `tool_info_screen`), `widgets/`, `utils.py` (`GithubRepoCloner`, `AtomicToolManager`),
-  `constants.py` (GitHub URL, `TOOLS_SUBFOLDER`).
+- **Purpose:** Textual TUI plus the `atomic` command-line client for vendoring Forge tool packages.
+- **Key files:** `main.py` (argparse commands and TUI entry), `app.py` (`AtomicAssembler(App)`),
+  `screens/`, `widgets/`, `utils.py` (source clone/index resolution/download), `constants.py`
+  (`ForgeSource`, source validation and display safety).
+- **Source model:** configured sources live in `~/.atomic-assembler/sources.json`; each source names a
+  Git URL, branch, and tools directory. Git authentication stays with SSH or the user’s credential helper.
 
 ### atomic-forge (tools)
-- **Location:** `atomic-forge/tools/`
-- **Purpose:** 13 standalone tools, each an independent mini-project following the `BaseTool` pattern,
-  copied into user projects by the assembler (build files such as `pyproject.toml` / `requirements.txt`
-  / `uv.lock` are skipped on copy).
-- **Authoring guide:** `atomic-forge/guides/tool_structure.md`.
+- **Location:** `atomic-forge/`
+- **Purpose:** a vendored-code registry of 13 standalone tools. `index.json` is generated from package
+  metadata by `scripts/generate_index.py`; `conformance/` verifies package structure and metadata.
+  CI requires a fresh index and runs every tool’s test suite.
+- **Authoring guide:** `atomic-forge/guides/tool_structure.md`; user-facing workflow:
+  `docs/guides/atomic_forge.md`.
 
 ### atomic-examples
 - **Location:** `atomic-examples/`

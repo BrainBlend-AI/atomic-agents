@@ -1,10 +1,11 @@
 # Codebase Map — Atomic Agents
 
-*Last Updated: 2026-07-18*
+*Last Updated: 2026-07-23*
 
 Atomic Agents is a lightweight, modular Python framework for building agentic AI applications as
 composable, schema-driven building blocks (built on Instructor + Pydantic). This repository is a
-`uv`-workspace **monorepo**: the core framework, a TUI tool installer, a tool library, and examples.
+`uv`-workspace **monorepo**: the core framework, a Forge CLI client, a vendored-code tool registry, and
+examples.
 
 **Stack:** Python ≥3.12 · Instructor · Pydantic v2 · LiteLLM · MCP · Textual · uv + Hatchling
 **Shape:** Monorepo — `atomic-agents/` (core lib) · `atomic-assembler/` (CLI) · `atomic-forge/` (tools) · `atomic-examples/` (examples)
@@ -24,6 +25,7 @@ composable, schema-driven building blocks (built on Instructor + Pydantic). This
 | [patterns.md](./patterns.md) | Atomicity, schema-driven I/O, context providers, testing |
 | [coding-style.md](./coding-style.md) | Formatting, linting, naming conventions |
 | [onboarding.md](./onboarding.md) | Setup with uv, tests, docs, common tasks |
+| [structure.md](./structure.md) | Layout intent: where new code goes, non-obvious conventions |
 
 ## How to use this map
 

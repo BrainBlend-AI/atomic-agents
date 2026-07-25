@@ -1,6 +1,6 @@
 # Patterns & Conventions
 
-*Last Updated: 2026-07-05*
+*Last Updated: 2026-07-23*
 
 ## Atomicity
 Build with small, single-purpose, composable parts ("LEGO blocks"): each agent, tool, and context
@@ -21,8 +21,11 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
 ## Tools
 - A tool is a `BaseTool[InputSchema, OutputSchema]` with a `run(params) -> OutputSchema` method and an
   optional `BaseToolConfig` (override `title`/`description` to disambiguate similar tools).
-- Forge tool layout (`atomic-forge/guides/tool_structure.md`): imports → input schema → output
-  schema(s) → config → tool class + logic → example usage.
+- A Forge tool is a complete, vendorable package: source, tests, README, `pyproject.toml`, and
+  `requirements.txt`. Downloaded tools are owned by the receiving project, never installed as hidden
+  framework runtime behavior.
+- Forge package layout and conformance: `atomic-forge/guides/tool_structure.md` and
+  `atomic-forge/conformance/`. Check the Forge catalog before generating a tool from scratch.
 
 ## Memory
 - `BaseChatHistory` (`context/base_chat_history.py`) is an interface-only ABC declaring the memory

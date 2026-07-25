@@ -1,6 +1,6 @@
 # Directory Structure
 
-*Last Updated: 2026-07-18*
+*Last Updated: 2026-07-23*
 
 ## Root Layout
 
@@ -14,11 +14,14 @@ atomic-agents/                  # repo root (uv workspace)
 │       ├── connectors/mcp/     #     Model Context Protocol integration
 │       └── utils/              #     token counter, tool-message formatting
 │   └── tests/                  #   pytest suite (agents/, base/, context/, connectors/, utils/)
-├── atomic-assembler/           # Textual TUI (`atomic` command) to install forge tools
-│   └── atomic_assembler/       #   main.py, app.py, screens/, widgets/, utils.py, constants.py
-├── atomic-forge/               # library of standalone tools (NOT a package)
-│   ├── tools/<tool>/           #   one folder per tool: tool/<tool>.py, tests/, pyproject.toml
-│   └── guides/                 #   tool authoring guides (e.g. tool_structure.md)
+├── atomic-assembler/           # Textual TUI + noninteractive `atomic` Forge client
+│   └── atomic_assembler/       #   main.py, source/index/download utilities, TUI screens/widgets
+├── atomic-forge/               # vendored-code tool registry (NOT a package)
+│   ├── tools/<tool>/           #   standalone package: tool/, tests/, pyproject.toml, requirements.txt
+│   ├── conformance/            #   registry package-contract test suite
+│   ├── scripts/                #   deterministic index generator
+│   ├── index.json              #   generated tool catalog
+│   └── guides/                 #   tool authoring guides
 ├── atomic-examples/            # 16 runnable example apps (each its own project)
 ├── claude-plugin/atomic-agents/ # AI-assistant plugin: 7 skills + 2 subagents (Claude Code plugin,
 │                               #   also installable cross-tool via `npx skills add eigenwise/atomic-agents`)
@@ -42,15 +45,16 @@ prompts and stores conversation history. `connectors/mcp/` bridges to MCP server
 token accounting via LiteLLM.
 
 ### `atomic-assembler/atomic_assembler/`
-A Textual terminal UI launched by the `atomic` command (`main.py:main`). `app.py` routes between
-`screens/` (main menu, tool explorer, file picker, README viewer); `utils.py` clones the GitHub repo
-and copies a selected tool into the user's project.
+The `atomic` entry point runs the Textual UI with no subcommand and supports scripting with `list`,
+`download`, and `sources` subcommands. Source utilities clone configured Git repositories, resolve an
+indexed package only inside the configured tools directory, and copy the full standalone package into the
+user’s project. Source/index metadata is treated as untrusted before it reaches the terminal or filesystem.
 
-### `atomic-forge/tools/`
-13 self-contained tools (`arxiv_search`, `calculator`, `tavily_search`, `weather`,
-`webpage_scraper`, `wikipedia_search`, …). Each tool folder contains `tool/<name>.py` (Input/Output
-`BaseIOSchema` + a `BaseToolConfig` + a `BaseTool` subclass), `tests/`, and its own
-`pyproject.toml`/`requirements.txt`. Tools are copied into user projects, not pip-installed.
+### `atomic-forge/`
+A shadcn-style collection of 13 self-contained tool packages. Each package contains `tool/<name>.py`
+(Input/Output `BaseIOSchema`, `BaseToolConfig`, `BaseTool`), tests, `pyproject.toml`, and
+`requirements.txt`; those files stay with the package when it is downloaded. `index.json` is generated
+from each package’s metadata, and `conformance/` plus CI enforce the registry contract.
 
 ### `atomic-examples/`
 16 standalone example apps (`quickstart`, `rag-chatbot`, `deep-research`, `web-search-agent`,

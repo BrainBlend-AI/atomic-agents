@@ -1,8 +1,8 @@
 {
   "tool": "codebase-mapper",
-  "version": "2.8.0",
-  "mappedAt": "2026-07-18",
-  "gitCommit": "73dbc8be54f4ca32e71d28f5d9a7648dd9628c9b",
+  "version": "2.11.2",
+  "mappedAt": "2026-07-23",
+  "gitCommit": "8a90c1a87de30788e59fd28c606a4e2a2c9c89ed",
   "documents": [
     "architecture.md",
     "tech-landscape.md",
@@ -13,19 +13,21 @@
     "dependencies.md",
     "patterns.md",
     "coding-style.md",
-    "onboarding.md"
+    "onboarding.md",
+    "structure.md"
   ],
   "hashes": {
-    "INDEX.md": "17eaa0ba82f159465e126597aac349c6e4429330887b58742636734e15854313",
+    "INDEX.md": "6ca6422261a5a3fd84c714c2aeba11d54a7b9c62d1e0ccf4fb8d22dc42d2bddc",
     "architecture.md": "7c908f047e6b0f08824ccd7c3f674ad47bd547dde234d0bd424a6d2784c0cbb6",
     "tech-landscape.md": "cad1a11e5e63013a10cf07657d248196d0e3e4e14203eba7b777c1c123628198",
-    "directory-structure.md": "7e3fc4c3c8b89b6627beabcb6ddebd74b0ac7094e52718926fc87a94c932df84",
-    "entry-points.md": "6bd4ccae3d975196e03fc2c4e86007eba89f1f6427232fd8adce78ec97d6b432",
-    "modules.md": "1238c76664edb1c1667fda23f39507bcab5b760b57a3a3728d7104b2cf8032e7",
+    "directory-structure.md": "8ae4de1f8554a2cd074a9195b86107e75cdaa78c3b206e2a8d76ad3b78769b9c",
+    "entry-points.md": "a6dc81ecc5b3bfc67fa8f7c1dcc9f36d80b9be13bab4eb6a6eac238000f5e074",
+    "modules.md": "1bd4b75fb7af2d455aa2cc12ac9604c7766802158bcaf804e1c9819328f925bf",
     "communication.md": "49741a7455b0f162881e1cfb2d797dc8e3832cc8782796bbcb8a10529f2c5a0b",
     "dependencies.md": "b445a920c121e27006fec824add6865d01cf71212a517e5ff8b2058d3999037a",
-    "patterns.md": "12b96c2d4f8bc7507bcae39b2b385b9db4d0dec95ef6a2049958663aff021705",
+    "patterns.md": "9c6e46d129b45b3de7fedf9b581af3ecce074c95f1970b56ada1958ee6523f36",
     "coding-style.md": "2f939544333b927cf8731f5bb906ce03cb3a46afa50c9735011ff8f7e4caca9e",
-    "onboarding.md": "3d28c671dc095a2aadb297bd7ab200c677779a99c7534e03e55a3d64c935f07e"
+    "onboarding.md": "ccc30bd73115d603afa7dc1b39344174542f3142a7dde25182fb94fad3e63ded",
+    "structure.md": "a6d1f09a2b0f5aa3d68ec8f008244acf6cf032050670e9dcf76c8812ab8467b1"
   }
 }
