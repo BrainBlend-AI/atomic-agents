@@ -1,7 +1,13 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "enabledPlugins": {
     "codebase-mapper@eigenwise-toolshed": true,
-    "live-rules@eigenwise-toolshed": true
+    "atomic-agents@claude-community": true,
+    "live-rules@eigenwise-toolshed": true,
+    "sidequest@eigenwise-toolshed": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "eigenwise-toolshed": {
