@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 from pathlib import Path
 
 import git
@@ -9,6 +10,21 @@ from atomic_assembler import main as assembler_main
 from atomic_assembler import utils as assembler_utils
 from atomic_assembler.constants import DEFAULT_SOURCES, ForgeSource, redact_source_url
 from atomic_assembler.utils import AtomicToolManager, GithubRepoCloner, load_sources, save_sources
+
+
+def _symlinks_supported() -> bool:
+    with tempfile.TemporaryDirectory() as probe_dir:
+        try:
+            (Path(probe_dir) / "link").symlink_to("target")
+        except (OSError, NotImplementedError):
+            return False
+    return True
+
+
+requires_symlinks = pytest.mark.skipif(
+    not _symlinks_supported(),
+    reason="creating symlinks requires a privilege this platform does not grant",
+)
 
 
 def test_github_repo_cloner_uses_configured_branch(monkeypatch):
@@ -61,6 +77,7 @@ def test_copy_atomic_tool_keeps_dependency_metadata(tmp_path):
     assert not (copied_path / ".coveragerc").exists()
 
 
+@requires_symlinks
 @pytest.mark.parametrize(
     ("link_path", "link_target"),
     [
@@ -84,6 +101,7 @@ def test_copy_atomic_tool_rejects_symlinks_that_escape_tool_directory(tmp_path, 
     assert not destination.exists()
 
 
+@requires_symlinks
 def test_copy_atomic_tool_preserves_safe_relative_symlink(tmp_path):
     tool_path = tmp_path / "example_tool"
     tool_path.mkdir()
