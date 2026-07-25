@@ -160,6 +160,7 @@ debug.log
 !.claude/clean-code-principles.md
 !.claude/.codebase-info/
 !.claude/.codebase-info/**
+.playwright-mcp/
 CLAUDE.md
 CLAUDE.local.md
 .serena
