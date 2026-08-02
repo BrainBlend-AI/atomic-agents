@@ -45,6 +45,7 @@ Built on [Instructor](https://github.com/jxnl/instructor) and [Pydantic](https:/
     - [Quickstart Examples](#quickstart-examples)
     - [Complete Examples](#complete-examples)
   - [AI-Assisted Development](#ai-assisted-development)
+    - [Project instructions (Cursor, Windsurf, Cline, Continue, and Aider)](#project-instructions-cursor-windsurf-cline-continue-and-aider)
     - [Agent skills (Claude Code, Cursor, Copilot, Codex, Windsurf, Gemini CLI, ...)](#agent-skills-claude-code-cursor-copilot-codex-windsurf-gemini-cli-)
     - [Docs for LLMs](#docs-for-llms)
   - [🚀 Version 2.0 Released!](#-version-20-released)
@@ -300,6 +301,20 @@ For a complete list of examples, see the [examples directory](/atomic-examples/)
 
 Building with an AI coding assistant? Atomic Agents ships first-class support so your assistant knows the framework's current API and conventions instead of guessing.
 
+### Project instructions (Cursor, Windsurf, Cline, Continue, and Aider)
+
+The root [`AGENTS.md`](./AGENTS.md) is the canonical source of repository guidance. Each supported assistant receives that guidance through its native project-instruction mechanism:
+
+| Assistant | Project configuration |
+| --- | --- |
+| **Cursor** | Reads [`AGENTS.md`](./AGENTS.md) [natively](https://cursor.com/docs/rules#agentsmd) when this repository is opened as the workspace root. |
+| **Windsurf / Devin Desktop** | Reads [`AGENTS.md`](./AGENTS.md) through its [Rules engine](https://docs.devin.ai/desktop/cascade/agents-md). |
+| **Cline** | Detects [`AGENTS.md`](./AGENTS.md) as a [supported rule type](https://docs.cline.bot/customization/cline-rules#supported-rule-types). |
+| **Continue 2.0+** | Reads the root [`AGENTS.md`](./AGENTS.md) natively as an always-on project instruction. |
+| **Aider** | [`.aider.conf.yml`](./.aider.conf.yml) loads `AGENTS.md` as a [read-only conventions file](https://aider.chat/docs/usage/conventions.html). |
+
+These files configure assistants working on the Atomic Agents repository itself. To add Atomic Agents framework knowledge to another project, install the agent skills below.
+
 ### Agent skills (Claude Code, Cursor, Copilot, Codex, Windsurf, Gemini CLI, ...)
 
 Six [agent skills](https://agents.md/) cover the framework: an auto-triggering `framework` guide with progressive-disclosure references, four creation workflows (`create-atomic-schema`, `create-atomic-agent`, `create-atomic-tool`, `create-atomic-context-provider`), and a `new-app` project scaffolder.
@@ -449,4 +464,3 @@ If you want to learn more about the motivation and philosophy behind Atomic Agen
    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=eigenwise/atomic-agents&type=date&legend=top-left&sealed_token=bLmINE964wFC41alauDl3hSyqW8sm5FyyW99qO_99iZLJ5RG_Mqygi8SrdMmVx06pCB-IdgNUbaiN_e57ToEL3XA1WAliiCjyA8TAgXAPUYsW1OPAJunEw" />
  </picture>
 </a>
-
