@@ -12,6 +12,7 @@ Model IDs in this file are illustrative. Provider model names change often — c
 - Ollama (local)
 - Gemini
 - OpenRouter
+- OrcaRouter
 - MiniMax
 - Picking a model
 - `model_api_parameters` per provider
@@ -27,6 +28,7 @@ Model IDs in this file are illustrative. Provider model names change often — c
 | Ollama | `instructor.from_openai(OpenAI(base_url=..., api_key="ollama"), mode=Mode.JSON)` | `Mode.JSON` | `"assistant"` | OpenAI-compatible |
 | Gemini | `instructor.from_genai(google.genai.Client(...), mode=Mode.GENAI_TOOLS)` | `Mode.GENAI_TOOLS` | `"model"` | Native |
 | OpenRouter | `instructor.from_openai(OpenAI(base_url=..., api_key=...))` | `Mode.TOOLS` | `"assistant"` | OpenAI-compatible |
+| OrcaRouter | `instructor.from_openai(OpenAI(base_url=..., api_key=...))` | `Mode.TOOLS` | `"assistant"` | OpenAI-compatible |
 | MiniMax | `instructor.from_openai(OpenAI(base_url=..., api_key=...), mode=Mode.JSON)` | `Mode.JSON` | `"assistant"` | OpenAI-compatible |
 
 The `mode` value is passed to `AgentConfig(mode=...)` **and** sometimes to the Instructor factory itself. Match them.
@@ -123,6 +125,22 @@ api_params = {"max_tokens": 2048}
 ```
 
 OpenRouter is a gateway to many providers via OpenAI-compatible protocol. Model ids use `provider/model` form.
+
+## OrcaRouter
+
+```python
+import os, instructor
+from openai import OpenAI
+
+client = instructor.from_openai(OpenAI(
+    base_url="https://api.orcarouter.ai/v1",
+    api_key=os.environ["ORCAROUTER_API_KEY"],
+))
+model = "openai/gpt-5.5"   # OrcaRouter's namespaced model id syntax
+api_params = {"max_tokens": 2048}
+```
+
+OrcaRouter is an OpenAI-compatible routing gateway that exposes models from OpenAI, Anthropic, Google, DeepSeek, Qwen and others behind a single endpoint and API key. It also runs gateway-level, zero-trust security for AI agents on the same endpoint — screening every prompt/response and governing every tool call on a default-deny basis, with no application code changes. Model ids use the `provider/model` form.
 
 ## MiniMax
 

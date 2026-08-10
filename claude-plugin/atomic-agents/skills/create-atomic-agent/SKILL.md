@@ -20,7 +20,7 @@ Bundle into one message:
 
 1. **What should the agent do?** One sentence. Becomes the persona / `background` line.
 2. **Inputs and outputs.** Use `BasicChatInputSchema` / `BasicChatOutputSchema` for free-form chat. Use a custom pair for anything structured (extraction, classification, planning, routing). When custom, branch to the `create-atomic-schema` skill for the schema authoring.
-3. **Provider.** OpenAI / Anthropic / Groq / Ollama / Gemini / OpenRouter / MiniMax. Default: whatever the project already uses; otherwise OpenAI.
+3. **Provider.** OpenAI / Anthropic / Groq / Ollama / Gemini / OpenRouter / OrcaRouter / MiniMax. Default: whatever the project already uses; otherwise OpenAI.
 4. **Conversational?** Yes → wire a `ChatHistory`. No (single-shot transformer) → omit it for stateless behavior.
 5. **Context providers.** Anything to inject into the prompt at runtime (current time, user identity, retrieved docs)? If yes, plan to also use the `create-atomic-context-provider` skill afterwards.
 
@@ -99,7 +99,7 @@ agent = AtomicAgent[MyInput, MyOutput](
             ],
         ),
         # Provider-specific knobs — match the Instructor factory
-        # mode=Mode.TOOLS,                         # OpenAI / Anthropic / OpenRouter
+        # mode=Mode.TOOLS,                         # OpenAI / Anthropic / OpenRouter / OrcaRouter
         # mode=Mode.JSON,                          # Groq / Ollama / MiniMax
         # mode=Mode.GENAI_TOOLS, assistant_role="model",  # Gemini
         model_api_parameters=api_params or {"temperature": 0.2},

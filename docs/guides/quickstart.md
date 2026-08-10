@@ -289,7 +289,8 @@ The framework supports multiple AI providers:
     "groq": "mixtral-8x7b-32768",
     "ollama": "llama3",
     "gemini": "gemini-2.0-flash-exp",
-    "openrouter": "mistral/ministral-8b"
+    "openrouter": "mistral/ministral-8b",
+    "orcarouter": "openai/gpt-5.5"
 }
 ```
 
@@ -373,13 +374,24 @@ def setup_client(provider):
         )
         model = "mistral/ministral-8b"
 
+    elif provider == "orcarouter":
+        from openai import OpenAI as OrcaRouterClient
+        api_key = os.getenv("ORCAROUTER_API_KEY")
+        client = instructor.from_openai(
+            OrcaRouterClient(
+                base_url="https://api.orcarouter.ai/v1",
+                api_key=api_key
+            )
+        )
+        model = "openai/gpt-5.5"
+
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
     return client, model
 
 # Prompt for provider choice
-provider = console.input("Choose a provider (openai/anthropic/groq/ollama/gemini/openrouter): ").lower()
+provider = console.input("Choose a provider (openai/anthropic/groq/ollama/gemini/openrouter/orcarouter): ").lower()
 
 # Set up client and model
 client, model = setup_client(provider)

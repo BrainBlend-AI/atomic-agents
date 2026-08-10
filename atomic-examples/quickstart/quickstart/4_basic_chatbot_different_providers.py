@@ -90,6 +90,14 @@ def setup_client(provider):
         model = "openai/gpt-4o-mini"
         model_api_parameters = {"max_tokens": 2048}
         assistant_role = "assistant"
+    elif provider == "9" or provider == "orcarouter":
+        from openai import OpenAI as OrcaRouterClient
+
+        api_key = os.getenv("ORCAROUTER_API_KEY")
+        client = instructor.from_openai(OrcaRouterClient(base_url="https://api.orcarouter.ai/v1", api_key=api_key))
+        model = "openai/gpt-5.5"
+        model_api_parameters = {"max_tokens": 2048}
+        assistant_role = "assistant"
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -97,7 +105,7 @@ def setup_client(provider):
 
 
 # Prompt the user to choose a provider from one in the list below.
-providers_list = ["openai", "anthropic", "groq", "ollama", "gemini", "openrouter", "minimax", "edenai"]
+providers_list = ["openai", "anthropic", "groq", "ollama", "gemini", "openrouter", "minimax", "edenai", "orcarouter"]
 y = "bold yellow"
 b = "bold blue"
 g = "bold green"
