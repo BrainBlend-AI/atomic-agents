@@ -1,31 +1,32 @@
 {
+  "schemaVersion": 1,
   "tool": "codebase-mapper",
-  "version": "2.8.0",
-  "mappedAt": "2026-07-18",
-  "gitCommit": "73dbc8be54f4ca32e71d28f5d9a7648dd9628c9b",
+  "version": "2.14.4",
+  "mappedAt": "2026-08-11",
+  "gitCommit": "c80c7520a703018d36abc97f2199dcaf3d9c29a3",
   "documents": [
     "architecture.md",
-    "tech-landscape.md",
+    "coding-style.md",
+    "communication.md",
+    "dependencies.md",
     "directory-structure.md",
     "entry-points.md",
     "modules.md",
-    "communication.md",
-    "dependencies.md",
+    "onboarding.md",
     "patterns.md",
-    "coding-style.md",
-    "onboarding.md"
+    "tech-landscape.md"
   ],
   "hashes": {
-    "INDEX.md": "17eaa0ba82f159465e126597aac349c6e4429330887b58742636734e15854313",
-    "architecture.md": "7c908f047e6b0f08824ccd7c3f674ad47bd547dde234d0bd424a6d2784c0cbb6",
-    "tech-landscape.md": "cad1a11e5e63013a10cf07657d248196d0e3e4e14203eba7b777c1c123628198",
-    "directory-structure.md": "7e3fc4c3c8b89b6627beabcb6ddebd74b0ac7094e52718926fc87a94c932df84",
-    "entry-points.md": "6bd4ccae3d975196e03fc2c4e86007eba89f1f6427232fd8adce78ec97d6b432",
-    "modules.md": "1238c76664edb1c1667fda23f39507bcab5b760b57a3a3728d7104b2cf8032e7",
-    "communication.md": "49741a7455b0f162881e1cfb2d797dc8e3832cc8782796bbcb8a10529f2c5a0b",
+    "INDEX.md": "50e7beb7784d3d01f8ce0e85b842889f5c033ca98cbb30981fd0b532c1495c8f",
+    "architecture.md": "8e6be8d2795231ea5919d7cdc23a201595f9fed9724b635e6cc686b2bf24581f",
+    "coding-style.md": "b63e8dff06d16a2d882f02624c62f490291317aec8b3032f6d79b3ee035e8567",
+    "communication.md": "6c73cad50151b73a6be63c8f0745d3f7a6653a861d37afce660c512ac30b8819",
     "dependencies.md": "b445a920c121e27006fec824add6865d01cf71212a517e5ff8b2058d3999037a",
-    "patterns.md": "12b96c2d4f8bc7507bcae39b2b385b9db4d0dec95ef6a2049958663aff021705",
-    "coding-style.md": "2f939544333b927cf8731f5bb906ce03cb3a46afa50c9735011ff8f7e4caca9e",
-    "onboarding.md": "3d28c671dc095a2aadb297bd7ab200c677779a99c7534e03e55a3d64c935f07e"
+    "directory-structure.md": "ca200817789c4d1fdc41d1683c37740c9837bf323b18881cb2351ef8a56c4926",
+    "entry-points.md": "62fd8ff478fc27c3658776626059bdd4101cab12a74a48cdd8787f9ca7b83f97",
+    "modules.md": "7a8772e5f31be0070003c9a7ce78eca5df95dfb6a1c9dd471a6be97df81084aa",
+    "onboarding.md": "3d28c671dc095a2aadb297bd7ab200c677779a99c7534e03e55a3d64c935f07e",
+    "patterns.md": "f3a339a7bc711c4586062139d135e1d79129653cf82fc430cd256028d25e2dcc",
+    "tech-landscape.md": "700b3ba7bb5e47ec14086e2b94ad65ad956c0bfbe1c463f96c39493143e0c912"
   }
 }

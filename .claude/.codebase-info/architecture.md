@@ -1,6 +1,6 @@
 # Architecture
 
-*Last Updated: 2026-07-05*
+*Last Updated: 2026-08-11*
 
 ## Summary
 
@@ -46,8 +46,8 @@ Tool install (atomic-assembler TUI):
 | Component | Path | Responsibility |
 |-----------|------|----------------|
 | Core agent | `atomic-agents/atomic_agents/agents/atomic_agent.py` | `AtomicAgent`, `AgentConfig`, run / stream / async methods |
-| Base contracts | `atomic-agents/atomic_agents/base/` | `BaseIOSchema`, `BaseTool`, `BaseToolConfig`, `BaseResource`, `BasePrompt` |
-| Context | `atomic-agents/atomic_agents/context/` | `SystemPromptGenerator`, `BaseDynamicContextProvider`, `BaseChatHistory` (pluggable memory contract) + `ChatHistory` |
+| Base contracts | `atomic-agents/atomic_agents/base/` | `BaseIOSchema`, `BaseTool`, `BaseToolConfig`, `BaseResource`, `BasePrompt`, `VideoURL` |
+| Context | `atomic-agents/atomic_agents/context/` | `SystemPromptGenerator`, `BaseDynamicContextProvider`, `BaseChatHistory` (pluggable memory contract) + `ChatHistory` with Instructor media and `VideoURL` |
 | Connectors | `atomic-agents/atomic_agents/connectors/mcp/` | Model Context Protocol tools / resources / prompts |
 | Utils | `atomic-agents/atomic_agents/utils/` | Token counting (LiteLLM), tool-message formatting |
 | Assembler (CLI) | `atomic-assembler/atomic_assembler/` | Textual TUI to fetch/install forge tools |
@@ -60,8 +60,7 @@ Tool install (atomic-assembler TUI):
 2. On `run(input)`, the `SystemPromptGenerator` assembles the system message from
    background / steps / output-instructions plus any registered **context providers** (evaluated live
    at call time).
-3. The `ChatHistory` (typed `Message`s, multimodal-aware) is serialized into the provider message
-   list; oldest *turns* are trimmed to respect `max_context_tokens`.
+3. The `ChatHistory` (typed `Message`s, multimodal-aware) is serialized into provider messages; `VideoURL` becomes an OpenAI-compatible `video_url` content part, while token counting uses a `[video content]` placeholder because LiteLLM cannot count video parts. Oldest *turns* are trimmed to respect `max_context_tokens`.
 4. `client.chat.completions.create(response_model=output_schema)` performs the structured LLM call via
    Instructor. Streaming and async variants exist: `run_stream`, `run_async`, `run_async_stream`.
 5. The validated output schema is appended to history and returned. Instructor **hooks**

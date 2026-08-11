@@ -1,6 +1,6 @@
 # Technology Landscape
 
-*Last Updated: 2026-07-18*
+*Last Updated: 2026-08-11*
 
 ## Source-of-Truth Files
 
@@ -11,6 +11,7 @@
 | Legacy install shims | `setup.py`, `requirements.txt` |
 | Lint | `.flake8` |
 | Format + git hooks | `.pre-commit-config.yaml`, `[tool.black]` in `pyproject.toml` |
+| Type checking | `pyrightconfig.json` |
 | Tests | `pytest.ini`, `.coveragerc` |
 | CI/CD | `.github/workflows/` |
 | Release | `build_and_deploy.ps1` |
@@ -30,6 +31,7 @@
 | HTTP / Git | requests, GitPython | assembler fetches forge from GitHub |
 | Build backend | Hatchling | `[build-system]` |
 | Workspace / lock / publish | uv | `uv sync` / `uv build` / `uv publish` |
+| Static type checking | Pyright | configured for the workspace `.venv` via `pyrightconfig.json` |
 | Docs | Sphinx + MyST + RTD theme | + `sphinxcontrib-mermaid`, deployed to GitHub Pages |
 
 ## Infrastructure

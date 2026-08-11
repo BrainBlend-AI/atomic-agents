@@ -1,6 +1,6 @@
 # Entry Points
 
-*Last Updated: 2026-07-05*
+*Last Updated: 2026-08-11*
 
 ## 1. Library API (the primary entry point)
 
@@ -18,6 +18,8 @@ result = agent.run(BasicChatInputSchema(chat_message="Hello"))
 - **Module:** `atomic-agents/atomic_agents/agents/atomic_agent.py`
 - **Run methods:** `run`, `run_stream`, `run_async`, `run_async_stream`.
 - Custom agents define their own `BaseIOSchema` subclasses and pass them as `AtomicAgent[In, Out]`.
+- **Public multimodal type:** import `VideoURL` from `atomic_agents` for video inputs; `ChatHistory`
+  serializes it as an OpenAI-compatible `video_url` content part before the provider call.
 
 ## 2. CLI — `atomic`
 
