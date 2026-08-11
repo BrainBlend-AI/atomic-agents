@@ -477,7 +477,8 @@ There's a full runnable example of this pattern (a dependency-free SQLite-backed
 
 ## Multimodal Content in History
 
-ChatHistory supports images, PDFs, and audio through Instructor's multimodal types.
+ChatHistory supports images, PDFs, and audio through Instructor's multimodal types, plus
+video through the framework's own `VideoURL` type.
 
 ### Adding Multimodal Messages
 
@@ -521,6 +522,29 @@ for message in history_data:
         # Text-only message
         json_content = message["content"]
 ```
+
+### Video
+
+Instructor has no video type yet, so Atomic Agents ships its own `VideoURL` for providers
+that accept OpenAI-compatible `video_url` content parts (MiniMax, Qwen-VL, ...):
+
+```python
+from atomic_agents import BaseIOSchema, VideoURL
+from pydantic import Field
+
+class VideoAnalysisInput(BaseIOSchema):
+    """Input with a video for analysis"""
+    question: str = Field(..., description="Question about the video")
+    video: VideoURL = Field(..., description="Video to analyze")
+
+input_with_video = VideoAnalysisInput(
+    question="What happens in this clip?",
+    video=VideoURL(url="https://example.com/clip.mp4", fps=1.0),
+)
+```
+
+`get_history()` emits the video as a `{"type": "video_url", ...}` content part, which
+Instructor passes through to the provider unchanged.
 
 ### Serialization with Multimodal
 
