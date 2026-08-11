@@ -1120,6 +1120,29 @@ def test_get_context_token_count_multimodal_content(mock_get_token_counter, mock
     assert image_entry["image_url"]["url"] == "https://example.com/test.png"
 
 
+def test_serialize_history_for_token_count_preserves_content_part(agent, mock_history):
+    video_part = {
+        "type": "video_url",
+        "video_url": {
+            "url": "mm_file://video-file",
+            "detail": "default",
+        },
+    }
+    mock_history.get_history.return_value = [
+        {
+            "role": "user",
+            "content": ['{"prompt":"Summarize the video"}', video_part],
+        }
+    ]
+
+    serialized = agent._serialize_history_for_token_count()
+
+    assert serialized[0]["content"] == [
+        {"type": "text", "text": '{"prompt":"Summarize the video"}'},
+        video_part,
+    ]
+
+
 # --- Tests for tool_result_role and Gemini system message remapping (issue #221) ---
 
 

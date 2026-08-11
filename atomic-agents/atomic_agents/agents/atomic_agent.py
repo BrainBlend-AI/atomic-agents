@@ -429,9 +429,9 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         """
         Serialize conversation history for token counting, handling multimodal content.
 
-        This method converts instructor multimodal objects (Image, Audio, PDF) to the
-        OpenAI format that LiteLLM's token counter expects. Text content is also
-        converted to the proper multimodal text format when mixed with media.
+        This method converts Instructor multimodal objects (Image, Audio, PDF) to the
+        format that LiteLLM's token counter expects. Native content-part dictionaries
+        are preserved, and text content is wrapped when mixed with media.
 
         Returns:
             List[Dict[str, Any]]: History messages in LiteLLM-compatible format.
@@ -449,6 +449,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
                     if isinstance(item, str):
                         # Text content - wrap in OpenAI text format
                         serialized_content.append({"type": "text", "text": item})
+                    elif isinstance(item, dict):
+                        serialized_content.append(item)
                     elif isinstance(item, (Image, Audio, PDF)):
                         # Multimodal object - use instructor's to_openai method
                         try:

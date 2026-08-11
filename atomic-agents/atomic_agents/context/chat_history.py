@@ -14,6 +14,14 @@ from atomic_agents.context.base_chat_history import BaseChatHistory
 INSTRUCTOR_MULTIMODAL_TYPES = (Image, Audio, PDF)
 
 
+def _is_video_content_part(obj) -> bool:
+    if not isinstance(obj, dict) or obj.get("type") != "video_url":
+        return False
+
+    video_url = obj.get("video_url")
+    return isinstance(video_url, dict) and isinstance(video_url.get("url"), str)
+
+
 class Message(BaseModel):
     """
     Represents a message in the chat history.
@@ -126,8 +134,9 @@ class ChatHistory(BaseChatHistory):
         Recursively extract multimodal objects and build a Pydantic-compatible exclude spec.
 
         Walks the object tree to find all Instructor multimodal types (Image, Audio, PDF)
-        at any nesting depth, collecting them into a flat list and building an exclude
-        specification that can be passed to model_dump_json(exclude=...).
+        and native video content parts at any nesting depth, collecting them into a flat
+        list and building an exclude specification that can be passed to
+        model_dump_json(exclude=...).
 
         Args:
             obj: The object to inspect (BaseIOSchema, list, dict, or primitive).
@@ -137,7 +146,7 @@ class ChatHistory(BaseChatHistory):
                 - multimodal_objects: flat list of all multimodal objects found
                 - exclude_spec: Pydantic exclude dict, True (exclude entirely), or None
         """
-        if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES):
+        if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES) or _is_video_content_part(obj):
             return [obj], True
 
         if hasattr(obj, "__class__") and hasattr(obj.__class__, "model_fields"):

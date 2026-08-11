@@ -646,6 +646,33 @@ def test_get_history_mixed_nested_and_toplevel_multimodal(history):
     assert img2 in result[0]["content"]
 
 
+def test_get_history_video_content_part(history):
+    """Native video content parts are separated from structured text."""
+
+    class VideoInput(BaseIOSchema):
+        """Input containing a video content part."""
+
+        prompt: str = Field(..., description="Instruction for the video")
+        video: Dict[str, object] = Field(..., description="Video content part")
+
+    video_part = {
+        "type": "video_url",
+        "video_url": {
+            "url": "mm_file://video-file",
+            "detail": "default",
+            "fps": 1,
+        },
+    }
+    history.add_message("user", VideoInput(prompt="Summarize the video", video=video_part))
+
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert isinstance(result[0]["content"], list)
+    assert json.loads(result[0]["content"][0]) == {"prompt": "Summarize the video"}
+    assert result[0]["content"][1] == video_part
+
+
 def test_get_history_list_of_nested_schemas_with_multimodal(history):
     """Multiple nested schemas each containing multimodal objects"""
 
