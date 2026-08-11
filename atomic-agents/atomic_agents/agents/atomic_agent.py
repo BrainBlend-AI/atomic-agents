@@ -431,7 +431,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
         This method converts instructor multimodal objects (Image, Audio, PDF) to the
         OpenAI format that LiteLLM's token counter expects. Text content is also
-        converted to the proper multimodal text format when mixed with media.
+        converted to the proper multimodal text format when mixed with media. Content-part
+        dicts (e.g. video) become text placeholders because LiteLLM cannot count them.
 
         Returns:
             List[Dict[str, Any]]: History messages in LiteLLM-compatible format.
@@ -462,6 +463,11 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
                                 f"Using placeholder for estimation."
                             )
                             serialized_content.append({"type": "text", "text": f"[{media_type.lower()} content]"})
+                    elif isinstance(item, dict):
+                        # get_history() emits pre-lowered content-part dicts (e.g. video).
+                        # LiteLLM's token counter only accepts text and image_url parts,
+                        # so estimate them with a placeholder.
+                        serialized_content.append({"type": "text", "text": f"[{item.get('type', 'unknown')} content]"})
                     else:
                         # Unknown type - convert to string
                         serialized_content.append({"type": "text", "text": str(item)})

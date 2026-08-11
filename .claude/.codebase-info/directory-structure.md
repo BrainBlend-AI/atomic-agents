@@ -1,6 +1,6 @@
 # Directory Structure
 
-*Last Updated: 2026-07-18*
+*Last Updated: 2026-08-11*
 
 ## Root Layout
 
@@ -9,11 +9,11 @@ atomic-agents/                  # repo root (uv workspace)
 ├── atomic-agents/              # CORE framework project (PyPI: atomic-agents)
 │   └── atomic_agents/          #   import package
 │       ├── agents/             #     AtomicAgent, AgentConfig
-│       ├── base/               #     BaseIOSchema, BaseTool, BaseResource, BasePrompt
+│       ├── base/               #     BaseIOSchema, BaseTool, BaseResource, BasePrompt, VideoURL
 │       ├── context/            #     SystemPromptGenerator, BaseChatHistory/ChatHistory, context providers
 │       ├── connectors/mcp/     #     Model Context Protocol integration
 │       └── utils/              #     token counter, tool-message formatting
-│   └── tests/                  #   pytest suite (agents/, base/, context/, connectors/, utils/)
+│   └── tests/                  #   pytest suite (agents/, base/, context/, connectors/, utils/; VideoURL tests in base/)
 ├── atomic-assembler/           # Textual TUI (`atomic` command) to install forge tools
 │   └── atomic_assembler/       #   main.py, app.py, screens/, widgets/, utils.py, constants.py
 ├── atomic-forge/               # library of standalone tools (NOT a package)
@@ -27,6 +27,7 @@ atomic-agents/                  # repo root (uv workspace)
 ├── guides/                     # DEV_GUIDE.md and contributor guides
 ├── scripts/                    # generate_llms_files.py (llms.txt index + llms-*.txt bundles)
 ├── pyproject.toml              # package metadata, deps, [tool.black], uv workspace
+├── pyrightconfig.json          # Pyright configuration for the uv-managed `.venv`
 ├── context7.json               # Context7 indexing config + v2 API rules for AI assistants
 ├── build_and_deploy.ps1        # version bump + uv build/publish
 ├── AGENTS.md                   # the project's own design philosophy (imported by CLAUDE.md)

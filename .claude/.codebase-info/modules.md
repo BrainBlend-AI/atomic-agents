@@ -1,6 +1,6 @@
 # Key Modules
 
-*Last Updated: 2026-07-05*
+*Last Updated: 2026-08-11*
 
 ## Core framework — `atomic-agents/atomic_agents/`
 
@@ -17,8 +17,9 @@
 - **Purpose:** The typed contracts everything else implements.
 - **Key files:** `base_io_schema.py` (`BaseIOSchema` — Pydantic base; non-empty docstring enforced and
   used as the schema description), `base_tool.py` (`BaseTool[In, Out]`, `BaseToolConfig`),
-  `base_resource.py` (`BaseResource`), `base_prompt.py` (`BasePrompt`).
-- **Exposes via package root:** `BaseIOSchema`, `BaseTool`, `BaseToolConfig`.
+  `base_resource.py` (`BaseResource`), `base_prompt.py` (`BasePrompt`), and `multimodal.py`
+  (`VideoURL` — OpenAI-compatible `video_url` content-part model for video inputs).
+- **Exposes via package root:** `BaseIOSchema`, `BaseTool`, `BaseToolConfig`, `VideoURL`.
 
 ### context
 - **Location:** `atomic-agents/atomic_agents/context/`
@@ -27,7 +28,8 @@
   `base_chat_history.py` (`BaseChatHistory` — interface-only ABC declaring the memory contract
   `AtomicAgent` depends on; the pluggable seam for custom/persistent backends),
   `chat_history.py` (`ChatHistory`, `Message` — the built-in in-memory implementation of
-  `BaseChatHistory`: multimodal Image/Audio/PDF, turn grouping, `dump()`/`load()` serialization).
+  `BaseChatHistory`: multimodal Image/Audio/PDF plus `VideoURL`, turn grouping, `dump()`/`load()`
+  serialization).
 - **Note:** `AgentConfig.history` is typed to `BaseChatHistory`, so any conforming backend drops in.
 
 ### connectors/mcp

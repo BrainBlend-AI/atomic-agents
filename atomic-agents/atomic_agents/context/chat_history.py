@@ -2,16 +2,17 @@ import json
 import uuid
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 from instructor.processing.multimodal import PDF, Image, Audio
 from pydantic import BaseModel, Field
 
 from atomic_agents.base.base_io_schema import BaseIOSchema
+from atomic_agents.base.multimodal import VideoURL
 from atomic_agents.context.base_chat_history import BaseChatHistory
 
 
-INSTRUCTOR_MULTIMODAL_TYPES = (Image, Audio, PDF)
+MULTIMODAL_TYPES = (Image, Audio, PDF, VideoURL)
 
 
 class Message(BaseModel):
@@ -109,10 +110,17 @@ class ChatHistory(BaseChatHistory):
 
             if multimodal_objects:
                 processed_content = []
+                # Message.content is a BaseIOSchema, so extraction never excludes the whole object.
+                assert not isinstance(exclude_spec, bool)
                 content_json = input_content.model_dump_json(exclude=exclude_spec)
                 if content_json and content_json != "{}":
                     processed_content.append(content_json)
-                processed_content.extend(multimodal_objects)
+                # Instructor forwards dict content parts to the provider unchanged but
+                # raises on object types it does not know, so VideoURL is converted here.
+                processed_content.extend(
+                    multimodal_object.to_openai() if isinstance(multimodal_object, VideoURL) else multimodal_object
+                    for multimodal_object in multimodal_objects
+                )
                 history.append({"role": message.role, "content": processed_content})
             else:
                 content_json = input_content.model_dump_json()
@@ -121,13 +129,14 @@ class ChatHistory(BaseChatHistory):
         return history
 
     @staticmethod
-    def _extract_multimodal_info(obj):
+    def _extract_multimodal_info(obj) -> Tuple[List[Union[Image, Audio, PDF, VideoURL]], Union[Dict, bool, None]]:
         """
         Recursively extract multimodal objects and build a Pydantic-compatible exclude spec.
 
-        Walks the object tree to find all Instructor multimodal types (Image, Audio, PDF)
-        at any nesting depth, collecting them into a flat list and building an exclude
-        specification that can be passed to model_dump_json(exclude=...).
+        Walks the object tree to find all multimodal types (Instructor's Image, Audio,
+        and PDF, plus VideoURL) at any nesting depth, collecting them into a flat list
+        and building an exclude specification that can be passed to
+        model_dump_json(exclude=...).
 
         Args:
             obj: The object to inspect (BaseIOSchema, list, dict, or primitive).
@@ -137,7 +146,7 @@ class ChatHistory(BaseChatHistory):
                 - multimodal_objects: flat list of all multimodal objects found
                 - exclude_spec: Pydantic exclude dict, True (exclude entirely), or None
         """
-        if isinstance(obj, INSTRUCTOR_MULTIMODAL_TYPES):
+        if isinstance(obj, MULTIMODAL_TYPES):
             return [obj], True
 
         if hasattr(obj, "__class__") and hasattr(obj.__class__, "model_fields"):

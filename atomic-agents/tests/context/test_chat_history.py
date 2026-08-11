@@ -6,7 +6,7 @@ from typing import List, Dict, Union
 from pathlib import Path
 from pydantic import Field
 from atomic_agents.context import ChatHistory, Message
-from atomic_agents import BaseIOSchema
+from atomic_agents import BaseIOSchema, VideoURL
 import instructor
 
 
@@ -865,3 +865,40 @@ def test_get_history_dict_of_images(history):
     assert "image_map" not in json_part
     assert img_a in result[0]["content"]
     assert img_b in result[0]["content"]
+
+
+class VideoMessageSchema(BaseIOSchema):
+    """Test schema with a video field"""
+
+    prompt: str = Field(..., description="Instruction for the video")
+    video: VideoURL = Field(..., description="The video to analyze")
+
+
+def test_get_history_video_url_becomes_content_part(history):
+    """VideoURL fields are separated from the JSON text as video_url content parts"""
+    content = VideoMessageSchema(
+        prompt="Summarize the video",
+        video=VideoURL(url="https://example.com/clip.mp4", fps=1.0),
+    )
+
+    history.add_message("user", content)
+    result = history.get_history()
+
+    assert len(result) == 1
+    assert json.loads(result[0]["content"][0]) == {"prompt": "Summarize the video"}
+    assert result[0]["content"][1] == {
+        "type": "video_url",
+        "video_url": {"url": "https://example.com/clip.mp4", "fps": 1.0},
+    }
+
+
+def test_dump_and_load_video_url(history):
+    """VideoURL round-trips through dump() and load() as a typed object"""
+    history.add_message("user", VideoMessageSchema(prompt="Summarize", video=VideoURL(url="https://example.com/clip.mp4")))
+
+    loaded_history = ChatHistory()
+    loaded_history.load(history.dump())
+
+    loaded_content = loaded_history.history[0].content
+    assert isinstance(loaded_content.video, VideoURL)
+    assert loaded_content.video.url == "https://example.com/clip.mp4"
