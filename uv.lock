@@ -235,7 +235,7 @@ wheels = [
 
 [[package]]
 name = "atomic-agents"
-version = "2.9.1"
+version = "2.10.0"
 source = { editable = "." }
 dependencies = [
     { name = "gitpython" },
