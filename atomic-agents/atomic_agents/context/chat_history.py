@@ -12,11 +12,7 @@ from atomic_agents.base.multimodal import VideoURL
 from atomic_agents.context.base_chat_history import BaseChatHistory
 
 
-INSTRUCTOR_MULTIMODAL_TYPES = (Image, Audio, PDF)
-MULTIMODAL_TYPES = INSTRUCTOR_MULTIMODAL_TYPES + (VideoURL,)
-
-MultimodalObject = Union[Image, Audio, PDF, VideoURL]
-ExcludeSpec = Union[Dict, bool, None]
+MULTIMODAL_TYPES = (Image, Audio, PDF, VideoURL)
 
 
 class Message(BaseModel):
@@ -114,8 +110,9 @@ class ChatHistory(BaseChatHistory):
 
             if multimodal_objects:
                 processed_content = []
-                excluded_fields = exclude_spec if isinstance(exclude_spec, dict) else None
-                content_json = input_content.model_dump_json(exclude=excluded_fields)
+                # Message.content is a BaseIOSchema, so extraction never excludes the whole object.
+                assert not isinstance(exclude_spec, bool)
+                content_json = input_content.model_dump_json(exclude=exclude_spec)
                 if content_json and content_json != "{}":
                     processed_content.append(content_json)
                 # Instructor forwards dict content parts to the provider unchanged but
@@ -132,7 +129,7 @@ class ChatHistory(BaseChatHistory):
         return history
 
     @staticmethod
-    def _extract_multimodal_info(obj) -> Tuple[List[MultimodalObject], ExcludeSpec]:
+    def _extract_multimodal_info(obj) -> Tuple[List[Union[Image, Audio, PDF, VideoURL]], Union[Dict, bool, None]]:
         """
         Recursively extract multimodal objects and build a Pydantic-compatible exclude spec.
 

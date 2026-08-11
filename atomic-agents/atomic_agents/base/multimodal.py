@@ -32,9 +32,4 @@ class VideoURL(BaseModel):
             Dict[str, Any]: A ``{"type": "video_url", "video_url": {...}}`` content part,
             omitting optional parameters that were not set.
         """
-        video_url: Dict[str, Any] = {"url": self.url}
-        if self.fps is not None:
-            video_url["fps"] = self.fps
-        if self.detail is not None:
-            video_url["detail"] = self.detail
-        return {"type": "video_url", "video_url": video_url}
+        return {"type": "video_url", "video_url": self.model_dump(exclude_none=True)}

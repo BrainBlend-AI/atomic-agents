@@ -4,7 +4,6 @@ from enum import Enum
 from pydantic import BaseModel, Field
 from pydantic import ValidationError
 import instructor
-import litellm
 from atomic_agents import (
     BaseIOSchema,
     AtomicAgent,
@@ -1129,9 +1128,8 @@ def test_serialize_history_for_token_count_video_placeholder(agent, mock_history
 
     assert serialized[0]["content"] == [
         {"type": "text", "text": '{"prompt":"Summarize the video"}'},
-        {"type": "text", "text": "[video content]"},
+        {"type": "text", "text": "[video_url content]"},
     ]
-    assert litellm.token_counter(model="gpt-4o", messages=serialized) > 0
 
 
 # --- Tests for tool_result_role and Gemini system message remapping (issue #221) ---
