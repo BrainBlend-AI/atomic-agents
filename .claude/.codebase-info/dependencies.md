@@ -1,6 +1,6 @@
 # Dependencies
 
-*Last Updated: 2026-06-13*
+*Last Updated: 2026-08-20*
 
 Declared in `pyproject.toml` (Hatchling build, `uv` workspace; versions locked in `uv.lock`).
 
@@ -18,7 +18,7 @@ Declared in `pyproject.toml` (Hatchling build, `uv` workspace; versions locked i
 | textual (≥5.3,<6) | TUI framework for the `atomic` assembler |
 | mcp[cli] (≥1.6) | Model Context Protocol client + CLI |
 | requests (≥2.32,<3) | HTTP |
-| gitpython (≥3.1.43,<4) | Clone the repo to fetch forge tools |
+| gitpython (≥3.1.43,<4) | Clone each configured Forge source to fetch tools |
 | pyyaml (≥6,<7) | Read tool `config.yaml` metadata |
 | pyfiglet (≥1,<2) | ASCII-art banners in the TUI |
 

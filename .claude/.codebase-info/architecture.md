@@ -1,6 +1,6 @@
 # Architecture
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-08-20*
 
 ## Summary
 
@@ -14,10 +14,10 @@ abstractions: the developer controls the system prompt, the conversation history
 The repository is a **monorepo** managed as a `uv` workspace with four parts:
 
 - **`atomic-agents/`** — the core framework (PyPI package `atomic-agents`, imported as `atomic_agents`).
-- **`atomic-assembler/`** — a Textual TUI (the `atomic` command) that downloads tools from the forge
-  into a user's project.
-- **`atomic-forge/`** — a library of 13 standalone, copy-into-your-project tools.
-- **`atomic-examples/`** — 15 runnable example applications.
+- **`atomic-assembler/`** — the `atomic` command: a Textual TUI plus a noninteractive CLI that
+  vendors tool packages from one or more configured Forge sources into a user's project.
+- **`atomic-forge/`** — a vendored-code registry of 13 standalone, copy-into-your-project tools.
+- **`atomic-examples/`** — 16 runnable example applications.
 
 ## High-Level Flow
 
@@ -37,8 +37,14 @@ Agent run (atomic_agents core):
                                   ├──► appended to ChatHistory
                                   └──► returned to caller
 
-Tool install (atomic-assembler TUI):
-  `atomic`  →  clone github.com/eigenwise/atomic-agents  →  copy atomic-forge/tools/<tool>  →  user project
+Tool install (atomic-assembler):
+  `atomic list` / `atomic download <source>/<tool>`
+        │
+        ├─► read ~/.atomic-assembler/sources.json (defaults to the official Forge)
+        ├─► git clone each source at its branch  →  read <tools-path>/../index.json
+        ├─► validate index paths stay inside the tools directory, reject unsafe symlinks
+        └─► copy the complete tool package  →  user project (they now own the code)
+  `atomic` with no subcommand opens the TUI instead.
 ```
 
 ## Components
@@ -50,8 +56,9 @@ Tool install (atomic-assembler TUI):
 | Context | `atomic-agents/atomic_agents/context/` | `SystemPromptGenerator`, `BaseDynamicContextProvider`, `BaseChatHistory` (pluggable memory contract) + `ChatHistory` with Instructor media and `VideoURL` |
 | Connectors | `atomic-agents/atomic_agents/connectors/mcp/` | Model Context Protocol tools / resources / prompts |
 | Utils | `atomic-agents/atomic_agents/utils/` | Token counting (LiteLLM), tool-message formatting |
-| Assembler (CLI) | `atomic-assembler/atomic_assembler/` | Textual TUI to fetch/install forge tools |
+| Assembler (CLI) | `atomic-assembler/atomic_assembler/` | `atomic` TUI + CLI to list and vendor Forge tools from configured Git sources |
 | Forge (tools) | `atomic-forge/tools/` | 13 standalone tools, each `BaseTool`-based |
+| Forge registry | `atomic-forge/index.json`, `scripts/`, `conformance/` | generated catalog, its deterministic generator, and the package-contract suite |
 
 ## The Agent Run Lifecycle
 
@@ -75,6 +82,9 @@ Tool install (atomic-assembler TUI):
 - **Python ≥3.12** — uses PEP 695 generic syntax (`AtomicAgent[In, Out]`).
 - **Tools are not a dependency.** Forge tools are *copied* into the user's repo (full control, no
   version lock-in) by the assembler, rather than pip-installed.
+- **A Forge source is untrusted input.** The assembler validates index paths and symlinks before
+  copying, and never stores or prompts for credentials — private sources authenticate through the
+  user's existing Git SSH keys or credential helper.
 - **No database and no containers** in the framework itself.
 - **v2 was a breaking change** from v1 — see `UPGRADE_DOC.md` (`BaseAgent`→`AtomicAgent`,
   `AgentMemory`→`ChatHistory`, flattened imports, schemas moved to generic type parameters).

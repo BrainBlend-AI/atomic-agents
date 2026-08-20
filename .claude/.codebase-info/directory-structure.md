@@ -1,6 +1,6 @@
 # Directory Structure
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-08-20*
 
 ## Root Layout
 
@@ -23,7 +23,7 @@ atomic-agents/                  # repo root (uv workspace)
 │   ├── index.json              #   generated tool catalog
 │   └── guides/                 #   tool authoring guides
 ├── atomic-examples/            # 16 runnable example apps (each its own project)
-├── claude-plugin/atomic-agents/ # AI-assistant plugin: 7 skills + 2 subagents (Claude Code plugin,
+├── claude-plugin/atomic-agents/ # AI-assistant plugin: 8 skills + 2 subagents (Claude Code plugin,
 │                               #   also installable cross-tool via `npx skills add eigenwise/atomic-agents`)
 ├── .claude-plugin/             # marketplace.json — plugin marketplace manifest (drives npx skills discovery)
 ├── docs/                       # Sphinx + MyST documentation (api/, guides/, examples/)
