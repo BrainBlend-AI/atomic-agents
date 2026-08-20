@@ -496,13 +496,21 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
         Returns:
             TokenCountResult: A named tuple containing:
-                - total: Total tokens in the context (including schema overhead)
-                - system_prompt: Tokens in the system prompt
-                - history: Tokens in the conversation history
-                - tools: Tokens in the tools/function definitions (TOOLS mode only)
+                - total: Total tokens in the complete message request; when tools
+                  are provided without messages, this is schema-only overhead and
+                  excludes request framing
+                - system_prompt: System message tokens, including request framing
+                  when a system message is present
+                - history: Incremental tokens added by conversation history,
+                  including request framing when no system message is present
+                - tools: Incremental tokens added by tool definitions (TOOLS mode only)
                 - model: The model used for counting
                 - max_tokens: Maximum context window (if known)
                 - utilization: Percentage of context used (if max_tokens known)
+
+            The breakdown is additive: ``system_prompt + history + tools == total``.
+            When tools are provided without system or history messages, ``total``
+            and ``tools`` report schema-only overhead and exclude request framing.
 
         Example:
             ```python
