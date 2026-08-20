@@ -25,7 +25,12 @@ result = agent.run(BasicChatInputSchema(chat_message="Hello"))
 
 | Entry | Type | Purpose | File |
 |-------|------|---------|------|
-| `atomic` | Textual TUI | Browse & install forge tools into a project | `atomic-assembler/atomic_assembler/main.py:main` |
+| `atomic` | Textual TUI + command-line interface | Browse and install vendored Forge tools | `atomic-assembler/atomic_assembler/main.py:main` |
+
+The noninteractive surface is `atomic list`, `atomic download <name> [--dest DIR]`, and
+`atomic sources list|add|remove`. Sources are Git repositories, including private ones accessed through
+normal Git SSH or credential-helper setup. A qualified name such as `company/weather` resolves a collision
+between source catalogs. The TUI remains available when no subcommand is supplied.
 
 Declared in `pyproject.toml` (`[project.scripts]  atomic = "atomic_assembler.main:main"`). Flags:
 `--enable-logging`, `--version`.

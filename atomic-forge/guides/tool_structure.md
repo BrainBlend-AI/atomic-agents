@@ -6,7 +6,7 @@ This guide aims to explain the anatomy of an **Atomic Tool** within the **Atomic
 
 ## Prerequisites
 
-Set up the main Atomic Agents library for development by following the instructions in the [development setup guide](/guides/dev-setup.md).
+Set up the main Atomic Agents library for development by following the instructions in the [development setup guide](../../guides/DEV_GUIDE.md).
 
 ## The Principles
 

@@ -135,6 +135,8 @@ When in doubt, start with Pattern 1. Add a choice agent only when you actually h
 
 ## The Atomic Forge: where tools live
 
+For the download workflow, private Forge sources, and the package conformance standard, see the [Atomic Forge and Assembler guide](atomic_forge.md).
+
 Tools themselves are distributed via the **Atomic Forge** — a registry of standalone, modular tool packages that you download into your project. The Forge approach gives you:
 
 1. **Full Control**: You own the tool's source. Modify behavior locally without forking the framework.

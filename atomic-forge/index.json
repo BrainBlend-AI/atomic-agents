@@ -1,0 +1,156 @@
+{
+  "schema": 1,
+  "name": "atomic-forge",
+  "tools": [
+    {
+      "name": "arxiv-search",
+      "path": "tools/arxiv_search",
+      "description": "arXiv search tool for Atomic Agents (free public API)",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "aiohttp>=3.9.0,<4.0.0"
+      ]
+    },
+    {
+      "name": "bocha-search",
+      "path": "tools/bocha_search",
+      "description": "A tool for performing searches using BoCha",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "aiohttp>=3.9.0,<4.0.0"
+      ]
+    },
+    {
+      "name": "calculator",
+      "path": "tools/calculator",
+      "description": "Calculator tool for Atomic Agents",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "sympy>=1.12,<2.0.0"
+      ]
+    },
+    {
+      "name": "datetime-tool",
+      "path": "tools/datetime_tool",
+      "description": "Date and time operations (now, parse, convert, shift, diff) for Atomic Agents",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "tzdata>=2024.1"
+      ]
+    },
+    {
+      "name": "fia-signals",
+      "path": "tools/fia_signals",
+      "description": "F\u00eda Signals crypto intelligence tool for Atomic Agents \u2014 market regime, trading signals, DeFi yields, wallet risk scoring",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "requests>=2.28.0,<3.0.0"
+      ]
+    },
+    {
+      "name": "hackernews-search",
+      "path": "tools/hackernews_search",
+      "description": "Hacker News search tool for Atomic Agents (free Algolia API)",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "aiohttp>=3.9.0,<4.0.0"
+      ]
+    },
+    {
+      "name": "pdf-reader",
+      "path": "tools/pdf_reader",
+      "description": "PDF reader tool for Atomic Agents (local files or URLs, page-range support)",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "pypdf>=5.1.0,<7.0.0",
+        "requests>=2.32.3,<3.0.0"
+      ]
+    },
+    {
+      "name": "searxng-search",
+      "path": "tools/searxng_search",
+      "description": "A tool for performing searches using SearxNG",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "aiohttp>=3.9.0,<4.0.0"
+      ]
+    },
+    {
+      "name": "tavily-search",
+      "path": "tools/tavily_search",
+      "description": "A tool for performing searches using Tavily",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "aiohttp>=3.9.0,<4.0.0"
+      ]
+    },
+    {
+      "name": "weather-tool",
+      "path": "tools/weather",
+      "description": "Weather tool for Atomic Agents (Open-Meteo, no API key required)",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "requests>=2.32.3,<3.0.0"
+      ]
+    },
+    {
+      "name": "webpage-scraper",
+      "path": "tools/webpage_scraper",
+      "description": "Tool for scraping webpage content and converting it to markdown format",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "beautifulsoup4>=4.12.0,<5.0.0",
+        "markdownify>=0.11.0,<1.0.0",
+        "readability-lxml>=0.8.1,<1.0.0",
+        "requests>=2.31.0,<3.0.0",
+        "lxml>=5.1.0,<6.0.0",
+        "lxml-html-clean>=0.3.1,<1.0.0"
+      ]
+    },
+    {
+      "name": "wikipedia-search",
+      "path": "tools/wikipedia_search",
+      "description": "Wikipedia search tool for Atomic Agents (free, no API key required)",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "aiohttp>=3.9.0,<4.0.0"
+      ]
+    },
+    {
+      "name": "youtube-transcript-scraper",
+      "path": "tools/youtube_transcript_scraper",
+      "description": "A tool for fetching and processing YouTube video transcripts",
+      "version": "1.0.0",
+      "dependencies": [
+        "atomic-agents",
+        "pydantic>=2.10.3,<3.0.0",
+        "google-api-python-client>=2.118.0,<3.0.0",
+        "youtube-transcript-api>=1.1.1,<2.0.0"
+      ]
+    }
+  ]
+}

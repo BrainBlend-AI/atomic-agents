@@ -9,6 +9,7 @@ This section contains detailed guides for working with Atomic Agents.
 quickstart
 memory
 tools
+atomic_forge
 hooks
 orchestration
 cookbook

@@ -54,38 +54,43 @@ We follow these coding standards:
 
 ## Creating Tools
 
-When creating new tools:
+When creating a new tool, follow the [tool structure guide](../atomic-forge/guides/tool_structure.md), which covers the package layout, schemas, configuration, implementation, tests, and documentation. The `create-atomic-tool` skill in the Atomic Agents Claude plugin can guide you through the same process as an assisted path.
 
-1. Use the tool template:
-   ```bash
-   atomic-assembler create-tool my-tool
-   ```
+The core implementation uses typed `BaseIOSchema` contracts and a `BaseToolConfig` configuration class:
 
-2. Implement the required interfaces:
-   ```python
-   from pydantic import BaseModel
-   from atomic_agents import BaseTool
+```python
+from pydantic import Field
 
-   class MyToolInputs(BaseModel):
-       # Define input schema
-       pass
+from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig
 
-   class MyToolOutputs(BaseModel):
-       # Define output schema
-       pass
 
-   class MyTool(BaseTool[MyToolInputs, MyToolOutputs]):
-       name = "my_tool"
-       description = "Tool description"
-       inputs_schema = MyToolInputs
-       outputs_schema = MyToolOutputs
+class MyToolInputSchema(BaseIOSchema):
+    """Input for MyTool."""
 
-       def run(self, inputs: MyToolInputs) -> MyToolOutputs:
-           # Implement tool logic
-           pass
-   ```
+    value: str = Field(..., description="Value to process.")
 
-3. Add comprehensive tests:
+
+class MyToolOutputSchema(BaseIOSchema):
+    """Result returned by MyTool."""
+
+    result: str = Field(..., description="Processed value.")
+
+
+class MyToolConfig(BaseToolConfig):
+    """Configuration for MyTool."""
+
+
+class MyTool(BaseTool[MyToolInputSchema, MyToolOutputSchema]):
+    """Process a value."""
+
+    def __init__(self, config: MyToolConfig = MyToolConfig()):
+        super().__init__(config)
+
+    def run(self, params: MyToolInputSchema) -> MyToolOutputSchema:
+        return MyToolOutputSchema(result=params.value)
+```
+
+1. Add comprehensive tests:
    ```python
    def test_my_tool():
        tool = MyTool()

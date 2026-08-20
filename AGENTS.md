@@ -393,6 +393,8 @@ This project captures repeatable agent workflows as small, single-purpose,
 verified skills under `.claude/skills/`. Build and maintain them with the
 **skill-forge** skill — never do a repeatable workflow ad hoc.
 
+Before writing a tool from scratch, check the Forge for an existing one.
+
 **Proactively (notice → propose → ask):** while working, if you notice a
 multi-step workflow being repeated with no skill, a SKILL.md growing past ~500
 lines or sprouting a second capability, a skill whose instructions have drifted

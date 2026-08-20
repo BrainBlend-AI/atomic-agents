@@ -1,6 +1,6 @@
 # Communication & Integrations
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-08-20*
 
 The framework exposes no HTTP API of its own; "communication" here means how it talks to LLM
 providers and external tools.
@@ -34,8 +34,22 @@ providers and external tools.
   `clear_hooks`. Events include `parse:error`, `completion:kwargs`, `completion:response`,
   `token:counted`. See the `hooks-example` example and `docs/guides/hooks.md`.
 
-## Assembler ↔ GitHub
-- `atomic-assembler` clones `https://github.com/eigenwise/atomic-agents.git` (via GitPython), reads
-  `atomic-forge/tools/`, and copies the chosen tool into the user's project (skipping build files).
-  Source URL and paths are in `atomic-assembler/atomic_assembler/constants.py` and `utils.py`
-  (`GithubRepoCloner`, `AtomicToolManager`).
+## Assembler ↔ Forge sources (Git)
+- A **Forge source** is a Git repository, branch, and tools directory (`ForgeSource` in
+  `atomic-assembler/atomic_assembler/constants.py`). Sources are stored in
+  `~/.atomic-assembler/sources.json` and default to the official
+  `https://github.com/eigenwise/atomic-agents.git` on `main` when that file is absent.
+- Per source, `GithubRepoCloner` clones into a temp directory via GitPython, then
+  `AtomicToolManager.get_indexed_forge_tools` reads the generated `index.json` beside the tools
+  directory and `copy_atomic_tool_to_destination` copies the selected package into the user's project
+  (skipping `.coveragerc` and `uv.lock`). Both live in `utils.py`.
+- **Authentication is out of scope by design.** The assembler stores, prompts for, and prints no
+  credentials; private sources rely on the user's Git SSH keys or credential helper.
+  `validate_source_url` rejects source URLs carrying userinfo, query strings, or fragments, and
+  `redact_source_url` masks them in any output.
+- **An index is untrusted input.** Tool paths must be relative, free of `..`, and resolve inside the
+  configured tools directory; symlinks escaping the tool directory are refused before the copy; and
+  every string reaching the terminal passes through `display_safe_text`, which strips ANSI/OSC escape
+  sequences and control characters.
+- `atomic list` reports per-source failures on stderr but still prints healthy sources, exiting
+  nonzero only when every configured source fails.
