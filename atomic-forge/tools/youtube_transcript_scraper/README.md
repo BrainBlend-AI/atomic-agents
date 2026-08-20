@@ -99,4 +99,4 @@ Please ensure you follow the project's coding standards and include tests for an
 
 ## License
 
-This project is licensed under the same license as the main Atomic Agents project. See the [LICENSE](LICENSE) file in the repository root for more details.
+This project is licensed under the same license as the main Atomic Agents project. See the [LICENSE](../../../LICENSE) file in the repository root for more details.

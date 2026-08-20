@@ -1,5 +1,8 @@
+from unittest.mock import MagicMock, call, patch
+
 import pytest
-from unittest.mock import patch
+from litellm import token_counter as litellm_token_counter
+
 from atomic_agents.utils.token_counter import (
     TokenCounter,
     TokenCountResult,
@@ -203,7 +206,9 @@ class TestTokenCounter:
     @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
     def test_count_context(self, mock_token_counter, mock_get_model_info):
-        mock_token_counter.side_effect = [30, 70]  # system, then history
+        # Counting each group independently would report 30 + 70 = 100, but the
+        # complete request only has 95 tokens because framing overhead is shared.
+        mock_token_counter.side_effect = [30, 95]
         mock_get_model_info.return_value = {"max_input_tokens": 8192, "max_tokens": 4096}
 
         counter = TokenCounter()
@@ -213,35 +218,109 @@ class TestTokenCounter:
             history_messages=[{"role": "user", "content": "Hello"}],
         )
 
-        assert result.total == 100
+        assert result.total == 95
         assert result.system_prompt == 30
-        assert result.history == 70
+        assert result.history == 65
         assert result.tools == 0
         assert result.model == "gpt-4"
         assert result.max_tokens == 8192
-        assert result.utilization == pytest.approx(100 / 8192)
+        assert result.utilization == pytest.approx(95 / 8192)
 
     @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
     def test_count_context_with_tools(self, mock_token_counter, mock_get_model_info):
-        # system=30, history=70, empty_with_tools=60, empty_without_tools=10 -> tools=50
-        mock_token_counter.side_effect = [30, 70, 60, 10]
+        # system=30, complete messages=95, complete request with tools=140
+        mock_token_counter.side_effect = [30, 95, 140]
+        mock_get_model_info.return_value = {"max_input_tokens": 8192, "max_tokens": 4096}
+
+        counter = TokenCounter()
+        system_messages = [{"role": "system", "content": "You are helpful"}]
+        history_messages = [{"role": "user", "content": "Hello"}]
+        tools = [{"type": "function", "function": {"name": "test_fn"}}]
+        result = counter.count_context(
+            model="gpt-4",
+            system_messages=system_messages,
+            history_messages=history_messages,
+            tools=tools,
+        )
+
+        assert result.system_prompt == 30
+        assert result.history == 65
+        assert result.tools == 45
+        assert result.total == 140
+        assert result.model == "gpt-4"
+        assert mock_token_counter.call_args_list == [
+            call(model="gpt-4", messages=system_messages),
+            call(model="gpt-4", messages=system_messages + history_messages),
+            call(model="gpt-4", messages=system_messages + history_messages, tools=tools),
+        ]
+
+    @patch("litellm.get_model_info")
+    def test_count_context_matches_complete_litellm_request(self, mock_get_model_info: MagicMock) -> None:
+        mock_get_model_info.return_value = {"max_input_tokens": 128000, "max_tokens": 16384}
+
+        model = "gpt-4o-mini"
+        system_messages = [{"role": "system", "content": "You are a concise research assistant."}]
+        history_messages = [
+            {"role": "user", "content": "Summarize retrieval-augmented generation."},
+            {"role": "assistant", "content": "It grounds model responses in retrieved evidence."},
+        ]
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_papers",
+                    "description": "Search for relevant papers",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string"}},
+                        "required": ["query"],
+                    },
+                },
+            }
+        ]
+        complete_request_tokens = litellm_token_counter(
+            model=model,
+            messages=system_messages + history_messages,
+            tools=tools,
+        )
+
+        result = TokenCounter().count_context(
+            model=model,
+            system_messages=system_messages,
+            history_messages=history_messages,
+            tools=tools,
+        )
+
+        assert result.total == complete_request_tokens
+        assert result.total == result.system_prompt + result.history + result.tools
+
+    @patch("litellm.get_model_info")
+    @patch("litellm.token_counter")
+    def test_count_context_with_tools_and_no_messages(
+        self, mock_token_counter: MagicMock, mock_get_model_info: MagicMock
+    ) -> None:
+        mock_token_counter.side_effect = [60, 10]
         mock_get_model_info.return_value = {"max_input_tokens": 8192, "max_tokens": 4096}
 
         counter = TokenCounter()
         tools = [{"type": "function", "function": {"name": "test_fn"}}]
         result = counter.count_context(
             model="gpt-4",
-            system_messages=[{"role": "system", "content": "You are helpful"}],
-            history_messages=[{"role": "user", "content": "Hello"}],
+            system_messages=[],
+            history_messages=[],
             tools=tools,
         )
 
-        assert result.system_prompt == 30
-        assert result.history == 70
+        placeholder = [{"role": "user", "content": ""}]
+        assert result.system_prompt == 0
+        assert result.history == 0
         assert result.tools == 50
-        assert result.total == 150  # 30 + 70 + 50
-        assert result.model == "gpt-4"
+        assert result.total == 50
+        assert mock_token_counter.call_args_list == [
+            call(model="gpt-4", messages=placeholder, tools=tools),
+            call(model="gpt-4", messages=placeholder),
+        ]
 
     @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
@@ -265,7 +344,7 @@ class TestTokenCounter:
     @patch("litellm.get_model_info")
     @patch("litellm.token_counter")
     def test_count_context_no_max_tokens(self, mock_token_counter, mock_get_model_info):
-        mock_token_counter.side_effect = [20, 30]
+        mock_token_counter.side_effect = [20, 45]
         mock_get_model_info.side_effect = Exception("Unknown model")
 
         counter = TokenCounter()
@@ -275,7 +354,7 @@ class TestTokenCounter:
             history_messages=[{"role": "user", "content": "Test"}],
         )
 
-        assert result.total == 50
+        assert result.total == 45
         assert result.max_tokens is None
         assert result.utilization is None
 
@@ -305,7 +384,7 @@ class TestTokenCounter:
     @patch("litellm.token_counter")
     def test_count_context_division_by_zero_prevention(self, mock_token_counter, mock_get_model_info):
         """Test that division by zero is prevented when max_tokens is 0."""
-        mock_token_counter.side_effect = [20, 30]
+        mock_token_counter.side_effect = [20, 45]
         mock_get_model_info.return_value = {"max_input_tokens": 0, "max_tokens": 0}  # Edge case
 
         counter = TokenCounter()
@@ -315,7 +394,7 @@ class TestTokenCounter:
             history_messages=[{"role": "user", "content": "Test"}],
         )
 
-        assert result.total == 50
+        assert result.total == 45
         assert result.max_tokens == 0
         assert result.utilization is None  # Should be None, not raise ZeroDivisionError
 

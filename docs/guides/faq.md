@@ -565,4 +565,4 @@ agent = AtomicAgent[MyInput, MyOutput](
 )
 ```
 
-See the [Upgrade Guide](../UPGRADE_DOC.md) for complete migration instructions.
+See the [Upgrade Guide](../../UPGRADE_DOC.md) for complete migration instructions.

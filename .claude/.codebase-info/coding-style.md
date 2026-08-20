@@ -1,6 +1,6 @@
 # Coding Style
 
-*Last Updated: 2026-06-13*
+*Last Updated: 2026-08-11*
 
 ## Tooling
 - **Formatter:** Black, line length **127** (`[tool.black]` in `pyproject.toml`; also a pre-commit hook).
@@ -10,6 +10,7 @@
 - **Pre-commit** (`.pre-commit-config.yaml`): trailing-whitespace, end-of-file-fixer, check-yaml,
   check-added-large-files, Black, Flake8.
 - **CI** runs `black --check` and `flake8` across all four subprojects (`code-quality.yml`).
+- **Type checker:** Pyright, configured by `pyrightconfig.json` to use the uv-managed `.venv`.
 
 ## Conventions
 | Kind | Convention | Example |
