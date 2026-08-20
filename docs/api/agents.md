@@ -167,7 +167,7 @@ class BasicChatOutputSchema(BaseIOSchema):
 - `get_context_provider(provider_name: str)`: Get a registered context provider
 - `register_context_provider(provider_name: str, provider: BaseDynamicContextProvider)`: Register a new context provider
 - `unregister_context_provider(provider_name: str)`: Remove a context provider
-- `get_context_token_count() -> TokenCountResult`: Get token count for current context (system prompt + history)
+- `get_context_token_count() -> TokenCountResult`: Get the complete context token count with an additive breakdown
 
 ### Context Providers
 
@@ -231,6 +231,7 @@ token_info = agent.get_context_token_count()
 print(f"Total tokens: {token_info.total}")
 print(f"System prompt (with schema): {token_info.system_prompt} tokens")
 print(f"History: {token_info.history} tokens")
+print(f"Tools: {token_info.tools} tokens")
 print(f"Model: {token_info.model}")
 
 # Check context utilization if max tokens is known
@@ -240,10 +241,19 @@ if token_info.utilization:
     print(f"Context utilization: {token_info.utilization:.1%}")
 ```
 
+The breakdown is additive: `system_prompt + history + tools == total`. Request
+framing is attributed to `system_prompt` when a system message is present, or to
+`history` otherwise. When tools are provided without system or history messages,
+`total` and `tools` report schema-only overhead and exclude request framing.
+
 The `TokenCountResult` contains:
-- `total`: Total tokens in context (system + history + schema overhead)
-- `system_prompt`: Tokens used by system prompt and output schema
-- `history`: Tokens used by conversation history (including multimodal content)
+- `total`: LiteLLM token count for the complete serialized context; with tools but
+  no messages, this is schema-only overhead and excludes request framing
+- `system_prompt`: System message tokens, including request framing when a system
+  message is present; in JSON modes, this also includes the output schema
+- `history`: Incremental tokens added by conversation history, including request
+  framing when no system message is present
+- `tools`: Incremental tokens added by tool definitions in TOOLS mode
 - `model`: The model name used for counting
 - `max_tokens`: Maximum context window (if known)
 - `utilization`: Percentage of context used (if max_tokens known)

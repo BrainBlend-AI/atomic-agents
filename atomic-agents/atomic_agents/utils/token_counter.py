@@ -17,10 +17,15 @@ class TokenCountResult(NamedTuple):
     Result of a token count operation.
 
     Attributes:
-        total: Total number of tokens in the context (messages + tools).
-        system_prompt: Tokens in the system prompt (0 if no system prompt).
-        history: Tokens in the conversation history.
-        tools: Tokens in the tools/function definitions (0 if no tools).
+        total: Total number of tokens in the complete message request. When tools
+            are provided without messages, this is schema-only overhead and
+            excludes request framing.
+        system_prompt: Tokens in the system messages, including request framing
+            when a system message is present (0 otherwise).
+        history: Incremental tokens added by the history messages. Includes
+            request framing when there are no system messages.
+        tools: Incremental tokens added by tools to the complete message request.
+            When there are no messages, this is the schema-only token overhead.
         model: The model used for tokenization.
         max_tokens: Maximum context window for the model (None if unknown).
         utilization: Percentage of context window used (None if max_tokens unknown).
@@ -170,6 +175,13 @@ class TokenCounter:
         """
         Count tokens with breakdown by system prompt, history, and tools.
 
+        The breakdown is additive: ``system_prompt + history + tools == total``.
+        Request framing is attributed to the system prompt when present, or to
+        history otherwise. Tool tokens are the increment over the full message
+        request without tools. When tools are provided without any messages,
+        ``total`` and ``tools`` report schema-only overhead and exclude request
+        framing.
+
         Args:
             model: The model identifier.
             system_messages: System prompt messages (may be empty).
@@ -183,18 +195,32 @@ class TokenCounter:
             TokenCountError: If token counting fails.
         """
         system_tokens = self.count_messages(model, system_messages) if system_messages else 0
-        history_tokens = self.count_messages(model, history_messages) if history_messages else 0
+        all_messages = system_messages + history_messages
 
-        # Count tool tokens separately if provided
+        # Tokenizers include request-level framing, so independently counting the
+        # system prompt and history would count that overhead twice. Count the
+        # complete message list and attribute the incremental tokens to history.
+        if history_messages:
+            messages_tokens = self.count_messages(model, all_messages)
+            history_tokens = messages_tokens - system_tokens
+        else:
+            messages_tokens = system_tokens
+            history_tokens = 0
+
         tools_tokens = 0
+        total_tokens = messages_tokens
         if tools:
-            # To count just the tools overhead, we count empty messages with tools
-            # and subtract the base overhead
-            empty_with_tools = self.count_messages(model, [{"role": "user", "content": ""}], tools=tools)
-            empty_without_tools = self.count_messages(model, [{"role": "user", "content": ""}])
-            tools_tokens = empty_with_tools - empty_without_tools
-
-        total_tokens = system_tokens + history_tokens + tools_tokens
+            if all_messages:
+                total_tokens = self.count_messages(model, all_messages, tools=tools)
+                tools_tokens = total_tokens - messages_tokens
+            else:
+                # Preserve schema-only counting by subtracting the same placeholder
+                # request without tools. Keep the placeholder out of the total.
+                placeholder = [{"role": "user", "content": ""}]
+                with_tools_tokens = self.count_messages(model, placeholder, tools=tools)
+                without_tools_tokens = self.count_messages(model, placeholder)
+                tools_tokens = with_tools_tokens - without_tools_tokens
+                total_tokens = tools_tokens
 
         max_tokens = self.get_max_tokens(model)
         # Prevent division by zero

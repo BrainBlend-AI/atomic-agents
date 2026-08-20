@@ -16,17 +16,25 @@ A named tuple containing token count information:
     .. py:attribute:: total
         :type: int
 
-        Total tokens in the context (system prompt + history + schema overhead).
+        LiteLLM token count for the complete serialized context. With tools but no
+        messages, this is schema-only overhead and excludes request framing.
 
     .. py:attribute:: system_prompt
         :type: int
 
-        Tokens used by the system prompt and output schema.
+        System message tokens, including request framing when a system message is
+        present. In JSON modes, this also includes the output schema.
 
     .. py:attribute:: history
         :type: int
 
-        Tokens used by conversation history (including multimodal content).
+        Incremental tokens added by conversation history, including request
+        framing when no system message is present.
+
+    .. py:attribute:: tools
+        :type: int
+
+        Incremental tokens added by tool definitions in TOOLS mode.
 
     .. py:attribute:: model
         :type: str
@@ -76,13 +84,14 @@ The main utility class for counting tokens:
         :param model: The model name
         :return: Maximum tokens, or None if unknown
 
-    .. py:method:: count_context(model: str, system_messages: List[Dict], history_messages: List[Dict]) -> TokenCountResult
+    .. py:method:: count_context(model: str, system_messages: List[Dict], history_messages: List[Dict], tools: Optional[List[Dict]] = None) -> TokenCountResult
 
-        Count tokens for a complete context (system prompt + history).
+        Count tokens for a complete context with an additive breakdown.
 
         :param model: The model name
         :param system_messages: System prompt messages
         :param history_messages: Conversation history messages
+        :param tools: Optional tool definitions
         :return: TokenCountResult with detailed breakdown
 ```
 
@@ -126,16 +135,20 @@ token_info = agent.get_context_token_count()
 print(f"Total tokens: {token_info.total}")
 print(f"System prompt (with schema): {token_info.system_prompt} tokens")
 print(f"History: {token_info.history} tokens")
+print(f"Tools: {token_info.tools} tokens")
 if token_info.utilization:
     print(f"Context utilization: {token_info.utilization:.1%}")
 ```
 
-The token count includes:
-- System prompt content
-- Output schema overhead (the JSON schema Instructor sends for structured output)
-- Conversation history (including multimodal content like images, PDFs, audio)
+The breakdown is additive: `system_prompt + history + tools == total`. Request
+framing is attributed to `system_prompt` when a system message is present, or to
+`history` otherwise. When tools are provided without system or history messages,
+`total` and `tools` report schema-only overhead and exclude request framing. In
+JSON modes, the output schema is included in `system_prompt`; in TOOLS mode, tool
+definitions are reported through `tools`.
 
-This gives you an accurate count that matches what would be sent to the API.
+For requests with messages, the total matches LiteLLM's count for the complete
+serialized request.
 
 ## Tool Message Formatting
 
