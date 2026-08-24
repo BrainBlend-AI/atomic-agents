@@ -8,7 +8,7 @@ composable, schema-driven building blocks (built on Instructor + Pydantic). This
 
 **Stack:** Python ≥3.12 · Instructor · Pydantic v2 · LiteLLM · MCP · Textual · uv + Hatchling · Pyright · `VideoURL` multimodal content
 **Shape:** Monorepo — `atomic-agents/` (core lib) · `atomic-assembler/` (CLI) · `atomic-forge/` (tools) · `atomic-examples/` (examples)
-**Package:** `atomic-agents` v2.9.1 on PyPI · core import package is `atomic_agents`
+**Package:** `atomic-agents` v2.10.2 on PyPI · core import package is `atomic_agents`
 
 ## Documents
 
