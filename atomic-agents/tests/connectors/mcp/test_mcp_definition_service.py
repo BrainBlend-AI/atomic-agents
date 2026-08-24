@@ -1,6 +1,9 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import mcp.types as types
+from mcp.shared.exceptions import McpError
+
 from atomic_agents.connectors.mcp import (
     MCPDefinitionService,
     MCPToolDefinition,
@@ -57,6 +60,7 @@ def mock_client_session():
     mock_response.resources = [mock_resource]
     mock_response.uri = "resource://TestResource/{id}"
     mock_session.list_resources.return_value = mock_response
+    mock_session.list_resource_templates.return_value = types.ListResourceTemplatesResult(resourceTemplates=[])
 
     mock_prompt = MagicMock()
     mock_prompt.name = "welcome"
@@ -326,6 +330,57 @@ class TestToolDefinitionService:
         mock_client_session.list_resources.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_fetch_resource_definitions_from_session_includes_templates_with_static_resources(self):
+        mock_session = AsyncMock()
+        mock_session.list_resources.return_value = types.ListResourcesResult(
+            resources=[types.Resource(name="current_config", uri="config://current")]
+        )
+        mock_session.list_resource_templates.return_value = types.ListResourceTemplatesResult(
+            resourceTemplates=[types.ResourceTemplate(name="user_profile", uriTemplate="users://{user_id}")]
+        )
+
+        result = await MCPDefinitionService.fetch_resource_definitions_from_session(mock_session)
+
+        assert [definition.name for definition in result] == ["current_config", "user_profile"]
+        assert result[1].uri == "users://{user_id}"
+        assert result[1].input_schema == {
+            "type": "object",
+            "properties": {"user_id": {"type": "string", "description": "URI parameter user_id"}},
+            "required": ["user_id"],
+        }
+        mock_session.list_resources.assert_awaited_once()
+        mock_session.list_resource_templates.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_fetch_resource_definitions_from_session_allows_unsupported_templates(self):
+        mock_session = AsyncMock()
+        mock_session.list_resources.return_value = types.ListResourcesResult(
+            resources=[types.Resource(name="current_config", uri="config://current")]
+        )
+        mock_session.list_resource_templates.side_effect = McpError(
+            types.ErrorData(code=types.METHOD_NOT_FOUND, message="Method not found")
+        )
+
+        result = await MCPDefinitionService.fetch_resource_definitions_from_session(mock_session)
+
+        assert [definition.name for definition in result] == ["current_config"]
+        mock_session.list_resource_templates.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_fetch_resource_definitions_from_session_propagates_template_errors(self):
+        mock_session = AsyncMock()
+        mock_session.list_resources.return_value = types.ListResourcesResult(
+            resources=[types.Resource(name="current_config", uri="config://current")]
+        )
+        template_error = McpError(types.ErrorData(code=types.INTERNAL_ERROR, message="Template listing failed"))
+        mock_session.list_resource_templates.side_effect = template_error
+
+        with pytest.raises(McpError) as exc_info:
+            await MCPDefinitionService.fetch_resource_definitions_from_session(mock_session)
+
+        assert exc_info.value is template_error
+
+    @pytest.mark.asyncio
     async def test_fetch_prompt_definitions_from_session(self, mock_client_session):
         result = await MCPDefinitionService.fetch_prompt_definitions_from_session(mock_client_session)
 
@@ -490,6 +545,7 @@ async def test_fetch_resources_from_session_no_resources(caplog):
     sess = AsyncMock()
     sess.initialize = AsyncMock()
     sess.list_resources = AsyncMock(return_value=_NoResourcesResponse())
+    sess.list_resource_templates = AsyncMock(return_value=types.ListResourceTemplatesResult(resourceTemplates=[]))
 
     result = await MCPDefinitionService.fetch_resource_definitions_from_session(sess)
     assert result == []
@@ -524,6 +580,7 @@ async def test_fetch_resources_from_session(caplog):
     mock_response.resources = [mock_resource]
 
     sess.list_resources = AsyncMock(return_value=mock_response)
+    sess.list_resource_templates = AsyncMock(return_value=types.ListResourceTemplatesResult(resourceTemplates=[]))
 
     result = await MCPDefinitionService.fetch_resource_definitions_from_session(sess)
 

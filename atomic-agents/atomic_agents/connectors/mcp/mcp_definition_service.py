@@ -11,6 +11,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
+from mcp.shared.exceptions import McpError
 import mcp.types as types
 from pydantic import AnyUrl
 from urllib.parse import unquote as decode_uri
@@ -251,10 +252,14 @@ class MCPDefinitionService:
 
             resources_iterable: List[types.Resource] = list(response.resources or [])
 
-            if not resources_iterable:
+            try:
                 res_templates: types.ListResourceTemplatesResult = await session.list_resource_templates()
+            except McpError as error:
+                if error.error.code != types.METHOD_NOT_FOUND:
+                    raise
+            else:
                 for template in res_templates.resourceTemplates:
-                    # Resources have no "input_schema" value and use URI templates with parameters.
+                    # Resource templates have no "input_schema" value and use URI templates with parameters.
                     resources_iterable.append(
                         types.Resource(
                             name=template.name,
