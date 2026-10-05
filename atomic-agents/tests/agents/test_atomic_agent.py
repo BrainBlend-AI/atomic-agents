@@ -1144,6 +1144,89 @@ def test_get_context_token_count_multimodal_content(mock_get_token_counter, mock
     assert image_entry["image_url"]["url"] == "https://example.com/test.png"
 
 
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_image_conversion_failure(mock_get_token_counter, mock_instructor, caplog):
+    from logging import WARNING
+    from instructor.processing.multimodal import Image
+
+    class ImageInputSchema(BaseIOSchema):
+        """Input with text and an image."""
+
+        text: str
+        image: Image
+
+    image = Image(source="https://example.com/test.png", media_type="image/png")
+    history = ChatHistory()
+    history.add_message("system", BasicChatInputSchema(chat_message="Earlier context"))
+    history.add_message("user", ImageInputSchema(text="Describe this image", image=image))
+    history.add_message("assistant", BasicChatOutputSchema(chat_message="Later reply"))
+    agent = AtomicAgent[ImageInputSchema, BasicChatOutputSchema](AgentConfig(client=mock_instructor, history=history))
+    expected_result = TokenCountResult(total=150, system_prompt=50, history=100, tools=0, model=agent.model)
+    mock_get_token_counter.return_value.count_context.return_value = expected_result
+
+    with patch.object(
+        Image, "to_openai", autospec=True, side_effect=RuntimeError("controlled conversion failure")
+    ) as convert_image:
+        result = agent.get_context_token_count()
+
+    convert_image.assert_called_once_with(image, instructor.Mode.JSON)
+    assert result == expected_result
+    assert caplog.record_tuples == [
+        (
+            "atomic_agents.agents.atomic_agent",
+            WARNING,
+            "Failed to serialize Image for token counting: controlled conversion failure. Using placeholder for estimation.",
+        )
+    ]
+    assert mock_get_token_counter.return_value.count_context.call_args.kwargs["history_messages"] == [
+        {"role": "system", "content": '{"chat_message":"Earlier context"}'},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": '{"text":"Describe this image"}'},
+                {"type": "text", "text": "[image content]"},
+            ],
+        },
+        {"role": "assistant", "content": '{"chat_message":"Later reply"}'},
+    ]
+
+
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_custom_history_stringifies_unusual_content(mock_get_token_counter, mock_instructor):
+    from copy import deepcopy
+    from decimal import Decimal
+
+    class CustomHistory(ChatHistory):
+        def get_history(self) -> list[dict[str, str | list[str | Decimal]]]:
+            return [
+                {"role": "tool", "content": ["Before value", Decimal("12.50"), "After value"]},
+                {"role": "assistant", "content": "Remaining message"},
+            ]
+
+        def copy(self) -> "CustomHistory":
+            return deepcopy(self)
+
+    history = CustomHistory()
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](AgentConfig(client=mock_instructor, history=history))
+    expected_result = TokenCountResult(total=150, system_prompt=50, history=100, tools=0, model=agent.model)
+    mock_get_token_counter.return_value.count_context.return_value = expected_result
+
+    result = agent.get_context_token_count()
+
+    assert result == expected_result
+    assert mock_get_token_counter.return_value.count_context.call_args.kwargs["history_messages"] == [
+        {
+            "role": "tool",
+            "content": [
+                {"type": "text", "text": "Before value"},
+                {"type": "text", "text": "12.50"},
+                {"type": "text", "text": "After value"},
+            ],
+        },
+        {"role": "assistant", "content": "Remaining message"},
+    ]
+
+
 def test_serialize_history_for_token_count_video_placeholder(agent, mock_history):
     video_part = {"type": "video_url", "video_url": {"url": "https://example.com/clip.mp4"}}
     mock_history.get_history.return_value = [{"role": "user", "content": ['{"prompt":"Summarize the video"}', video_part]}]

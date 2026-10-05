@@ -1,5 +1,8 @@
 import pytest
 from pydantic import BaseModel
+from mcp import ClientSession, StdioServerParameters
+from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
+from unittest.mock import AsyncMock, MagicMock, call
 import asyncio
 from atomic_agents.connectors.mcp import (
     fetch_mcp_tools,
@@ -1422,21 +1425,108 @@ def test_create_prompt_classes_skips_invalid(monkeypatch):
     assert prompts[0].mcp_prompt_name == "Good"
 
 
-def test_force_mark_unreachable_lines_for_coverage():
-    """
-    Force execution marking of unreachable lines in mcp_tool_factory for coverage.
-    """
-    import inspect
-    from atomic_agents.connectors.mcp.mcp_factory import MCPFactory
+@pytest.fixture
+def mocked_mcp_connection(monkeypatch: pytest.MonkeyPatch) -> tuple[AsyncMock, dict[str, MagicMock]]:
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+    import atomic_agents.connectors.mcp.mcp_definition_service as definition_module
 
-    file_path = inspect.getsourcefile(MCPFactory)
-    assert file_path is not None, "Could not determine source file for MCPFactory."
-    # Include additional unreachable lines for coverage
-    unreachable_lines = [135, 136, 137, 138, 139, 192, 219, 221, 239, 243, 247, 248, 249, 271, 272, 273]
-    for ln in unreachable_lines:
-        # Generate a code object with a single pass at the target line number
-        code = "\n" * (ln - 1) + "pass"
-        exec(compile(code, file_path, "exec"), {})
+    session = AsyncMock(spec=ClientSession)
+    session.__aenter__.return_value = session
+    session.__aexit__.return_value = None
+    session.list_tools.return_value = ListToolsResult(
+        tools=[
+            Tool(
+                name="EchoTool",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}, "optional": {"type": "string"}},
+                    "required": ["query"],
+                },
+            )
+        ]
+    )
+    session.call_tool.return_value = CallToolResult(content=[TextContent(type="text", text="echo result")])
+    monkeypatch.setattr(factory_module, "ClientSession", MagicMock(return_value=session))
+    monkeypatch.setattr(definition_module, "ClientSession", MagicMock(return_value=session))
+
+    clients = {}
+    for client_name, streams in (
+        ("stdio_client", (None, None)),
+        ("sse_client", (None, None)),
+        ("streamablehttp_client", (None, None, None)),
+    ):
+        transport = AsyncMock()
+        transport.__aenter__.return_value = streams
+        transport.__aexit__.return_value = None
+        client = MagicMock(return_value=transport)
+        clients[client_name] = client
+        monkeypatch.setattr(factory_module, client_name, client)
+        monkeypatch.setattr(definition_module, client_name, client)
+    return session, clients
+
+
+@pytest.mark.parametrize(
+    "transport_type,client_name,endpoint,expected_connection",
+    [
+        pytest.param(
+            MCPTransportType.STDIO,
+            "stdio_client",
+            "mock-mcp --local",
+            StdioServerParameters(command="mock-mcp", args=["--local"], env=None, cwd="workdir"),
+            id="stdio",
+        ),
+        pytest.param(MCPTransportType.SSE, "sse_client", "http://example.test", "http://example.test/sse", id="sse"),
+        pytest.param(
+            MCPTransportType.HTTP_STREAM,
+            "streamablehttp_client",
+            "http://example.test",
+            "http://example.test/mcp/",
+            id="http-stream",
+        ),
+    ],
+)
+def test_generated_tool_discovers_and_calls_sdk_tool_through_transport(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    transport_type: MCPTransportType,
+    client_name: str,
+    endpoint: str,
+    expected_connection: str | StdioServerParameters,
+) -> None:
+    session, clients = mocked_mcp_connection
+    tool_class = fetch_mcp_tools(endpoint, transport_type, working_directory="workdir")[0]
+    result = tool_class().run(tool_class.input_schema(tool_name="EchoTool", query="hello", optional=None))
+
+    assert result.result == [TextContent(type="text", text="echo result")]
+    session.list_tools.assert_awaited_once_with()
+    session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})
+    assert session.initialize.await_count == 2
+    assert clients[client_name].call_args_list == [call(expected_connection), call(expected_connection)]
+    session.__aexit__.assert_has_awaits([call(session, None, None, None), call(session, None, None, None)])
+    transport = clients[client_name].return_value
+    transport.__aexit__.assert_has_awaits([call(transport, None, None, None), call(transport, None, None, None)])
+
+
+@pytest.mark.asyncio
+async def test_generated_tool_uses_sdk_structured_output_on_persistent_session(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+) -> None:
+    session, clients = mocked_mcp_connection
+    session.list_tools.return_value.tools[0].outputSchema = {
+        "type": "object",
+        "properties": {"count": {"type": "integer"}},
+        "required": ["count"],
+    }
+    session.call_tool.return_value = CallToolResult(
+        content=[TextContent(type="text", text='{"count": 99}')], structuredContent={"count": 7}
+    )
+    tool_class = (await fetch_mcp_tools_async(client_session=session))[0]
+    result = await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+
+    assert result.model_dump() == {"count": 7}
+    session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})
+    session.initialize.assert_awaited_once_with()
+    for client in clients.values():
+        client.assert_not_called()
 
 
 def test__fetch_tool_definitions_service_branch(monkeypatch):
@@ -1491,21 +1581,18 @@ def test_fetch_prompt_definitions_service_branch(monkeypatch):
     assert result[0].name == "COVP"
 
 
-@pytest.mark.asyncio
-async def test_cover_line_195_async_test():
-    """Covers line 195 by simulating the async execution path directly."""
+def test_fetch_mcp_tools_rejects_persistent_session_without_event_loop(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+) -> None:
+    session, clients = mocked_mcp_connection
+    with pytest.raises(ValueError, match="When `client_session` is provided an `event_loop` must also be supplied"):
+        fetch_mcp_tools(client_session=session)
 
-    # Simulate the async function logic that includes the target line
-    async def simulate_persistent_call_no_loop(loop):
-        if loop is None:
-            raise RuntimeError("Simulated: No event loop provided for the persistent MCP session.")
-        pass  # Simplified
-
-    # Run the simulated async function with loop = None and assert the exception
-    with pytest.raises(RuntimeError) as excinfo:
-        await simulate_persistent_call_no_loop(None)
-
-    assert "Simulated: No event loop provided for the persistent MCP session." in str(excinfo.value)
+    session.initialize.assert_not_awaited()
+    session.list_tools.assert_not_awaited()
+    session.call_tool.assert_not_awaited()
+    for client in clients.values():
+        client.assert_not_called()
 
 
 def test_run_tool_with_persistent_session_no_event_loop(monkeypatch):
