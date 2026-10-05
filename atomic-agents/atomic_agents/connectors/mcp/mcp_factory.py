@@ -149,8 +149,8 @@ def _validate_tool_content_output(
 def _validate_model_tool_output(
     tool_result: BaseModel, output_schema: type[BaseIOSchema], tool_name: str
 ) -> BaseIOSchema | None:
-    if hasattr(tool_result, "structuredContent"):
-        structured_data: JsonValue | _ModelDumpPayload = getattr(tool_result, "structuredContent")
+    structured_data: JsonValue | _ModelDumpPayload = getattr(tool_result, "structuredContent", None)
+    if structured_data is not None:
         return _validate_structured_tool_output(structured_data, output_schema, tool_name)
     elif hasattr(tool_result, "content"):
         content: _ToolContent = getattr(tool_result, "content")

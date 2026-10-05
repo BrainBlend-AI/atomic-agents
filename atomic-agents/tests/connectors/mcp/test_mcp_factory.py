@@ -1,5 +1,5 @@
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from mcp import ClientSession, StdioServerParameters
 from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
 from unittest.mock import AsyncMock, MagicMock, call
@@ -1507,8 +1507,24 @@ def test_generated_tool_discovers_and_calls_sdk_tool_through_transport(
 
 
 @pytest.mark.asyncio
-async def test_generated_tool_uses_sdk_structured_output_on_persistent_session(
-    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+@pytest.mark.parametrize(
+    "tool_result,expected_count",
+    [
+        pytest.param(CallToolResult(content=[TextContent(type="text", text='{"count": 7}')]), 7, id="json-text-fallback"),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": 99}')], structuredContent={"count": 7}),
+            7,
+            id="structured-precedence",
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": 99}')], structuredContent={"count": 0}),
+            0,
+            id="structured-zero",
+        ),
+    ],
+)
+async def test_generated_tool_uses_sdk_typed_output_on_persistent_session(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]], tool_result: CallToolResult, expected_count: int
 ) -> None:
     session, clients = mocked_mcp_connection
     session.list_tools.return_value.tools[0].outputSchema = {
@@ -1516,17 +1532,72 @@ async def test_generated_tool_uses_sdk_structured_output_on_persistent_session(
         "properties": {"count": {"type": "integer"}},
         "required": ["count"],
     }
-    session.call_tool.return_value = CallToolResult(
-        content=[TextContent(type="text", text='{"count": 99}')], structuredContent={"count": 7}
-    )
+    session.call_tool.return_value = tool_result
     tool_class = (await fetch_mcp_tools_async(client_session=session))[0]
     result = await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
 
-    assert result.model_dump() == {"count": 7}
+    assert result.model_dump() == {"count": expected_count}
     session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})
     session.initialize.assert_awaited_once_with()
     for client in clients.values():
         client.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,cause_type,message",
+    [
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="invalid")]),
+            ValueError,
+            "unparseable result",
+            id="malformed-json",
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="[]")]), ValueError, "unparseable result", id="json-array"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="0")]), ValueError, "unparseable result", id="json-zero"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="false")]), ValueError, "unparseable result", id="json-false"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="null")]), ValueError, "unparseable result", id="json-null"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": "invalid"}')]),
+            ValidationError,
+            "validation error",
+            id="invalid-count",
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": 7}')], structuredContent={}),
+            ValidationError,
+            "validation error",
+            id="empty-structured-precedence",
+        ),
+    ],
+)
+async def test_generated_typed_tool_rejects_invalid_sdk_output(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    tool_result: CallToolResult,
+    cause_type: type[Exception],
+    message: str,
+) -> None:
+    session, _ = mocked_mcp_connection
+    session.list_tools.return_value.tools[0].outputSchema = {
+        "type": "object",
+        "properties": {"count": {"type": "integer"}},
+        "required": ["count"],
+    }
+    session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=session))[0]
+    with pytest.raises(RuntimeError, match=message) as failure:
+        await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+
+    assert isinstance(failure.value.__cause__, cause_type)
+    session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})
 
 
 def test__fetch_tool_definitions_service_branch(monkeypatch):
@@ -2919,6 +2990,7 @@ def named_output_tool_session(mocked_mcp_connection: tuple[AsyncMock, dict[str, 
     "tool_result,expected_name",
     [
         (CallToolResult(content=[TextContent(type="text", text='{"name":"text"}')], structuredContent={"name": "sdk"}), "sdk"),
+        (CallToolResult(content=[TextContent(type="text", text='{"name":"text"}')]), "text"),
         (StructuredModelResult(structuredContent=NamedToolPayload(name="model")), "model"),
         (
             MockContentResult(content=[MockContentItem(text='{"name":"first"}'), MockContentItem(text='{"name":"second"}')]),
@@ -2947,12 +3019,8 @@ async def test_typed_tool_conversion_preserves_precedence(
 @pytest.mark.parametrize(
     "tool_result,cause_type,message",
     [
-        (
-            CallToolResult(content=[TextContent(type="text", text='{"name":"text"}')]),
-            TypeError,
-            "structuredContent with unexpected type NoneType",
-        ),
         (StructuredModelResult(structuredContent="invalid"), TypeError, "structuredContent with unexpected type str"),
+        (StructuredModelResult(structuredContent=""), TypeError, "structuredContent with unexpected type str"),
         (MockContentResult(content=[]), ValueError, "unparseable result"),
         (MockContentResult(content=[MockContentItem(text="invalid")]), ValueError, "unparseable result"),
         (
