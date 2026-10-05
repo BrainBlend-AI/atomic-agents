@@ -2888,3 +2888,116 @@ async def test_prompt_agenerate_error_handling(monkeypatch):
     with pytest.raises(RuntimeError) as exc_info:
         await agenerate_method(params)
     assert "Failed to get MCP prompt 'ErrorPrompt'" in str(exc_info.value)
+
+
+class StructuredModelResult(BaseModel):
+    structuredContent: BaseModel | dict[str, str] | str | None
+
+
+class NamedToolPayload(BaseModel):
+    name: str
+
+
+class TextAndDataContent(BaseModel):
+    text: str | int | None
+    data: dict[str, str]
+
+
+@pytest.fixture
+def named_output_tool_session(mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]]) -> AsyncMock:
+    session, _ = mocked_mcp_connection
+    session.list_tools.return_value.tools[0].outputSchema = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}},
+        "required": ["name"],
+    }
+    return session
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,expected_name",
+    [
+        (CallToolResult(content=[TextContent(type="text", text='{"name":"text"}')], structuredContent={"name": "sdk"}), "sdk"),
+        (StructuredModelResult(structuredContent=NamedToolPayload(name="model")), "model"),
+        (
+            MockContentResult(content=[MockContentItem(text='{"name":"first"}'), MockContentItem(text='{"name":"second"}')]),
+            "first",
+        ),
+        (MockContentResult(content=(MockContentItemWithData(data={"name": "tuple"}),)), "tuple"),
+        (MockContentResult(content=[TextAndDataContent(text="[]", data={"name": "data"})]), "data"),
+        (MockContentResult(content=[TextAndDataContent(text="invalid" * 40, data={"name": "long"})]), "long"),
+        (MockContentResult(content=[TextAndDataContent(text="invalid", data={"name": "short"})]), "short"),
+        (MockContentResult(content=[TextAndDataContent(text=None, data={"name": "none-text"})]), "none-text"),
+        ({"structuredContent": {"name": "structured"}, "content": {"name": "content"}}, "structured"),
+        ({"content": {"name": "content"}, "name": "raw"}, "content"),
+        ({"isError": True, "name": "test_value", "content": "article"}, "test_value"),
+    ],
+)
+async def test_typed_tool_conversion_preserves_precedence(
+    named_output_tool_session: AsyncMock, tool_result: BaseModel | dict[str, object], expected_name: str
+) -> None:
+    named_output_tool_session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=named_output_tool_session))[0]
+    result = await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+    assert result.model_dump() == {"name": expected_name}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,cause_type,message",
+    [
+        (
+            CallToolResult(content=[TextContent(type="text", text='{"name":"text"}')]),
+            TypeError,
+            "structuredContent with unexpected type NoneType",
+        ),
+        (StructuredModelResult(structuredContent="invalid"), TypeError, "structuredContent with unexpected type str"),
+        (MockContentResult(content=[]), ValueError, "unparseable result"),
+        (MockContentResult(content=[MockContentItem(text="invalid")]), ValueError, "unparseable result"),
+        (
+            MockContentResult(content=[TextAndDataContent(text='{"wrong":"field"}', data={"name": "ignored"})]),
+            ValueError,
+            "validation error",
+        ),
+        ({"structuredContent": None, "name": "ignored"}, TypeError, "mapping"),
+        ("raw string", ValueError, "unparseable result"),
+    ],
+)
+async def test_typed_tool_conversion_preserves_wrapped_failures(
+    named_output_tool_session: AsyncMock,
+    tool_result: BaseModel | dict[str, object] | str,
+    cause_type: type[Exception],
+    message: str,
+) -> None:
+    named_output_tool_session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=named_output_tool_session))[0]
+    with pytest.raises(RuntimeError, match="Failed to execute MCP tool 'EchoTool':") as failure:
+        await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+    assert isinstance(failure.value.__cause__, cause_type)
+    assert message in str(failure.value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,expected_content",
+    [
+        (
+            CallToolResult(content=[TextContent(type="text", text="first"), TextContent(type="text", text="second")]),
+            [TextContent(type="text", text="first"), TextContent(type="text", text="second")],
+        ),
+        ({"isError": True, "name": "test_value", "content": "article"}, "article"),
+        ({"name": "raw"}, {"name": "raw"}),
+        (123, 123),
+    ],
+)
+async def test_generic_tool_conversion_preserves_content(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    tool_result: BaseModel | dict[str, object] | int,
+    expected_content: list[TextContent] | dict[str, str] | str | int,
+) -> None:
+    session, _ = mocked_mcp_connection
+    session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=session))[0]
+    result = await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+    assert result.result == expected_content
