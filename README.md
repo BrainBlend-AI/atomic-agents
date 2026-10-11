@@ -350,6 +350,7 @@ Atomic Forge is a collection of tools that can be used with Atomic Agents to ext
 - DateTime
 - Fía Signals
 - Firecrawl Search
+- FXMacroData
 - Hacker News Search
 - PDF Reader
 - SearXNG Search
