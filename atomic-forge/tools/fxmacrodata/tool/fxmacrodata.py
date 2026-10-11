@@ -10,7 +10,6 @@ from pydantic import Field, JsonValue, SecretStr, field_validator
 
 from atomic_agents import BaseIOSchema, BaseTool, BaseToolConfig
 
-
 CURRENCY_PATTERN = re.compile(r"^[a-z]{3}$")
 INDICATOR_PATTERN = re.compile(r"^[a-z0-9_]+$")
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -135,10 +134,14 @@ class FXMacroDataToolConfig(BaseToolConfig):
     def require_https_host(cls, value: str) -> str:
         """Reject anything but an https:// URL with a host, so a bad value fails here rather than mid-request."""
         base_url = value.strip().rstrip("/")
-        parts = urlsplit(base_url)
-        if parts.scheme != "https" or not parts.hostname:
-            raise ValueError("base_url must be an https:// URL with a host, e.g. https://api.fxmacrodata.com/v1")
-        return base_url
+        try:
+            parts = urlsplit(base_url)
+            if parts.scheme == "https" and parts.hostname:
+                _ = parts.port  # urlsplit defers malformed/out-of-range port checks until this access.
+                return base_url
+        except ValueError:
+            pass
+        raise ValueError("base_url must be an https:// URL with a host, e.g. https://api.fxmacrodata.com/v1")
 
 
 ####################
@@ -265,7 +268,15 @@ class FXMacroDataTool(BaseTool[FXMacroDataToolInputSchema, FXMacroDataToolOutput
 
     def redact(self, message: str) -> str:
         """Remove the API key from any text that leaves the tool."""
-        return message.replace(self._api_key, "[redacted]") if self._api_key else message
+        if not self._api_key:
+            return message
+        redacted = message.replace(self._api_key, "[redacted]")
+        if self._api_key not in redacted:
+            return redacted
+        replacement = "*"
+        while replacement in self._api_key:
+            replacement = chr(ord(replacement) + 1)
+        return message.replace(self._api_key, replacement)
 
     def redact_json(self, value: JsonValue) -> JsonValue:
         """Redact the API key from every string in a response body, keys included."""
@@ -276,7 +287,17 @@ class FXMacroDataTool(BaseTool[FXMacroDataToolInputSchema, FXMacroDataToolOutput
         return self.redact(value) if isinstance(value, str) else value
 
     def redact_object(self, value: JsonObject) -> JsonObject:
-        return {self.redact(name): self.redact_json(item) for name, item in value.items()}
+        """Keep every value when redacting different keys to the same name."""
+        result = {}
+        for name, item in value.items():
+            redacted_name = self.redact(name)
+            key = redacted_name
+            suffix = 0
+            while key in result:
+                suffix += 1
+                key = self.redact(f"{redacted_name}_{suffix}")
+            result[key] = self.redact_json(item)
+        return result
 
     def headers(self) -> Dict[str, str]:
         if self._api_key and not API_KEY_PATTERN.match(self._api_key):
@@ -310,12 +331,17 @@ class FXMacroDataTool(BaseTool[FXMacroDataToolInputSchema, FXMacroDataToolOutput
         path, query = build_request(params)
         url = f"{self.base_url}{path}"
         display_url = requests.Request("GET", url, params=query).prepare().url
-        payload = self.redact_json(self.fetch(url, query))
+        payload = self.fetch(url, query)
         if params.endpoint == "catalogue":
-            return FXMacroDataToolOutputSchema(endpoint=params.endpoint, url=display_url, data=parse_catalogue(payload))
+            catalogue = parse_catalogue(payload)
+            return FXMacroDataToolOutputSchema(endpoint=params.endpoint, url=display_url, data=self.redact_object(catalogue))
         rows, pagination, metadata = parse_rows(payload)
         return FXMacroDataToolOutputSchema(
-            endpoint=params.endpoint, url=display_url, data=rows, pagination=pagination, metadata=metadata
+            endpoint=params.endpoint,
+            url=display_url,
+            data=self.redact_json(rows),
+            pagination=self.redact_json(pagination),
+            metadata=self.redact_object(metadata),
         )
 
     def run(self, params: FXMacroDataToolInputSchema) -> FXMacroDataToolOutputSchema:

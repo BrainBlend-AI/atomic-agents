@@ -1,7 +1,7 @@
 # FXMacroData Tool
 
 ## Overview
-Queries the [FXMacroData](https://fxmacrodata.com) API for official-source macroeconomic data: release history with the official announcement timestamp of each print (CPI, GDP, unemployment, payrolls, policy rates, bond yields and more), the latest value of every indicator for a currency, upcoming release dates, the indicator catalogue, FX spot history, CFTC Commitments of Traders positioning, and commodity prices.
+Queries the [FXMacroData](https://fxmacrodata.com) API for official-source macroeconomic data: release history with publication timestamps where available (CPI, GDP, unemployment, payrolls, policy rates, bond yields and more), the latest value of every indicator for a currency, upcoming release dates, the indicator catalogue, FX spot history, CFTC Commitments of Traders positioning, and commodity prices.
 
 USD releases, the USD release calendar and the indicator catalogue work without an API key. Other currencies, FX rates, COT and commodities need a key from [fxmacrodata.com/subscribe](https://fxmacrodata.com/subscribe).
 
@@ -18,7 +18,7 @@ USD releases, the USD release calendar and the indicator catalogue work without 
 
 ## Configuration
 - `api_key` (secret str): FXMacroData API key, hidden from the config repr, sent in the `X-API-Key` header. Falls back to the `FXMACRODATA_API_KEY` environment variable; surrounding whitespace is ignored. Leave empty for keyless USD access. The key never appears in `url`, `error` or any other output field, even if the API echoes it.
-- `base_url` (str): API base URL (default `https://api.fxmacrodata.com/v1`). Must be an `https://` URL with a host, checked when the config is created; redirects are not followed, so the key is only ever sent to this origin.
+- `base_url` (str): API base URL (default `https://api.fxmacrodata.com/v1`). Must be an `https://` URL with a host and a valid port when specified, checked when the config is created; redirects are not followed, so the key is only ever sent to this origin.
 - `timeout` (float): HTTP timeout in seconds (default 30).
 
 ## Input & Output Structure
@@ -42,10 +42,12 @@ USD releases, the USD release calendar and the indicator catalogue work without 
 ### Output Schema
 - `endpoint` (str): the endpoint that was called.
 - `url` (str): the request URL (the key is never included).
-- `data`: the rows returned by the API, with the API's own field names. Announcement rows carry `date` (reference period), `val`, and `announcement_datetime` (Unix seconds of the official release). For `catalogue` this is a mapping of indicator slug to metadata.
+- `data`: the rows returned by the API, with the API's own field names. Announcement rows include `date` (reference period), `val`, and an `announcement_datetime` timestamp field (Unix seconds when available; the timestamp can be unavailable). For `catalogue` this is a mapping of indicator slug to metadata.
 - `pagination` (dict, optional): `has_more`, `next_offset` and `total_count` for paged endpoints.
 - `metadata` (dict): the remaining top-level response fields, such as source, provenance and data quality.
 - `error` (str, optional): set instead of raising when the input is invalid, the request fails, or the response is not the documented shape, so an agent can read the reason (for example a missing API key for a non-USD currency) and adjust.
+
+Response structure is validated before credential redaction. Names that collide after redaction receive unique, redacted suffixes; all values are retained.
 
 ## Usage
 

@@ -17,7 +17,6 @@ from tool.fxmacrodata import (  # noqa: E402
     build_request,
 )
 
-
 ANNOUNCEMENTS_PAYLOAD = {
     "currency": "USD",
     "indicator": "inflation",
@@ -386,3 +385,92 @@ async def test_run_async(tool):
             FXMacroDataToolInputSchema(endpoint="announcements", currency="usd", indicator="inflation")
         )
     assert len(output.data) == 2
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    ["https://example.test:abc/v1", "https://example.test:65536/v1", "https://example.test:-1/v1", "https://[invalid/v1"],
+)
+def test_malformed_ports_and_hosts_are_rejected_by_config(base_url):
+    with patch("requests.adapters.HTTPAdapter.send") as send:
+        with pytest.raises(ValidationError, match="base_url must be an https:// URL with a host"):
+            FXMacroDataToolConfig(api_key=SECRET, base_url=base_url)
+    send.assert_not_called()
+
+
+@pytest.mark.parametrize("base_url", ["https://example.test:443/v1", "https://[::1]:8443/v1"])
+def test_valid_explicit_ports_are_preserved(base_url):
+    assert FXMacroDataToolConfig(base_url=base_url).base_url == base_url
+
+
+@pytest.mark.parametrize("pagination", [{"total_count": True}, {"has_more": "yes"}, {"limit": 1.5}])
+def test_pagination_is_validated_before_sensitive_keys_are_redacted(pagination):
+    key = next(iter(pagination))
+    tool = FXMacroDataTool(FXMacroDataToolConfig(api_key=key))
+    with patch("tool.fxmacrodata.requests.get", return_value=_response(200, {"data": [], "pagination": pagination})):
+        output = tool.run(FXMacroDataToolInputSchema(endpoint="latest", currency="usd"))
+    assert "unexpected response body" in output.error
+    assert output.pagination is None
+
+
+@pytest.mark.parametrize("endpoint", ["latest", "catalogue"])
+def test_redacted_key_collisions_preserve_all_values(endpoint):
+    values = {
+        SECRET: {"value": 1},
+        "[redacted]": {"value": 2},
+        "[redacted]_": {"value": 3},
+        SECRET + "_": {"value": 4},
+    }
+    payload = values if endpoint == "catalogue" else {"data": [values], "pagination": values, **values}
+    tool = FXMacroDataTool(FXMacroDataToolConfig(api_key=SECRET))
+    with patch("tool.fxmacrodata.requests.get", return_value=_response(200, payload)):
+        output = tool.run(FXMacroDataToolInputSchema(endpoint=endpoint, currency="usd"))
+    assert output.error is None
+    objects = [output.data] if endpoint == "catalogue" else [output.data[0], output.pagination, output.metadata]
+    for value in objects:
+        assert len(value) == 4
+        assert sorted(item["value"] for item in value.values()) == [1, 2, 3, 4]
+    assert SECRET not in output.model_dump_json()
+
+
+def test_collision_suffixes_are_redacted_too():
+    tool = FXMacroDataTool(FXMacroDataToolConfig(api_key="_"))
+    with patch("tool.fxmacrodata.requests.get", return_value=_response(200, {"data": [{"_": 1, "[redacted]": 2}]})):
+        output = tool.run(FXMacroDataToolInputSchema(endpoint="latest", currency="usd"))
+    assert output.error is None
+    assert list(output.data[0].values()) == [1, 2]
+    assert "_" not in output.model_dump_json()
+
+
+def test_nested_redaction_collisions_preserve_values_and_safe_keys():
+    payload = {"data": [{"nested": {SECRET: "first", "[redacted]": "second"}, "ordinary": 3}]}
+    tool = FXMacroDataTool(FXMacroDataToolConfig(api_key=SECRET))
+    with patch("tool.fxmacrodata.requests.get", return_value=_response(200, payload)):
+        output = tool.run(FXMacroDataToolInputSchema(endpoint="latest", currency="usd"))
+    assert output.error is None
+    assert list(output.data[0]["nested"].values()) == ["first", "second"]
+    assert output.data[0]["ordinary"] == 3
+    assert SECRET not in output.model_dump_json()
+
+
+@pytest.mark.parametrize("api_key", ["[redacted]_", "[redacted]", "redacted", "[", "_", "1", "][", "*][", "*["])
+def test_marker_and_suffix_overlaps_terminate_without_losing_values(api_key):
+    tool = FXMacroDataTool(FXMacroDataToolConfig(api_key=api_key))
+    redact = FXMacroDataTool.redact
+    calls = 0
+
+    def bounded_redact(self, value):
+        nonlocal calls
+        calls += 1
+        assert calls <= 100, "redaction must make progress when suffixes overlap the key"
+        return redact(self, value)
+
+    marker = tool.redact(api_key)
+    payload = {api_key: 1, marker: 2, marker + "_1": 3, api_key + "_1": 4}
+    with patch.object(FXMacroDataTool, "redact", bounded_redact):
+        result = tool.redact_object(payload)
+    assert list(result.values()) == list(payload.values())
+    assert len(result) == len(payload)
+    assert all(api_key not in name for name in result)
+    assert api_key not in tool.redact(api_key * 2)
+    assert api_key not in tool.redact("*" + api_key * 2)
