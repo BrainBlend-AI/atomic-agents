@@ -1,6 +1,6 @@
 # Communication & Integrations
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-13*
 
 The framework exposes no HTTP API of its own; "communication" here means how it talks to LLM
 providers and external tools.
@@ -28,6 +28,9 @@ providers and external tools.
   tools/resources/prompts: `MCPFactory`, `MCPDefinitionService`, `SchemaTransformer`, and
   `fetch_mcp_tools` / `fetch_mcp_resources` / `fetch_mcp_prompts` (sync + async). See the
   `mcp-agent` and `progressive-disclosure` examples.
+- Discovery follows tool, resource, template and prompt cursors. Template continuation errors propagate.
+- Schema references decode escaped definition names and support non-object definitions.
+- Typed SDK tool results use structured content only when it is non-None, then use the existing validated JSON-text fallback. Present empty structured data retains precedence. Mapping adapters keep their separate validation contract.
 
 ## Hooks / observability
 - Built on Instructor's hook system: `register_hook(event, handler)`, `unregister_hook`,
