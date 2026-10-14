@@ -1,6 +1,6 @@
 # Communication & Integrations
 
-*Last Updated: 2026-10-13*
+*Last Updated: 2026-10-14*
 
 The framework exposes no HTTP API of its own; "communication" here means how it talks to LLM
 providers and external tools.
