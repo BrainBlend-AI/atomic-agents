@@ -31,6 +31,7 @@ providers and external tools.
 - Discovery follows tool, resource, template and prompt cursors. Template continuation errors propagate.
 - Schema references decode escaped definition names and support non-object definitions.
 - Typed SDK tool results use structured content only when it is non-None, then use the existing validated JSON-text fallback. Present empty structured data retains precedence. Mapping adapters keep their separate validation contract.
+- SDK `CallToolResult` and strictly validated mapping envelopes with `isError=True` raise a `RuntimeError` before typed or generic output parsing. The message uses `TextContent` only (meaningful fallback when no text); `structuredContent`, `_meta` and binary blocks never enter messages or logs. Raw application dictionaries that merely contain `isError`/`name` keys (even with a string `content`) stay ordinary outputs.
 
 ## Hooks / observability
 - Built on Instructor's hook system: `register_hook(event, handler)`, `unregister_hook`,
