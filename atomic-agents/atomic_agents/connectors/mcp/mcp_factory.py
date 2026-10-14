@@ -6,7 +6,7 @@ from contextlib import AsyncExitStack
 import shlex
 import types
 
-from pydantic import create_model, Field, BaseModel, JsonValue
+from pydantic import create_model, Field, BaseModel, JsonValue, ValidationError
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
@@ -74,6 +74,28 @@ class _GeneratedMCPTool(Protocol):
     mcp_endpoint: str | None
     transport_type: MCPTransportType
     output_schema: type[BaseIOSchema]
+
+
+def _validated_tool_envelope(tool_result: _ToolResult) -> mcp.types.CallToolResult | None:
+    if isinstance(tool_result, mcp.types.CallToolResult):
+        return tool_result
+    if isinstance(tool_result, dict):
+        try:
+            return mcp.types.CallToolResult.model_validate(tool_result, strict=True)
+        except ValidationError:
+            return None
+    return None
+
+
+def _tool_error_diagnostic(envelope: mcp.types.CallToolResult) -> str:
+    text_parts = [block.text.strip() for block in envelope.content if isinstance(block, mcp.types.TextContent)]
+    return "\n".join(filter(None, text_parts)) or "MCP tool reported an error without text content"
+
+
+def _raise_tool_execution_error(tool_result: _ToolResult) -> None:
+    envelope = _validated_tool_envelope(tool_result)
+    if envelope is not None and envelope.isError:
+        raise RuntimeError(_tool_error_diagnostic(envelope))
 
 
 def _validate_structured_tool_output(
@@ -385,6 +407,7 @@ class MCPFactory:
                             # Legacy behaviour – open a fresh connection per invocation.
                             tool_result = await _connect_and_call()
 
+                        _raise_tool_execution_error(tool_result)
                         output_schema = self.output_schema
                         if getattr(self, "_has_typed_output_schema", False):
                             return _validate_typed_tool_output(tool_result, output_schema, bound_tool_name)

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import BaseModel, ValidationError
 from mcp import ClientSession, StdioServerParameters
-from mcp.types import CallToolResult, ListToolsResult, TextContent, Tool
+from mcp.types import CallToolResult, ImageContent, ListToolsResult, TextContent, Tool
 from unittest.mock import AsyncMock, MagicMock, call
 import asyncio
 from atomic_agents.connectors.mcp import (
@@ -22,6 +22,115 @@ from atomic_agents.connectors.mcp import (
     MCPDefinitionService,
     MCPTransportType,
 )
+
+
+@pytest.fixture(params=[False, True], ids=["generic", "typed"])
+def error_test_tool(request, monkeypatch):
+    output_schema = None
+    if request.param:
+        output_schema = {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}
+    definition = MCPToolDefinition(
+        name="SearchTool", description="Search", input_schema={"type": "object", "properties": {}}, output_schema=output_schema
+    )
+    factory = MCPFactory("http://example.com")
+    tool = factory._create_tool_classes([definition])[0]()
+    session = AsyncMock(spec=ClientSession)
+    session.__aenter__.return_value = session
+    transport = AsyncMock()
+    transport.__aenter__.return_value = (None, None, None)
+    monkeypatch.setattr("atomic_agents.connectors.mcp.mcp_factory.ClientSession", MagicMock(return_value=session))
+    monkeypatch.setattr("atomic_agents.connectors.mcp.mcp_factory.streamablehttp_client", MagicMock(return_value=transport))
+    return tool, session, transport, request.param
+
+
+@pytest.fixture(params=[False, True], ids=["owned", "borrowed"])
+def error_test_connection(request, error_test_tool):
+    tool, session, transport, typed = error_test_tool
+    loop = asyncio.new_event_loop()
+    if request.param:
+        tool._client_session = session
+        tool._event_loop = loop
+    yield tool, session, transport, typed, request.param
+    loop.close()
+
+
+@pytest.mark.parametrize("synchronous", [False, True], ids=["async", "sync"])
+@pytest.mark.parametrize("mapping", [False, True], ids=["sdk", "mapping"])
+def test_execution_error_precedes_output_parsing(error_test_connection, synchronous, mapping, caplog):
+    tool, session, transport, typed, borrowed = error_test_connection
+    envelope = CallToolResult(
+        isError=True,
+        content=[
+            TextContent(type="text", text="Search unavailable"),
+            ImageContent(type="image", data="PRIVATE_BINARY", mimeType="image/png", text=None),
+        ],
+        structuredContent={"name": "PRIVATE_STRUCTURED"},
+        _meta={"secret": "PRIVATE_META"},
+    )
+    session.call_tool.return_value = envelope.model_dump() if mapping else envelope
+    params = tool.input_schema(tool_name="SearchTool")
+    with pytest.raises(RuntimeError, match="Failed to execute MCP tool 'SearchTool': Search unavailable") as raised:
+        if synchronous:
+            tool.run(params)
+        else:
+            asyncio.run(tool.arun(params))
+    assert isinstance(raised.value.__cause__, RuntimeError)
+    assert str(raised.value.__cause__) == "Search unavailable"
+    assert "PRIVATE_" not in str(raised.value) + caplog.text
+    session.call_tool.assert_awaited_once_with(name="SearchTool", arguments={})
+    owned_session_calls = int(not borrowed)
+    assert session.initialize.await_count == owned_session_calls
+    assert session.__aexit__.await_count == owned_session_calls
+    assert transport.__aexit__.await_count == owned_session_calls
+
+
+@pytest.mark.parametrize("mapping", [False, True], ids=["sdk", "mapping"])
+@pytest.mark.parametrize(
+    "content",
+    [[], [ImageContent(type="image", data="PRIVATE_BINARY", mimeType="image/png")], [TextContent(type="text", text="  \n ")]],
+)
+def test_execution_error_without_text_has_safe_fallback(error_test_connection, mapping, content, caplog):
+    tool, session, transport, typed, borrowed = error_test_connection
+    envelope = CallToolResult(isError=True, content=content, structuredContent={"name": "PRIVATE_STRUCTURED"})
+    session.call_tool.return_value = envelope.model_dump() if mapping else envelope
+    with pytest.raises(RuntimeError, match="MCP tool reported an error without text content") as raised:
+        asyncio.run(tool.arun(tool.input_schema(tool_name="SearchTool")))
+    assert "PRIVATE_" not in str(raised.value) + caplog.text
+
+
+@pytest.mark.parametrize("mapping", [False, True], ids=["sdk", "mapping"])
+@pytest.mark.parametrize("synchronous", [False, True], ids=["async", "sync"])
+def test_successful_envelope_keeps_output_precedence(error_test_connection, mapping, synchronous):
+    tool, session, transport, typed, borrowed = error_test_connection
+    envelope = CallToolResult(
+        isError=False, content=[TextContent(type="text", text='{"name":"text"}')], structuredContent={"name": "structured"}
+    )
+    session.call_tool.return_value = envelope.model_dump() if mapping else envelope
+    params = tool.input_schema(tool_name="SearchTool")
+    output = tool.run(params) if synchronous else asyncio.run(tool.arun(params))
+    if typed:
+        assert output.name == "structured"
+    else:
+        expected_content = envelope.model_dump()["content"] if mapping else envelope.content
+        assert output.result == expected_content
+    session.call_tool.assert_awaited_once_with(name="SearchTool", arguments={})
+
+
+@pytest.mark.parametrize("content", [None, "article"])
+@pytest.mark.parametrize("synchronous", [False, True], ids=["async", "sync"])
+def test_raw_error_named_dictionary_stays_application_data(error_test_connection, content, synchronous):
+    tool, session, transport, typed, borrowed = error_test_connection
+    payload = {"isError": True, "name": "test_value"}
+    if content is not None:
+        payload["content"] = content
+    session.call_tool.return_value = payload
+    params = tool.input_schema(tool_name="SearchTool")
+    output = tool.run(params) if synchronous else asyncio.run(tool.arun(params))
+    if typed:
+        assert output.name == "test_value"
+    else:
+        assert output.result == (payload if content is None else content)
+    session.call_tool.assert_awaited_once_with(name="SearchTool", arguments={})
 
 
 class DummySession:
