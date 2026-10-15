@@ -1,10 +1,10 @@
 import os
 import sys
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import ANY, patch, MagicMock
 from datetime import datetime
 
-from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled
+from youtube_transcript_api import FetchedTranscript, FetchedTranscriptSnippet, NoTranscriptFound, TranscriptsDisabled
 
 # Add the parent directory of 'tests' to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -16,15 +16,26 @@ from tool.youtube_transcript_scraper import (  # noqa: E402
     YouTubeTranscriptToolConfig,
 )
 
+FETCH_TARGET = "tool.youtube_transcript_scraper.YouTubeTranscriptApi.fetch"
+
+
+def fetched_rick_astley_transcript() -> FetchedTranscript:
+    return FetchedTranscript(
+        snippets=[
+            FetchedTranscriptSnippet(text="Never gonna give you up", start=0.0, duration=5.0),
+            FetchedTranscriptSnippet(text="Never gonna let you down", start=5.0, duration=5.0),
+        ],
+        video_id="dQw4w9WgXcQ",
+        language="English",
+        language_code="en",
+        is_generated=False,
+    )
+
 
 def test_youtube_transcript_tool():
     mock_api_key = "mock_api_key"
     mock_video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     mock_video_id = "dQw4w9WgXcQ"
-    mock_transcript = [
-        {"text": "Never gonna give you up", "duration": 5.0},
-        {"text": "Never gonna let you down", "duration": 5.0},
-    ]
     mock_metadata = {
         "title": "Rick Astley - Never Gonna Give You Up",
         "channelTitle": "Rick Astley",
@@ -32,10 +43,7 @@ def test_youtube_transcript_tool():
     }
 
     with (
-        patch(
-            "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
-            return_value=mock_transcript,
-        ),
+        patch(FETCH_TARGET, autospec=True, return_value=fetched_rick_astley_transcript()) as mock_fetch,
         patch("tool.youtube_transcript_scraper.build") as mock_build,
     ):
         mock_youtube = MagicMock()
@@ -46,6 +54,7 @@ def test_youtube_transcript_tool():
         input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url)
         result = youtube_transcript_tool.run(input_schema)
 
+        mock_fetch.assert_called_once_with(ANY, mock_video_id)
         assert isinstance(result, YouTubeTranscriptToolOutputSchema)
         assert result.transcript == "Never gonna give you up Never gonna let you down"
         assert result.duration == 10.0
@@ -61,10 +70,6 @@ def test_youtube_transcript_tool():
 def test_youtube_transcript_tool_with_language():
     mock_api_key = "mock_api_key"
     mock_video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    mock_transcript = [
-        {"text": "Never gonna give you up", "duration": 5.0},
-        {"text": "Never gonna let you down", "duration": 5.0},
-    ]
     mock_metadata = {
         "title": "Rick Astley - Never Gonna Give You Up",
         "channelTitle": "Rick Astley",
@@ -72,10 +77,7 @@ def test_youtube_transcript_tool_with_language():
     }
 
     with (
-        patch(
-            "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
-            return_value=mock_transcript,
-        ),
+        patch(FETCH_TARGET, autospec=True, return_value=fetched_rick_astley_transcript()) as mock_fetch,
         patch("tool.youtube_transcript_scraper.build") as mock_build,
     ):
         mock_youtube = MagicMock()
@@ -83,9 +85,10 @@ def test_youtube_transcript_tool_with_language():
         mock_youtube.videos().list().execute.return_value = {"items": [{"snippet": mock_metadata}]}
 
         youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key=mock_api_key))
-        input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url, language="en")
+        input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url, language="de")
         result = youtube_transcript_tool.run(input_schema)
 
+        mock_fetch.assert_called_once_with(ANY, "dQw4w9WgXcQ", languages=["de"])
         assert isinstance(result, YouTubeTranscriptToolOutputSchema)
         assert result.transcript == "Never gonna give you up Never gonna let you down"
 
@@ -95,7 +98,8 @@ def test_youtube_transcript_tool_no_transcript():
     mock_video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
     with patch(
-        "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
+        FETCH_TARGET,
+        autospec=True,
         side_effect=NoTranscriptFound(
             video_id="dQw4w9WgXcQ",
             requested_language_codes=["en"],
@@ -116,8 +120,9 @@ def test_youtube_transcript_tool_transcripts_disabled():
     mock_video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
     with patch(
-        "tool.youtube_transcript_scraper.YouTubeTranscriptApi.get_transcript",
-        side_effect=TranscriptsDisabled("Transcripts are disabled"),
+        FETCH_TARGET,
+        autospec=True,
+        side_effect=TranscriptsDisabled("dQw4w9WgXcQ"),
     ):
         youtube_transcript_tool = YouTubeTranscriptTool(YouTubeTranscriptToolConfig(api_key=mock_api_key))
         input_schema = YouTubeTranscriptToolInputSchema(video_url=mock_video_url)

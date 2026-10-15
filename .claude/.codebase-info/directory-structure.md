@@ -49,7 +49,7 @@ A Textual terminal UI launched by the `atomic` command (`main.py:main`). `app.py
 and copies a selected tool into the user's project.
 
 ### `atomic-forge/tools/`
-14 self-contained tools (`arxiv_search`, `calculator`, `serply_search`, `tavily_search`, `weather`,
+Self-contained tools (`arxiv_search`, `calculator`, `firecrawl_search`, `fxmacrodata`, `serply_search`, `tavily_search`, `weather`,
 `webpage_scraper`, `wikipedia_search`, …). Each tool folder contains `tool/<name>.py` (Input/Output
 `BaseIOSchema` + a `BaseToolConfig` + a `BaseTool` subclass), `tests/`, and its own
 `pyproject.toml`/`requirements.txt`. Tools are copied into user projects, not pip-installed.
