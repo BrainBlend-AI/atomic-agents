@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
@@ -205,7 +206,7 @@ class WikipediaSearchTool(BaseTool[WikipediaSearchToolInputSchema, WikipediaSear
 
     def run(self, params: WikipediaSearchToolInputSchema) -> WikipediaSearchToolOutputSchema:
         with ThreadPoolExecutor() as executor:
-            return executor.submit(asyncio.run, self.run_async(params)).result()
+            return executor.submit(contextvars.copy_context().run, asyncio.run, self.run_async(params)).result()
 
 
 #################
