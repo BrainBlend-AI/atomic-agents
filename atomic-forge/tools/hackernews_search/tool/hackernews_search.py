@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Literal, Optional
@@ -174,7 +175,7 @@ class HackerNewsSearchTool(BaseTool[HackerNewsSearchToolInputSchema, HackerNewsS
 
     def run(self, params: HackerNewsSearchToolInputSchema) -> HackerNewsSearchToolOutputSchema:
         with ThreadPoolExecutor() as executor:
-            return executor.submit(asyncio.run, self.run_async(params)).result()
+            return executor.submit(contextvars.copy_context().run, asyncio.run, self.run_async(params)).result()
 
 
 #################

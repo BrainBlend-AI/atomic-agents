@@ -1,6 +1,6 @@
 # Key Modules
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-15*
 
 ## Core framework — `atomic-agents/atomic_agents/`
 
@@ -43,6 +43,22 @@
 - **Location:** `atomic-agents/atomic_agents/utils/`
 - **Key files:** `token_counter.py` (`TokenCounter` via LiteLLM; `get_context_token_count`),
   `format_tool_message.py`.
+
+### observability (opt-in)
+- **Location:** `atomic-agents/atomic_agents/observability/`
+- **Purpose:** OpenInference tracing for Arize Phoenix and any OpenTelemetry backend. `AtomicAgentsInstrumentor`
+  (`__init__.py`, stdlib-only imports) lazily loads `openinference_tracing.py`, which patches the four
+  `AtomicAgent.run*` methods into AGENT spans and every `BaseTool` subclass's `run`/`run_async`/`arun` into TOOL
+  spans (existing classes via a `__subclasses__` walk, future ones via a wrapped `BaseTool.__init_subclass__`).
+- **Contract:** `instrument(tracer_provider=, config=TraceConfig)` / `uninstrument()` /
+  `is_instrumented_by_opentelemetry`; idempotent and fully reversible. Needs the `observability` extra
+  (`openinference-instrumentation>=0.1.38`); older versions are refused with a warning so Phoenix's
+  `register(auto_instrument=True)` (which loads the `openinference_instrumentor` entry point) never fails.
+- **Span facts:** `agent.name` = `Class[InputSchema, OutputSchema]`; namespaced `atomic_agents.*` attributes
+  (model, mode, schema names, history size, context provider names, SHA-256 of the static prompt sections);
+  streams record the final/last partial and `atomic_agents.stream.closed_early`; a `ContextVar` re-entrancy guard
+  keeps `run -> arun` / `to_thread` delegation to one TOOL span. Nothing in `atomic_agents/__init__.py` imports it.
+- **Tests:** `atomic-agents/tests/observability/` (in-memory span exporter).
 
 ## Subprojects
 

@@ -1,6 +1,6 @@
 # Entry Points
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-15*
 
 ## 1. Library API (the primary entry point)
 
@@ -49,6 +49,7 @@ MCP server tools/resources/prompts become agent components via `atomic_agents.co
 | `fastapi-memory` | multi-user / multi-session memory behind a FastAPI service |
 | `persistent-memory` | custom `BaseChatHistory` backend: cross-session recall via stdlib `sqlite3` (no extra deps) |
 | `hooks-example` | monitoring, error handling, retry via hooks |
+| `phoenix-tracing` | Arize Phoenix traces: planner agent -> calculator tool -> answer agent under one CHAIN span, via `register(auto_instrument=True)` |
 | `basic-multimodal` / `nested-multimodal` | images / PDFs in (nested) schemas |
 | `basic-pdf-analysis` | PDF analysis with a multimodal model |
 | `youtube-summarizer` / `youtube-to-recipe` | transcript → summary / structured recipe |

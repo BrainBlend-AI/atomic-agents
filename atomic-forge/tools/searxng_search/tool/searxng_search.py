@@ -1,6 +1,7 @@
 import os
 from typing import List, Literal, Optional
 import asyncio
+import contextvars
 from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
@@ -188,7 +189,7 @@ class SearXNGSearchTool(BaseTool[SearXNGSearchToolInputSchema, SearXNGSearchTool
             Exception: If the request to SearXNG fails.
         """
         with ThreadPoolExecutor() as executor:
-            return executor.submit(asyncio.run, self.run_async(params, max_results)).result()
+            return executor.submit(contextvars.copy_context().run, asyncio.run, self.run_async(params, max_results)).result()
 
 
 #################

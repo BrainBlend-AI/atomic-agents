@@ -1,6 +1,7 @@
 import os
 from typing import List, Optional, Literal
 import asyncio
+import contextvars
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import aiohttp
@@ -167,6 +168,7 @@ class BoChaSearchTool(BaseTool[BoChaSearchToolInputSchema, BoChaSearchToolOutput
         """
         with ThreadPoolExecutor() as executor:
             result = executor.submit(
+                contextvars.copy_context().run,
                 asyncio.run,
                 self.run_async(
                     params,
