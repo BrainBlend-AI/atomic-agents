@@ -386,7 +386,9 @@ async def prometheus_metrics():
 
 ### OpenTelemetry Integration
 
-Add distributed tracing for complex systems:
+For agent and tool spans that render in Arize Phoenix and other OpenInference-aware backends, use the built-in
+instrumentor described in the [Observability guide](observability.md). The snippet below shows the generic
+OpenTelemetry setup for everything else:
 
 ```python
 from opentelemetry import trace
