@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import logging
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
@@ -226,7 +227,7 @@ class ArxivSearchTool(BaseTool[ArxivSearchToolInputSchema, ArxivSearchToolOutput
 
     def run(self, params: ArxivSearchToolInputSchema) -> ArxivSearchToolOutputSchema:
         with ThreadPoolExecutor() as executor:
-            return executor.submit(asyncio.run, self.run_async(params)).result()
+            return executor.submit(contextvars.copy_context().run, asyncio.run, self.run_async(params)).result()
 
 
 #################

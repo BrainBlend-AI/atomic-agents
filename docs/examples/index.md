@@ -33,6 +33,17 @@ Comprehensive monitoring and error handling with the AtomicAgent hook system:
 
 📂 **[View on GitHub](https://github.com/eigenwise/atomic-agents/tree/main/atomic-examples/hooks-example)** - Browse the complete source code and run the examples
 
+## Phoenix Tracing
+
+Trace agents and tools in Arize Phoenix with the optional OpenInference instrumentor:
+
+- Automatic AGENT and TOOL spans via `phoenix.otel.register(auto_instrument=True)`
+- LLM spans from the OpenAI instrumentor nested under each agent run
+- A parent chain span that ties a planner agent, a calculator tool and an answer agent into one trace
+- Session grouping with `using_session`
+
+📂 **[View on GitHub](https://github.com/eigenwise/atomic-agents/tree/main/atomic-examples/phoenix-tracing)** - Browse the complete source code and run the examples
+
 ## Basic Multimodal
 
 Examples of working with images and text:

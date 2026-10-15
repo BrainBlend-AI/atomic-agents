@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import ipaddress
 import logging
 import os
@@ -353,7 +354,7 @@ class FirecrawlSearchTool(BaseTool[FirecrawlSearchToolInputSchema, FirecrawlSear
 
     def run(self, params: FirecrawlSearchToolInputSchema) -> FirecrawlSearchToolOutputSchema:
         with ThreadPoolExecutor() as executor:
-            return executor.submit(asyncio.run, self.run_async(params)).result()
+            return executor.submit(contextvars.copy_context().run, asyncio.run, self.run_async(params)).result()
 
 
 #################

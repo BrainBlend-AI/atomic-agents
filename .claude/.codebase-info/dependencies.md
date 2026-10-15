@@ -1,6 +1,6 @@
 # Dependencies
 
-*Last Updated: 2026-06-13*
+*Last Updated: 2026-10-15*
 
 Declared in `pyproject.toml` (Hatchling build, `uv` workspace; versions locked in `uv.lock`).
 
@@ -11,6 +11,16 @@ Declared in `pyproject.toml` (Hatchling build, `uv` workspace; versions locked i
 | pydantic (≥2.11,<3) | Schemas / data validation for all I/O |
 | litellm (≥1.50,<2) | Provider-agnostic token counting & model metadata |
 | rich (≥13.7.1,<14) | Console formatting |
+
+## Optional extra — `observability`
+| Package | Purpose |
+|---------|---------|
+| openinference-instrumentation (≥0.1.38,<0.2) | `OITracer` / `TraceConfig` used by `atomic_agents.observability` |
+| openinference-semantic-conventions (≥0.1.20,<0.2) | Span attribute names (`agent.name` needs ≥0.1.20) |
+| opentelemetry-api (≥1.30,<2) | Tracer / context API |
+
+Also listed in the dev group (plus `opentelemetry-sdk`) so CI runs the observability tests. `arize-phoenix-otel`
+already brings the two OpenInference packages, so the Phoenix auto path works without the extra.
 
 ## Runtime — CLI / tooling
 | Package | Purpose |
