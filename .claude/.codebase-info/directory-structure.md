@@ -1,6 +1,6 @@
 # Directory Structure
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-15*
 
 ## Root Layout
 
@@ -12,14 +12,15 @@ atomic-agents/                  # repo root (uv workspace)
 │       ├── base/               #     BaseIOSchema, BaseTool, BaseResource, BasePrompt, VideoURL
 │       ├── context/            #     SystemPromptGenerator, BaseChatHistory/ChatHistory, context providers
 │       ├── connectors/mcp/     #     Model Context Protocol integration
-│       └── utils/              #     token counter, tool-message formatting
-│   └── tests/                  #   pytest suite (agents/, base/, context/, connectors/, utils/; VideoURL tests in base/)
+│       ├── utils/              #     token counter, tool-message formatting
+│       └── observability/      #     opt-in OpenInference instrumentor (Phoenix / OpenTelemetry)
+│   └── tests/                  #   pytest suite (agents/, base/, context/, connectors/, observability/, utils/)
 ├── atomic-assembler/           # Textual TUI (`atomic` command) to install forge tools
 │   └── atomic_assembler/       #   main.py, app.py, screens/, widgets/, utils.py, constants.py
 ├── atomic-forge/               # library of standalone tools (NOT a package)
 │   ├── tools/<tool>/           #   one folder per tool: tool/<tool>.py, tests/, pyproject.toml
 │   └── guides/                 #   tool authoring guides (e.g. tool_structure.md)
-├── atomic-examples/            # 16 runnable example apps (each its own project)
+├── atomic-examples/            # 17 runnable example apps (each its own project)
 ├── claude-plugin/atomic-agents/ # AI-assistant plugin: 7 skills + 2 subagents (Claude Code plugin,
 │                               #   also installable cross-tool via `npx skills add eigenwise/atomic-agents`)
 ├── .claude-plugin/             # marketplace.json — plugin marketplace manifest (drives npx skills discovery)
@@ -54,7 +55,7 @@ and copies a selected tool into the user's project.
 `pyproject.toml`/`requirements.txt`. Tools are copied into user projects, not pip-installed.
 
 ### `atomic-examples/`
-16 standalone example apps (`quickstart`, `rag-chatbot`, `deep-research`, `web-search-agent`,
+17 standalone example apps (`quickstart`, `rag-chatbot`, `deep-research`, `web-search-agent`, `phoenix-tracing`,
 `mcp-agent`, `fastapi-memory`, `persistent-memory`, `youtube-summarizer`, …), each with its own
 `pyproject.toml`. These are excluded from the workspace build.
 
