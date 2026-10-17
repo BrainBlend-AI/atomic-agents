@@ -35,17 +35,19 @@ class BaseResource[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
         input_schema (Type[InputSchema]): Schema class defining the input data (derived from generic type parameter).
         output_schema (Type[OutputSchema]): Schema class defining the output data (derived from generic type parameter).
         resource_name (str): The name of the resource, derived from the input schema's title or overridden by the config.
-        resource_description (str): Description of the resource, derived from the input schema's description or overridden by the config.
+        resource_description (str): Description of the resource, derived from the input schema's description
+            or overridden by the config.
     """
 
-    def __init__(self, config: BaseResourceConfig = BaseResourceConfig()):
+    def __init__(self, config: Optional[BaseResourceConfig] = None):
         """
         Initializes the BaseResource with an optional configuration override.
 
         Args:
-            config (BaseResourceConfig, optional): Configuration for the resource, including optional title and description overrides.
+            config (BaseResourceConfig, optional): Configuration for the resource, including optional title
+                and description overrides. If omitted, a new configuration is created for this instance.
         """
-        self.config = config
+        self.config = config if config is not None else BaseResourceConfig()
 
     def __init_subclass__(cls, **kwargs):
         """
