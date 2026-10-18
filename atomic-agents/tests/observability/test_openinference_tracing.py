@@ -144,7 +144,7 @@ def sync_client(response=None, partials=None):
 
 
 def async_client(response=None, partials=None):
-    client = Mock(spec=instructor.core.client.AsyncInstructor)
+    client = Mock(spec=instructor.AsyncInstructor)
     client.chat = Mock()
     client.chat.completions = Mock()
 
