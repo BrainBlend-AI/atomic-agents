@@ -178,7 +178,7 @@ Here's a simple example:
 from atomic_agents.context import BaseDynamicContextProvider
 
 class SearchResultsProvider(BaseDynamicContextProvider):
-    def __init__(self, title: str, search_results: List[str]):
+    def __init__(self, title: str, search_results: list[str]):
         super().__init__(title=title)
         self.search_results = search_results
 
