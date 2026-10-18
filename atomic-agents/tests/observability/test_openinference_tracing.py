@@ -12,7 +12,7 @@ from unittest.mock import Mock
 
 import instructor
 import pytest
-from openinference.instrumentation import TraceConfig, using_metadata, using_session
+from openinference.instrumentation import OITracer, TraceConfig, using_metadata, using_session
 from openinference.semconv.trace import OpenInferenceSpanKindValues, SpanAttributes
 from opentelemetry import trace as trace_api
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
@@ -278,6 +278,36 @@ def test_agent_span_nests_under_a_user_chain_span(exporter, provider_tracer):
     agent_span, turn_span = spans_of(exporter)
     assert agent_span.parent.span_id == turn.get_span_context().span_id
     assert turn_span.name == "turn"
+
+
+def test_manual_setup_from_the_guide_groups_agents_and_tools_under_one_chain_span():
+    exporter = InMemorySpanExporter()
+    tracer_provider = TracerProvider()
+    tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
+    trace_config = TraceConfig()
+    instrumentor = AtomicAgentsInstrumentor()
+    instrumentor.instrument(tracer_provider=tracer_provider, config=trace_config)
+    tracer = OITracer(tracer_provider.get_tracer(__name__), config=trace_config)
+    planner = make_agent(sync_client())
+    answerer = make_agent(sync_client())
+    calculator = CalculatorTool()
+    try:
+        with tracer.start_as_current_span("answer_question", openinference_span_kind="chain") as turn:
+            turn.set_input("what is 2 + 2?")
+            plan = planner.run(QuestionSchema(question="what is 2 + 2?"))
+            calculation = calculator.run(CalculationInputSchema(expression=plan.answer))
+            answer = answerer.run(QuestionSchema(question=str(calculation.result)))
+            turn.set_output(answer.answer)
+    finally:
+        instrumentor.uninstrument()
+
+    spans = spans_of(exporter)
+    chain_span = next(span for span in spans if kind_of(span) == OpenInferenceSpanKindValues.CHAIN.value)
+    children = [span for span in spans if span is not chain_span]
+    assert [kind_of(span) for span in children] == ["AGENT", "TOOL", "AGENT"]
+    assert all(span.parent.span_id == chain_span.get_span_context().span_id for span in children)
+    assert chain_span.attributes[SpanAttributes.INPUT_VALUE] == "what is 2 + 2?"
+    assert chain_span.attributes[SpanAttributes.OUTPUT_VALUE] == answer.answer
 
 
 def test_llm_call_inside_run_becomes_child_of_agent_span(exporter, provider_tracer):

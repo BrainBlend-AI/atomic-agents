@@ -32,10 +32,11 @@ pip install "atomic-agents[observability]" arize-phoenix-otel openinference-inst
 
 The `observability` extra installs `openinference-instrumentation`, `openinference-semantic-conventions` and
 `opentelemetry-api`. The Phoenix path below works without the extra because `arize-phoenix-otel` already depends on
-those packages; the manual path needs the extra plus an OpenTelemetry SDK and exporter:
+those packages; the manual path needs the extra plus an OpenTelemetry SDK, an exporter, and the instrumentor for
+your LLM client (the example below uses the OpenAI one):
 
 ```bash
-pip install "atomic-agents[observability]" opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+pip install "atomic-agents[observability]" opentelemetry-sdk opentelemetry-exporter-otlp-proto-http openinference-instrumentation-openai
 ```
 
 ## Setup with Phoenix (automatic)
@@ -66,17 +67,25 @@ Two things to know about the automatic path:
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from openinference.instrumentation import TraceConfig
+from openinference.instrumentation import OITracer, TraceConfig
 from openinference.instrumentation.openai import OpenAIInstrumentor
 
 from atomic_agents.observability import AtomicAgentsInstrumentor
 
 tracer_provider = TracerProvider()
 tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter("http://localhost:6006/v1/traces")))
+trace_config = TraceConfig()
 
-AtomicAgentsInstrumentor().instrument(tracer_provider=tracer_provider, config=TraceConfig())
-OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
+AtomicAgentsInstrumentor().instrument(tracer_provider=tracer_provider, config=trace_config)
+OpenAIInstrumentor().instrument(tracer_provider=tracer_provider, config=trace_config)
+tracer = OITracer(tracer_provider.get_tracer(__name__), config=trace_config)
 ```
+
+The last line matters for the grouping section below: a plain SDK provider hands out a plain OpenTelemetry tracer,
+and the `openinference_span_kind` argument, `set_input` and `set_output` only exist on an OpenInference `OITracer`.
+Phoenix's `register()` returns a provider whose tracers already are `OITracer`s, so the automatic path skips this
+step. Pass the same `TraceConfig` to every layer; the config given to `instrument()` configures only the Atomic Agents
+spans.
 
 `instrument()` is idempotent. Calling it again with a different provider or config logs a warning and keeps the first
 installation; call `uninstrument()` first to change it. `uninstrument()` restores the original methods on
@@ -88,8 +97,6 @@ Atomic Agents has no tool-calling loop: your code calls `agent.run(...)`, then `
 Each of those is a root span, so without a parent they become separate traces. Open one parent span per unit of work:
 
 ```python
-tracer = tracer_provider.get_tracer(__name__)
-
 with tracer.start_as_current_span("answer_question", openinference_span_kind="chain") as turn:
     turn.set_input(question)
     plan = planner.run(BasicChatInputSchema(chat_message=question))
@@ -98,8 +105,9 @@ with tracer.start_as_current_span("answer_question", openinference_span_kind="ch
     turn.set_output(answer.chat_message)
 ```
 
-The [phoenix-tracing example](https://github.com/eigenwise/atomic-agents/tree/main/atomic-examples/phoenix-tracing)
-is exactly this flow.
+`tracer` is the `OITracer` from the manual setup, or `tracer_provider.get_tracer(__name__)` on the Phoenix path. The
+[phoenix-tracing example](https://github.com/eigenwise/atomic-agents/tree/main/atomic-examples/phoenix-tracing)
+is exactly this flow, and the test suite runs the manual setup plus this grouping offline with an in-memory exporter.
 
 ## Sessions, users and metadata
 
@@ -122,7 +130,11 @@ Agent and tool payloads are exported as `input.value` / `output.value`. To redac
   `TraceConfig()` reads these variables.
 - On the manual path, pass `TraceConfig(hide_inputs=True, hide_outputs=True)` to `instrument()`.
 
-Redacted values are exported as `__REDACTED__`. `atomic_agents.system_prompt.sha256` stays available either way. It
+Redacted values are exported as `__REDACTED__`. Masking covers the `input.value` and `output.value` attributes of
+Atomic Agents spans and nothing else: exception events and status descriptions (a validation error can quote input
+values), tool names and descriptions, and whatever you put in `using_metadata` are exported as they are. The LLM
+instrumentor and your own `OITracer` each take their own `TraceConfig`, so pass the same one to all three if you want
+the same masking everywhere. `atomic_agents.system_prompt.sha256` stays available either way. It
 hashes the static sections of a `SystemPromptGenerator` (background, steps, output instructions) and ignores what
 context providers add per call, so it identifies the prompt version even when inputs are hidden. Multimodal inputs (images, audio, PDFs) are serialized into
 `input.value` in full; cap attribute size with `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT` if that is too much.
