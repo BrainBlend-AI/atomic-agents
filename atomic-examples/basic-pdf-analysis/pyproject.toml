@@ -16,7 +16,7 @@ authors = [
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "atomic-agents",
-    "instructor[google-genai]==1.14.5",
+    "instructor[google-genai]>=1.17.0,<2",
 ]
 
 [tool.uv.sources]
