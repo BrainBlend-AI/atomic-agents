@@ -23,7 +23,9 @@ from atomic_agents.context import ChatHistory
 DUMMY_KEY = "not-a-real-key"
 LOGGER_NAME = "atomic_agents.agents.atomic_agent"
 COUNTING_MODEL = "gpt-4o-mini"
-TOOL_REQUEST_PARAMS = ("tools", "functions", "toolConfig")
+# Request parameters Instructor uses to transmit the output schema as a tool or
+# function definition; xAI carries it under the private _xai_tool kwarg instead.
+TOOL_REQUEST_PARAMS = ("tools", "functions", "toolConfig", "_xai_tool")
 
 
 class InputWithImage(BaseIOSchema):
@@ -282,3 +284,12 @@ class TestAccountingMatchesPreparedRequests:
         assert kwargs["tool_choice"]
         assert not any("json_schema" in str(block.get("text", "")) for block in kwargs["system"])
         assert not any("json_schema" in str(message.get("content", "")) for message in kwargs["messages"])
+
+    def test_xai_tools_request_carries_schema_as_tool(self):
+        # xAI has no OpenAI-style tools parameter: the schema travels as a tool
+        # definition under Instructor's private _xai_tool kwarg, which the
+        # accounting set must recognize.
+        kwargs = _prepared_request(instructor.Mode.XAI_TOOLS)
+
+        assert kwargs["_xai_tool"]["name"] == BasicChatOutputSchema.__name__
+        assert "chat_message" in kwargs["_xai_tool"]["parameters"]["properties"]
