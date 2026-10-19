@@ -94,9 +94,9 @@ class AgentConfig(BaseModel):
     )
     model_config = {"arbitrary_types_allowed": True}
     mode: Mode = Field(default=Mode.TOOLS, description="The Instructor mode used for structured outputs (TOOLS, JSON, etc.).")
-    model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
+    model_api_parameters: Optional[dict] = Field(default=None, description="Additional parameters passed to the API provider.")
     max_context_tokens: Optional[int] = Field(
-        None,
+        default=None,
         description=(
             "Maximum tokens for the full context (system prompt + history + tools). "
             "When exceeded, oldest conversation turns are automatically trimmed to stay within limit. "
