@@ -1,6 +1,6 @@
 # Patterns & Conventions
 
-*Last Updated: 2026-10-19*
+*Last Updated: 2026-10-20*
 
 ## Atomicity
 Build with small, single-purpose, composable parts ("LEGO blocks"): each agent, tool, and context
@@ -55,6 +55,7 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
 - MCP tests use real SDK result models with mocked transport/session boundaries. Synthetic execution against production filenames is not used to increase coverage.
 
 ## Configuration
+- Use explicit `Field(default=...)` for public config defaults so static type checkers infer optional constructor arguments. The AgentConfig constructor regression covers direct calls and typed settings unpacking.
 - Omitted `BaseTool`, `BaseResource`, and `BasePrompt` configurations are created per instance.
   Explicitly supplied configuration objects retain their identity.
 - Runtime config is explicit via `AgentConfig` (client, model, history, roles, mode,
