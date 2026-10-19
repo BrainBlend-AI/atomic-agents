@@ -1,6 +1,6 @@
 # Communication & Integrations
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-15*
 
 The framework exposes no HTTP API of its own; "communication" here means how it talks to LLM
 providers and external tools.
@@ -28,11 +28,23 @@ providers and external tools.
   tools/resources/prompts: `MCPFactory`, `MCPDefinitionService`, `SchemaTransformer`, and
   `fetch_mcp_tools` / `fetch_mcp_resources` / `fetch_mcp_prompts` (sync + async). See the
   `mcp-agent` and `progressive-disclosure` examples.
+- Discovery follows tool, resource, template and prompt cursors. Template continuation errors propagate.
+- Schema references decode escaped definition names and support non-object definitions.
+- Typed SDK tool results use structured content only when it is non-None, then use the existing validated JSON-text fallback. Present empty structured data retains precedence. Mapping adapters keep their separate validation contract.
+- SDK `CallToolResult` and strictly validated mapping envelopes with `isError=True` raise a `RuntimeError` before typed or generic output parsing. The message uses `TextContent` only (meaningful fallback when no text); `structuredContent`, `_meta` and binary blocks never enter messages or logs. Raw application dictionaries that merely contain `isError`/`name` keys (even with a string `content`) stay ordinary outputs.
 
 ## Hooks / observability
 - Built on Instructor's hook system: `register_hook(event, handler)`, `unregister_hook`,
   `clear_hooks`. Events include `parse:error`, `completion:kwargs`, `completion:response`,
   `token:counted`. See the `hooks-example` example and `docs/guides/hooks.md`.
+- OpenInference tracing (`atomic_agents.observability`, optional `observability` extra): an AGENT span per
+  `AtomicAgent` run and a TOOL span per `BaseTool` run, auto-activated by `phoenix.otel.register(auto_instrument=True)`
+  through the `openinference_instrumentor` entry point, or by `AtomicAgentsInstrumentor().instrument(tracer_provider=...)`
+  for any OTLP backend. LLM spans come from the provider's own OpenInference instrumentor and nest under the agent
+  span. See `docs/guides/observability.md` and the `phoenix-tracing` example.
+- Forge tools that run their async body through a `ThreadPoolExecutor` submit via
+  `contextvars.copy_context().run` so the caller's OpenTelemetry context (and the tracing re-entrancy guard)
+  survives in the pool thread.
 
 ## Assembler ↔ GitHub
 - `atomic-assembler` clones `https://github.com/eigenwise/atomic-agents.git` (via GitPython), reads

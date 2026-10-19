@@ -56,22 +56,24 @@ _InstructorMedia = Union[Image, Audio, PDF]
 
 
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
+    kwargs.setdefault("strict", None)
     potential_object = ""
     partial_model = cls.get_partial_model()
     for chunk in json_chunks:
         potential_object += chunk
         obj = from_json((potential_object or "{}").encode(), partial_mode="trailing-strings")
-        obj = partial_model.model_validate(obj, strict=None, **kwargs)
+        obj = partial_model.model_validate(obj, **kwargs)
         yield obj
 
 
 async def model_from_chunks_async_patched(cls, json_chunks, **kwargs):
+    kwargs.setdefault("strict", None)
     potential_object = ""
     partial_model = cls.get_partial_model()
     async for chunk in json_chunks:
         potential_object += chunk
         obj = from_json((potential_object or "{}").encode(), partial_mode="trailing-strings")
-        obj = partial_model.model_validate(obj, strict=None, **kwargs)
+        obj = partial_model.model_validate(obj, **kwargs)
         yield obj
 
 
@@ -101,7 +103,7 @@ class BasicChatOutputSchema(BaseIOSchema):
 
 
 class AgentConfig(BaseModel):
-    client: instructor.core.client.Instructor = Field(..., description="Client for interacting with the language model.")
+    client: instructor.Instructor = Field(..., description="Client for interacting with the language model.")
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[BaseChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[BaseSystemPromptGenerator] = Field(
@@ -416,7 +418,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
         Called before building the messages list. Uses the full context token count
         (system prompt + history + tools) via get_context_token_count().
-        Removes oldest turns one at a time until the context fits within the limit.
+        Removes oldest turns one at a time until the context fits within the limit,
+        preserving the current turn so the request never loses its latest input.
 
         Turn-preserving: always removes complete turns, never individual messages.
 
@@ -446,6 +449,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         for turn_id in turn_ids_ordered:
             if total_tokens <= self.max_context_tokens:
                 break
+            if turn_id == self.history.current_turn_id:
+                continue
 
             self.history.delete_turn_id(turn_id)
             new_result = self.get_context_token_count()
@@ -716,17 +721,15 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             OutputSchema: The response from the chat agent.
         """
         assert not isinstance(
-            self.client, instructor.core.client.AsyncInstructor
+            self.client, instructor.AsyncInstructor
         ), "The run method is not supported for async clients. Use run_async instead."
-
-        # Trim history BEFORE adding new user message to protect the new input
-        self._trim_context()
 
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
             self.history.add_message("user", user_input)
 
+        self._trim_context()
         self._prepare_messages()
         response = self.client.chat.completions.create(
             messages=self.messages,
@@ -753,16 +756,15 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             OutputSchema: The final response from the chat agent.
         """
         assert not isinstance(
-            self.client, instructor.core.client.AsyncInstructor
+            self.client, instructor.AsyncInstructor
         ), "The run_stream method is not supported for async clients. Use run_async instead."
-
-        self._trim_context()
 
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
             self.history.add_message("user", user_input)
 
+        self._trim_context()
         self._prepare_messages()
 
         response_stream = self.client.chat.completions.create_partial(
@@ -779,7 +781,9 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         if last_response:
-            full_response_content = self.output_schema(**last_response.model_dump())
+            # model_dump() keys the data by field name, so accept field names
+            # for output schemas whose fields have an alias.
+            full_response_content = self.output_schema.model_validate(last_response.model_dump(), by_name=True)
             self.history.add_message(self.assistant_role, full_response_content)
             self._prepare_messages()
             return full_response_content
@@ -798,15 +802,14 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             NotAsyncIterableError: If used as an async generator (in an async for loop).
                                    Use run_async_stream() method instead for streaming responses.
         """
-        assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
-
-        self._trim_context()
+        assert isinstance(self.client, instructor.AsyncInstructor), "The run_async method is for async clients."
 
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
             self.history.add_message("user", user_input)
 
+        self._trim_context()
         self._prepare_messages()
 
         response = await self.client.chat.completions.create(
@@ -827,13 +830,13 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Yields:
             OutputSchema: Partial responses from the chat agent.
         """
-        assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
-        self._trim_context()
+        assert isinstance(self.client, instructor.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
             self.history.add_message("user", user_input)
 
+        self._trim_context()
         self._prepare_messages()
 
         response_stream = self.client.chat.completions.create_partial(
@@ -850,7 +853,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         if last_response:
-            full_response_content = self.output_schema(**last_response.model_dump())
+            # See run_stream(): accept field names for aliased output schemas.
+            full_response_content = self.output_schema.model_validate(last_response.model_dump(), by_name=True)
             self.history.add_message(self.assistant_role, full_response_content)
             self._prepare_messages()
 

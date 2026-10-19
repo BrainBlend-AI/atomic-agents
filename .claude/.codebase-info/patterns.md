@@ -1,6 +1,6 @@
 # Patterns & Conventions
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-19*
 
 ## Atomicity
 Build with small, single-purpose, composable parts ("LEGO blocks"): each agent, tool, and context
@@ -12,6 +12,10 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
   as the LLM-facing description). Naming: `<Thing>InputSchema` / `<Thing>OutputSchema`.
 - Agents are parameterized by schemas via PEP 695 generics: `AtomicAgent[InputSchema, OutputSchema]`.
 - Structured output is enforced by Instructor through `response_model=OutputSchema`.
+- Streaming completion accepts field names when reconstructing output schemas with aliases.
+- Tool messages use Pydantic JSON-mode serialization, including JSON-only field serializers.
+- MCP dictionary schemas preserve mapping values and validate typed `additionalProperties`,
+  including mappings reached through `$defs` or `definitions` references.
 
 ## Dynamic system prompts (context providers)
 - `SystemPromptGenerator(background=[...], steps=[...], output_instructions=[...], context_providers={...})`.
@@ -34,6 +38,7 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
   and supports `dump()`/`load()`. `VideoURL` is converted to an OpenAI-compatible `video_url`
   content part for provider messages. `AtomicAgent` trims the oldest whole turns to honor
   `max_context_tokens`, using a text placeholder when LiteLLM cannot count video parts.
+- Invalid serialized history is validated before replacing existing state. Context trimming includes the incoming message in the token budget.
 - Custom backend pattern: subclass `ChatHistory` and override `add_message`/`load` to persist (see
   the `persistent-memory` example and the "Writing a Custom Memory Backend" guide section).
 
@@ -46,8 +51,12 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
   clients. Core tests in `atomic-agents/tests/` mirror the package layout (`agents/`, `base/`,
   `context/`, `connectors/mcp/`, `utils/`), including `tests/base/test_multimodal.py` for `VideoURL`.
   Discovery (`pytest.ini`): files `test_*.py`, classes `Test*`, functions `test_*`.
+- Instructor transport regressions use real clients with `httpx.MockTransport`, including sync/async streaming and explicit strict validation.
+- MCP tests use real SDK result models with mocked transport/session boundaries. Synthetic execution against production filenames is not used to increase coverage.
 
 ## Configuration
+- Omitted `BaseTool`, `BaseResource`, and `BasePrompt` configurations are created per instance.
+  Explicitly supplied configuration objects retain their identity.
 - Runtime config is explicit via `AgentConfig` (client, model, history, roles, mode,
   `model_api_parameters`, `max_context_tokens`) — no global state. Secrets (API keys) come from the
   environment / `.env`.

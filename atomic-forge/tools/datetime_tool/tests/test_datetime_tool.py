@@ -101,6 +101,32 @@ def test_diff_negative_keeps_sign():
     assert out.diff_human.startswith("-")
 
 
+def test_diff_counts_elapsed_time_across_a_dst_change():
+    tool = DateTimeTool()
+    # Clocks in New York go forward an hour on 2026-03-08, and in Brussels back an hour on 2026-10-25.
+    spring = tool.run(
+        DateTimeToolInputSchema(
+            operation="diff",
+            input="2026-03-08T00:00:00",
+            input_2="2026-03-09T00:00:00",
+            timezone="America/New_York",
+        )
+    )
+    autumn = tool.run(
+        DateTimeToolInputSchema(
+            operation="diff",
+            input="2026-10-25T00:00:00",
+            input_2="2026-10-26T00:00:00",
+            timezone="Europe/Brussels",
+        )
+    )
+    assert spring.error is None and autumn.error is None
+    assert spring.diff_seconds == 23 * 3600
+    assert spring.diff_human == "23 hours"
+    assert autumn.diff_seconds == 25 * 3600
+    assert autumn.diff_human == "1 day, 1 hour"
+
+
 def test_unknown_timezone_returns_error():
     tool = DateTimeTool()
     out = tool.run(DateTimeToolInputSchema(operation="now", timezone="Mars/Olympus"))

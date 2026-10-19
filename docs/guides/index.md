@@ -10,6 +10,7 @@ quickstart
 memory
 tools
 hooks
+observability
 orchestration
 cookbook
 error-handling

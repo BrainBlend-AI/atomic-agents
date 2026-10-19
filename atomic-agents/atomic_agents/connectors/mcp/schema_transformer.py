@@ -27,7 +27,7 @@ class SchemaTransformer:
 
     @staticmethod
     def _resolve_ref(ref_path: str, root_schema: Dict[str, Any], model_cache: Dict[str, Type]) -> Type:
-        """Resolve a $ref to a Pydantic model."""
+        """Resolve a $ref to its Pydantic-compatible value type."""
         # Extract ref name from path like "#/$defs/MyObject" or "#/definitions/ANode"
         # JSON Pointer decodes ~1 before ~0 so a literal ~1 is not decoded twice.
         ref_name = ref_path.split("/")[-1].replace("~1", "/").replace("~0", "~")
@@ -39,11 +39,15 @@ class SchemaTransformer:
         defs = root_schema.get("$defs", root_schema.get("definitions", {}))
         if ref_name in defs:
             ref_schema = defs[ref_name]
-            # Create model for the referenced schema
-            model_name = ref_schema.get("title", ref_name)
             # Avoid infinite recursion by adding placeholder first
             model_cache[ref_name] = Any
-            model = SchemaTransformer._create_nested_model(ref_schema, model_name, root_schema, model_cache)
+            if ref_schema.get("properties") or (
+                ref_schema.get("type") == "object" and ref_schema.get("additionalProperties") is False
+            ):
+                model_name = ref_schema.get("title", ref_name)
+                model = SchemaTransformer._create_nested_model(ref_schema, model_name, root_schema, model_cache)
+            else:
+                model, _ = SchemaTransformer.json_to_pydantic_field(ref_schema, True, root_schema, model_cache)
             model_cache[ref_name] = model
             return model
 
@@ -133,6 +137,10 @@ class SchemaTransformer:
 
                 elif json_type == "object":
                     python_type = Dict[str, Any]
+                    value_schema = prop_schema.get("additionalProperties", {})
+                    if isinstance(value_schema, dict):
+                        value_type, _ = SchemaTransformer.json_to_pydantic_field(value_schema, True, root_schema, model_cache)
+                        python_type = Dict[str, value_type]
 
         field_kwargs = {"description": description}
         if required:

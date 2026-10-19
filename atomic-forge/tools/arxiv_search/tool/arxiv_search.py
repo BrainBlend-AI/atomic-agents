@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import logging
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
@@ -109,7 +110,10 @@ class ArxivSearchTool(BaseTool[ArxivSearchToolInputSchema, ArxivSearchToolOutput
         else:
             base = f"all:{query}"
         if category:
-            base = f"{base} AND cat:{category}"
+            # Group the query: arXiv binds `all:` to the first word only and gives AND
+            # precedence, so "all:diffusion model AND cat:cs.CV" also matches any paper
+            # mentioning "diffusion" in another category.
+            base = f"({base}) AND cat:{category}"
         return base
 
     @staticmethod
@@ -226,7 +230,7 @@ class ArxivSearchTool(BaseTool[ArxivSearchToolInputSchema, ArxivSearchToolOutput
 
     def run(self, params: ArxivSearchToolInputSchema) -> ArxivSearchToolOutputSchema:
         with ThreadPoolExecutor() as executor:
-            return executor.submit(asyncio.run, self.run_async(params)).result()
+            return executor.submit(contextvars.copy_context().run, asyncio.run, self.run_async(params)).result()
 
 
 #################

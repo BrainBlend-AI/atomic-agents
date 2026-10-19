@@ -6,7 +6,7 @@ from typing import Dict, Optional, Type
 
 def format_tool_message(tool_call: Type[BaseModel], tool_id: Optional[str] = None) -> Dict:
     """
-    Formats a message for a tool call.
+    Formats a message for a tool call, using Pydantic's JSON representations for arguments.
 
     Args:
         tool_call (Type[BaseModel]): The Pydantic model instance representing the tool call.
@@ -24,6 +24,6 @@ def format_tool_message(tool_call: Type[BaseModel], tool_id: Optional[str] = Non
         "type": "function",
         "function": {
             "name": tool_call.__class__.__name__,
-            "arguments": json.dumps(tool_call.model_dump(), separators=(", ", ": ")),
+            "arguments": json.dumps(tool_call.model_dump(mode="json"), separators=(", ", ": ")),
         },
     }

@@ -1,5 +1,7 @@
+from contextlib import AsyncExitStack
+from unittest.mock import DEFAULT, AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import mcp.types as types
 from mcp.shared.exceptions import McpError
@@ -305,6 +307,51 @@ class TestToolDefinitionService:
             await service.fetch_prompt_definitions()
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("fetch_method", "error_action"),
+        [
+            ("fetch_tool_definitions", "tool definition fetching"),
+            ("fetch_resource_definitions", "resource fetching"),
+            ("fetch_prompt_definitions", "prompt fetching"),
+        ],
+    )
+    async def test_unsupported_transport_rejects_before_connecting_and_closes_stack(
+        self, fetch_method: str, error_action: str, mock_client_session: AsyncMock, monkeypatch: pytest.MonkeyPatch
+    ):
+        service = MCPDefinitionService("http://test-endpoint")
+        monkeypatch.setattr(service, "transport_type", "unsupported")
+        stack = AsyncExitStack()
+        with (
+            patch.multiple(
+                "atomic_agents.connectors.mcp.mcp_definition_service",
+                stdio_client=DEFAULT,
+                streamablehttp_client=DEFAULT,
+                sse_client=DEFAULT,
+                ClientSession=DEFAULT,
+                AsyncExitStack=DEFAULT,
+            ) as connection_factories,
+            patch.object(stack, "aclose", wraps=stack.aclose) as close_stack,
+            patch.object(stack, "enter_async_context", wraps=stack.enter_async_context) as enter_context,
+        ):
+            connection_factories["AsyncExitStack"].return_value = stack
+            connection_factories["ClientSession"].return_value = MockAsyncContextManager(mock_client_session)
+
+            with pytest.raises(RuntimeError) as raised_error:
+                await getattr(service, fetch_method)()
+
+            expected_cause = "Unknown transport type: unsupported. Available types: ['sse', 'http_stream', 'stdio']"
+            assert isinstance(raised_error.value.__cause__, ValueError)
+            assert str(raised_error.value.__cause__) == expected_cause
+            assert str(raised_error.value) == f"Unexpected error during {error_action}: {expected_cause}"
+            connection_factories["stdio_client"].assert_not_called()
+            connection_factories["streamablehttp_client"].assert_not_called()
+            connection_factories["sse_client"].assert_not_called()
+            connection_factories["ClientSession"].assert_not_called()
+            enter_context.assert_not_awaited()
+            close_stack.assert_awaited_once_with()
+            assert mock_client_session.mock_calls == []
+
+    @pytest.mark.asyncio
     async def test_fetch_tool_definitions_from_session(self, mock_client_session):
         # Execute using the static method
         result = await MCPDefinitionService.fetch_tool_definitions_from_session(mock_client_session)
@@ -328,6 +375,51 @@ class TestToolDefinitionService:
 
         mock_client_session.initialize.assert_called()
         mock_client_session.list_resources.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_mapping_adapter_resource_decodes_uri_and_requires_named_parameters(self, mock_client_session: AsyncMock):
+        adapter_response = MagicMock(
+            resources=[{"name": "user_document", "uri": "documents://user%20files/%7Buser_id%7D/%7Bdocument_id%7D"}]
+        )
+        mock_client_session.list_resources.return_value = adapter_response
+
+        definitions = await MCPDefinitionService.fetch_resource_definitions_from_session(mock_client_session)
+
+        assert definitions == [
+            MCPResourceDefinition(
+                name="user_document",
+                description=None,
+                uri="documents://user files/{user_id}/{document_id}",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "URI parameter user_id"},
+                        "document_id": {"type": "string", "description": "URI parameter document_id"},
+                    },
+                    "required": ["user_id", "document_id"],
+                },
+            )
+        ]
+        mock_client_session.initialize.assert_awaited_once_with()
+        mock_client_session.list_resources.assert_awaited_once_with()
+        mock_client_session.list_resource_templates.assert_awaited_once_with()
+
+    @pytest.mark.asyncio
+    async def test_mapping_adapter_rejects_unrecognized_resource_without_creating_definition(
+        self, mock_client_session: AsyncMock
+    ):
+        adapter_response = MagicMock(resources=[42])
+        mock_client_session.list_resources.return_value = adapter_response
+
+        with patch("atomic_agents.connectors.mcp.mcp_definition_service.MCPResourceDefinition") as resource_definition:
+            with pytest.raises(ValueError, match="^Unexpected resource format: 42$"):
+                await MCPDefinitionService.fetch_resource_definitions_from_session(mock_client_session)
+
+            resource_definition.assert_not_called()
+
+        mock_client_session.initialize.assert_awaited_once_with()
+        mock_client_session.list_resources.assert_awaited_once_with()
+        mock_client_session.list_resource_templates.assert_awaited_once_with()
 
     @pytest.mark.asyncio
     async def test_fetch_resource_definitions_from_session_includes_templates_with_static_resources(self):
@@ -365,6 +457,25 @@ class TestToolDefinitionService:
 
         assert [definition.name for definition in result] == ["current_config"]
         mock_session.list_resource_templates.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("code", [types.METHOD_NOT_FOUND, types.INTERNAL_ERROR])
+    async def test_resource_template_continuation_error_is_propagated(self, code):
+        mock_session = AsyncMock()
+        mock_session.list_resources.return_value = types.ListResourcesResult(resources=[])
+        error = McpError(types.ErrorData(code=code, message="Continuation failed"))
+        mock_session.list_resource_templates.side_effect = [
+            types.ListResourceTemplatesResult(
+                resourceTemplates=[types.ResourceTemplate(name="user", uriTemplate="users://{id}")],
+                nextCursor="next-page",
+            ),
+            error,
+        ]
+        with pytest.raises(McpError) as exc_info:
+            await MCPDefinitionService.fetch_resource_definitions_from_session(mock_session)
+        assert exc_info.value is error
+        assert mock_session.list_resource_templates.await_count == 2
+        assert mock_session.list_resource_templates.await_args.kwargs == {"cursor": "next-page"}
 
     @pytest.mark.asyncio
     async def test_fetch_resource_definitions_from_session_propagates_template_errors(self):

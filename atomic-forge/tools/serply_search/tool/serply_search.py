@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
@@ -157,7 +158,7 @@ class SerplySearchTool(BaseTool[SerplySearchToolInputSchema, SerplySearchToolOut
 
     def run(self, params: SerplySearchToolInputSchema) -> SerplySearchToolOutputSchema:
         with ThreadPoolExecutor() as executor:
-            return executor.submit(asyncio.run, self.run_async(params)).result()
+            return executor.submit(contextvars.copy_context().run, asyncio.run, self.run_async(params)).result()
 
 
 #################

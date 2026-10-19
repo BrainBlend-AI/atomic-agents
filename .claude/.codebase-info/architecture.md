@@ -1,6 +1,6 @@
 # Architecture
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-15*
 
 ## Summary
 
@@ -50,6 +50,7 @@ Tool install (atomic-assembler TUI):
 | Context | `atomic-agents/atomic_agents/context/` | `SystemPromptGenerator`, `BaseDynamicContextProvider`, `BaseChatHistory` (pluggable memory contract) + `ChatHistory` with Instructor media and `VideoURL` |
 | Connectors | `atomic-agents/atomic_agents/connectors/mcp/` | Model Context Protocol tools / resources / prompts |
 | Utils | `atomic-agents/atomic_agents/utils/` | Token counting (LiteLLM), tool-message formatting |
+| Observability (opt-in) | `atomic-agents/atomic_agents/observability/` | OpenInference AGENT/TOOL spans for Phoenix / OpenTelemetry; `observability` extra + `openinference_instrumentor` entry point |
 | Assembler (CLI) | `atomic-assembler/atomic_assembler/` | Textual TUI to fetch/install forge tools |
 | Forge (tools) | `atomic-forge/tools/` | 13 standalone tools, each `BaseTool`-based |
 
