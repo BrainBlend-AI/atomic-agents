@@ -18,7 +18,7 @@ dependencies = [
     "atomic-agents[observability]",
     "arize-phoenix-otel>=0.17.0,<1.0.0",
     "openinference-instrumentation-openai>=0.1.30,<0.2.0",
-    "instructor==1.14.5",
+    "instructor>=1.17.0,<2",
     "openai>=2.0.0,<3.0.0",
     "python-dotenv>=1.0.1,<2.0.0",
     "sympy>=1.13.3,<2.0.0",
