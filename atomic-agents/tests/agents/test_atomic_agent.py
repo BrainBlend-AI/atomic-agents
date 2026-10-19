@@ -512,6 +512,27 @@ def test_run_stream(mock_instructor, mock_history):
     mock_history.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
 
+class AliasedOutputSchema(BaseIOSchema):
+    """Output schema whose field is set through an alias."""
+
+    chat_message: str = Field(..., alias="chatMessage", description="The reply text")
+
+
+def test_run_stream_with_aliased_output_schema(mock_instructor, mock_history):
+    streamed = AliasedOutputSchema(chatMessage="Test output")
+    mock_instructor.chat.completions.create_partial.return_value = iter([streamed])
+    config = AgentConfig(client=mock_instructor, model="gpt-5-mini", history=mock_history)
+    agent = AtomicAgent[BasicChatInputSchema, AliasedOutputSchema](config)
+
+    stream = agent.run_stream(BasicChatInputSchema(chat_message="Test input"))
+    with pytest.raises(StopIteration) as stop:
+        while True:
+            next(stream)
+
+    assert stop.value.value == streamed
+    mock_history.add_message.assert_called_with("assistant", streamed)
+
+
 @pytest.mark.asyncio
 async def test_run_async(agent_async, mock_history):
     # Create a mock input
