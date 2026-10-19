@@ -189,8 +189,10 @@ class DateTimeTool(BaseTool[DateTimeToolInputSchema, DateTimeToolOutputSchema]):
             if params.operation == "diff":
                 if not params.input or not params.input_2:
                     raise ValueError("'diff' operation requires `input` and `input_2`.")
-                a = self._parse(params.input, params.timezone)
-                b = self._parse(params.input_2, params.timezone)
+                # Subtract in UTC: Python subtracts datetimes that share a tzinfo by wall clock,
+                # which ignores a DST change between them.
+                a = self._parse(params.input, params.timezone).astimezone(timezone.utc)
+                b = self._parse(params.input_2, params.timezone).astimezone(timezone.utc)
                 delta = b - a
                 return DateTimeToolOutputSchema(
                     operation="diff",
