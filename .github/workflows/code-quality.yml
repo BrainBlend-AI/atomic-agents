@@ -54,6 +54,9 @@ jobs:
         run: uv run flake8 --extend-exclude=.venv atomic-agents atomic-assembler atomic-examples atomic-forge
         if: success()
 
+      - name: Check AgentConfig constructor typing
+        run: uvx --from pyright==1.1.414 pyright atomic-agents/tests/agents/test_config_defaults_typing.py
+
       - name: Run Tests
         run: uv run pytest --cov=atomic_agents atomic-agents
         if: success()
