@@ -61,11 +61,16 @@ def test_build_search_query_with_field_prefix(tool):
 
 
 def test_build_search_query_with_category(tool):
-    assert tool._build_search_query("RAG", "cs.AI") == "all:RAG AND cat:cs.AI"
+    assert tool._build_search_query("RAG", "cs.AI") == "(all:RAG) AND cat:cs.AI"
+
+
+def test_build_search_query_groups_a_multi_word_query_before_the_category(tool):
+    assert tool._build_search_query("diffusion model", "cs.CV") == "(all:diffusion model) AND cat:cs.CV"
+    assert tool._build_search_query("ti:RAG OR abs:agents", "cs.AI") == "(ti:RAG OR abs:agents) AND cat:cs.AI"
 
 
 def test_build_search_query_field_prefix_and_category(tool):
-    assert tool._build_search_query("ti:RAG", "cs.AI") == "ti:RAG AND cat:cs.AI"
+    assert tool._build_search_query("ti:RAG", "cs.AI") == "(ti:RAG) AND cat:cs.AI"
 
 
 def test_extract_id_strips_version_and_url(tool):
