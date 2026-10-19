@@ -1,6 +1,6 @@
 # Entry Points
 
-*Last Updated: 2026-10-15*
+*Last Updated: 2026-10-19*
 
 ## 1. Library API (the primary entry point)
 
@@ -54,6 +54,15 @@ MCP server tools/resources/prompts become agent components via `atomic_agents.co
 | `basic-pdf-analysis` | PDF analysis with a multimodal model |
 | `youtube-summarizer` / `youtube-to-recipe` | transcript → summary / structured recipe |
 | `dspy-integration` | combining DSPy with Atomic Agents |
+
+## 5. OpenTelemetry discovery
+
+`atomic_agents.observability:AtomicAgentsInstrumentor` is registered as `atomic_agents` in both
+`openinference_instrumentor` (Phoenix) and `opentelemetry_instrumentor` (the standard
+`opentelemetry-instrument` launcher). Both use the same installation state. The launcher needs
+its own SDK/exporter setup and the optional OpenInference dependencies; it does not install them
+through `opentelemetry-bootstrap`. Set `OTEL_PYTHON_DISABLED_INSTRUMENTATIONS=atomic_agents` to
+disable launcher discovery. See `docs/guides/observability.md`.
 
 ## Representative Flow
 

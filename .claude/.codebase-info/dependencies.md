@@ -40,6 +40,7 @@ already brings the two OpenInference packages, so the Phoenix auto path works wi
 | pre-commit (≥4,<5) | Git hook runner |
 | pytest / pytest-cov / pytest-asyncio | Tests, coverage, async tests |
 | openai (≥2,<3) | Example/test provider client |
+| opentelemetry-instrumentation (≥0.51b0,<1) | Real auto-loader and launcher tests; dev-only, not a runtime dependency |
 
 ## Docs
 `sphinx`, `sphinx-rtd-theme`, `myst-parser`, `sphinx-copybutton`, `sphinx-design`,
