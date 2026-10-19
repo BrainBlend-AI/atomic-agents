@@ -581,7 +581,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         return serialized
 
     @staticmethod
-    def _token_count_content_part(item: Union[str, _InstructorMedia, Dict[str, Any]]) -> Dict[str, Any]:
+    def _token_count_content_part(item: object) -> Dict[str, Any]:
         """
         Converts one history content part to the chat format the token counter accepts.
 
