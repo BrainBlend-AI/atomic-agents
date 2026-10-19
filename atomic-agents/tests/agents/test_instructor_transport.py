@@ -61,11 +61,11 @@ def agent_over_mock_transport(**model_api_parameters) -> AtomicAgent[BasicChatIn
     return AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config=config)
 
 
-def async_agent_over_mock_transport() -> AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema]:
+def async_agent_over_mock_transport(**model_api_parameters: bool) -> AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema]:
     raw_client = openai.AsyncOpenAI(
         api_key="test", http_client=httpx.AsyncClient(transport=httpx.MockTransport(respond_with_tool_call))
     )
-    config = AgentConfig(client=instructor.from_openai(raw_client), model="m")
+    config = AgentConfig(client=instructor.from_openai(raw_client), model="m", model_api_parameters=model_api_parameters)
     return AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](config=config)
 
 
@@ -90,5 +90,23 @@ def test_run_stream_yields_partials_then_the_complete_response():
 
 def test_run_stream_honors_a_caller_strict_setting():
     partials = list(agent_over_mock_transport(strict=True).run_stream(BasicChatInputSchema(chat_message="hey")))
+
+    assert partials[-1].chat_message == "hi there"
+
+
+@pytest.mark.asyncio
+async def test_run_async_stream_yields_the_complete_response() -> None:
+    agent = async_agent_over_mock_transport()
+
+    partials = [response async for response in agent.run_async_stream(BasicChatInputSchema(chat_message="hey"))]
+
+    assert partials[-1].chat_message == "hi there"
+
+
+@pytest.mark.asyncio
+async def test_run_async_stream_honors_a_caller_strict_setting() -> None:
+    agent = async_agent_over_mock_transport(strict=True)
+
+    partials = [response async for response in agent.run_async_stream(BasicChatInputSchema(chat_message="hey"))]
 
     assert partials[-1].chat_message == "hi there"
