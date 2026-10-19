@@ -1,6 +1,6 @@
 # Dependencies
 
-*Last Updated: 2026-10-15*
+*Last Updated: 2026-10-19*
 
 Declared in `pyproject.toml` (Hatchling build, `uv` workspace; versions locked in `uv.lock`).
 
@@ -26,7 +26,7 @@ already brings the two OpenInference packages, so the Phoenix auto path works wi
 | Package | Purpose |
 |---------|---------|
 | textual (≥5.3,<6) | TUI framework for the `atomic` assembler |
-| mcp[cli] (≥1.6) | Model Context Protocol client + CLI |
+| mcp[cli] (≥1.6,<2) | Model Context Protocol client + CLI |
 | requests (≥2.32,<3) | HTTP |
 | gitpython (≥3.1.43,<4) | Clone the repo to fetch forge tools |
 | pyyaml (≥6,<7) | Read tool `config.yaml` metadata |

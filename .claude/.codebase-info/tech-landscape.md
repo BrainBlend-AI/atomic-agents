@@ -1,6 +1,6 @@
 # Technology Landscape
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-19*
 
 ## Source-of-Truth Files
 
@@ -25,7 +25,7 @@
 | Structured LLM I/O | Instructor 1.14.5 (pinned) | provider-agnostic structured outputs |
 | Data modeling | Pydantic v2 (≥2.11) | all schemas are Pydantic models |
 | Provider / token utils | LiteLLM (≥1.50) | token counting, model metadata |
-| Tool protocol | MCP — `mcp[cli]` (≥1.6) | Model Context Protocol connectors |
+| Tool protocol | MCP, `mcp[cli]` (≥1.6,<2) | Model Context Protocol connectors |
 | TUI | Textual (≥5.3,<6) | the `atomic` assembler UI |
 | Console output | Rich, pyfiglet | |
 | HTTP / Git | requests, GitPython | assembler fetches forge from GitHub |
@@ -38,8 +38,9 @@
 
 - **CI (GitHub Actions):**
   - `code-quality.yml` — on push/PR to `main`/`v2.0`: `uv sync`, `black --check`, `flake8`, then
-    `pytest --cov=atomic_agents` across `atomic-agents`, `atomic-assembler`, `atomic-examples`,
-    `atomic-forge`.
+    `pytest --cov=atomic_agents` for the core. Formatting and lint cover all four project directories.
+    A separate `fresh-install` job builds the wheel, installs it without the lockfile, and imports
+    every `atomic_agents` subpackage.
   - `docs.yml` — on push to `main`: build Sphinx docs, run
     `scripts/generate_llms_files.py` (spec-compliant `llms.txt` index + `llms-*.txt`
     bundles, copied to the site root), deploy to GitHub Pages. The docs version needs
