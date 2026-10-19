@@ -126,7 +126,7 @@ jobs:
       - name: Install the floors plus current test tooling
         run: |
           uv venv lowest-venv
-          uv pip install --python lowest-venv -r lowest-requirements.txt pytest pytest-asyncio pytest-cov
+          uv pip install --python lowest-venv -r lowest-requirements.txt pytest pytest-asyncio pytest-cov opentelemetry-instrumentation==0.51b0
           uv pip install --python lowest-venv --no-deps -e .
 
       - name: Show resolved versions

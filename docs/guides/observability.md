@@ -61,6 +61,46 @@ Two things to know about the automatic path:
 - Existing `auto_instrument=True` users start exporting agent and tool payloads when they upgrade to a version with the
   instrumentor. Use the privacy controls below if that is not wanted.
 
+## Setup with the OpenTelemetry launcher (automatic)
+
+Install the optional tracing adapter, launcher, SDK, and exporter explicitly:
+
+```bash
+pip install "atomic-agents[observability]" opentelemetry-distro opentelemetry-exporter-otlp-proto-http
+```
+
+Run your existing application with environment-only configuration:
+
+```bash
+export OTEL_SERVICE_NAME=my-app
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:6006
+export OTEL_METRICS_EXPORTER=none
+export OTEL_LOGS_EXPORTER=none
+export OPENINFERENCE_HIDE_INPUTS=true
+export OPENINFERENCE_HIDE_OUTPUTS=true
+opentelemetry-instrument python app.py
+```
+
+The launcher discovers `atomic_agents` through the `opentelemetry_instrumentor` entry point and activates the
+same adapter used by Phoenix and manual setup. Without the OpenInference dependencies, the loader skips the adapter.
+`opentelemetry-bootstrap` does not automatically install Atomic Agents or its observability extra.
+
+To disable this adapter, set `OTEL_PYTHON_DISABLED_INSTRUMENTATIONS=atomic_agents` (or add `atomic_agents` to an
+existing comma-separated list). Ordinary imports without a launcher or explicit setup remain uninstrumented.
+
+Choose one provider configuration path: the launcher, Phoenix registration, or manual setup. Both discovery entry
+points share one installation, so activating both does not duplicate Atomic Agents spans. The first provider/config
+wins; a later call with different settings warns and keeps the existing installation. OpenTelemetry also keeps its
+first global provider. Calling Phoenix registration after launcher startup therefore does not switch the export
+destination. To combine explicit activations, configure a shared provider, or uninstrument before changing the
+Atomic Agents provider/config as described below.
+
+The launcher adds AGENT and TOOL spans, with no parent CHAIN or provider LLM spans of its own. Install exactly one
+instrumentor for your LLM provider and activate it through its supported setup. Use the grouping example below when
+you want several agent/tool calls in one trace.
+
 ## Setup with any OpenTelemetry backend (manual)
 
 ```python
@@ -126,8 +166,8 @@ endpoint returned, so a context manager around the endpoint body no longer appli
 
 Agent and tool payloads are exported as `input.value` / `output.value`. To redact them:
 
-- On the automatic Phoenix path, set `OPENINFERENCE_HIDE_INPUTS=true` and/or `OPENINFERENCE_HIDE_OUTPUTS=true`.
-  `TraceConfig()` reads these variables.
+- On the automatic Phoenix or OpenTelemetry launcher path, set `OPENINFERENCE_HIDE_INPUTS=true` and/or
+  `OPENINFERENCE_HIDE_OUTPUTS=true`. `TraceConfig()` reads these variables before the first installation.
 - On the manual path, pass `TraceConfig(hide_inputs=True, hide_outputs=True)` to `instrument()`.
 
 Redacted values are exported as `__REDACTED__`. Masking covers the `input.value` and `output.value` attributes of
