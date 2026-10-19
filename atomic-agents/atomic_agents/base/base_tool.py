@@ -35,17 +35,18 @@ class BaseTool[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
         input_schema (Type[InputSchema]): Schema class defining the input data (derived from generic type parameter).
         output_schema (Type[OutputSchema]): Schema class defining the output data (derived from generic type parameter).
         tool_name (str): The name of the tool, derived from the input schema's title or overridden by the config.
-        tool_description (str): Description of the tool, derived from the input schema's description or overridden by the config.
+        tool_description (str): Description of the tool, derived from the input schema's description
+            or overridden by the config.
     """
 
-    def __init__(self, config: BaseToolConfig = BaseToolConfig()):
+    def __init__(self, config: Optional[BaseToolConfig] = None):
         """
         Initializes the BaseTool with an optional configuration override.
 
         Args:
             config (BaseToolConfig, optional): Configuration for the tool, including optional title and description overrides.
         """
-        self.config = config
+        self.config = config if config is not None else BaseToolConfig()
 
     def __init_subclass__(cls, **kwargs):
         """

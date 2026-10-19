@@ -1,5 +1,11 @@
 import uuid
-from pydantic import BaseModel
+import json
+from datetime import date, datetime, timezone
+from decimal import Decimal
+from enum import Enum
+from pathlib import Path
+
+from pydantic import BaseModel, field_serializer
 import pytest
 from atomic_agents import BaseIOSchema
 from atomic_agents.utils import format_tool_message
@@ -88,6 +94,60 @@ def test_format_tool_message_with_complex_model():
 
     assert result["function"]["name"] == "ComplexToolCall"
     assert result["function"]["arguments"] == '{"nested": {"key": "value"}, "list_field": [1, 2, 3]}'
+
+
+def test_format_tool_message_serializes_pydantic_json_types():
+    class Priority(Enum):
+        HIGH = "high"
+
+    class Details(BaseModel):
+        created: datetime
+        due: date
+        request_id: uuid.UUID
+        amount: Decimal
+        path: Path
+        priority: Priority
+
+    class RichToolCall(BaseModel):
+        details: Details
+
+    tool_call = RichToolCall(
+        details=Details(
+            created=datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc),
+            due=date(2026, 1, 3),
+            request_id=uuid.UUID("12345678-1234-5678-1234-567812345678"),
+            amount=Decimal("12.50"),
+            path=Path("report.txt"),
+            priority=Priority.HIGH,
+        )
+    )
+
+    result = format_tool_message(tool_call, "request-1")
+
+    assert result["function"]["name"] == "RichToolCall"
+    assert json.loads(result["function"]["arguments"]) == {
+        "details": {
+            "created": "2026-01-02T03:04:05Z",
+            "due": "2026-01-03",
+            "request_id": "12345678-1234-5678-1234-567812345678",
+            "amount": "12.50",
+            "path": "report.txt",
+            "priority": "high",
+        }
+    }
+
+
+def test_format_tool_message_honors_json_field_serializers():
+    class SerializedToolCall(BaseModel):
+        value: int
+
+        @field_serializer("value", when_used="json")
+        def serialize_value(self, value):
+            return f"item-{value}"
+
+    result = format_tool_message(SerializedToolCall(value=42))
+
+    assert json.loads(result["function"]["arguments"]) == {"value": "item-42"}
 
 
 if __name__ == "__main__":

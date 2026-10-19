@@ -639,7 +639,9 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         if last_response:
-            full_response_content = self.output_schema(**last_response.model_dump())
+            # model_dump() keys the data by field name, so accept field names
+            # for output schemas whose fields have an alias.
+            full_response_content = self.output_schema.model_validate(last_response.model_dump(), by_name=True)
             self.history.add_message(self.assistant_role, full_response_content)
             self._prepare_messages()
             return full_response_content
@@ -709,7 +711,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         if last_response:
-            full_response_content = self.output_schema(**last_response.model_dump())
+            # See run_stream(): accept field names for aliased output schemas.
+            full_response_content = self.output_schema.model_validate(last_response.model_dump(), by_name=True)
             self.history.add_message(self.assistant_role, full_response_content)
             self._prepare_messages()
 

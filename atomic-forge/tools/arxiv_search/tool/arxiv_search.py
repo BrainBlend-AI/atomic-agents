@@ -110,7 +110,10 @@ class ArxivSearchTool(BaseTool[ArxivSearchToolInputSchema, ArxivSearchToolOutput
         else:
             base = f"all:{query}"
         if category:
-            base = f"{base} AND cat:{category}"
+            # Group the query: arXiv binds `all:` to the first word only and gives AND
+            # precedence, so "all:diffusion model AND cat:cs.CV" also matches any paper
+            # mentioning "diffusion" in another category.
+            base = f"({base}) AND cat:{category}"
         return base
 
     @staticmethod

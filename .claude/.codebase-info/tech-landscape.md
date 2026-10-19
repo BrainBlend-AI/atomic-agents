@@ -1,6 +1,6 @@
 # Technology Landscape
 
-*Last Updated: 2026-10-18*
+*Last Updated: 2026-10-19*
 
 ## Source-of-Truth Files
 
@@ -22,8 +22,8 @@
 | Layer | Technology | Notes |
 |-------|------------|-------|
 | Language | Python ≥3.12 | PEP 695 generics |
-| Structured LLM I/O | Instructor >=1.17.0,<2 (range since 2026-10-18) | provider-agnostic structured outputs |
-| Data modeling | Pydantic v2 (≥2.11) | all schemas are Pydantic models |
+| Structured LLM I/O | Instructor >=1.17.0,<2 (range in 2.13.0) | provider-agnostic structured outputs |
+| Data modeling | Pydantic v2 (≥2.11.4) | all schemas are Pydantic models |
 | Provider / token utils | LiteLLM (≥1.50) | token counting, model metadata |
 | Tool protocol | MCP — `mcp[cli]` (≥1.8,<2) | Model Context Protocol connectors |
 | TUI | Textual (≥5.3,<6) | the `atomic` assembler UI |
@@ -38,8 +38,8 @@
 
 - **CI (GitHub Actions):**
   - `code-quality.yml` — on push/PR to `main`/`v2.0`, three jobs: `quality` (`uv sync`,
-    `black --check`, `flake8`, then `pytest --cov=atomic_agents` across `atomic-agents`,
-    `atomic-assembler`, `atomic-examples`, `atomic-forge`); `fresh-install` (build the wheel, install
+    `black --check` and `flake8` across all four project directories, then
+    `pytest --cov=atomic_agents` for the core); `fresh-install` (build the wheel, install
     it with the observability extra into a clean venv without the lockfile, import every module under
     `atomic_agents`, which is what a new user's `pip install` sees); `lowest-versions` (resolve runtime
     dependencies with `uv pip compile --resolution lowest-direct`, install current pytest tooling, run

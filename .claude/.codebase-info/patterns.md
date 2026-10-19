@@ -1,6 +1,6 @@
 # Patterns & Conventions
 
-*Last Updated: 2026-10-13*
+*Last Updated: 2026-10-19*
 
 ## Atomicity
 Build with small, single-purpose, composable parts ("LEGO blocks"): each agent, tool, and context
@@ -12,6 +12,10 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
   as the LLM-facing description). Naming: `<Thing>InputSchema` / `<Thing>OutputSchema`.
 - Agents are parameterized by schemas via PEP 695 generics: `AtomicAgent[InputSchema, OutputSchema]`.
 - Structured output is enforced by Instructor through `response_model=OutputSchema`.
+- Streaming completion accepts field names when reconstructing output schemas with aliases.
+- Tool messages use Pydantic JSON-mode serialization, including JSON-only field serializers.
+- MCP dictionary schemas preserve mapping values and validate typed `additionalProperties`,
+  including mappings reached through `$defs` or `definitions` references.
 
 ## Dynamic system prompts (context providers)
 - `SystemPromptGenerator(background=[...], steps=[...], output_instructions=[...], context_providers={...})`.
@@ -50,6 +54,8 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
 - MCP tests use real SDK result models with mocked transport/session boundaries. Synthetic execution against production filenames is not used to increase coverage.
 
 ## Configuration
+- Omitted `BaseTool`, `BaseResource`, and `BasePrompt` configurations are created per instance.
+  Explicitly supplied configuration objects retain their identity.
 - Runtime config is explicit via `AgentConfig` (client, model, history, roles, mode,
   `model_api_parameters`, `max_context_tokens`) — no global state. Secrets (API keys) come from the
   environment / `.env`.

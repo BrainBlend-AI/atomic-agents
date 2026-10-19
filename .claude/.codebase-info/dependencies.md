@@ -1,6 +1,6 @@
 # Dependencies
 
-*Last Updated: 2026-10-18*
+*Last Updated: 2026-10-19*
 
 Declared in `pyproject.toml` (Hatchling build, `uv` workspace; versions locked in `uv.lock`).
 
@@ -50,6 +50,6 @@ already brings the two OpenInference packages, so the Phoenix auto path works wi
 
 ## Notes
 - `requirements.txt` / `setup.py` are legacy shims; `pyproject.toml` + `uv.lock` are the source of truth.
-- Instructor was an exact pin (`==1.14.5`) until 2026-10-18 because patch releases had removed import paths (567-labs/instructor#1796); it is a range now, guarded by two CI jobs: `fresh-install` (build the wheel, install it without the lockfile, import every module) and `lowest-versions` (run the suite with every runtime dependency at its declared floor). The framework references `instructor.Instructor` / `instructor.AsyncInstructor` from the package root; `instructor.core` is not an attribute path on 1.17.0.
+- Instructor was an exact pin (`==1.14.5`) through 2.12.1 because patch releases had removed import paths (567-labs/instructor#1796); it is a range now, guarded by two CI jobs: `fresh-install` (build the wheel, install it without the lockfile, import every module) and `lowest-versions` (run the suite with every runtime dependency at its declared floor). The framework references `instructor.Instructor` / `instructor.AsyncInstructor` from the package root; `instructor.core` is not an attribute path on 1.17.0.
 - Every example project and the legacy `requirements.txt` carry the same Instructor range.
 - Each `atomic-forge` tool and each `atomic-examples` project declares its **own** dependencies.
