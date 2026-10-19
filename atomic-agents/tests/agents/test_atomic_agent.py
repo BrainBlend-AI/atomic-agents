@@ -572,6 +572,23 @@ async def test_run_async_stream(agent_async, mock_history):
     mock_history.add_message.assert_any_call("assistant", full_response_content)
 
 
+@pytest.mark.asyncio
+async def test_run_async_stream_with_aliased_output_schema(mock_instructor_async, mock_history):
+    streamed = AliasedOutputSchema(chatMessage="Test output")
+
+    async def mock_create_partial(*args, **kwargs):
+        yield streamed
+
+    mock_instructor_async.chat.completions.create_partial = mock_create_partial
+    config = AgentConfig(client=mock_instructor_async, model="gpt-5-mini", history=mock_history)
+    agent = AtomicAgent[BasicChatInputSchema, AliasedOutputSchema](config)
+
+    responses = [response async for response in agent.run_async_stream(BasicChatInputSchema(chat_message="Test input"))]
+
+    assert responses == [streamed]
+    mock_history.add_message.assert_called_with("assistant", streamed)
+
+
 def test_model_from_chunks_patched():
     class TestPartialModel(PartialBase):
         @classmethod
