@@ -51,6 +51,7 @@ the next's input. See `atomic-examples/deep-research` and `orchestration-agent`.
   clients. Core tests in `atomic-agents/tests/` mirror the package layout (`agents/`, `base/`,
   `context/`, `connectors/mcp/`, `utils/`), including `tests/base/test_multimodal.py` for `VideoURL`.
   Discovery (`pytest.ini`): files `test_*.py`, classes `Test*`, functions `test_*`.
+- Instructor transport regressions use real clients with `httpx.MockTransport`, including sync/async streaming and explicit strict validation.
 - MCP tests use real SDK result models with mocked transport/session boundaries. Synthetic execution against production filenames is not used to increase coverage.
 
 ## Configuration
