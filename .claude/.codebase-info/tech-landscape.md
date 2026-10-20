@@ -1,6 +1,6 @@
 # Technology Landscape
 
-*Last Updated: 2026-10-19*
+*Last Updated: 2026-10-20*
 
 ## Source-of-Truth Files
 
@@ -38,7 +38,7 @@
 
 - **CI (GitHub Actions):**
   - `code-quality.yml` — on push/PR to `main`/`v2.0`, three jobs: `quality` (`uv sync`,
-    `black --check` and `flake8` across all four project directories, then
+    `black --check` and `flake8` across all four project directories, a focused Pyright 1.1.414 constructor check, then
     `pytest --cov=atomic_agents` for the core); `fresh-install` (build the wheel, install
     it with the observability extra into a clean venv without the lockfile, import every module under
     `atomic_agents`, which is what a new user's `pip install` sees); `lowest-versions` (resolve runtime
