@@ -124,12 +124,14 @@ jobs:
           version: "latest"
 
       - name: Resolve runtime dependencies at their declared floors
-        run: uv pip compile pyproject.toml --resolution lowest-direct --extra observability -o lowest-requirements.txt
+        run: |
+          echo 'opentelemetry-instrumentation==0.51b0' > telemetry-test-requirements.txt
+          uv pip compile pyproject.toml telemetry-test-requirements.txt --resolution lowest-direct --extra observability -o lowest-requirements.txt
 
       - name: Install the floors plus current test tooling
         run: |
           uv venv lowest-venv
-          uv pip install --python lowest-venv -r lowest-requirements.txt pytest pytest-asyncio pytest-cov
+          uv pip install --python lowest-venv -r lowest-requirements.txt pytest pytest-asyncio pytest-cov opentelemetry-instrumentation==0.51b0
           uv pip install --python lowest-venv --no-deps -e .
 
       - name: Show resolved versions

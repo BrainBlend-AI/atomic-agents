@@ -673,11 +673,12 @@ def test_phoenix_entry_point_loads_and_instruments_with_only_a_tracer_provider()
     assert len(spans_of(exporter)) == 1
 
 
-def test_instrument_without_openinference_raises_install_hint(monkeypatch):
+@pytest.mark.parametrize("options", [{}, {"skip_dep_check": False}])
+def test_instrument_without_openinference_raises_install_hint(monkeypatch: pytest.MonkeyPatch, options: dict[str, object]):
     monkeypatch.setattr(observability, "_openinference_is_installed", lambda: False)
 
     with pytest.raises(ImportError, match="atomic-agents\\[observability\\]"):
-        AtomicAgentsInstrumentor().instrument()
+        AtomicAgentsInstrumentor().instrument(**options)
 
 
 def test_uninstrument_without_openinference_is_a_no_op(monkeypatch):

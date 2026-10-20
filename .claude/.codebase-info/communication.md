@@ -1,6 +1,6 @@
 # Communication & Integrations
 
-*Last Updated: 2026-10-15*
+*Last Updated: 2026-10-19*
 
 The framework exposes no HTTP API of its own; "communication" here means how it talks to LLM
 providers and external tools.
@@ -39,9 +39,13 @@ providers and external tools.
   `token:counted`. See the `hooks-example` example and `docs/guides/hooks.md`.
 - OpenInference tracing (`atomic_agents.observability`, optional `observability` extra): an AGENT span per
   `AtomicAgent` run and a TOOL span per `BaseTool` run, auto-activated by `phoenix.otel.register(auto_instrument=True)`
-  through the `openinference_instrumentor` entry point, or by `AtomicAgentsInstrumentor().instrument(tracer_provider=...)`
-  for any OTLP backend. LLM spans come from the provider's own OpenInference instrumentor and nest under the agent
-  span. See `docs/guides/observability.md` and the `phoenix-tracing` example.
+  through `openinference_instrumentor`, by the standard `opentelemetry-instrument` launcher through
+  `opentelemetry_instrumentor`, or by `AtomicAgentsInstrumentor().instrument(tracer_provider=...)`
+  for an explicitly configured backend. Both discovery paths share the first installation's provider/config.
+  Missing optional tracing dependencies are DEBUG-skipped when the launcher passes `skip_dep_check=True`;
+  manual setup retains its import error and install hint. Choose one configuration path or share the
+  provider explicitly. LLM spans come from one provider-level OpenInference instrumentor and nest under
+  the agent span. See `docs/guides/observability.md` and the `phoenix-tracing` example.
 - Forge tools that run their async body through a `ThreadPoolExecutor` submit via
   `contextvars.copy_context().run` so the caller's OpenTelemetry context (and the tracing re-entrancy guard)
   survives in the pool thread.

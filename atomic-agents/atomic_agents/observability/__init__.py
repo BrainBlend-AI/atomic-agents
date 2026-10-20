@@ -63,7 +63,11 @@ class AtomicAgentsInstrumentor:
     """
 
     def instrument(
-        self, *, tracer_provider: Optional["TracerProvider"] = None, config: Optional["TraceConfig"] = None
+        self,
+        *,
+        tracer_provider: Optional["TracerProvider"] = None,
+        config: Optional["TraceConfig"] = None,
+        **options: object,
     ) -> None:
         """
         Patch the framework classes. Safe to call more than once; a second call with different
@@ -72,12 +76,17 @@ class AtomicAgentsInstrumentor:
         Args:
             tracer_provider: An OpenTelemetry ``TracerProvider``. Defaults to the global provider.
             config: An ``openinference.instrumentation.TraceConfig`` (for example ``hide_inputs=True``).
+            **options: Launcher options accepted for OpenTelemetry auto-instrumentation compatibility.
 
         Raises:
-            ImportError: When the ``observability`` extra is not installed.
+            ModuleNotFoundError: When the ``observability`` extra is not installed, except during
+                OpenTelemetry auto-discovery, which skips unavailable optional instrumentation.
         """
         if not _openinference_is_installed():
-            raise ImportError(_INSTALL_HINT)
+            if options.get("skip_dep_check") is True:
+                logger.debug(_INSTALL_HINT)
+                return
+            raise ModuleNotFoundError(_INSTALL_HINT)
         tracing = _load_tracing_module()
         if tracing is not None:
             tracing.install(tracer_provider=tracer_provider, config=config)
