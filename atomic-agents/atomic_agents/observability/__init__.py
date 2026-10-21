@@ -11,6 +11,7 @@ activates it without further code. See ``docs/guides/observability.md``.
 import importlib.util
 import logging
 from importlib.metadata import PackageNotFoundError, version
+from types import ModuleType
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
@@ -40,7 +41,13 @@ def _openinference_is_too_old() -> bool:
     return release < _MINIMUM_OPENINFERENCE_VERSION
 
 
-def _load_tracing_module():
+def _import_tracing_module() -> ModuleType:
+    from atomic_agents.observability import openinference_tracing
+
+    return openinference_tracing
+
+
+def _load_tracing_module() -> ModuleType | None:
     if _openinference_is_too_old():
         logger.warning(
             "Atomic Agents tracing is disabled: %s %s or newer is required.",
@@ -48,9 +55,7 @@ def _load_tracing_module():
             ".".join(str(part) for part in _MINIMUM_OPENINFERENCE_VERSION),
         )
         return None
-    from atomic_agents.observability import openinference_tracing
-
-    return openinference_tracing
+    return _import_tracing_module()
 
 
 class AtomicAgentsInstrumentor:
@@ -95,13 +100,13 @@ class AtomicAgentsInstrumentor:
         """Restore the original framework methods. No-op when nothing is installed."""
         if not self.is_instrumented_by_opentelemetry:
             return
-        _load_tracing_module().uninstall()
+        _import_tracing_module().uninstall()
 
     @property
     def is_instrumented_by_opentelemetry(self) -> bool:
         if not _openinference_is_installed() or _openinference_is_too_old():
             return False
-        return _load_tracing_module().is_installed()
+        return _import_tracing_module().is_installed()
 
 
 __all__ = ["AtomicAgentsInstrumentor"]
