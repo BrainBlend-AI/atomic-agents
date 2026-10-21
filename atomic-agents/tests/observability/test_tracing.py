@@ -25,7 +25,7 @@ from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema, BaseTool
 from atomic_agents.context import BaseDynamicContextProvider, SystemPromptGenerator
 from atomic_agents.observability import AtomicAgentsInstrumentor
 import atomic_agents.observability as observability
-from atomic_agents.observability import tracing as tracing
+from atomic_agents.observability import agent_spans, installation, span_attributes, span_payloads, tracing as tracing
 
 
 class QuestionSchema(BaseIOSchema):
@@ -622,14 +622,14 @@ def test_second_instrument_replaces_provider_and_warns(exporter, caplog):
     other_provider.add_span_processor(SimpleSpanProcessor(other_exporter))
     agent = make_agent(sync_client())
     agent.run(QuestionSchema(question="first"))
-    installed = tracing._installation
+    installed = installation._installation
     wrapped_run = AtomicAgent.run
 
     with caplog.at_level(logging.WARNING):
         AtomicAgentsInstrumentor().instrument(tracer_provider=other_provider)
 
     agent.run(QuestionSchema(question="second"))
-    assert tracing._installation is installed
+    assert installation._installation is installed
     assert AtomicAgent.run is wrapped_run
     assert len(spans_of(exporter)) == 1
     assert len(spans_of(other_exporter)) == 1
@@ -710,7 +710,7 @@ def test_openinference_below_the_floor_only_disables_context_with_a_warning(monk
 
     assert "0.1.38 or newer is required" in caplog.text
     assert AtomicAgentsInstrumentor().is_instrumented_by_opentelemetry
-    assert tracing._context_attributes() == {}
+    assert span_attributes._context_attributes() == {}
     AtomicAgentsInstrumentor().uninstrument()
 
 
@@ -877,7 +877,7 @@ def configured_tracing():
 @pytest.mark.parametrize("openinference_enabled", [False, True])
 def test_genai_attributes_survive_without_openinference(monkeypatch, configured_tracing, openinference_enabled):
     provider, exporter = configured_tracing
-    monkeypatch.setattr(tracing, "_import_context_attributes", lambda: None)
+    monkeypatch.setattr(span_attributes, "_import_context_attributes", lambda: None)
     config = tracing.TracingConfig(openinference_attributes=True if openinference_enabled else None)
     AtomicAgentsInstrumentor().instrument(tracer_provider=provider, config=config)
     client = sync_client()
@@ -1089,11 +1089,11 @@ def test_plain_parent_span_owns_agent_and_tool_trace(exporter):
 
 
 def test_same_provider_and_config_is_a_silent_no_op(exporter, caplog):
-    installed = tracing._installation
+    installed = installation._installation
     tracer = installed.tracer
     with caplog.at_level(logging.DEBUG, logger=tracing.__name__):
         AtomicAgentsInstrumentor().instrument(tracer_provider=exporter.provider, config=tracing.TracingConfig())
-    assert tracing._installation is installed
+    assert installation._installation is installed
     assert installed.tracer is tracer
     assert not caplog.records
 
@@ -1141,7 +1141,7 @@ def test_in_flight_span_finishes_on_original_provider(exporter):
 def test_none_descriptions_are_omitted_without_otel_warnings(exporter, caplog, name):
     agent = make_agent(sync_client())
     setattr(agent, name, None)
-    with tracing._agent_span(agent, (), {}):
+    with agent_spans._agent_span(agent, (), {}):
         pass
     (span,) = spans_of(exporter)
     assert f"atomic_agents.{name}" not in span.attributes
@@ -1152,7 +1152,7 @@ def test_none_descriptions_are_omitted_without_otel_warnings(exporter, caplog, n
 def test_broken_history_preserves_mandatory_agent_attributes(exporter, monkeypatch, caplog):
     agent = make_agent(sync_client())
     monkeypatch.setattr(type(agent), "history", PropertyMock(side_effect=RuntimeError("history unavailable")), raising=False)
-    with caplog.at_level(logging.DEBUG), tracing._agent_span(agent, (), {}):
+    with caplog.at_level(logging.DEBUG), agent_spans._agent_span(agent, (), {}):
         pass
     (span,) = spans_of(exporter)
     assert span.attributes["gen_ai.operation.name"] == "invoke_agent"
@@ -1188,7 +1188,7 @@ def test_configured_tool_name_is_the_span_join_key(exporter):
 def test_hidden_payload_is_never_serialized(exporter, caplog, hide):
     payload = UnserializableInputSchema(store=AnswerStore())
     with exporter.provider.get_tracer("test").start_as_current_span("payload") as span:
-        tracing._record_payload(span, (("payload", "payload.mime_type"),), payload, hide, tracing.TracingConfig())
+        span_payloads._record_payload(span, (("payload", "payload.mime_type"),), payload, hide, tracing.TracingConfig())
     (span,) = spans_of(exporter)
     assert ("Could not serialize tracing payload" in caplog.text) is not hide
     assert span.attributes.get("payload") == ("__REDACTED__" if hide else None)
@@ -1198,9 +1198,9 @@ def test_hidden_payload_is_never_serialized(exporter, caplog, hide):
 @pytest.mark.parametrize("hide", [False, True])
 def test_hidden_non_model_payload_does_not_call_json_dumps(exporter, monkeypatch, caplog, hide):
     serialize = Mock(side_effect=ValueError("serialization failed"))
-    monkeypatch.setattr(tracing.json, "dumps", serialize)
+    monkeypatch.setattr(span_payloads.json, "dumps", serialize)
     with exporter.provider.get_tracer("test").start_as_current_span("payload") as span:
-        tracing._record_payload(span, (("payload", None),), object(), hide, tracing.TracingConfig())
+        span_payloads._record_payload(span, (("payload", None),), object(), hide, tracing.TracingConfig())
     assert serialize.call_count == (0 if hide else 1)
     assert ("Could not serialize tracing payload" in caplog.text) is not hide
 
@@ -1233,7 +1233,7 @@ def test_instructor_provider_names_follow_genai_conventions(exporter, provider, 
 
 
 def test_none_context_attributes_are_filtered(exporter, monkeypatch, caplog):
-    monkeypatch.setattr(tracing, "_context_attributes", lambda: {"optional": None})
+    monkeypatch.setattr(span_attributes, "_context_attributes", lambda: {"optional": None})
     make_agent(sync_client()).run(QuestionSchema(question="question"))
     (span,) = spans_of(exporter)
     assert "optional" not in span.attributes
@@ -1267,7 +1267,7 @@ def test_error_status_and_recorded_message_are_bounded(configured_tracing):
     AtomicAgentsInstrumentor().instrument(tracer_provider=provider, config=tracing.TracingConfig(max_attribute_length=12))
     error = ValueError("private" * 100)
     agent = make_agent(sync_client())
-    with pytest.raises(ValueError) as raised, tracing._agent_span(agent, (), {}):
+    with pytest.raises(ValueError) as raised, agent_spans._agent_span(agent, (), {}):
         raise error
     (span,) = spans_of(exporter)
     expected = str(error)[:12] + "...[truncated]"
@@ -1284,7 +1284,7 @@ def test_hidden_validation_errors_do_not_export_model_output(configured_tracing)
         QuestionSchema.model_validate({"question": ["secret model output"]})
     except ValidationError as error:
         with provider.get_tracer("test").start_as_current_span("failure") as span:
-            tracing._record_failure(span, error)
+            span_payloads._record_failure(span, error)
     (span,) = spans_of(exporter)
     assert span.status.description == "ValidationError: 1 errors (__REDACTED__)"
     assert span.events[0].attributes["exception.message"] == span.status.description
