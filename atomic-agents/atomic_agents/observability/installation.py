@@ -59,12 +59,11 @@ def install(
     *, tracer_provider: Optional["TracerProvider"] = None, config: TracingConfig | PayloadVisibility | None = None
 ) -> None:
     global _installation
-    config = TracingConfig.coerce(config)
     if _installation is not None:
-        if config.openinference_attributes is None:
-            config = replace(config, openinference_attributes=_installation.config.openinference_attributes)
+        tracer_provider = _installation.tracer_provider if tracer_provider is None else tracer_provider
         _replace_installation(_installation, tracer_provider, config)
         return
+    config = TracingConfig.coerce(config)
     context_attributes = span_attributes._import_context_attributes()
     if config.openinference_attributes is None:
         config = replace(config, openinference_attributes=context_attributes is not None)
@@ -90,8 +89,11 @@ def uninstall() -> None:
 
 
 def _replace_installation(
-    installed: _Installation, tracer_provider: Optional["TracerProvider"], config: TracingConfig
+    installed: _Installation, tracer_provider: Optional["TracerProvider"], config: TracingConfig | PayloadVisibility | None
 ) -> None:
+    config = installed.config if config is None else TracingConfig.coerce(config)
+    if config.openinference_attributes is None:
+        config = replace(config, openinference_attributes=installed.config.openinference_attributes)
     if tracer_provider is installed.tracer_provider and config == installed.config:
         return
     installed.tracer = trace_api.get_tracer(TRACER_NAME, __version__, tracer_provider)

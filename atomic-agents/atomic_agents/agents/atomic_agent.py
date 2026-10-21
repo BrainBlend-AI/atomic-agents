@@ -799,16 +799,11 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Args:
             event (Optional[str]): The event name to clear, or None to clear all
         """
-        if event:
-            if event in self._hook_handlers:
-                # Clear from instructor client first
-                if hasattr(self.client, "clear"):
-                    self.client.clear(event)
-                self._hook_handlers[event].clear()
-        else:
-            # Clear all hooks
-            if hasattr(self.client, "clear"):
-                self.client.clear()
+        events = [event] if event else list(self._hook_handlers)
+        for registered_event in events:
+            for handler in list(self._hook_handlers.get(registered_event, [])):
+                self.unregister_hook(registered_event, handler)
+        if not event:
             self._hook_handlers.clear()
 
     def _dispatch_hook(self, event: str, *args, **kwargs) -> None:

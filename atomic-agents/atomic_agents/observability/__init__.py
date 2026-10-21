@@ -1,11 +1,7 @@
-"""
-Opt-in OpenTelemetry tracing for Atomic Agents.
+"""Opt-in tracing for any OpenTelemetry backend using GenAI attributes.
 
-Emits an AGENT span per ``AtomicAgent`` run and a TOOL span per ``BaseTool`` run, rendered by
-Arize Phoenix and any other OpenTelemetry backend. Needs the ``observability`` extra:
-``pip install "atomic-agents[observability]"``. Phoenix discovers :class:`AtomicAgentsInstrumentor`
-through the ``openinference_instrumentor`` entry point, so ``phoenix.otel.register(auto_instrument=True)``
-activates it without further code. See ``docs/guides/observability.md``.
+Install the observability extra for tracing. The optional phoenix extra adds
+Arize Phoenix integration and OpenInference attributes.
 """
 
 import importlib.util

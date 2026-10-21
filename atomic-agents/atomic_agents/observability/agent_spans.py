@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextvars
 import functools
 from contextlib import contextmanager
 from typing import AsyncGenerator, Awaitable, Callable, Coroutine, Generator, Generic, Iterator, TypeVar
@@ -25,11 +24,6 @@ AGENT_SYNC_METHOD = "run"
 AGENT_ASYNC_METHOD = "run_async"
 AGENT_SYNC_STREAM_METHOD = "run_stream"
 AGENT_ASYNC_STREAM_METHOD = "run_async_stream"
-
-
-_active_agent_span: contextvars.ContextVar[Span | None] = contextvars.ContextVar(
-    "atomic_agents_active_agent_span", default=None
-)
 
 
 def _user_input_from_call(args: tuple[object, ...], kwargs: dict[str, object]) -> object:
@@ -57,16 +51,17 @@ def _agent_span(agent: AtomicAgent, args: tuple[object, ...], kwargs: dict[str, 
     ) as span:
         _set_input_safely(span, _user_input_from_call(args, kwargs))
         run = llm_attempt_spans.new_run(span, agent)
-        token = _active_agent_span.set(span)
         try:
             with llm_attempt_spans.active_run(run):
                 yield span
+        except (asyncio.CancelledError, GeneratorExit):
+            span.set_attribute("atomic_agents.cancelled", True)
+            raise
         except BaseException as error:
             _record_failure(span, error)
             raise
         finally:
             llm_attempt_spans.finish_run(run)
-            _active_agent_span.reset(token)
 
 
 def _trace_agent_call(wrapped: Callable[..., OutputSchema]) -> Callable[..., OutputSchema]:
@@ -111,24 +106,20 @@ def _start_agent_span(agent: AtomicAgent, args: tuple[object, ...], kwargs: dict
 def _call_within_span(run: llm_attempt_spans._AgentRun, function: Callable[..., CallResult], *args: object) -> CallResult:
     span = run.span
     token = context_api.attach(trace_api.set_span_in_context(span))
-    agent_token = _active_agent_span.set(span)
     try:
         with llm_attempt_spans.active_run(run):
             return function(*args)
     finally:
-        _active_agent_span.reset(agent_token)
         context_api.detach(token)
 
 
 async def _await_within_span(run: llm_attempt_spans._AgentRun, awaitable: Awaitable[CallResult]) -> CallResult:
     span = run.span
     token = context_api.attach(trace_api.set_span_in_context(span))
-    agent_token = _active_agent_span.set(span)
     try:
         with llm_attempt_spans.active_run(run):
             return await awaitable
     finally:
-        _active_agent_span.reset(agent_token)
         context_api.detach(token)
 
 
@@ -198,6 +189,9 @@ def _trace_agent_stream(
             return cursor.final
         except GeneratorExit:
             cursor.close_early()
+            raise
+        except asyncio.CancelledError:
+            _mark_closed_early(span, cursor.output)
             raise
         except BaseException as error:
             _record_failure(span, error)
