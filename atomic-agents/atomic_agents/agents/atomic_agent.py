@@ -68,6 +68,10 @@ class BasicChatOutputSchema(BaseIOSchema):
 
 class AgentConfig(BaseModel):
     client: instructor.Instructor = Field(..., description="Client for interacting with the language model.")
+    name: Optional[str] = Field(
+        default=None,
+        description="Stable name for this agent in logs and traces, for example the role it plays. Defaults to the class name.",
+    )
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[BaseChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[BaseSystemPromptGenerator] = Field(
@@ -190,6 +194,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Args:
             config (AgentConfig): Configuration for the chat agent.
         """
+        self.name = config.name
         self.client = config.client
         self.model = config.model
         self.history = config.history if config.history is not None else ChatHistory()
@@ -794,16 +799,11 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Args:
             event (Optional[str]): The event name to clear, or None to clear all
         """
-        if event:
-            if event in self._hook_handlers:
-                # Clear from instructor client first
-                if hasattr(self.client, "clear"):
-                    self.client.clear(event)
-                self._hook_handlers[event].clear()
-        else:
-            # Clear all hooks
-            if hasattr(self.client, "clear"):
-                self.client.clear()
+        events = [event] if event else list(self._hook_handlers)
+        for registered_event in events:
+            for handler in list(self._hook_handlers.get(registered_event, [])):
+                self.unregister_hook(registered_event, handler)
+        if not event:
             self._hook_handlers.clear()
 
     def _dispatch_hook(self, event: str, *args, **kwargs) -> None:

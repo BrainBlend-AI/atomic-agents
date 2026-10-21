@@ -20,7 +20,7 @@ from opentelemetry.util.types import AttributeValue
 
 import atomic_agents.observability as observability
 from atomic_agents.observability import AtomicAgentsInstrumentor
-from test_openinference_tracing import CalculationInputSchema, CalculatorTool, QuestionSchema, make_agent, sync_client
+from test_tracing import CalculationInputSchema, CalculatorTool, QuestionSchema, make_agent, sync_client
 
 
 @pytest.fixture
@@ -72,6 +72,7 @@ def test_installed_opentelemetry_entry_point_activates_real_loader(
 
 def test_unknown_launcher_options_preserve_provider_and_privacy(
     local_tracing: tuple[TracerProvider, InMemorySpanExporter],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     provider, exporter = local_tracing
     AtomicAgentsInstrumentor().instrument(
@@ -82,13 +83,16 @@ def test_unknown_launcher_options_preserve_provider_and_privacy(
     )
     run_agent_and_tool()
 
+    assert "custom_launcher_option" in caplog.text
+    assert any(record.levelno == logging.WARNING for record in caplog.records)
+    assert "skip_dep_check" not in caplog.text
     spans = exporter.get_finished_spans()
     assert len(spans) == 2
     assert [exported_attributes(span)[SpanAttributes.INPUT_VALUE] for span in spans] == ["__REDACTED__", "__REDACTED__"]
     assert [exported_attributes(span)[SpanAttributes.OUTPUT_VALUE] for span in spans] == ["__REDACTED__", "__REDACTED__"]
 
 
-def test_loader_skips_missing_openinference_and_continues_without_error(
+def test_loader_skips_missing_opentelemetry_and_continues_without_error(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     instrumentor = installed_entry_point("opentelemetry_instrumentor")
@@ -98,20 +102,23 @@ def test_loader_skips_missing_openinference_and_continues_without_error(
     sentinel.name = "sentinel"
     points = (instrumentor, sentinel)
     monkeypatch.setattr(_load, "entry_points", lambda group: points if group == "opentelemetry_instrumentor" else ())
-    monkeypatch.setattr(observability, "_openinference_is_installed", lambda: False)
+    monkeypatch.setattr(observability, "_opentelemetry_is_installed", lambda: False)
     monkeypatch.delenv("OTEL_PYTHON_DISABLED_INSTRUMENTATIONS", raising=False)
 
     with caplog.at_level(logging.DEBUG):
         _load._load_instrumentors(DefaultDistro())
 
     sentinel.load.return_value.return_value.instrument.assert_called_once_with(skip_dep_check=True)
-    assert "atomic-agents[observability]" in caplog.text
+    assert (
+        'Atomic Agents tracing needs opentelemetry-api. Install it with: pip install "atomic-agents[observability]" '
+        '(add "atomic-agents[phoenix]" for Arize Phoenix / OpenInference attributes)'
+    ) in caplog.text
     assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
     assert not AtomicAgentsInstrumentor().is_instrumented_by_opentelemetry
 
 
 @pytest.mark.parametrize("first_group", ["openinference_instrumentor", "opentelemetry_instrumentor"])
-def test_both_entry_points_keep_first_provider_and_config(
+def test_both_entry_points_replace_provider_and_config(
     first_group: str, local_tracing: tuple[TracerProvider, InMemorySpanExporter], caplog: pytest.LogCaptureFixture
 ) -> None:
     provider, exporter = local_tracing
@@ -129,12 +136,11 @@ def test_both_entry_points_keep_first_provider_and_config(
         with caplog.at_level(logging.WARNING):
             second.instrument(tracer_provider=other_provider, config=TraceConfig(hide_inputs=False), skip_dep_check=True)
         run_agent_and_tool()
-        assert "already installed" in caplog.text
-        assert [exported_attributes(span)[SpanAttributes.INPUT_VALUE] for span in exporter.get_finished_spans()] == [
-            "__REDACTED__",
-            "__REDACTED__",
-        ]
-        assert other_exporter.get_finished_spans() == ()
+        assert "tracer provider/config replaced" in caplog.text
+        assert exporter.get_finished_spans() == ()
+        spans = other_exporter.get_finished_spans()
+        assert len(spans) == 2
+        assert all(exported_attributes(span)[SpanAttributes.INPUT_VALUE] != "__REDACTED__" for span in spans)
     finally:
         second.uninstrument()
         other_provider.shutdown()
@@ -223,7 +229,7 @@ sys.modules['openinference'] = None
 sys.modules['opentelemetry'] = None
 import atomic_agents
 import atomic_agents.observability
-assert 'atomic_agents.observability.openinference_tracing' not in sys.modules
+assert 'atomic_agents.observability.tracing' not in sys.modules
 print('optional-free import passed')
 """
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=45)
