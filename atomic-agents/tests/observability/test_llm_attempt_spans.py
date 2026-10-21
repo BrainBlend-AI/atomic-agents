@@ -1,4 +1,6 @@
 import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -319,3 +321,59 @@ def test_validation_text_truncation_and_extra_hook_keywords(exporter):
     child, parent = finished_spans(exporter, 2)
     assert parent.attributes["atomic_agents.llm.last_validation_error"] == "long...[truncated]"
     assert parent.attributes["atomic_agents.llm.last_validation_error.original_length"] == 10
+
+
+def test_threaded_first_use_registers_once_and_uninstalls(exporter, monkeypatch):
+    client = scripted_client(retry_script)
+    first_registration = threading.Barrier(2, timeout=5)
+    release_registration = threading.Event()
+    original_on = Hooks.on
+
+    def blocked_on(hooks, event, handler):
+        if event == "completion:kwargs":
+            first_registration.wait()
+            assert release_registration.wait(timeout=5)
+        return original_on(hooks, event, handler)
+
+    monkeypatch.setattr(Hooks, "on", blocked_on)
+    client.on.side_effect = client.hooks.on
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(run_agent, client)
+        first_registration.wait()
+        second_started = threading.Event()
+
+        def second_run():
+            second_started.set()
+            return run_agent(client)
+
+        second = executor.submit(second_run)
+        assert second_started.wait(timeout=5)
+        try:
+            with pytest.raises(TimeoutError):
+                second.result(timeout=0.1)
+            assert client.on.call_count == 1
+        finally:
+            release_registration.set()
+        first.result(timeout=5)
+        second.result(timeout=5)
+    assert len(client.hooks._handlers) == 5
+    assert all(len(handlers) == 1 for handlers in client.hooks._handlers.values())
+    installation.uninstall()
+    assert all(not handlers for handlers in client.hooks._handlers.values())
+
+
+def test_partial_registration_is_rolled_back(exporter):
+    client = scripted_client(retry_script)
+
+    def fail_registration(event, handler):
+        if event == "parse:error":
+            raise RuntimeError("registration failed")
+        client.hooks.on(event, handler)
+
+    client.on.side_effect = fail_registration
+    llm_attempt_spans.register_client(client)
+    assert client not in llm_attempt_spans._clients
+    assert all(not handlers for handlers in client.hooks._handlers.values())
+    client.on.side_effect = client.hooks.on
+    llm_attempt_spans.register_client(client)
+    assert all(len(handlers) == 1 for handlers in client.hooks._handlers.values())

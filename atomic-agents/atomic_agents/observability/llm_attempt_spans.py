@@ -3,6 +3,7 @@
 import contextvars
 import functools
 import logging
+import threading
 import weakref
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -57,6 +58,7 @@ class _AgentRun:
 
 _active_run: contextvars.ContextVar[_AgentRun | None] = contextvars.ContextVar("atomic_agents_llm_run", default=None)
 _clients: weakref.WeakSet[_HookClient] = weakref.WeakSet()
+_registration_lock = threading.Lock()
 
 
 def _never_raise(handler: Callable[_PARAMETERS, None]) -> Callable[_PARAMETERS, None]:
@@ -72,18 +74,33 @@ def _never_raise(handler: Callable[_PARAMETERS, None]) -> Callable[_PARAMETERS, 
 
 @_never_raise
 def register_client(client: _HookClient) -> None:
-    if not hasattr(client, "on") or client in _clients:
+    if not hasattr(client, "on"):
         return
-    for event, handler in _HANDLERS.items():
-        client.on(event, handler)
-    _clients.add(client)
+    # Shared clients must acquire all handlers once before another run can use them.
+    with _registration_lock:
+        if client not in _clients:
+            _register_handlers(client)
+            _clients.add(client)
+
+
+def _register_handlers(client: _HookClient) -> None:
+    registered: list[tuple[str, Callable[..., None]]] = []
+    try:
+        for event, handler in _HANDLERS.items():
+            client.on(event, handler)
+            registered.append((event, handler))
+    except Exception:
+        for event, handler in registered:
+            client.off(event, handler)
+        raise
 
 
 @_never_raise
 def unregister_clients() -> None:
-    for client in list(_clients):
-        _unregister_client(client)
-    _clients.clear()
+    with _registration_lock:
+        for client in list(_clients):
+            _unregister_client(client)
+        _clients.clear()
 
 
 @_never_raise
