@@ -96,9 +96,9 @@ jobs:
       - name: Trace a tool and agent with only OpenTelemetry
         run: |
           fresh-install-venv/bin/python - <<'PY'
-          from types import SimpleNamespace
-
-          from instructor import Instructor
+          import httpx
+          import instructor
+          import openai
           from opentelemetry.sdk.trace import TracerProvider
           from opentelemetry.sdk.trace.export import SimpleSpanProcessor
           from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -125,34 +125,43 @@ jobs:
               def run(self, params: SmokeInput) -> SmokeOutput:
                   return SmokeOutput(text=params.text)
 
-          class StubCompletions:
-              def create(self, **options: object) -> SmokeOutput:
-                  return SmokeOutput(text="offline response")
+          def respond(request: httpx.Request) -> httpx.Response:
+              assert request.url.path == "/v1/chat/completions"
+              return httpx.Response(200, json={
+                  "id": "chatcmpl_smoke", "object": "chat.completion", "created": 1,
+                  "model": "response-model",
+                  "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {
+                      "role": "assistant", "content": None, "tool_calls": [{
+                          "id": "call_smoke", "type": "function", "function": {
+                              "name": "SmokeOutput", "arguments": '{"text": "offline response"}'
+                          }
+                      }]
+                  }}],
+                  "usage": {
+                      "prompt_tokens": 3, "completion_tokens": 2, "total_tokens": 5,
+                      "prompt_tokens_details": {"cached_tokens": 1},
+                      "completion_tokens_details": {"reasoning_tokens": 2},
+                  },
+              })
 
-          class StubClient(Instructor):
-              chat = SimpleNamespace(completions=StubCompletions())
-              provider = None
-
-              def __init__(self) -> None:
-                  pass
-
-              def on(self, event: str, handler: object) -> None:
-                  pass
-
-              def off(self, event: str, handler: object) -> None:
-                  pass
+          client = instructor.from_openai(openai.OpenAI(
+              api_key="test", http_client=httpx.Client(transport=httpx.MockTransport(respond))
+          ))
 
           class SmokeAgent(AtomicAgent[SmokeInput, SmokeOutput]):
               pass
 
           assert SmokeTool().run(SmokeInput(text="tool input")).text == "tool input"
-          agent = SmokeAgent(config=AgentConfig(client=StubClient(), model="offline-model"))
+          agent = SmokeAgent(config=AgentConfig(client=client, model="offline-model"))
           assert agent.run(SmokeInput(text="private agent input")).text == "offline response"
 
           spans = exporter.get_finished_spans()
           for span in spans:
               print(f"{span.name}: {sorted(span.attributes)}")
           spans_by_operation = {span.attributes["gen_ai.operation.name"]: span for span in spans}
+          assert len(spans) == 3
+          assert len(spans_by_operation) == 3
+          chat_span = spans_by_operation["chat"]
           tool_span = spans_by_operation["execute_tool"]
           agent_span = spans_by_operation["invoke_agent"]
           assert tool_span.name == f"execute_tool {SmokeTool().tool_name}"
@@ -160,9 +169,27 @@ jobs:
           assert tool_span.attributes["gen_ai.tool.name"] == SmokeTool().tool_name
           assert tool_span.attributes["atomic_agents.tool.class"] == "SmokeTool"
           assert agent_span.attributes["atomic_agents.input"] == "__REDACTED__"
-          for span in (tool_span, agent_span):
+          assert agent_span.attributes["gen_ai.agent.name"] == "SmokeAgent"
+          assert agent_span.attributes["atomic_agents.llm.attempts"] == 1
+          assert chat_span.name == "chat offline-model"
+          assert chat_span.parent.span_id == agent_span.context.span_id
+          for span in (agent_span, chat_span):
+              assert span.attributes["gen_ai.request.model"] == "offline-model"
+              assert span.attributes["gen_ai.response.model"] == "response-model"
+              assert span.attributes["gen_ai.provider.name"] == "openai"
+              assert span.attributes["gen_ai.usage.input_tokens"] == 3
+              assert span.attributes["gen_ai.usage.output_tokens"] == 2
+              assert span.attributes["gen_ai.usage.cache_read.input_tokens"] == 1
+              assert span.attributes["gen_ai.usage.reasoning.output_tokens"] == 2
+          forbidden_keys = {
+              "input.value", "output.value", "input.mime_type", "output.mime_type",
+              "agent.name", "tool.name", "tool.description", "tool.parameters", "session.id",
+          }
+          for span in spans:
+              assert forbidden_keys.isdisjoint(span.attributes)
               assert not any(key.startswith("openinference.") for key in span.attributes)
-          print("api-only tracing ok: tool and agent spans, GenAI attributes, redacted input, no OpenInference keys")
+          client.client.close()
+          print("api-only tracing ok: tool, agent and chat spans, real Instructor usage, redacted input, no OpenInference keys")
           PY
 
       - name: Import every subpackage the way a new user would

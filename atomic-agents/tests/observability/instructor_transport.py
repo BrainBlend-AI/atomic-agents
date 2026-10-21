@@ -77,17 +77,28 @@ class ScriptedResponse:
         }
 
 
-def instructor_client(mode: instructor.Mode, responses: list[ScriptedResponse]) -> instructor.Instructor:
+def response_transport(mode: instructor.Mode, responses: list[ScriptedResponse]) -> httpx.MockTransport:
     scripted = iter(responses)
 
     def respond(request: httpx.Request) -> httpx.Response:
         response = next(scripted)
-        body = response.responses_body() if mode == instructor.Mode.RESPONSES_TOOLS else response.chat_body(mode)
-        expected_path = "/v1/responses" if mode == instructor.Mode.RESPONSES_TOOLS else "/v1/chat/completions"
+        body = response.responses_body() if mode.value == "responses_tools" else response.chat_body(mode)
+        expected_path = "/v1/responses" if mode.value == "responses_tools" else "/v1/chat/completions"
         if request.url.path != expected_path:
             raise AssertionError(f"Unexpected transport path: {request.url.path}")
         return httpx.Response(200, json=body)
 
+    return httpx.MockTransport(respond)
+
+
+def instructor_client(mode: instructor.Mode, responses: list[ScriptedResponse]) -> instructor.Instructor:
     return instructor.from_openai(
-        openai.OpenAI(api_key="test", http_client=httpx.Client(transport=httpx.MockTransport(respond))), mode=mode
+        openai.OpenAI(api_key="test", http_client=httpx.Client(transport=response_transport(mode, responses))), mode=mode
+    )
+
+
+def async_instructor_client(mode: instructor.Mode, responses: list[ScriptedResponse]) -> instructor.AsyncInstructor:
+    return instructor.from_openai(
+        openai.AsyncOpenAI(api_key="test", http_client=httpx.AsyncClient(transport=response_transport(mode, responses))),
+        mode=mode,
     )
