@@ -24,6 +24,7 @@ class TracingConfig:
             hide_inputs=_visibility_environment("INPUTS").lower() in ("true", "1"),
             hide_outputs=_visibility_environment("OUTPUTS").lower() in ("true", "1"),
             max_attribute_length=int(os.environ.get("ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH", "4096")),
+            llm_spans=os.environ.get("ATOMIC_AGENTS_TRACE_LLM_SPANS", "true").lower() not in ("false", "0"),
         )
 
     @classmethod

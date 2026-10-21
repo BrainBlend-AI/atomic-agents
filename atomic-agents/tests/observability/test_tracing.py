@@ -995,6 +995,25 @@ def test_tracing_config_environment_and_coercion(monkeypatch):
     assert TracingConfig.coerce(TraceConfig(hide_inputs=True)) == TracingConfig(hide_inputs=True)
 
 
+@pytest.mark.parametrize(
+    "value, expected", [("false", False), ("FaLsE", False), ("0", False), ("true", True), ("1", True), ("", True)]
+)
+def test_tracing_config_llm_spans_environment(monkeypatch, value, expected):
+    from atomic_agents.observability import TracingConfig
+
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_LLM_SPANS", value)
+    assert TracingConfig.from_environment().llm_spans is expected
+    assert TracingConfig.coerce(None).llm_spans is expected
+
+
+def test_tracing_config_llm_spans_defaults_to_enabled(monkeypatch):
+    from atomic_agents.observability import TracingConfig
+
+    monkeypatch.delenv("ATOMIC_AGENTS_TRACE_LLM_SPANS", raising=False)
+    assert TracingConfig.from_environment().llm_spans is True
+    assert TracingConfig().llm_spans is True
+
+
 def test_session_is_mirrored_to_genai_conversation(exporter):
     with using_session("session-1"):
         make_agent(sync_client()).run(QuestionSchema(question="?"))

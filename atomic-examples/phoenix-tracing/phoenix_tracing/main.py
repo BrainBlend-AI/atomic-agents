@@ -10,14 +10,13 @@ from pydantic import Field
 from rich.console import Console
 
 from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema, BasicChatInputSchema, BasicChatOutputSchema
-from atomic_agents.observability import AtomicAgentsInstrumentor, TracingConfig
 from atomic_agents.context import SystemPromptGenerator
 from phoenix_tracing.tools.calculator import CalculatorTool, CalculatorToolInputSchema
 
 load_dotenv()
 
+os.environ.setdefault("ATOMIC_AGENTS_TRACE_LLM_SPANS", "false")
 tracer_provider = register(project_name="atomic-agents-example", auto_instrument=True)
-AtomicAgentsInstrumentor().instrument(config=TracingConfig(llm_spans=False))
 tracer = tracer_provider.get_tracer(__name__)
 console = Console()
 
