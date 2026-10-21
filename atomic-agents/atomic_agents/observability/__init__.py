@@ -60,7 +60,7 @@ def _warn_unknown_options(options: dict[str, object]) -> None:
 
 class AtomicAgentsInstrumentor:
     """
-    Installs AGENT and TOOL spans around ``AtomicAgent`` and ``BaseTool`` calls.
+    Installs AGENT, TOOL and LLM-attempt spans around ``AtomicAgent`` and ``BaseTool`` calls.
 
     The public surface mirrors OpenTelemetry's ``BaseInstrumentor`` (``instrument`` / ``uninstrument``)
     without depending on it, because Arize Phoenix only guarantees ``opentelemetry-api`` and

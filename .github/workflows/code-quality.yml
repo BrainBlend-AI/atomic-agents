@@ -104,7 +104,7 @@ jobs:
           from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
           from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema, BaseTool
-          from atomic_agents.observability import AtomicAgentsInstrumentor, TracingConfig
+          from atomic_agents.observability import AtomicAgentsInstrumentor, TracingConfig, using_conversation
 
           exporter = InMemorySpanExporter()
           provider = TracerProvider()
@@ -153,7 +153,8 @@ jobs:
 
           assert SmokeTool().run(SmokeInput(text="tool input")).text == "tool input"
           agent = SmokeAgent(config=AgentConfig(client=client, model="offline-model"))
-          assert agent.run(SmokeInput(text="private agent input")).text == "offline response"
+          with using_conversation("smoke-conversation"):
+              assert agent.run(SmokeInput(text="private agent input")).text == "offline response"
 
           spans = exporter.get_finished_spans()
           for span in spans:
@@ -174,6 +175,7 @@ jobs:
           assert chat_span.name == "chat offline-model"
           assert chat_span.parent.span_id == agent_span.context.span_id
           for span in (agent_span, chat_span):
+              assert span.attributes["gen_ai.conversation.id"] == "smoke-conversation"
               assert span.attributes["gen_ai.request.model"] == "offline-model"
               assert span.attributes["gen_ai.response.model"] == "response-model"
               assert span.attributes["gen_ai.provider.name"] == "openai"

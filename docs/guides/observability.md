@@ -175,7 +175,7 @@ share one installation, so activating several does not duplicate spans. OpenTele
 provider, so calling Phoenix registration after launcher startup does not switch where spans are exported. See
 "Re-instrumentation" for what a second `instrument()` call does.
 
-The launcher adds AGENT and TOOL spans and no parent span. The example above disables Atomic Agents' LLM attempt
+The launcher adds AGENT, TOOL and LLM-attempt spans and no parent span. The example above disables Atomic Agents' LLM attempt
 spans for applications that also use a provider instrumentor. Leave `ATOMIC_AGENTS_TRACE_LLM_SPANS` unset to keep
 attempt spans enabled. Use the grouping example below when you want several agent and tool calls in one trace.
 
@@ -362,7 +362,8 @@ as a fallback (`true` or `1`). `ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH` sets t
 `ATOMIC_AGENTS_TRACE_LLM_SPANS` disables attempt spans for `false` or `0` (case-insensitive); any other value or unset
 keeps them enabled. If you pass your own
 `TracingConfig(...)`, the environment is not read; use `TracingConfig.from_environment()` to start from it. An
-OpenInference `TraceConfig` is also accepted for `config`, for its `hide_inputs` and `hide_outputs` settings.
+OpenInference `TraceConfig` is also accepted for `config`; its `hide_inputs` and `hide_outputs` override those
+environment settings, while the other settings still come from the environment.
 
 A truncated value gets a companion attribute with the original size, for example `atomic_agents.input.original_length`.
 Hiding wins over truncation, and a hidden payload is never serialized in the first place.
@@ -372,6 +373,17 @@ Covered by hiding and truncation: `atomic_agents.input`, `atomic_agents.output`,
 is truncated but never hidden. Status descriptions and recorded exception messages are truncated too, and under
 `hide_outputs` a Pydantic validation error message is replaced by `__REDACTED__` plus the error count, because the raw
 model output is quoted inside it.
+
+Instructor's own logging is separate from Atomic Agents' tracing: in the installed Instructor 1.17.0 source,
+`instructor.v2.retry` (re-exported through `instructor.core.retry`) logs per-attempt validation failures at DEBUG
+and retry exhaustion's raw last error, including model output, at ERROR regardless of `hide_outputs`.
+Setting its level to ERROR does not silence exhaustion. To keep model output out of logs, use CRITICAL below
+or a filter/handler that drops those records. The logger name and levels may change in later Instructor versions.
+
+```python
+import logging
+logging.getLogger("instructor.v2.retry").setLevel(logging.CRITICAL)
+```
 
 Not covered: tool names and descriptions, the system prompt hash, and whatever you put in `using_metadata`. A provider
 instrumentor and your own tracer apply their own settings, so configure them the same way if you want matching masking.
