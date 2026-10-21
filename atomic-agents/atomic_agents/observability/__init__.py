@@ -20,8 +20,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _INSTALL_HINT = (
-    "Atomic Agents observability needs the OpenInference packages. "
-    'Install them with: pip install "atomic-agents[observability]"'
+    "Atomic Agents tracing needs opentelemetry-api. "
+    'Install it with: pip install "atomic-agents[observability]" '
+    '(add "atomic-agents[phoenix]" for Arize Phoenix / OpenInference attributes)'
 )
 _OPENINFERENCE_DISTRIBUTION = "openinference-instrumentation"
 _MINIMUM_OPENINFERENCE_VERSION = (0, 1, 38)
@@ -55,6 +56,12 @@ def __getattr__(name: str) -> object:
     raise AttributeError(name)
 
 
+def _warn_unknown_options(options: dict[str, object]) -> None:
+    for key in options:
+        if key != "skip_dep_check":
+            logger.warning("Unknown Atomic Agents instrumentation option %s ignored", key)
+
+
 class AtomicAgentsInstrumentor:
     """
     Installs AGENT and TOOL spans around ``AtomicAgent`` and ``BaseTool`` calls.
@@ -84,6 +91,7 @@ class AtomicAgentsInstrumentor:
             ModuleNotFoundError: When the ``observability`` extra is not installed, except during
                 OpenTelemetry auto-discovery, which skips unavailable optional instrumentation.
         """
+        _warn_unknown_options(options)
         if not _opentelemetry_is_installed():
             if options.get("skip_dep_check") is True:
                 logger.debug(_INSTALL_HINT)

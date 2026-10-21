@@ -8,7 +8,7 @@ import types
 from concurrent.futures import ThreadPoolExecutor
 from importlib.metadata import entry_points
 from typing import Dict, List
-from unittest.mock import Mock
+from unittest.mock import Mock, PropertyMock
 
 import instructor
 import pytest
@@ -19,7 +19,7 @@ from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import StatusCode
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema, BaseTool
 from atomic_agents.context import BaseDynamicContextProvider, SystemPromptGenerator
@@ -485,7 +485,7 @@ def test_tool_defined_before_instrumentation_emits_tool_span(exporter):
 
     assert result.result == "3.0"
     (span,) = spans_of(exporter)
-    assert span.name == "execute_tool CalculatorTool"
+    assert span.name == "execute_tool CalculationInputSchema"
     assert kind_of(span) == OpenInferenceSpanKindValues.TOOL.value
     assert span.attributes[SpanAttributes.TOOL_NAME] == "CalculationInputSchema"
     assert span.attributes[SpanAttributes.TOOL_DESCRIPTION] == "Expression to evaluate."
@@ -511,7 +511,7 @@ def test_tool_defined_after_instrumentation_emits_tool_span(exporter):
     LateTool().run(CalculationInputSchema(expression="x"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "execute_tool LateTool"
+    assert span.name == "execute_tool CalculationInputSchema"
     assert LateTool().input_schema is CalculationInputSchema
 
 
@@ -523,14 +523,14 @@ def test_subclass_calling_super_run_emits_one_span(exporter):
     LoudCalculatorTool().run(CalculationInputSchema(expression="2*2"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "execute_tool LoudCalculatorTool"
+    assert span.name == "execute_tool CalculationInputSchema"
 
 
 def test_sync_run_delegating_to_arun_emits_one_span(exporter):
     AsyncCalculatorTool().run(CalculationInputSchema(expression="2*2"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "execute_tool AsyncCalculatorTool"
+    assert span.name == "execute_tool CalculationInputSchema"
     assert output_json(span) == {"result": "3"}
 
 
@@ -539,7 +539,7 @@ async def test_run_async_delegating_to_thread_emits_one_span(exporter):
     await ThreadedCalculatorTool().run_async(CalculationInputSchema(expression="3*3"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "execute_tool ThreadedCalculatorTool"
+    assert span.name == "execute_tool CalculationInputSchema"
     assert output_json(span) == {"result": "3"}
 
 
@@ -547,7 +547,7 @@ def test_mixin_defined_run_is_traced(exporter):
     MixinCalculatorTool().run(CalculationInputSchema(expression="x"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "execute_tool MixinCalculatorTool"
+    assert span.name == "execute_tool CalculationInputSchema"
 
 
 def test_static_run_is_left_alone(exporter):
@@ -803,7 +803,7 @@ def test_forge_style_thread_pool_tool_emits_one_span_in_the_callers_trace(export
         ForgeStyleTool().run(CalculationInputSchema(expression="x"))
 
     tool_span, root_span = spans_of(exporter)
-    assert tool_span.name == "execute_tool ForgeStyleTool"
+    assert tool_span.name == "execute_tool CalculationInputSchema"
     assert tool_span.parent.span_id == root.get_span_context().span_id
     assert tool_span.context.trace_id == root_span.context.trace_id
 
@@ -825,7 +825,7 @@ def test_mcp_style_generated_tool_class_emits_one_span(exporter):
     GeneratedTool().run(CalculationInputSchema(expression="x"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "execute_tool GeneratedTool"
+    assert span.name == "execute_tool CalculationInputSchema"
     assert output_json(span) == {"result": "mcp"}
 
 
@@ -860,7 +860,7 @@ def test_instrument_uninstrument_instrument_cycle_traces_tools_defined_between_c
     finally:
         instrumentor.uninstrument()
 
-    assert [span.name for span in spans_of(exporter)] == ["execute_tool BetweenCyclesTool"]
+    assert [span.name for span in spans_of(exporter)] == ["execute_tool CalculationInputSchema"]
     assert BetweenCyclesTool.__dict__["run"] is original_run
 
 
@@ -886,7 +886,7 @@ def test_genai_attributes_survive_without_openinference(monkeypatch, configured_
     CalculatorTool().run(CalculationInputSchema(expression="1+1"))
 
     agent_span, tool_span = spans_of(exporter)
-    assert [agent_span.name, tool_span.name] == ["invoke_agent AtomicAgent", "execute_tool CalculatorTool"]
+    assert [agent_span.name, tool_span.name] == ["invoke_agent AtomicAgent", "execute_tool CalculationInputSchema"]
     assert agent_span.attributes["gen_ai.operation.name"] == "invoke_agent"
     assert agent_span.attributes["gen_ai.agent.name"] == "AtomicAgent"
     assert agent_span.attributes["gen_ai.request.model"] == "test-model"
@@ -895,7 +895,8 @@ def test_genai_attributes_survive_without_openinference(monkeypatch, configured_
     assert json.loads(agent_span.attributes["atomic_agents.input"]) == {"question": "question"}
     assert json.loads(agent_span.attributes["atomic_agents.output"]) == {"answer": "42"}
     assert tool_span.attributes["gen_ai.operation.name"] == "execute_tool"
-    assert tool_span.attributes["gen_ai.tool.name"] == "CalculatorTool"
+    assert tool_span.attributes["gen_ai.tool.name"] == "CalculationInputSchema"
+    assert tool_span.attributes["atomic_agents.tool.class"] == "CalculatorTool"
     assert tool_span.attributes["gen_ai.tool.description"] == "Expression to evaluate."
     assert tool_span.attributes["gen_ai.tool.type"] == "function"
     assert json.loads(tool_span.attributes["gen_ai.tool.call.arguments"]) == {"expression": "1+1"}
@@ -1134,3 +1135,169 @@ def test_in_flight_span_finishes_on_original_provider(exporter):
     assert tool_span.parent.span_id == agent_span.context.span_id
     assert tool_span.context.trace_id == agent_span.context.trace_id
     other_provider.shutdown()
+
+
+@pytest.mark.parametrize("name", ["model", "mode"])
+def test_none_descriptions_are_omitted_without_otel_warnings(exporter, caplog, name):
+    agent = make_agent(sync_client())
+    setattr(agent, name, None)
+    with tracing._agent_span(agent, (), {}):
+        pass
+    (span,) = spans_of(exporter)
+    assert f"atomic_agents.{name}" not in span.attributes
+    assert "gen_ai.request.model" not in span.attributes if name == "model" else True
+    assert "Invalid type" not in caplog.text
+
+
+def test_broken_history_preserves_mandatory_agent_attributes(exporter, monkeypatch, caplog):
+    agent = make_agent(sync_client())
+    monkeypatch.setattr(type(agent), "history", PropertyMock(side_effect=RuntimeError("history unavailable")), raising=False)
+    with caplog.at_level(logging.DEBUG), tracing._agent_span(agent, (), {}):
+        pass
+    (span,) = spans_of(exporter)
+    assert span.attributes["gen_ai.operation.name"] == "invoke_agent"
+    assert span.attributes["gen_ai.agent.name"] == "AtomicAgent"
+    assert span.attributes["atomic_agents.agent.class"] == "AtomicAgent[QuestionSchema, AnswerSchema]"
+    assert span.attributes["gen_ai.request.model"] == "test-model"
+    assert "atomic_agents.history.message_count" not in span.attributes
+    assert sum("history.message_count" in record.message for record in caplog.records) == 1
+
+
+def test_broken_tool_description_preserves_other_attributes(exporter, monkeypatch):
+    monkeypatch.setattr(CalculatorTool, "tool_description", PropertyMock(side_effect=RuntimeError("unavailable")))
+    CalculatorTool().run(CalculationInputSchema(expression="1+1"))
+    (span,) = spans_of(exporter)
+    assert span.attributes["gen_ai.tool.name"] == "CalculationInputSchema"
+    assert span.attributes["atomic_agents.tool.class"] == "CalculatorTool"
+    assert span.attributes["tool.name"] == "CalculationInputSchema"
+    assert "tool.parameters" in span.attributes
+    assert "gen_ai.tool.description" not in span.attributes
+
+
+def test_configured_tool_name_is_the_span_join_key(exporter):
+    tool = CalculatorTool()
+    tool.config.title = "calculate"
+    tool.run(CalculationInputSchema(expression="1+1"))
+    (span,) = spans_of(exporter)
+    assert span.name == "execute_tool calculate"
+    assert span.attributes["gen_ai.tool.name"] == span.attributes["tool.name"] == "calculate"
+    assert span.attributes["atomic_agents.tool.class"] == "CalculatorTool"
+
+
+@pytest.mark.parametrize("hide", [False, True])
+def test_hidden_payload_is_never_serialized(exporter, caplog, hide):
+    payload = UnserializableInputSchema(store=AnswerStore())
+    with exporter.provider.get_tracer("test").start_as_current_span("payload") as span:
+        tracing._record_payload(span, (("payload", "payload.mime_type"),), payload, hide, tracing.TracingConfig())
+    (span,) = spans_of(exporter)
+    assert ("Could not serialize tracing payload" in caplog.text) is not hide
+    assert span.attributes.get("payload") == ("__REDACTED__" if hide else None)
+    assert "payload.mime_type" not in span.attributes
+
+
+@pytest.mark.parametrize("hide", [False, True])
+def test_hidden_non_model_payload_does_not_call_json_dumps(exporter, monkeypatch, caplog, hide):
+    serialize = Mock(side_effect=ValueError("serialization failed"))
+    monkeypatch.setattr(tracing.json, "dumps", serialize)
+    with exporter.provider.get_tracer("test").start_as_current_span("payload") as span:
+        tracing._record_payload(span, (("payload", None),), object(), hide, tracing.TracingConfig())
+    assert serialize.call_count == (0 if hide else 1)
+    assert ("Could not serialize tracing payload" in caplog.text) is not hide
+
+
+@pytest.mark.parametrize(
+    "provider,expected",
+    [
+        ("azure_openai", "azure.ai.openai"),
+        ("vertexai", "gcp.vertex_ai"),
+        ("gemini", "gcp.gemini"),
+        ("genai", "gcp.gemini"),
+        ("bedrock", "aws.bedrock"),
+        ("mistral", "mistral_ai"),
+        ("xai", "x_ai"),
+        ("openai", "openai"),
+        ("anthropic", "anthropic"),
+        ("cohere", "cohere"),
+        ("groq", "groq"),
+        ("deepseek", "deepseek"),
+        ("perplexity", "perplexity"),
+        ("custom", "custom"),
+    ],
+)
+def test_instructor_provider_names_follow_genai_conventions(exporter, provider, expected):
+    client = sync_client()
+    client.provider = types.SimpleNamespace(value=provider)
+    make_agent(client).run(QuestionSchema(question="question"))
+    (span,) = spans_of(exporter)
+    assert span.attributes["gen_ai.provider.name"] == expected
+
+
+def test_none_context_attributes_are_filtered(exporter, monkeypatch, caplog):
+    monkeypatch.setattr(tracing, "_context_attributes", lambda: {"optional": None})
+    make_agent(sync_client()).run(QuestionSchema(question="question"))
+    (span,) = spans_of(exporter)
+    assert "optional" not in span.attributes
+    assert "gen_ai.provider.name" not in span.attributes
+    assert "Invalid type" not in caplog.text
+
+
+@pytest.mark.parametrize("prefix", ["ATOMIC_AGENTS_TRACE", "OPENINFERENCE"])
+def test_visibility_environment_supports_both_spellings(monkeypatch, prefix):
+    monkeypatch.delenv("ATOMIC_AGENTS_TRACE_HIDE_INPUTS", raising=False)
+    monkeypatch.delenv("ATOMIC_AGENTS_TRACE_HIDE_OUTPUTS", raising=False)
+    monkeypatch.setenv(f"{prefix}_HIDE_INPUTS", "TRUE")
+    monkeypatch.setenv(f"{prefix}_HIDE_OUTPUTS", "1")
+    config = tracing.TracingConfig.from_environment()
+    assert config.hide_inputs is True
+    assert config.hide_outputs is True
+
+
+def test_atomic_visibility_environment_overrides_openinference(monkeypatch):
+    monkeypatch.setenv("OPENINFERENCE_HIDE_INPUTS", "true")
+    monkeypatch.setenv("OPENINFERENCE_HIDE_OUTPUTS", "true")
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_HIDE_INPUTS", "false")
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_HIDE_OUTPUTS", "")
+    config = tracing.TracingConfig.from_environment()
+    assert config.hide_inputs is False
+    assert config.hide_outputs is False
+
+
+def test_error_status_and_recorded_message_are_bounded(configured_tracing):
+    provider, exporter = configured_tracing
+    AtomicAgentsInstrumentor().instrument(tracer_provider=provider, config=tracing.TracingConfig(max_attribute_length=12))
+    error = ValueError("private" * 100)
+    agent = make_agent(sync_client())
+    with pytest.raises(ValueError) as raised, tracing._agent_span(agent, (), {}):
+        raise error
+    (span,) = spans_of(exporter)
+    expected = str(error)[:12] + "...[truncated]"
+    assert raised.value is error
+    assert span.status.description == expected
+    assert span.events[0].attributes["exception.message"] == expected
+    assert len(span.events[0].attributes["exception.stacktrace"]) <= 12 + len("...[truncated]")
+
+
+def test_hidden_validation_errors_do_not_export_model_output(configured_tracing):
+    provider, exporter = configured_tracing
+    AtomicAgentsInstrumentor().instrument(tracer_provider=provider, config=tracing.TracingConfig(hide_outputs=True))
+    try:
+        QuestionSchema.model_validate({"question": ["secret model output"]})
+    except ValidationError as error:
+        with provider.get_tracer("test").start_as_current_span("failure") as span:
+            tracing._record_failure(span, error)
+    (span,) = spans_of(exporter)
+    assert span.status.description == "ValidationError: 1 errors (__REDACTED__)"
+    assert span.events[0].attributes["exception.message"] == span.status.description
+    assert "secret model output" not in str(span.events[0].attributes)
+
+
+def test_tool_parameters_use_the_payload_size_limit(configured_tracing):
+    provider, exporter = configured_tracing
+    AtomicAgentsInstrumentor().instrument(
+        tracer_provider=provider, config=tracing.TracingConfig(max_attribute_length=12, openinference_attributes=True)
+    )
+    CalculatorTool().run(CalculationInputSchema(expression="x"))
+    (span,) = spans_of(exporter)
+    parameters = json.dumps(CalculationInputSchema.model_json_schema())
+    assert span.attributes["tool.parameters"] == parameters[:12] + "...[truncated]"
+    assert span.attributes["tool.parameters.original_length"] == len(parameters)
