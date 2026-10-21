@@ -61,6 +61,9 @@ def _agent_span(agent: AtomicAgent, args: tuple[object, ...], kwargs: dict[str, 
         try:
             with llm_attempt_spans.active_run(run):
                 yield span
+        except (asyncio.CancelledError, GeneratorExit):
+            span.set_attribute("atomic_agents.cancelled", True)
+            raise
         except BaseException as error:
             _record_failure(span, error)
             raise
@@ -198,6 +201,9 @@ def _trace_agent_stream(
             return cursor.final
         except GeneratorExit:
             cursor.close_early()
+            raise
+        except asyncio.CancelledError:
+            _mark_closed_early(span, cursor.output)
             raise
         except BaseException as error:
             _record_failure(span, error)

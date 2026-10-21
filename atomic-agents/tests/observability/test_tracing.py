@@ -1368,3 +1368,56 @@ def test_reinstall_without_provider_preserves_provider(exporter, caplog):
     assert caplog.records == []
     make_agent(sync_client()).run(QuestionSchema(question="?"))
     assert spans_of(exporter)[0].attributes["atomic_agents.output"] == "__REDACTED__"
+
+
+@pytest.mark.asyncio
+async def test_run_async_cancellation_leaves_span_unset(exporter):
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    async def create(**kwargs):
+        started.set()
+        await release.wait()
+        return AnswerSchema(answer="never")
+
+    client = async_client()
+    client.chat.completions.create = create
+    task = asyncio.create_task(make_agent(client).run_async(QuestionSchema(question="?")))
+    await asyncio.wait_for(started.wait(), timeout=2)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    (span,) = spans_of(exporter)
+    assert span.attributes.get("atomic_agents.cancelled") is True
+    assert span.status.status_code == StatusCode.UNSET
+    assert span.events == ()
+    assert "error.type" not in span.attributes
+
+
+@pytest.mark.parametrize("error_type", [GeneratorExit, asyncio.CancelledError])
+def test_run_cancellation_leaves_span_unset(exporter, error_type):
+    client = sync_client()
+    client.chat.completions.create.side_effect = error_type
+    with pytest.raises(error_type):
+        make_agent(client).run(QuestionSchema(question="?"))
+    (span,) = spans_of(exporter)
+    assert span.attributes.get("atomic_agents.cancelled") is True
+    assert span.status.status_code == StatusCode.UNSET
+    assert span.events == ()
+
+
+def test_run_stream_cancellation_marks_closed_early(exporter):
+    def create_partial(**kwargs):
+        yield AnswerSchema(answer="4")
+        raise asyncio.CancelledError
+
+    client = sync_client()
+    client.chat.completions.create_partial = create_partial
+    stream = make_agent(client).run_stream(QuestionSchema(question="?"))
+    next(stream)
+    with pytest.raises(asyncio.CancelledError):
+        next(stream)
+    (span,) = spans_of(exporter)
+    assert span.attributes.get(tracing.ATTR_STREAM_CLOSED_EARLY) is True
+    assert span.status.status_code == StatusCode.UNSET
+    assert span.events == ()
