@@ -1,6 +1,6 @@
 # Communication & Integrations
 
-*Last Updated: 2026-10-19*
+*Last Updated: 2026-10-21*
 
 The framework exposes no HTTP API of its own; "communication" here means how it talks to LLM
 providers and external tools.
@@ -37,15 +37,18 @@ providers and external tools.
 - Built on Instructor's hook system: `register_hook(event, handler)`, `unregister_hook`,
   `clear_hooks`. Events include `parse:error`, `completion:kwargs`, `completion:response`,
   `token:counted`. See the `hooks-example` example and `docs/guides/hooks.md`.
-- OpenInference tracing (`atomic_agents.observability`, optional `observability` extra): an AGENT span per
-  `AtomicAgent` run and a TOOL span per `BaseTool` run, auto-activated by `phoenix.otel.register(auto_instrument=True)`
-  through `openinference_instrumentor`, by the standard `opentelemetry-instrument` launcher through
-  `opentelemetry_instrumentor`, or by `AtomicAgentsInstrumentor().instrument(tracer_provider=...)`
-  for an explicitly configured backend. Both discovery paths share the first installation's provider/config.
-  Missing optional tracing dependencies are DEBUG-skipped when the launcher passes `skip_dep_check=True`;
-  manual setup retains its import error and install hint. Choose one configuration path or share the
-  provider explicitly. LLM spans come from one provider-level OpenInference instrumentor and nest under
-  the agent span. See `docs/guides/observability.md` and the `phoenix-tracing` example.
+- OpenTelemetry tracing (`atomic_agents.observability`, `observability` extra = `opentelemetry-api` only): an AGENT
+  span per `AtomicAgent` run, a TOOL span per `BaseTool` run and one CLIENT `chat` span per Instructor attempt
+  (driven by Instructor hooks registered once per client), all with OpenTelemetry GenAI attributes; OpenInference
+  attributes are added only when its package is importable (`phoenix` extra). Activated by
+  `phoenix.otel.register(auto_instrument=True)` through `openinference_instrumentor`, by the `opentelemetry-instrument`
+  launcher through `opentelemetry_instrumentor`, or by `AtomicAgentsInstrumentor().instrument(tracer_provider=...,
+  config=TracingConfig(...))`. A later install with different explicit values replaces the provider/config in place
+  with a WARNING; `None` keeps the installed value. Missing `opentelemetry-api` is DEBUG-skipped when the launcher
+  passes `skip_dep_check=True`; manual setup raises `ModuleNotFoundError` with the install hint. Application hooks on
+  the same client keep running; `AtomicAgent.clear_hooks()` removes only its own. Set `llm_spans=False` (or
+  `ATOMIC_AGENTS_TRACE_LLM_SPANS=false`) when a provider instrumentor also emits LLM spans. See
+  `docs/guides/observability.md` and the `phoenix-tracing` example.
 - Forge tools that run their async body through a `ThreadPoolExecutor` submit via
   `contextvars.copy_context().run` so the caller's OpenTelemetry context (and the tracing re-entrancy guard)
   survives in the pool thread.
