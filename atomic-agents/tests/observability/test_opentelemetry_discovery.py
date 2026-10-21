@@ -20,7 +20,7 @@ from opentelemetry.util.types import AttributeValue
 
 import atomic_agents.observability as observability
 from atomic_agents.observability import AtomicAgentsInstrumentor
-from test_openinference_tracing import CalculationInputSchema, CalculatorTool, QuestionSchema, make_agent, sync_client
+from test_tracing import CalculationInputSchema, CalculatorTool, QuestionSchema, make_agent, sync_client
 
 
 @pytest.fixture
@@ -223,7 +223,7 @@ sys.modules['openinference'] = None
 sys.modules['opentelemetry'] = None
 import atomic_agents
 import atomic_agents.observability
-assert 'atomic_agents.observability.openinference_tracing' not in sys.modules
+assert 'atomic_agents.observability.tracing' not in sys.modules
 print('optional-free import passed')
 """
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=45)

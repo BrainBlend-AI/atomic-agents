@@ -48,9 +48,9 @@ def _load_tracing_module():
             ".".join(str(part) for part in _MINIMUM_OPENINFERENCE_VERSION),
         )
         return None
-    from atomic_agents.observability import openinference_tracing
+    from atomic_agents.observability import tracing
 
-    return openinference_tracing
+    return tracing
 
 
 class AtomicAgentsInstrumentor:

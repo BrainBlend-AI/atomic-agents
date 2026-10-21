@@ -25,7 +25,7 @@ from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema, BaseTool
 from atomic_agents.context import BaseDynamicContextProvider, SystemPromptGenerator
 from atomic_agents.observability import AtomicAgentsInstrumentor
 import atomic_agents.observability as observability
-from atomic_agents.observability import openinference_tracing as tracing
+from atomic_agents.observability import tracing as tracing
 
 
 class QuestionSchema(BaseIOSchema):
