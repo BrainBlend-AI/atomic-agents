@@ -111,7 +111,7 @@ def test_loader_skips_missing_opentelemetry_and_continues_without_error(
 
 
 @pytest.mark.parametrize("first_group", ["openinference_instrumentor", "opentelemetry_instrumentor"])
-def test_both_entry_points_keep_first_provider_and_config(
+def test_both_entry_points_replace_provider_and_config(
     first_group: str, local_tracing: tuple[TracerProvider, InMemorySpanExporter], caplog: pytest.LogCaptureFixture
 ) -> None:
     provider, exporter = local_tracing
@@ -129,12 +129,11 @@ def test_both_entry_points_keep_first_provider_and_config(
         with caplog.at_level(logging.WARNING):
             second.instrument(tracer_provider=other_provider, config=TraceConfig(hide_inputs=False), skip_dep_check=True)
         run_agent_and_tool()
-        assert "already installed" in caplog.text
-        assert [exported_attributes(span)[SpanAttributes.INPUT_VALUE] for span in exporter.get_finished_spans()] == [
-            "__REDACTED__",
-            "__REDACTED__",
-        ]
-        assert other_exporter.get_finished_spans() == ()
+        assert "tracer provider/config replaced" in caplog.text
+        assert exporter.get_finished_spans() == ()
+        spans = other_exporter.get_finished_spans()
+        assert len(spans) == 2
+        assert all(exported_attributes(span)[SpanAttributes.INPUT_VALUE] != "__REDACTED__" for span in spans)
     finally:
         second.uninstrument()
         other_provider.shutdown()

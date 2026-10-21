@@ -14,7 +14,7 @@ from importlib.metadata import PackageNotFoundError, version
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from atomic_agents.observability.tracing import PayloadVisibility, TracingConfig
+    from atomic_agents.observability.tracing import PayloadVisibility, TracingConfig, using_conversation
     from opentelemetry.trace import TracerProvider
 
 logger = logging.getLogger(__name__)
@@ -50,8 +50,8 @@ def _load_tracing_module():
 
 
 def __getattr__(name: str) -> object:
-    if name == "TracingConfig":
-        return _load_tracing_module().TracingConfig
+    if name in ("TracingConfig", "using_conversation"):
+        return getattr(_load_tracing_module(), name)
     raise AttributeError(name)
 
 
@@ -73,7 +73,7 @@ class AtomicAgentsInstrumentor:
     ) -> None:
         """
         Patch the framework classes. Safe to call more than once; a second call with different
-        arguments logs a warning and keeps the first installation.
+        arguments replaces the tracer provider/config and logs a warning.
 
         Args:
             tracer_provider: An OpenTelemetry ``TracerProvider``. Defaults to the global provider.
@@ -104,4 +104,4 @@ class AtomicAgentsInstrumentor:
         return _load_tracing_module().is_installed()
 
 
-__all__ = ["AtomicAgentsInstrumentor", "TracingConfig"]
+__all__ = ["AtomicAgentsInstrumentor", "TracingConfig", "using_conversation"]
