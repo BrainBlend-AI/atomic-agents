@@ -12,7 +12,7 @@ from atomic_agents import __version__
 from atomic_agents.agents.atomic_agent import AtomicAgent
 from atomic_agents.base.base_tool import BaseTool
 
-from . import agent_spans, span_attributes, tool_spans
+from . import agent_spans, llm_attempt_spans, span_attributes, tool_spans
 from .tracing_config import PayloadVisibility, TracingConfig
 
 if TYPE_CHECKING:
@@ -85,6 +85,7 @@ def uninstall() -> None:
         tool_spans._restore_tool_class(tool_class)
     for method_name in agent_spans._AGENT_WRAPPERS:
         _restore_method(AtomicAgent, method_name)
+    llm_attempt_spans.unregister_clients()
     _installation = None
 
 

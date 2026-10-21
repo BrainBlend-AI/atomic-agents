@@ -1,0 +1,321 @@
+import asyncio
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import instructor
+import pytest
+from instructor.core.hooks import Hooks
+from opentelemetry import trace as trace_api
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.trace import StatusCode
+
+from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema
+from atomic_agents.observability import TracingConfig, using_conversation
+from atomic_agents.observability import agent_spans, installation, llm_attempt_spans
+
+
+class Question(BaseIOSchema):
+    """A test question."""
+
+    question: str
+
+
+class Answer(BaseIOSchema):
+    """A test answer."""
+
+    answer: str
+
+
+@pytest.fixture
+def exporter():
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    installation.install(tracer_provider=provider, config=TracingConfig(openinference_attributes=False))
+    yield exporter
+    installation.uninstall()
+
+
+def usage(input_tokens=3, output_tokens=2):
+    return SimpleNamespace(
+        prompt_tokens=input_tokens,
+        completion_tokens=output_tokens,
+        prompt_tokens_details=SimpleNamespace(cached_tokens=1),
+        completion_tokens_details=SimpleNamespace(reasoning_tokens=2),
+    )
+
+
+def finished_spans(exporter, count):
+    spans = exporter.get_finished_spans()
+    assert len(spans) == count
+    return spans
+
+
+def response():
+    return SimpleNamespace(model="response-model", usage=usage())
+
+
+def scripted_client(script):
+    client = Mock(spec=instructor.Instructor)
+    client.provider = instructor.Provider.OPENAI
+    client.hooks = Hooks()
+    client.on.side_effect = client.hooks.on
+    client.off.side_effect = client.hooks.off
+    client.chat = Mock()
+    client.chat.completions = Mock()
+
+    def create(**kwargs):
+        script(client.hooks, kwargs)
+        return Answer(answer="42")
+
+    client.chat.completions.create.side_effect = create
+    return client
+
+
+def agent(client):
+    return AtomicAgent[Question, Answer](AgentConfig(client=client, model="test-model"))
+
+
+def retry_script(hooks, kwargs):
+    hooks.emit_completion_arguments(**kwargs)
+    hooks.emit_completion_response(response())
+    hooks.emit_completion_usage(usage(), attempt_number=1)
+    hooks.emit_parse_error(ValueError("invalid output"))
+    hooks.emit_completion_arguments(**kwargs)
+    hooks.emit_completion_response(response())
+    hooks.emit_completion_usage(usage(6, 4), attempt_number=2)
+
+
+def run_agent(client):
+    return agent(client).run(Question(question="test"))
+
+
+def test_retry_spans_usage_validation_and_parentage(exporter):
+    client = scripted_client(retry_script)
+    with using_conversation("conversation"):
+        run_agent(client)
+    first, second, parent = finished_spans(exporter, 3)
+    assert [first.name, second.name] == ["chat test-model", "chat test-model"]
+    assert [first.attributes["atomic_agents.llm.attempt"], second.attributes["atomic_agents.llm.attempt"]] == [1, 2]
+    assert first.parent.span_id == second.parent.span_id == parent.context.span_id
+    assert first.status.status_code == second.status.status_code == StatusCode.OK
+    assert first.attributes["gen_ai.provider.name"] == "openai"
+    assert first.attributes["gen_ai.conversation.id"] == "conversation"
+    assert first.attributes["gen_ai.usage.input_tokens"] == second.attributes["gen_ai.usage.input_tokens"] == 3
+    assert first.attributes["gen_ai.usage.output_tokens"] == 2
+    assert first.attributes["gen_ai.usage.cache_read.input_tokens"] == 1
+    assert first.attributes["gen_ai.usage.reasoning.output_tokens"] == 2
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 6
+    assert parent.attributes["gen_ai.usage.output_tokens"] == 4
+    assert parent.attributes.get("atomic_agents.llm.attempts") == 2
+    assert parent.attributes["atomic_agents.llm.last_validation_error"] == "invalid output"
+    assert parent.attributes["gen_ai.response.model"] == first.attributes["gen_ai.response.model"] == "response-model"
+    event = parent.events[0]
+    assert event.name == "validation_error"
+    assert event.attributes["atomic_agents.llm.attempt"] == 1
+
+
+def test_disabled_attempt_spans_keep_totals(exporter):
+    installed = installation._current_installation()
+    installation.install(tracer_provider=installed.tracer_provider, config=TracingConfig(llm_spans=False))
+    run_agent(scripted_client(retry_script))
+    (parent,) = finished_spans(exporter, 1)
+    assert parent.attributes.get("atomic_agents.llm.attempts") == 2
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 6
+
+
+def test_completion_error_is_bounded_and_ends_attempt(exporter):
+    def script(hooks, kwargs):
+        hooks.emit_completion_arguments(**kwargs)
+        hooks.emit_completion_error(ValueError("failed"), attempt_number=1, max_attempts=1, is_last_attempt=True)
+
+    run_agent(scripted_client(script))
+    child, parent = finished_spans(exporter, 2)
+    assert child.status.status_code == StatusCode.ERROR
+    assert child.attributes["error.type"] == "ValueError"
+    assert child.events[0].attributes["exception.message"] == "failed"
+    assert parent.status.status_code == StatusCode.OK
+
+
+def test_registration_once_and_uninstall_preserves_application_hooks(exporter):
+    client = scripted_client(retry_script)
+    application_hook = Mock()
+    client.hooks.on("completion:response", application_hook)
+    for _ in range(3):
+        run_agent(client)
+    assert client.on.call_count == 5
+    assert application_hook.call_count == 6
+    installation.uninstall()
+    assert client.off.call_count == 5
+    client.hooks.emit_completion_response(response())
+    assert application_hook.call_count == 7
+    assert not llm_attempt_spans._clients
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+def test_concurrent_shared_client_runs_are_isolated(exporter, asynchronous):
+    client = scripted_client(retry_script)
+
+    async def invoke(number):
+        async def complete(agent, *args, **kwargs):
+            client.hooks.emit_completion_arguments(model="test-model")
+            await asyncio.sleep(0)
+            client.hooks.emit_completion_response(response())
+            client.hooks.emit_completion_usage(usage(number), attempt_number=1)
+            return Answer(answer="ok")
+
+        if asynchronous:
+            return await agent_spans._trace_agent_async_call("run_async", complete)(agent(client))
+        return await asyncio.to_thread(run_agent, client)
+
+    async def gather():
+        await asyncio.gather(invoke(10), invoke(20))
+
+    asyncio.run(gather())
+    parents = [span for span in exporter.get_finished_spans() if span.name.startswith("invoke_agent")]
+    expected = [10, 20] if asynchronous else [6, 6]
+    assert sorted(span.attributes.get("gen_ai.usage.input_tokens", -1) for span in parents) == expected
+    assert all(span.attributes["atomic_agents.llm.attempts"] == (1 if asynchronous else 2) for span in parents)
+
+
+@pytest.mark.parametrize("kind", ["sync", "async", "stream", "async_stream"])
+@pytest.mark.parametrize("fails", [False, True])
+def test_open_attempt_ends_at_agent_end(exporter, kind, fails):
+    client = scripted_client(retry_script)
+
+    def start():
+        client.hooks.emit_completion_arguments(model="test-model")
+        if fails:
+            raise ValueError("agent failed")
+        return Answer(answer="partial")
+
+    def call(*args, **kwargs):
+        return start()
+
+    async def async_call(*args, **kwargs):
+        return start()
+
+    def stream(*args, **kwargs):
+        yield start()
+        yield Answer(answer="final")
+
+    async def async_stream(*args, **kwargs):
+        yield start()
+        yield Answer(answer="final")
+
+    def invoke():
+        if kind == "sync":
+            return agent_spans._trace_agent_call("run", call)(agent(client))
+        if kind == "async":
+            return asyncio.run(agent_spans._trace_agent_async_call("run_async", async_call)(agent(client)))
+        if kind == "stream":
+            iterator = agent_spans._trace_agent_stream("run_stream", stream)(agent(client))
+            next(iterator)
+            assert trace_api.get_current_span() is trace_api.INVALID_SPAN
+            iterator.close()
+            return None
+        return asyncio.run(consume_async_stream())
+
+    async def consume_async_stream():
+        iterator = agent_spans._trace_agent_async_stream("run_async_stream", async_stream)(agent(client))
+        await anext(iterator)
+        assert trace_api.get_current_span() is trace_api.INVALID_SPAN
+        await iterator.aclose()
+
+    if fails:
+        with pytest.raises(ValueError, match="agent failed"):
+            invoke()
+    else:
+        invoke()
+    child, parent = finished_spans(exporter, 2)
+    assert child.status.status_code == StatusCode.UNSET
+    assert child.parent.span_id == parent.context.span_id
+    assert child.end_time <= parent.end_time
+
+
+def test_validation_text_redacted_and_anthropic_usage(exporter):
+    installed = installation._current_installation()
+    installation.install(tracer_provider=installed.tracer_provider, config=TracingConfig(hide_outputs=True))
+
+    def script(hooks, kwargs):
+        hooks.emit_completion_arguments(**kwargs)
+        hooks.emit_parse_error(ValueError("secret"))
+        hooks.emit_completion_usage(SimpleNamespace(input_tokens=9, output_tokens=4), attempt_number=1)
+
+    run_agent(scripted_client(script))
+    child, parent = finished_spans(exporter, 2)
+    assert parent.attributes["atomic_agents.llm.last_validation_error"] == "__REDACTED__"
+    assert parent.events[0].attributes["atomic_agents.llm.last_validation_error"] == "__REDACTED__"
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 9
+
+
+def test_hook_failure_warns_without_breaking_agent(exporter, caplog):
+    class BrokenResponse:
+        @property
+        def model(self):
+            raise RuntimeError("broken metadata")
+
+    def script(hooks, kwargs):
+        hooks.emit_completion_arguments(**kwargs)
+        hooks.emit_completion_response(BrokenResponse())
+
+    assert run_agent(scripted_client(script)).answer == "42"
+    child, parent = finished_spans(exporter, 2)
+    assert child.status.status_code == StatusCode.UNSET
+    assert "Instructor tracing hook failed" in caplog.text
+
+
+@pytest.mark.parametrize("asynchronous", [False, True])
+def test_stream_attempt_context_survives_cursor_advances(exporter, asynchronous):
+    client = scripted_client(retry_script)
+
+    def begin():
+        client.hooks.emit_completion_arguments(model="test-model")
+        return trace_api.get_current_span().get_span_context().span_id
+
+    def complete(expected):
+        assert trace_api.get_current_span().get_span_context().span_id == expected
+        client.hooks.emit_completion_response(response())
+        return Answer(answer="final")
+
+    def stream(*args, **kwargs):
+        expected = begin()
+        yield Answer(answer="partial")
+        yield complete(expected)
+
+    async def async_stream(*args, **kwargs):
+        expected = begin()
+        yield Answer(answer="partial")
+        await asyncio.sleep(0)
+        yield complete(expected)
+
+    async def consume():
+        return [
+            partial async for partial in agent_spans._trace_agent_async_stream("run_async_stream", async_stream)(agent(client))
+        ]
+
+    if asynchronous:
+        assert len(asyncio.run(consume())) == 2
+    else:
+        assert len(list(agent_spans._trace_agent_stream("run_stream", stream)(agent(client)))) == 2
+    child, parent = finished_spans(exporter, 2)
+    assert child.status.status_code == StatusCode.OK
+    assert parent.status.status_code == StatusCode.OK
+
+
+def test_validation_text_truncation_and_extra_hook_keywords(exporter):
+    installed = installation._current_installation()
+    installation.install(tracer_provider=installed.tracer_provider, config=TracingConfig(max_attribute_length=4))
+
+    def script(hooks, kwargs):
+        hooks.emit_completion_arguments(**kwargs)
+        llm_attempt_spans._parse_error(ValueError("long error"), future_option=True)
+        llm_attempt_spans._completion_response(response(), future_option=True)
+        llm_attempt_spans._completion_usage(usage(), attempt_number=1, future_option=True)
+
+    run_agent(scripted_client(script))
+    child, parent = finished_spans(exporter, 2)
+    assert parent.attributes["atomic_agents.llm.last_validation_error"] == "long...[truncated]"
+    assert parent.attributes["atomic_agents.llm.last_validation_error.original_length"] == 10
