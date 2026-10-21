@@ -108,7 +108,7 @@ def _instrument_agent_class() -> None:
     for method_name, wrap in agent_spans._AGENT_WRAPPERS.items():
         original = AtomicAgent.__dict__[method_name]
         if not getattr(original, TRACED_MARKER, False):
-            setattr(AtomicAgent, method_name, _mark_traced(wrap(method_name, original), original, False))
+            setattr(AtomicAgent, method_name, _mark_traced(wrap(original), original, False))
 
 
 def _mark_traced(wrapper: Callable, original: Callable, inherited: bool) -> Callable:

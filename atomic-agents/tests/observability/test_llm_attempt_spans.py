@@ -12,6 +12,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import StatusCode
+from pydantic import ValidationError
 
 from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema
 from atomic_agents.observability import TracingConfig, using_conversation
@@ -129,15 +130,26 @@ def test_disabled_attempt_spans_keep_totals(exporter):
 
 
 def test_completion_error_is_bounded_and_ends_attempt(exporter):
+    installed = installation._current_installation()
+    installation.install(tracer_provider=installed.tracer_provider, config=TracingConfig(max_attribute_length=32))
+    error = ValueError("failed " * 20)
+    expected = str(error)[:32] + "...[truncated]"
+
     def script(hooks, kwargs):
         hooks.emit_completion_arguments(**kwargs)
-        hooks.emit_completion_error(ValueError("failed"), attempt_number=1, max_attempts=1, is_last_attempt=True)
+        hooks.emit_parse_error(error)
+        hooks.emit_completion_error(error, attempt_number=1, max_attempts=1, is_last_attempt=True)
 
     run_agent(scripted_client(script))
     child, parent = finished_spans(exporter, 2)
     assert child.status.status_code == StatusCode.ERROR
     assert child.attributes["error.type"] == "ValueError"
-    assert child.events[0].attributes["exception.message"] == "failed"
+    assert child.events[0].attributes["exception.message"] == expected
+    assert child.events[0].attributes["exception.stacktrace"] == expected
+    assert child.status.description == expected
+    assert len(child.status.description) == 32 + len("...[truncated]")
+    assert parent.attributes["atomic_agents.llm.last_validation_error"] == expected
+    assert parent.attributes["atomic_agents.llm.last_validation_error.original_length"] == len(str(error))
     assert parent.status.status_code == StatusCode.OK
 
 
@@ -169,7 +181,7 @@ def test_concurrent_shared_client_runs_are_isolated(exporter, asynchronous):
             return Answer(answer="ok")
 
         if asynchronous:
-            return await agent_spans._trace_agent_async_call("run_async", complete)(agent(client))
+            return await agent_spans._trace_agent_async_call(complete)(agent(client))
         return await asyncio.to_thread(run_agent, client)
 
     async def gather():
@@ -209,11 +221,11 @@ def test_open_attempt_ends_at_agent_end(exporter, kind, fails):
 
     def invoke():
         if kind == "sync":
-            return agent_spans._trace_agent_call("run", call)(agent(client))
+            return agent_spans._trace_agent_call(call)(agent(client))
         if kind == "async":
-            return asyncio.run(agent_spans._trace_agent_async_call("run_async", async_call)(agent(client)))
+            return asyncio.run(agent_spans._trace_agent_async_call(async_call)(agent(client)))
         if kind == "stream":
-            iterator = agent_spans._trace_agent_stream("run_stream", stream)(agent(client))
+            iterator = agent_spans._trace_agent_stream(stream)(agent(client))
             next(iterator)
             assert trace_api.get_current_span() is trace_api.INVALID_SPAN
             iterator.close()
@@ -221,7 +233,7 @@ def test_open_attempt_ends_at_agent_end(exporter, kind, fails):
         return asyncio.run(consume_async_stream())
 
     async def consume_async_stream():
-        iterator = agent_spans._trace_agent_async_stream("run_async_stream", async_stream)(agent(client))
+        iterator = agent_spans._trace_agent_async_stream(async_stream)(agent(client))
         await anext(iterator)
         assert trace_api.get_current_span() is trace_api.INVALID_SPAN
         await iterator.aclose()
@@ -243,7 +255,10 @@ def test_validation_text_redacted_and_anthropic_usage(exporter):
 
     def script(hooks, kwargs):
         hooks.emit_completion_arguments(**kwargs)
-        hooks.emit_parse_error(ValueError("secret"))
+        with pytest.raises(ValidationError) as invalid:
+            Answer.model_validate({"answer": {"secret": "private output"}})
+        hooks.emit_parse_error(invalid.value)
+        hooks.emit_completion_error(invalid.value, attempt_number=1, max_attempts=1, is_last_attempt=True)
         hooks.emit_completion_usage(SimpleNamespace(input_tokens=9, output_tokens=4), attempt_number=1)
 
     run_agent(scripted_client(script))
@@ -251,6 +266,10 @@ def test_validation_text_redacted_and_anthropic_usage(exporter):
     assert parent.attributes["atomic_agents.llm.last_validation_error"] == "__REDACTED__"
     assert parent.events[0].attributes["atomic_agents.llm.last_validation_error"] == "__REDACTED__"
     assert parent.attributes["gen_ai.usage.input_tokens"] == 9
+    assert child.status.description == "ValidationError: 1 errors (__REDACTED__)"
+    assert child.events[0].attributes["exception.message"] == child.status.description
+    assert child.events[0].attributes["exception.stacktrace"] == child.status.description
+    assert "private output" not in str(child.events)
 
 
 def test_hook_failure_warns_without_breaking_agent(exporter, caplog):
@@ -294,14 +313,12 @@ def test_stream_attempt_context_survives_cursor_advances(exporter, asynchronous)
         yield complete(expected)
 
     async def consume():
-        return [
-            partial async for partial in agent_spans._trace_agent_async_stream("run_async_stream", async_stream)(agent(client))
-        ]
+        return [partial async for partial in agent_spans._trace_agent_async_stream(async_stream)(agent(client))]
 
     if asynchronous:
         assert len(asyncio.run(consume())) == 2
     else:
-        assert len(list(agent_spans._trace_agent_stream("run_stream", stream)(agent(client)))) == 2
+        assert len(list(agent_spans._trace_agent_stream(stream)(agent(client)))) == 2
     child, parent = finished_spans(exporter, 2)
     assert child.status.status_code == StatusCode.OK
     assert parent.status.status_code == StatusCode.OK

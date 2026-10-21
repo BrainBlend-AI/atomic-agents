@@ -1,5 +1,7 @@
 """Instructor attempt spans and cumulative agent usage."""
 
+from __future__ import annotations
+
 import contextvars
 import functools
 import logging
@@ -27,9 +29,27 @@ _ATTEMPT = "atomic_agents.llm.attempt"
 _VALIDATION_ERROR = "atomic_agents.llm.last_validation_error"
 
 
-class _Usage(Protocol):
+class _PromptTokenDetails(Protocol):
+    cached_tokens: int | None
+
+
+class _CompletionTokenDetails(Protocol):
+    reasoning_tokens: int | None
+
+
+class _InputOutputUsage(Protocol):
     input_tokens: int
     output_tokens: int
+
+
+class _PromptCompletionUsage(Protocol):
+    prompt_tokens: int
+    completion_tokens: int
+    prompt_tokens_details: _PromptTokenDetails | None
+    completion_tokens_details: _CompletionTokenDetails | None
+
+
+_Usage = _InputOutputUsage | _PromptCompletionUsage
 
 
 class _Response(Protocol):
