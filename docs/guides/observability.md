@@ -379,6 +379,9 @@ Instructor's own logging is separate from Atomic Agents' tracing: in the install
 and retry exhaustion's raw last error, including model output, at ERROR regardless of `hide_outputs`.
 Setting its level to ERROR does not silence exhaustion. To keep model output out of logs, use CRITICAL below
 or a filter/handler that drops those records. The logger name and levels may change in later Instructor versions.
+Anything that forwards ERROR log records off the host carries that text with it: Sentry's `LoggingIntegration`
+(`event_level=logging.ERROR` by default) turns the exhaustion record into a Sentry event, and OpenTelemetry or Datadog
+log handlers export it the same way. If `hide_outputs` matters to you, silence the logger before those handlers attach.
 
 ```python
 import logging
