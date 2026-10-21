@@ -190,18 +190,18 @@ def test_run_emits_agent_span_with_io_and_framework_attributes(exporter):
     assert span.name == "invoke_agent AtomicAgent"
     assert kind_of(span) == OpenInferenceSpanKindValues.AGENT.value
     assert span.attributes[SpanAttributes.AGENT_NAME] == "AtomicAgent"
-    assert span.attributes[tracing.ATTR_AGENT_CLASS] == "AtomicAgent[QuestionSchema, AnswerSchema]"
+    assert span.attributes[span_attributes.ATTR_AGENT_CLASS] == "AtomicAgent[QuestionSchema, AnswerSchema]"
     assert input_json(span) == {"question": "6*7?"}
     assert output_json(span) == {"answer": "42"}
     assert span.attributes[SpanAttributes.INPUT_MIME_TYPE] == "application/json"
     assert span.attributes[SpanAttributes.OUTPUT_MIME_TYPE] == "application/json"
-    assert span.attributes[tracing.ATTR_MODEL] == "test-model"
-    assert span.attributes[tracing.ATTR_MODE] == agent.mode.value
-    assert span.attributes[tracing.ATTR_INPUT_SCHEMA] == "QuestionSchema"
-    assert span.attributes[tracing.ATTR_OUTPUT_SCHEMA] == "AnswerSchema"
-    assert span.attributes[tracing.ATTR_HISTORY_MESSAGE_COUNT] == 0
-    assert span.attributes[tracing.ATTR_CONTEXT_PROVIDERS] == ()
-    assert len(span.attributes[tracing.ATTR_SYSTEM_PROMPT_SHA256]) == 64
+    assert span.attributes[span_attributes.ATTR_MODEL] == "test-model"
+    assert span.attributes[span_attributes.ATTR_MODE] == agent.mode.value
+    assert span.attributes[span_attributes.ATTR_INPUT_SCHEMA] == "QuestionSchema"
+    assert span.attributes[span_attributes.ATTR_OUTPUT_SCHEMA] == "AnswerSchema"
+    assert span.attributes[span_attributes.ATTR_HISTORY_MESSAGE_COUNT] == 0
+    assert span.attributes[span_attributes.ATTR_CONTEXT_PROVIDERS] == ()
+    assert len(span.attributes[span_attributes.ATTR_SYSTEM_PROMPT_SHA256]) == 64
     assert span.status.status_code == StatusCode.OK
 
 
@@ -212,8 +212,8 @@ def test_second_turn_reports_history_size_entering_the_turn(exporter):
     agent.run(QuestionSchema(question="second"))
 
     first, second = spans_of(exporter)
-    assert first.attributes[tracing.ATTR_HISTORY_MESSAGE_COUNT] == 0
-    assert second.attributes[tracing.ATTR_HISTORY_MESSAGE_COUNT] == 2
+    assert first.attributes[span_attributes.ATTR_HISTORY_MESSAGE_COUNT] == 0
+    assert second.attributes[span_attributes.ATTR_HISTORY_MESSAGE_COUNT] == 2
 
 
 def test_agent_without_system_role_has_no_prompt_hash(exporter):
@@ -222,7 +222,7 @@ def test_agent_without_system_role_has_no_prompt_hash(exporter):
     agent.run(QuestionSchema(question="?"))
 
     (span,) = spans_of(exporter)
-    assert tracing.ATTR_SYSTEM_PROMPT_SHA256 not in span.attributes
+    assert span_attributes.ATTR_SYSTEM_PROMPT_SHA256 not in span.attributes
 
 
 def test_abstract_intermediate_tool_base_is_not_wrapped(exporter):
@@ -231,7 +231,7 @@ def test_abstract_intermediate_tool_base_is_not_wrapped(exporter):
         def run(self, params: CalculationInputSchema) -> CalculationOutputSchema:
             raise NotImplementedError
 
-    assert not hasattr(AbstractCalculator.__dict__["run"], tracing.TRACED_MARKER)
+    assert not hasattr(AbstractCalculator.__dict__["run"], installation.TRACED_MARKER)
 
 
 def test_run_without_input_sets_no_input_attribute(exporter):
@@ -398,7 +398,7 @@ def test_run_stream_closed_early_ends_span_and_closes_inner_generator(exporter):
 
     assert inner_closed == [True]
     (span,) = spans_of(exporter)
-    assert span.attributes[tracing.ATTR_STREAM_CLOSED_EARLY] is True
+    assert span.attributes[span_attributes.ATTR_STREAM_CLOSED_EARLY] is True
     assert output_json(span) == {"answer": "4"}
     assert span.status.status_code == StatusCode.OK
 
@@ -462,7 +462,7 @@ async def test_run_async_stream_closed_early_ends_span(exporter):
 
     assert first.answer == "4"
     (span,) = spans_of(exporter)
-    assert span.attributes[tracing.ATTR_STREAM_CLOSED_EARLY] is True
+    assert span.attributes[span_attributes.ATTR_STREAM_CLOSED_EARLY] is True
     assert span.status.status_code == StatusCode.OK
 
 
@@ -734,8 +734,11 @@ def test_prompt_hash_identifies_static_sections_despite_dynamic_providers(export
     agent.run(QuestionSchema(question="b"))
 
     first, second = spans_of(exporter)
-    assert first.attributes[tracing.ATTR_SYSTEM_PROMPT_SHA256] == second.attributes[tracing.ATTR_SYSTEM_PROMPT_SHA256]
-    assert first.attributes[tracing.ATTR_CONTEXT_PROVIDERS] == ("counter",)
+    assert (
+        first.attributes[span_attributes.ATTR_SYSTEM_PROMPT_SHA256]
+        == second.attributes[span_attributes.ATTR_SYSTEM_PROMPT_SHA256]
+    )
+    assert first.attributes[span_attributes.ATTR_CONTEXT_PROVIDERS] == ("counter",)
 
 
 def test_prompt_hash_changes_when_static_sections_change(exporter):
@@ -746,7 +749,10 @@ def test_prompt_hash_changes_when_static_sections_change(exporter):
     agent.run(QuestionSchema(question="b"))
 
     first, second = spans_of(exporter)
-    assert first.attributes[tracing.ATTR_SYSTEM_PROMPT_SHA256] != second.attributes[tracing.ATTR_SYSTEM_PROMPT_SHA256]
+    assert (
+        first.attributes[span_attributes.ATTR_SYSTEM_PROMPT_SHA256]
+        != second.attributes[span_attributes.ATTR_SYSTEM_PROMPT_SHA256]
+    )
 
 
 def test_run_stream_dropped_without_close_still_ends_span(exporter):
@@ -758,7 +764,7 @@ def test_run_stream_dropped_without_close_still_ends_span(exporter):
     gc.collect()
 
     (span,) = spans_of(exporter)
-    assert span.attributes[tracing.ATTR_STREAM_CLOSED_EARLY] is True
+    assert span.attributes[span_attributes.ATTR_STREAM_CLOSED_EARLY] is True
 
 
 @pytest.mark.asyncio
@@ -785,7 +791,7 @@ async def test_run_async_stream_cancelled_mid_await_is_not_an_error(exporter):
         await task
 
     (span,) = spans_of(exporter)
-    assert span.attributes[tracing.ATTR_STREAM_CLOSED_EARLY] is True
+    assert span.attributes[span_attributes.ATTR_STREAM_CLOSED_EARLY] is True
     assert output_json(span) == {"answer": "4"}
     assert span.status.status_code != StatusCode.ERROR
 
@@ -837,8 +843,8 @@ def test_async_generator_tool_method_is_left_alone(exporter):
         async def run_async(self, params: CalculationInputSchema):
             yield CalculationOutputSchema(result="chunk")
 
-    assert not hasattr(StreamingTool.__dict__["run_async"], tracing.TRACED_MARKER)
-    assert hasattr(StreamingTool.__dict__["run"], tracing.TRACED_MARKER)
+    assert not hasattr(StreamingTool.__dict__["run_async"], installation.TRACED_MARKER)
+    assert hasattr(StreamingTool.__dict__["run"], installation.TRACED_MARKER)
 
 
 def test_instrument_uninstrument_instrument_cycle_traces_tools_defined_between_cycles():
@@ -1418,7 +1424,7 @@ def test_run_stream_cancellation_marks_closed_early(exporter):
     with pytest.raises(asyncio.CancelledError):
         next(stream)
     (span,) = spans_of(exporter)
-    assert span.attributes.get(tracing.ATTR_STREAM_CLOSED_EARLY) is True
+    assert span.attributes.get(span_attributes.ATTR_STREAM_CLOSED_EARLY) is True
     assert span.status.status_code == StatusCode.UNSET
     assert span.events == ()
 

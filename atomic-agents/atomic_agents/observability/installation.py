@@ -60,6 +60,7 @@ def install(
 ) -> None:
     global _installation
     if _installation is not None:
+        tracer_provider = _installation.tracer_provider if tracer_provider is None else tracer_provider
         _replace_installation(_installation, tracer_provider, config)
         return
     config = TracingConfig.coerce(config)
@@ -91,7 +92,6 @@ def _replace_installation(
     installed: _Installation, tracer_provider: Optional["TracerProvider"], config: TracingConfig | PayloadVisibility | None
 ) -> None:
     config = installed.config if config is None else TracingConfig.coerce(config)
-    tracer_provider = installed.tracer_provider if tracer_provider is None else tracer_provider
     if config.openinference_attributes is None:
         config = replace(config, openinference_attributes=installed.config.openinference_attributes)
     if tracer_provider is installed.tracer_provider and config == installed.config:
