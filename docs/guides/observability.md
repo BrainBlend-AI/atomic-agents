@@ -159,6 +159,7 @@ export OTEL_METRICS_EXPORTER=none
 export OTEL_LOGS_EXPORTER=none
 export ATOMIC_AGENTS_TRACE_HIDE_INPUTS=true
 export ATOMIC_AGENTS_TRACE_HIDE_OUTPUTS=true
+export ATOMIC_AGENTS_TRACE_LLM_SPANS=false
 opentelemetry-instrument python app.py
 ```
 
@@ -174,12 +175,20 @@ share one installation, so activating several does not duplicate spans. OpenTele
 provider, so calling Phoenix registration after launcher startup does not switch where spans are exported. See
 "Re-instrumentation" for what a second `instrument()` call does.
 
-The launcher adds AGENT, TOOL and LLM attempt spans and no parent span. Use the grouping example below when you want
-several agent and tool calls in one trace.
+The launcher adds AGENT and TOOL spans and no parent span. The example above disables Atomic Agents' LLM attempt
+spans for applications that also use a provider instrumentor. Leave `ATOMIC_AGENTS_TRACE_LLM_SPANS` unset to keep
+attempt spans enabled. Use the grouping example below when you want several agent and tool calls in one trace.
 
 ## Setup with Phoenix (automatic)
 
+`register(auto_instrument=True)` also activates the OpenAI instrumentor, so set
+`ATOMIC_AGENTS_TRACE_LLM_SPANS=false` (before import) to avoid two LLM layers:
+
 ```python
+import os
+
+os.environ.setdefault("ATOMIC_AGENTS_TRACE_LLM_SPANS", "false")
+
 from phoenix.otel import register
 
 tracer_provider = register(project_name="my-app", auto_instrument=True)
@@ -349,7 +358,9 @@ TracingConfig(hide_inputs=True, hide_outputs=True, max_attribute_length=2048)
 
 When no config is passed to `instrument()`, the settings come from the environment. `ATOMIC_AGENTS_TRACE_HIDE_INPUTS`
 and `ATOMIC_AGENTS_TRACE_HIDE_OUTPUTS` are read first, then `OPENINFERENCE_HIDE_INPUTS` and `OPENINFERENCE_HIDE_OUTPUTS`
-as a fallback (`true` or `1`). `ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH` sets the size cap. If you pass your own
+as a fallback (`true` or `1`). `ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH` sets the size cap.
+`ATOMIC_AGENTS_TRACE_LLM_SPANS` disables attempt spans for `false` or `0` (case-insensitive); any other value or unset
+keeps them enabled. If you pass your own
 `TracingConfig(...)`, the environment is not read; use `TracingConfig.from_environment()` to start from it. An
 OpenInference `TraceConfig` is also accepted for `config`, for its `hide_inputs` and `hide_outputs` settings.
 
