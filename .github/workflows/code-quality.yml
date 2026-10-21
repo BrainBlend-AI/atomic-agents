@@ -152,12 +152,13 @@ jobs:
           spans = exporter.get_finished_spans()
           for span in spans:
               print(f"{span.name}: {sorted(span.attributes)}")
-          spans_by_name = {span.name: span for span in spans}
-          tool_span = spans_by_name["execute_tool SmokeTool"]
-          agent_span = spans_by_name["invoke_agent SmokeAgent"]
-          assert tool_span.attributes["gen_ai.operation.name"] == "execute_tool"
-          assert tool_span.attributes["gen_ai.tool.name"] == "SmokeTool"
-          assert agent_span.attributes["gen_ai.operation.name"] == "invoke_agent"
+          spans_by_operation = {span.attributes["gen_ai.operation.name"]: span for span in spans}
+          tool_span = spans_by_operation["execute_tool"]
+          agent_span = spans_by_operation["invoke_agent"]
+          assert tool_span.name == f"execute_tool {SmokeTool().tool_name}"
+          assert agent_span.name == "invoke_agent SmokeAgent"
+          assert tool_span.attributes["gen_ai.tool.name"] == SmokeTool().tool_name
+          assert tool_span.attributes["atomic_agents.tool.class"] == "SmokeTool"
           assert agent_span.attributes["atomic_agents.input"] == "__REDACTED__"
           for span in (tool_span, agent_span):
               assert not any(key.startswith("openinference.") for key in span.attributes)
