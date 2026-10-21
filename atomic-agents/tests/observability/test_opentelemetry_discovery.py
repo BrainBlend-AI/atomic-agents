@@ -72,6 +72,7 @@ def test_installed_opentelemetry_entry_point_activates_real_loader(
 
 def test_unknown_launcher_options_preserve_provider_and_privacy(
     local_tracing: tuple[TracerProvider, InMemorySpanExporter],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     provider, exporter = local_tracing
     AtomicAgentsInstrumentor().instrument(
@@ -82,6 +83,9 @@ def test_unknown_launcher_options_preserve_provider_and_privacy(
     )
     run_agent_and_tool()
 
+    assert "custom_launcher_option" in caplog.text
+    assert any(record.levelno == logging.WARNING for record in caplog.records)
+    assert "skip_dep_check" not in caplog.text
     spans = exporter.get_finished_spans()
     assert len(spans) == 2
     assert [exported_attributes(span)[SpanAttributes.INPUT_VALUE] for span in spans] == ["__REDACTED__", "__REDACTED__"]
@@ -105,7 +109,10 @@ def test_loader_skips_missing_opentelemetry_and_continues_without_error(
         _load._load_instrumentors(DefaultDistro())
 
     sentinel.load.return_value.return_value.instrument.assert_called_once_with(skip_dep_check=True)
-    assert "atomic-agents[observability]" in caplog.text
+    assert (
+        'Atomic Agents tracing needs opentelemetry-api. Install it with: pip install "atomic-agents[observability]" '
+        '(add "atomic-agents[phoenix]" for Arize Phoenix / OpenInference attributes)'
+    ) in caplog.text
     assert not [record for record in caplog.records if record.levelno >= logging.ERROR]
     assert not AtomicAgentsInstrumentor().is_instrumented_by_opentelemetry
 

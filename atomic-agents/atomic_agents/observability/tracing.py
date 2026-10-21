@@ -12,6 +12,7 @@ import hashlib
 import inspect
 import json
 import logging
+from collections.abc import Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
 import os
@@ -22,7 +23,7 @@ from opentelemetry import context as context_api
 from opentelemetry import trace as trace_api
 from opentelemetry.trace import Span, Status, StatusCode, Tracer
 from opentelemetry.util.types import AttributeValue
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from atomic_agents import __version__
 from atomic_agents.agents.atomic_agent import AtomicAgent
@@ -76,6 +77,17 @@ ATTR_INPUT = "atomic_agents.input"
 ATTR_OUTPUT = "atomic_agents.output"
 ATTR_AGENT_CLASS = "atomic_agents.agent.class"
 ATTR_ERROR_TYPE = "error.type"
+ATTR_TOOL_CLASS = "atomic_agents.tool.class"
+TRUNCATION_MARKER = "...[truncated]"
+PROVIDER_NAMES = {
+    "azure_openai": "azure.ai.openai",
+    "vertexai": "gcp.vertex_ai",
+    "gemini": "gcp.gemini",
+    "genai": "gcp.gemini",
+    "bedrock": "aws.bedrock",
+    "mistral": "mistral_ai",
+    "xai": "x_ai",
+}
 
 
 class PayloadVisibility(Protocol):
@@ -94,8 +106,8 @@ class TracingConfig:
     @classmethod
     def from_environment(cls) -> "TracingConfig":
         return cls(
-            hide_inputs=os.environ.get("OPENINFERENCE_HIDE_INPUTS", "").lower() in ("true", "1"),
-            hide_outputs=os.environ.get("OPENINFERENCE_HIDE_OUTPUTS", "").lower() in ("true", "1"),
+            hide_inputs=_visibility_environment("INPUTS").lower() in ("true", "1"),
+            hide_outputs=_visibility_environment("OUTPUTS").lower() in ("true", "1"),
             max_attribute_length=int(os.environ.get("ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH", "4096")),
         )
 
@@ -106,6 +118,10 @@ class TracingConfig:
         if isinstance(config, cls):
             return config
         return cls(hide_inputs=config.hide_inputs, hide_outputs=config.hide_outputs)
+
+
+def _visibility_environment(direction: str) -> str:
+    return os.environ.get(f"ATOMIC_AGENTS_TRACE_HIDE_{direction}", os.environ.get(f"OPENINFERENCE_HIDE_{direction}", ""))
 
 
 def _import_context_attributes() -> Callable[[], dict[str, AttributeValue]] | None:
@@ -301,26 +317,47 @@ def _agent_class_name(agent: AtomicAgent) -> str:
     return f"{type(agent).__name__}[{agent.input_schema.__name__}, {agent.output_schema.__name__}]"
 
 
-def _agent_start_attributes(agent: AtomicAgent) -> Dict[str, Any]:
-    try:
-        return {
-            ATTR_OPERATION: "invoke_agent",
-            ATTR_AGENT_NAME: _agent_display_name(agent),
-            ATTR_AGENT_CLASS: _agent_class_name(agent),
-            ATTR_REQUEST_MODEL: agent.model,
-            **_provider_attributes(agent),
-            **_optional_attributes("AGENT", {ATTR_OI_AGENT_NAME: _agent_display_name(agent)}),
-            ATTR_MODEL: agent.model,
-            ATTR_MODE: getattr(agent.mode, "value", str(agent.mode)),
-            ATTR_INPUT_SCHEMA: agent.input_schema.__name__,
-            ATTR_OUTPUT_SCHEMA: agent.output_schema.__name__,
-            ATTR_HISTORY_MESSAGE_COUNT: len(agent.history.history),
-            ATTR_CONTEXT_PROVIDERS: _context_provider_names(agent),
-            **_system_prompt_version(agent),
-        }
-    except Exception as error:
-        logger.warning("Could not describe agent for tracing: %s", error)
-        return {}
+def _best_effort_attributes(
+    readers: dict[str, Callable[[], AttributeValue | None]],
+) -> dict[str, AttributeValue]:
+    attributes: dict[str, AttributeValue] = {}
+    for key, read in readers.items():
+        try:
+            value = read()
+            if value is not None:
+                attributes[key] = value
+        except Exception as error:
+            logger.debug("Could not collect tracing attribute %s: %s", key, error)
+    return attributes
+
+
+def _without_none(attributes: Mapping[str, AttributeValue | None]) -> dict[str, AttributeValue]:
+    return {key: value for key, value in attributes.items() if value is not None}
+
+
+def _agent_start_attributes(agent: AtomicAgent) -> dict[str, AttributeValue]:
+    attributes: dict[str, AttributeValue] = {
+        ATTR_OPERATION: "invoke_agent",
+        ATTR_AGENT_NAME: _agent_display_name(agent),
+        ATTR_AGENT_CLASS: _agent_class_name(agent),
+    }
+    attributes.update(
+        _best_effort_attributes(
+            {
+                ATTR_REQUEST_MODEL: lambda: agent.model,
+                ATTR_MODEL: lambda: agent.model,
+                ATTR_MODE: lambda: getattr(agent.mode, "value", None),
+                ATTR_INPUT_SCHEMA: lambda: agent.input_schema.__name__,
+                ATTR_OUTPUT_SCHEMA: lambda: agent.output_schema.__name__,
+                ATTR_HISTORY_MESSAGE_COUNT: lambda: len(agent.history.history),
+                ATTR_CONTEXT_PROVIDERS: lambda: _context_provider_names(agent),
+                ATTR_SYSTEM_PROMPT_SHA256: lambda: _system_prompt_version(agent).get(ATTR_SYSTEM_PROMPT_SHA256),
+                ATTR_PROVIDER_NAME: lambda: _provider_attributes(agent).get(ATTR_PROVIDER_NAME),
+            }
+        )
+    )
+    attributes.update(_optional_attributes("AGENT", {ATTR_OI_AGENT_NAME: _agent_display_name(agent)}))
+    return _without_none(attributes)
 
 
 def _context_provider_names(agent: AtomicAgent) -> List[str]:
@@ -345,7 +382,7 @@ def _user_input_from_call(args: tuple, kwargs: dict) -> Any:
 
 def _provider_attributes(agent: AtomicAgent) -> dict[str, str]:
     provider = getattr(getattr(agent.client, "provider", None), "value", None)
-    return {ATTR_PROVIDER_NAME: provider} if isinstance(provider, str) else {}
+    return {ATTR_PROVIDER_NAME: PROVIDER_NAMES.get(provider, provider)} if isinstance(provider, str) else {}
 
 
 def _optional_attributes(kind: str, attributes: dict[str, AttributeValue]) -> dict[str, AttributeValue]:
@@ -353,7 +390,7 @@ def _optional_attributes(kind: str, attributes: dict[str, AttributeValue]) -> di
     conversation = _conversation_attributes(context)
     if not _current_installation().config.openinference_attributes:
         return conversation
-    return {ATTR_SPAN_KIND: kind, **attributes, **context, **conversation}
+    return _without_none({ATTR_SPAN_KIND: kind, **attributes, **context, **conversation})
 
 
 def _conversation_attributes(context: dict[str, AttributeValue]) -> dict[str, AttributeValue]:
@@ -368,15 +405,21 @@ def _conversation_attributes(context: dict[str, AttributeValue]) -> dict[str, At
     return attributes
 
 
+def _serialize_payload(value: object) -> str | None:
+    try:
+        return value.model_dump_json() if isinstance(value, BaseModel) else json.dumps(value, default=str)
+    except Exception as error:
+        logger.warning("Could not serialize tracing payload: %s", error)
+        return None
+
+
 def _record_payload(
     span: Span, key_pairs: tuple[tuple[str, str | None], ...], value: object, hide: bool, config: TracingConfig
 ) -> None:
     if value is None:
         return
-    try:
-        serialized = value.model_dump_json() if isinstance(value, BaseModel) else json.dumps(value, default=str)
-    except Exception as error:
-        logger.warning("Could not serialize tracing payload: %s", error)
+    serialized = "__REDACTED__" if hide else _serialize_payload(value)
+    if serialized is None:
         return
     for key, mime_key in key_pairs:
         _write_payload(span, key, mime_key, serialized, hide, config)
@@ -388,7 +431,7 @@ def _write_payload(span: Span, key: str, mime_key: str | None, serialized: str, 
         return
     if len(serialized) > config.max_attribute_length:
         span.set_attribute(key + ".original_length", len(serialized))
-        serialized = serialized[: config.max_attribute_length] + "...[truncated]"
+        serialized = _bounded_text(serialized, config)
     span.set_attribute(key, serialized)
     if mime_key is not None:
         span.set_attribute(mime_key, "application/json")
@@ -421,10 +464,24 @@ def _mark_closed_early(span: Any, output: Any) -> None:
     _set_output_safely(span, output)
 
 
-def _record_failure(span: Any, error: BaseException) -> None:
+def _bounded_text(value: str, config: TracingConfig) -> str:
+    if len(value) > config.max_attribute_length:
+        return value[: config.max_attribute_length] + TRUNCATION_MARKER
+    return value
+
+
+def _failure_message(error: BaseException, config: TracingConfig) -> str:
+    if config.hide_outputs and isinstance(error, ValidationError):
+        return f"ValidationError: {error.error_count()} errors (__REDACTED__)"
+    return str(error)
+
+
+def _record_failure(span: Span, error: BaseException) -> None:
+    config = _current_installation().config
+    message = _bounded_text(_failure_message(error, config), config)
     span.set_attribute(ATTR_ERROR_TYPE, type(error).__qualname__)
-    span.record_exception(error)
-    span.set_status(Status(StatusCode.ERROR, str(error)))
+    span.record_exception(error, attributes={"exception.message": message, "exception.stacktrace": message})
+    span.set_status(Status(StatusCode.ERROR, message))
 
 
 @contextmanager
@@ -595,33 +652,53 @@ def _trace_agent_async_stream(method_name: str, wrapped: Callable) -> Callable:
     return traced
 
 
+def _tool_parameter_attributes(tool: BaseTool) -> dict[str, AttributeValue]:
+    parameters = _best_effort_attributes({ATTR_TOOL_PARAMETERS: lambda: json.dumps(tool.input_schema.model_json_schema())})
+    value = parameters.get(ATTR_TOOL_PARAMETERS)
+    if isinstance(value, str):
+        config = _current_installation().config
+        parameters[ATTR_TOOL_PARAMETERS] = _bounded_text(value, config)
+        if len(value) > config.max_attribute_length:
+            parameters[ATTR_TOOL_PARAMETERS + ".original_length"] = len(value)
+    return parameters
+
+
+def _tool_display_name(tool: BaseTool) -> str:
+    try:
+        return tool.tool_name
+    except Exception as error:
+        logger.debug("Could not collect tracing tool name: %s", error)
+        return type(tool).__name__
+
+
 def _tool_start_attributes(tool: BaseTool) -> dict[str, AttributeValue]:
     attributes: dict[str, AttributeValue] = {
         ATTR_OPERATION: "execute_tool",
-        ATTR_TOOL_NAME: type(tool).__name__,
+        ATTR_TOOL_NAME: _tool_display_name(tool),
+        ATTR_TOOL_CLASS: type(tool).__name__,
         ATTR_TOOL_TYPE: "function",
         **_optional_attributes("TOOL", {}),
     }
-    try:
-        attributes[ATTR_TOOL_DESCRIPTION] = tool.tool_description
-        if _current_installation().config.openinference_attributes:
-            attributes.update(
+    attributes.update(_best_effort_attributes({ATTR_TOOL_DESCRIPTION: lambda: tool.tool_description}))
+    if _current_installation().config.openinference_attributes:
+        attributes.update(
+            _best_effort_attributes(
                 {
-                    ATTR_OI_TOOL_NAME: tool.tool_name,
-                    ATTR_OI_TOOL_DESCRIPTION: tool.tool_description,
-                    ATTR_TOOL_PARAMETERS: json.dumps(tool.input_schema.model_json_schema()),
+                    ATTR_OI_TOOL_NAME: lambda: attributes[ATTR_TOOL_NAME],
+                    ATTR_OI_TOOL_DESCRIPTION: lambda: tool.tool_description,
                 }
             )
-    except Exception as error:
-        logger.warning("Could not describe tool %s for tracing: %s", type(tool).__name__, error)
-    return attributes
+        )
+        attributes.update(_tool_parameter_attributes(tool))
+    return _without_none(attributes)
 
 
 @contextmanager
 def _tool_span(tool: BaseTool, args: tuple, kwargs: dict) -> Iterator[Span]:
+    attributes = _tool_start_attributes(tool)
     with _current_installation().tracer.start_as_current_span(
-        f"execute_tool {type(tool).__name__}",
-        attributes=_tool_start_attributes(tool),
+        f"execute_tool {attributes[ATTR_TOOL_NAME]}",
+        attributes=attributes,
         record_exception=False,
         set_status_on_exception=False,
     ) as span:
