@@ -3165,7 +3165,7 @@ version = "1.0.0"
 source = { editable = "atomic-examples/phoenix-tracing" }
 dependencies = [
     { name = "arize-phoenix-otel" },
-    { name = "atomic-agents", extra = ["observability"] },
+    { name = "atomic-agents", extra = ["phoenix"] },
     { name = "instructor" },
     { name = "openai" },
     { name = "openinference-instrumentation-openai" },
@@ -3176,7 +3176,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "arize-phoenix-otel", specifier = ">=0.17.0,<1.0.0" },
-    { name = "atomic-agents", extras = ["observability"], editable = "." },
+    { name = "atomic-agents", extras = ["phoenix"], editable = "." },
     { name = "instructor", specifier = ">=1.17.0,<2" },
     { name = "openai", specifier = ">=2.0.0,<3.0.0" },
     { name = "openinference-instrumentation-openai", specifier = ">=0.1.30,<0.2.0" },
