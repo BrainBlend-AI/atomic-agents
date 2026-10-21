@@ -1,8 +1,11 @@
 """Instructor attempt spans and cumulative agent usage."""
 
+from __future__ import annotations
+
 import contextvars
 import functools
 import logging
+import threading
 import weakref
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -26,9 +29,27 @@ _ATTEMPT = "atomic_agents.llm.attempt"
 _VALIDATION_ERROR = "atomic_agents.llm.last_validation_error"
 
 
-class _Usage(Protocol):
+class _PromptTokenDetails(Protocol):
+    cached_tokens: int | None
+
+
+class _CompletionTokenDetails(Protocol):
+    reasoning_tokens: int | None
+
+
+class _InputOutputUsage(Protocol):
     input_tokens: int
     output_tokens: int
+
+
+class _PromptCompletionUsage(Protocol):
+    prompt_tokens: int
+    completion_tokens: int
+    prompt_tokens_details: _PromptTokenDetails | None
+    completion_tokens_details: _CompletionTokenDetails | None
+
+
+_Usage = _InputOutputUsage | _PromptCompletionUsage
 
 
 class _Response(Protocol):
@@ -51,12 +72,14 @@ class _AgentRun:
     config: TracingConfig
     provider: dict[str, AttributeValue]
     attempt_count: int = 0
+    suppressed_attempt: bool = False
     open_attempt: Span | None = None
     context_token: contextvars.Token | None = None
 
 
 _active_run: contextvars.ContextVar[_AgentRun | None] = contextvars.ContextVar("atomic_agents_llm_run", default=None)
 _clients: weakref.WeakSet[_HookClient] = weakref.WeakSet()
+_registration_lock = threading.Lock()
 
 
 def _never_raise(handler: Callable[_PARAMETERS, None]) -> Callable[_PARAMETERS, None]:
@@ -72,18 +95,33 @@ def _never_raise(handler: Callable[_PARAMETERS, None]) -> Callable[_PARAMETERS, 
 
 @_never_raise
 def register_client(client: _HookClient) -> None:
-    if not hasattr(client, "on") or client in _clients:
+    if not hasattr(client, "on"):
         return
-    for event, handler in _HANDLERS.items():
-        client.on(event, handler)
-    _clients.add(client)
+    # Shared clients must acquire all handlers once before another run can use them.
+    with _registration_lock:
+        if client not in _clients:
+            _register_handlers(client)
+            _clients.add(client)
+
+
+def _register_handlers(client: _HookClient) -> None:
+    registered: list[tuple[str, Callable[..., None]]] = []
+    try:
+        for event, handler in _HANDLERS.items():
+            client.on(event, handler)
+            registered.append((event, handler))
+    except Exception:
+        for event, handler in registered:
+            client.off(event, handler)
+        raise
 
 
 @_never_raise
 def unregister_clients() -> None:
-    for client in list(_clients):
-        _unregister_client(client)
-    _clients.clear()
+    with _registration_lock:
+        for client in list(_clients):
+            _unregister_client(client)
+        _clients.clear()
 
 
 @_never_raise
@@ -139,6 +177,10 @@ def _completion_kwargs(*args: object, **kwargs: object) -> None:
     if run is None:
         return
     finish_attempt(run)
+    # Suppressed kwargs must also swallow later response and usage outside that context.
+    run.suppressed_attempt = bool(context_api.get_value("suppress_instrumentation"))
+    if run.suppressed_attempt:
+        return
     run.attempt_count += 1
     if not run.config.llm_spans:
         return
@@ -167,7 +209,7 @@ def _usage_attributes(usage: _Usage | None) -> dict[str, int]:
 @_never_raise
 def _completion_response(response: _Response, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None:
+    if run is None or run.suppressed_attempt:
         return
     attributes = _without_none({_RESPONSE_MODEL: getattr(response, "model", None)})
     run.span.set_attributes(attributes)
@@ -185,7 +227,7 @@ def _complete_response_attempt(run: _AgentRun, response: _Response, attributes: 
 @_never_raise
 def _completion_error(error: BaseException, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None or run.open_attempt is None:
+    if run is None or run.suppressed_attempt or run.open_attempt is None:
         return
     message = _bounded_text(_failure_message(error, run.config), run.config)
     run.open_attempt.set_attribute("error.type", type(error).__qualname__)
@@ -196,7 +238,7 @@ def _completion_error(error: BaseException, **kwargs: object) -> None:
 @_never_raise
 def _parse_error(error: BaseException, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None:
+    if run is None or run.suppressed_attempt:
         return
     text = "__REDACTED__" if run.config.hide_outputs else _failure_message(error, run.config)
     _write_payload(run.span, _VALIDATION_ERROR, None, text, run.config.hide_outputs, run.config)
@@ -206,10 +248,10 @@ def _parse_error(error: BaseException, **kwargs: object) -> None:
 @_never_raise
 def _completion_usage(usage: _Usage, *, attempt_number: int, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None:
+    if run is None or run.suppressed_attempt:
         return
     run.span.set_attributes(_usage_attributes(usage))
-    run.span.set_attribute("atomic_agents.llm.attempts", attempt_number)
+    run.span.set_attribute("atomic_agents.llm.attempts", run.attempt_count)
 
 
 _HANDLERS: dict[str, Callable[..., None]] = {

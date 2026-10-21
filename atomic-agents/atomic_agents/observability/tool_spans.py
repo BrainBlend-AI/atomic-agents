@@ -7,7 +7,7 @@ import json
 import logging
 from contextlib import contextmanager
 from types import FunctionType
-from typing import Any, Callable, Iterator, List, Optional, Type
+from typing import Awaitable, Callable, Coroutine, Iterator, List, Optional, Type, TypeVar
 
 from opentelemetry.trace import Span, Status, StatusCode
 from opentelemetry.util.types import AttributeValue
@@ -33,6 +33,8 @@ from .span_attributes import (
 
 logger = logging.getLogger("atomic_agents.observability.tracing")
 
+
+OutputSchema = TypeVar("OutputSchema")
 
 TOOL_METHOD_NAMES = ("run", "run_async", "arun")
 
@@ -72,7 +74,7 @@ def _instrument_tool_class(tool_class: Type) -> None:
             setattr(tool_class, method_name, installation._mark_traced(_trace_tool_method(method), method, inherited))
 
 
-def _is_traceable_function(method: Any) -> bool:
+def _is_traceable_function(method: object) -> bool:
     if not isinstance(method, FunctionType) or inspect.isasyncgenfunction(method):
         return False
     if getattr(method, "__isabstractmethod__", False):
@@ -127,7 +129,7 @@ def _tool_start_attributes(tool: BaseTool) -> dict[str, AttributeValue]:
 
 
 @contextmanager
-def _tool_span(tool: BaseTool, args: tuple, kwargs: dict) -> Iterator[Span]:
+def _tool_span(tool: BaseTool, args: tuple[object, ...], kwargs: dict[str, object]) -> Iterator[Span]:
     attributes = _tool_start_attributes(tool)
     with installation._current_installation().tracer.start_as_current_span(
         f"execute_tool {attributes[ATTR_TOOL_NAME]}",
@@ -143,16 +145,18 @@ def _tool_span(tool: BaseTool, args: tuple, kwargs: dict) -> Iterator[Span]:
             raise
 
 
-def _tool_input_from_call(args: tuple, kwargs: dict) -> Any:
+def _tool_input_from_call(args: tuple[object, ...], kwargs: dict[str, object]) -> object:
     return args[0] if args else kwargs.get("params")
 
 
-def _trace_tool_method(wrapped: Callable) -> Callable:
+def _trace_tool_method(
+    wrapped: Callable[..., OutputSchema],
+) -> Callable[..., OutputSchema] | Callable[..., Coroutine[object, object, object]]:
     if inspect.iscoroutinefunction(wrapped):
         return _trace_tool_async_method(wrapped)
 
     @functools.wraps(wrapped)
-    def traced(tool, *args, **kwargs):
+    def traced(tool: BaseTool, *args: object, **kwargs: object) -> OutputSchema:
         if _active_tool.get() is tool or _suppressed():
             return wrapped(tool, *args, **kwargs)
         with _tool_span(tool, args, kwargs) as span:
@@ -164,9 +168,11 @@ def _trace_tool_method(wrapped: Callable) -> Callable:
     return traced
 
 
-def _trace_tool_async_method(wrapped: Callable) -> Callable:
+def _trace_tool_async_method(
+    wrapped: Callable[..., Awaitable[OutputSchema]],
+) -> Callable[..., Coroutine[object, object, OutputSchema]]:
     @functools.wraps(wrapped)
-    async def traced(tool, *args, **kwargs):
+    async def traced(tool: BaseTool, *args: object, **kwargs: object) -> OutputSchema:
         if _active_tool.get() is tool or _suppressed():
             return await wrapped(tool, *args, **kwargs)
         with _tool_span(tool, args, kwargs) as span:
@@ -178,7 +184,9 @@ def _trace_tool_async_method(wrapped: Callable) -> Callable:
     return traced
 
 
-def _run_as_active_tool(tool: BaseTool, wrapped: Callable, args: tuple, kwargs: dict) -> Any:
+def _run_as_active_tool(
+    tool: BaseTool, wrapped: Callable[..., OutputSchema], args: tuple[object, ...], kwargs: dict[str, object]
+) -> OutputSchema:
     token = _active_tool.set(tool)
     try:
         return wrapped(tool, *args, **kwargs)
@@ -186,7 +194,9 @@ def _run_as_active_tool(tool: BaseTool, wrapped: Callable, args: tuple, kwargs: 
         _active_tool.reset(token)
 
 
-async def _await_as_active_tool(tool: BaseTool, wrapped: Callable, args: tuple, kwargs: dict) -> Any:
+async def _await_as_active_tool(
+    tool: BaseTool, wrapped: Callable[..., Awaitable[OutputSchema]], args: tuple[object, ...], kwargs: dict[str, object]
+) -> OutputSchema:
     token = _active_tool.set(tool)
     try:
         return await wrapped(tool, *args, **kwargs)

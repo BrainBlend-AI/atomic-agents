@@ -1,15 +1,18 @@
 import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import instructor
 import pytest
 from instructor.core.hooks import Hooks
-from opentelemetry import trace as trace_api
+from opentelemetry import context as context_api, trace as trace_api
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.trace import StatusCode
+from pydantic import ValidationError
 
 from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema
 from atomic_agents.observability import TracingConfig, using_conversation
@@ -127,15 +130,26 @@ def test_disabled_attempt_spans_keep_totals(exporter):
 
 
 def test_completion_error_is_bounded_and_ends_attempt(exporter):
+    installed = installation._current_installation()
+    installation.install(tracer_provider=installed.tracer_provider, config=TracingConfig(max_attribute_length=32))
+    error = ValueError("failed " * 20)
+    expected = str(error)[:32] + "...[truncated]"
+
     def script(hooks, kwargs):
         hooks.emit_completion_arguments(**kwargs)
-        hooks.emit_completion_error(ValueError("failed"), attempt_number=1, max_attempts=1, is_last_attempt=True)
+        hooks.emit_parse_error(error)
+        hooks.emit_completion_error(error, attempt_number=1, max_attempts=1, is_last_attempt=True)
 
     run_agent(scripted_client(script))
     child, parent = finished_spans(exporter, 2)
     assert child.status.status_code == StatusCode.ERROR
     assert child.attributes["error.type"] == "ValueError"
-    assert child.events[0].attributes["exception.message"] == "failed"
+    assert child.events[0].attributes["exception.message"] == expected
+    assert child.events[0].attributes["exception.stacktrace"] == expected
+    assert child.status.description == expected
+    assert len(child.status.description) == 32 + len("...[truncated]")
+    assert parent.attributes["atomic_agents.llm.last_validation_error"] == expected
+    assert parent.attributes["atomic_agents.llm.last_validation_error.original_length"] == len(str(error))
     assert parent.status.status_code == StatusCode.OK
 
 
@@ -167,7 +181,7 @@ def test_concurrent_shared_client_runs_are_isolated(exporter, asynchronous):
             return Answer(answer="ok")
 
         if asynchronous:
-            return await agent_spans._trace_agent_async_call("run_async", complete)(agent(client))
+            return await agent_spans._trace_agent_async_call(complete)(agent(client))
         return await asyncio.to_thread(run_agent, client)
 
     async def gather():
@@ -207,11 +221,11 @@ def test_open_attempt_ends_at_agent_end(exporter, kind, fails):
 
     def invoke():
         if kind == "sync":
-            return agent_spans._trace_agent_call("run", call)(agent(client))
+            return agent_spans._trace_agent_call(call)(agent(client))
         if kind == "async":
-            return asyncio.run(agent_spans._trace_agent_async_call("run_async", async_call)(agent(client)))
+            return asyncio.run(agent_spans._trace_agent_async_call(async_call)(agent(client)))
         if kind == "stream":
-            iterator = agent_spans._trace_agent_stream("run_stream", stream)(agent(client))
+            iterator = agent_spans._trace_agent_stream(stream)(agent(client))
             next(iterator)
             assert trace_api.get_current_span() is trace_api.INVALID_SPAN
             iterator.close()
@@ -219,7 +233,7 @@ def test_open_attempt_ends_at_agent_end(exporter, kind, fails):
         return asyncio.run(consume_async_stream())
 
     async def consume_async_stream():
-        iterator = agent_spans._trace_agent_async_stream("run_async_stream", async_stream)(agent(client))
+        iterator = agent_spans._trace_agent_async_stream(async_stream)(agent(client))
         await anext(iterator)
         assert trace_api.get_current_span() is trace_api.INVALID_SPAN
         await iterator.aclose()
@@ -241,7 +255,10 @@ def test_validation_text_redacted_and_anthropic_usage(exporter):
 
     def script(hooks, kwargs):
         hooks.emit_completion_arguments(**kwargs)
-        hooks.emit_parse_error(ValueError("secret"))
+        with pytest.raises(ValidationError) as invalid:
+            Answer.model_validate({"answer": {"secret": "private output"}})
+        hooks.emit_parse_error(invalid.value)
+        hooks.emit_completion_error(invalid.value, attempt_number=1, max_attempts=1, is_last_attempt=True)
         hooks.emit_completion_usage(SimpleNamespace(input_tokens=9, output_tokens=4), attempt_number=1)
 
     run_agent(scripted_client(script))
@@ -249,6 +266,10 @@ def test_validation_text_redacted_and_anthropic_usage(exporter):
     assert parent.attributes["atomic_agents.llm.last_validation_error"] == "__REDACTED__"
     assert parent.events[0].attributes["atomic_agents.llm.last_validation_error"] == "__REDACTED__"
     assert parent.attributes["gen_ai.usage.input_tokens"] == 9
+    assert child.status.description == "ValidationError: 1 errors (__REDACTED__)"
+    assert child.events[0].attributes["exception.message"] == child.status.description
+    assert child.events[0].attributes["exception.stacktrace"] == child.status.description
+    assert "private output" not in str(child.events)
 
 
 def test_hook_failure_warns_without_breaking_agent(exporter, caplog):
@@ -292,14 +313,12 @@ def test_stream_attempt_context_survives_cursor_advances(exporter, asynchronous)
         yield complete(expected)
 
     async def consume():
-        return [
-            partial async for partial in agent_spans._trace_agent_async_stream("run_async_stream", async_stream)(agent(client))
-        ]
+        return [partial async for partial in agent_spans._trace_agent_async_stream(async_stream)(agent(client))]
 
     if asynchronous:
         assert len(asyncio.run(consume())) == 2
     else:
-        assert len(list(agent_spans._trace_agent_stream("run_stream", stream)(agent(client)))) == 2
+        assert len(list(agent_spans._trace_agent_stream(stream)(agent(client)))) == 2
     child, parent = finished_spans(exporter, 2)
     assert child.status.status_code == StatusCode.OK
     assert parent.status.status_code == StatusCode.OK
@@ -319,3 +338,89 @@ def test_validation_text_truncation_and_extra_hook_keywords(exporter):
     child, parent = finished_spans(exporter, 2)
     assert parent.attributes["atomic_agents.llm.last_validation_error"] == "long...[truncated]"
     assert parent.attributes["atomic_agents.llm.last_validation_error.original_length"] == 10
+
+
+def test_threaded_first_use_registers_once_and_uninstalls(exporter, monkeypatch):
+    client = scripted_client(retry_script)
+    first_registration = threading.Barrier(2, timeout=5)
+    release_registration = threading.Event()
+    original_on = Hooks.on
+
+    def blocked_on(hooks, event, handler):
+        if event == "completion:kwargs":
+            first_registration.wait()
+            assert release_registration.wait(timeout=5)
+        return original_on(hooks, event, handler)
+
+    monkeypatch.setattr(Hooks, "on", blocked_on)
+    client.on.side_effect = client.hooks.on
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(run_agent, client)
+        first_registration.wait()
+        second_started = threading.Event()
+
+        def second_run():
+            second_started.set()
+            return run_agent(client)
+
+        second = executor.submit(second_run)
+        assert second_started.wait(timeout=5)
+        try:
+            with pytest.raises(TimeoutError):
+                second.result(timeout=0.1)
+            assert client.on.call_count == 1
+        finally:
+            release_registration.set()
+        first.result(timeout=5)
+        second.result(timeout=5)
+    assert len(client.hooks._handlers) == 5
+    assert all(len(handlers) == 1 for handlers in client.hooks._handlers.values())
+    installation.uninstall()
+    assert all(not handlers for handlers in client.hooks._handlers.values())
+
+
+def test_partial_registration_is_rolled_back(exporter):
+    client = scripted_client(retry_script)
+
+    def fail_registration(event, handler):
+        if event == "parse:error":
+            raise RuntimeError("registration failed")
+        client.hooks.on(event, handler)
+
+    client.on.side_effect = fail_registration
+    llm_attempt_spans.register_client(client)
+    assert client not in llm_attempt_spans._clients
+    assert all(not handlers for handlers in client.hooks._handlers.values())
+    client.on.side_effect = client.hooks.on
+    llm_attempt_spans.register_client(client)
+    assert all(len(handlers) == 1 for handlers in client.hooks._handlers.values())
+
+
+@pytest.mark.parametrize("completion", ["response", "error"])
+def test_suppressed_attempt_events_are_ignored_then_normal_attempt_works(exporter, completion):
+    def script(hooks, kwargs):
+        run = llm_attempt_spans._active_run.get()
+        token = context_api.attach(context_api.set_value("suppress_instrumentation", True))
+        try:
+            hooks.emit_completion_arguments(**kwargs)
+        finally:
+            context_api.detach(token)
+        if completion == "response":
+            hooks.emit_completion_response(response())
+        else:
+            hooks.emit_completion_error(ValueError("suppressed"), attempt_number=1, max_attempts=2, is_last_attempt=False)
+        hooks.emit_parse_error(ValueError("suppressed"))
+        hooks.emit_completion_usage(usage(99, 99), attempt_number=1)
+        assert run.attempt_count == 0
+        assert run.open_attempt is None
+        assert not exporter.get_finished_spans()
+        hooks.emit_completion_arguments(**kwargs)
+        hooks.emit_completion_response(response())
+        hooks.emit_completion_usage(usage(), attempt_number=2)
+
+    run_agent(scripted_client(script))
+    child, parent = finished_spans(exporter, 2)
+    assert child.attributes["atomic_agents.llm.attempt"] == 1
+    assert parent.attributes["atomic_agents.llm.attempts"] == 1
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 3
+    assert not parent.events
