@@ -189,7 +189,8 @@ def test_run_emits_agent_span_with_io_and_framework_attributes(exporter):
     (span,) = spans_of(exporter)
     assert span.name == "invoke_agent AtomicAgent"
     assert kind_of(span) == OpenInferenceSpanKindValues.AGENT.value
-    assert span.attributes[SpanAttributes.AGENT_NAME] == "AtomicAgent[QuestionSchema, AnswerSchema]"
+    assert span.attributes[SpanAttributes.AGENT_NAME] == "AtomicAgent"
+    assert span.attributes[tracing.ATTR_AGENT_CLASS] == "AtomicAgent[QuestionSchema, AnswerSchema]"
     assert input_json(span) == {"question": "6*7?"}
     assert output_json(span) == {"answer": "42"}
     assert span.attributes[SpanAttributes.INPUT_MIME_TYPE] == "application/json"
@@ -615,15 +616,27 @@ def test_session_and_user_metadata_survive_on_agent_span(exporter):
     assert json.loads(span.attributes[SpanAttributes.METADATA]) == {"tenant": "acme"}
 
 
-def test_second_instrument_with_other_settings_warns_and_keeps_first(exporter, caplog):
+def test_second_instrument_replaces_provider_and_warns(exporter, caplog):
     other_provider = TracerProvider()
+    other_exporter = InMemorySpanExporter()
+    other_provider.add_span_processor(SimpleSpanProcessor(other_exporter))
+    agent = make_agent(sync_client())
+    agent.run(QuestionSchema(question="first"))
+    installed = tracing._installation
+    wrapped_run = AtomicAgent.run
 
     with caplog.at_level(logging.WARNING):
         AtomicAgentsInstrumentor().instrument(tracer_provider=other_provider)
 
-    assert "already installed" in caplog.text
-    make_agent(sync_client()).run(QuestionSchema(question="?"))
+    agent.run(QuestionSchema(question="second"))
+    assert tracing._installation is installed
+    assert AtomicAgent.run is wrapped_run
     assert len(spans_of(exporter)) == 1
+    assert len(spans_of(other_exporter)) == 1
+    assert "tracer provider/config replaced" in caplog.text
+    assert "in-flight spans finish on the provider they started with" in caplog.text
+    assert caplog.records[-1].levelno == logging.WARNING
+    other_provider.shutdown()
 
 
 def test_uninstrument_restores_originals_and_stops_tracing():
@@ -998,3 +1011,126 @@ async def final_agent_answer(agent_method, result):
         return [partial async for partial in result][-1].answer
     else:
         return result.answer
+
+
+@pytest.mark.parametrize(
+    "name, expected", [(None, "AtomicAgent"), ("", "AtomicAgent"), ("orchestrator_planning", "orchestrator_planning")]
+)
+def test_stable_agent_name_is_separate_from_schema_class(exporter, name, expected):
+    agent = AtomicAgent[QuestionSchema, AnswerSchema](AgentConfig(client=sync_client(), name=name))
+    agent.run(QuestionSchema(question="?"))
+    (span,) = spans_of(exporter)
+    assert span.name == f"invoke_agent {expected}"
+    assert span.attributes["gen_ai.agent.name"] == expected
+    assert span.attributes["agent.name"] == expected
+    assert span.attributes["atomic_agents.agent.class"] == "AtomicAgent[QuestionSchema, AnswerSchema]"
+
+
+@pytest.mark.parametrize("openinference_enabled", [False, True])
+def test_conversation_context_overrides_session_on_agent_and_tool(exporter, openinference_enabled):
+    config = tracing.TracingConfig(openinference_attributes=openinference_enabled)
+    AtomicAgentsInstrumentor().instrument(tracer_provider=exporter.provider, config=config)
+    with using_session("session-1"), observability.using_conversation("c-1"):
+        make_agent(sync_client()).run(QuestionSchema(question="?"))
+        CalculatorTool().run(CalculationInputSchema(expression="?"))
+    agent_span, tool_span = spans_of(exporter)
+    assert agent_span.attributes["gen_ai.conversation.id"] == "c-1"
+    assert tool_span.attributes["gen_ai.conversation.id"] == "c-1"
+    assert agent_span.attributes.get("session.id") == ("c-1" if openinference_enabled else None)
+    assert tool_span.attributes.get("session.id") == ("c-1" if openinference_enabled else None)
+
+
+def test_session_is_mirrored_even_with_openinference_attributes_disabled(exporter):
+    config = tracing.TracingConfig(openinference_attributes=False)
+    AtomicAgentsInstrumentor().instrument(tracer_provider=exporter.provider, config=config)
+    with using_session("session-1"):
+        make_agent(sync_client()).run(QuestionSchema(question="?"))
+        CalculatorTool().run(CalculationInputSchema(expression="?"))
+    for span in spans_of(exporter):
+        assert span.attributes["gen_ai.conversation.id"] == "session-1"
+        assert "session.id" not in span.attributes
+
+
+def test_conversation_context_restores_after_nested_exception(exporter):
+    with observability.using_conversation("outer"):
+        with pytest.raises(ValueError), observability.using_conversation("inner"):
+            CalculatorTool().run(CalculationInputSchema(expression="inner"))
+            raise ValueError("reset context")
+        CalculatorTool().run(CalculationInputSchema(expression="outer"))
+    CalculatorTool().run(CalculationInputSchema(expression="unset"))
+    inner, outer, unset = spans_of(exporter)
+    assert inner.attributes["gen_ai.conversation.id"] == "inner"
+    assert outer.attributes["gen_ai.conversation.id"] == "outer"
+    assert "gen_ai.conversation.id" not in unset.attributes
+
+
+@pytest.mark.asyncio
+async def test_conversation_context_is_task_local(exporter):
+    async def run_in_conversation(conversation_id):
+        with observability.using_conversation(conversation_id):
+            await asyncio.sleep(0)
+            await make_agent(async_client()).run_async(QuestionSchema(question="?"))
+            CalculatorTool().run(CalculationInputSchema(expression="?"))
+
+    await asyncio.gather(run_in_conversation("first"), run_in_conversation("second"))
+    assert [span.attributes["gen_ai.conversation.id"] for span in spans_of(exporter)] == ["first", "first", "second", "second"]
+
+
+def test_plain_parent_span_owns_agent_and_tool_trace(exporter):
+    with exporter.provider.get_tracer("app").start_as_current_span("turn") as turn:
+        make_agent(sync_client()).run(QuestionSchema(question="?"))
+        CalculatorTool().run(CalculationInputSchema(expression="?"))
+    agent_span, tool_span, parent = spans_of(exporter)
+    assert agent_span.context.trace_id == turn.get_span_context().trace_id
+    assert tool_span.context.trace_id == turn.get_span_context().trace_id
+    assert agent_span.parent.span_id == parent.context.span_id
+    assert tool_span.parent.span_id == parent.context.span_id
+
+
+def test_same_provider_and_config_is_a_silent_no_op(exporter, caplog):
+    installed = tracing._installation
+    tracer = installed.tracer
+    with caplog.at_level(logging.DEBUG, logger=tracing.__name__):
+        AtomicAgentsInstrumentor().instrument(tracer_provider=exporter.provider, config=tracing.TracingConfig())
+    assert tracing._installation is installed
+    assert installed.tracer is tracer
+    assert not caplog.records
+
+
+def test_reinstrument_replaces_config_without_rewrapping(exporter, caplog):
+    wrapped_run = AtomicAgent.run
+    agent = make_agent(sync_client())
+    config = tracing.TracingConfig(hide_inputs=True, openinference_attributes=False)
+    with caplog.at_level(logging.WARNING):
+        AtomicAgentsInstrumentor().instrument(tracer_provider=exporter.provider, config=config)
+    agent.run(QuestionSchema(question="secret"))
+    CalculatorTool().run(CalculationInputSchema(expression="secret"))
+    agent_span, tool_span = spans_of(exporter)
+    assert agent_span.attributes["atomic_agents.input"] == "__REDACTED__"
+    assert tool_span.attributes["gen_ai.tool.call.arguments"] == "__REDACTED__"
+    assert "agent.name" not in agent_span.attributes
+    assert AtomicAgent.run is wrapped_run
+    assert "tracer provider/config replaced" in caplog.text
+
+
+def test_in_flight_span_finishes_on_original_provider(exporter):
+    other_provider = TracerProvider()
+    other_exporter = InMemorySpanExporter()
+    other_provider.add_span_processor(SimpleSpanProcessor(other_exporter))
+    client = sync_client()
+
+    def replace_provider(**kwargs):
+        AtomicAgentsInstrumentor().instrument(tracer_provider=other_provider)
+        CalculatorTool().run(CalculationInputSchema(expression="?"))
+        return AnswerSchema(answer="42")
+
+    client.chat.completions.create.side_effect = replace_provider
+    make_agent(client).run(QuestionSchema(question="?"))
+    assert len(spans_of(exporter)) == 1
+    assert len(spans_of(other_exporter)) == 1
+    (agent_span,) = spans_of(exporter)
+    (tool_span,) = spans_of(other_exporter)
+    assert agent_span.name == "invoke_agent AtomicAgent"
+    assert tool_span.parent.span_id == agent_span.context.span_id
+    assert tool_span.context.trace_id == agent_span.context.trace_id
+    other_provider.shutdown()

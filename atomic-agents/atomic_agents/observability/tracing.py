@@ -135,6 +135,21 @@ def _suppressed() -> bool:
     return bool(context_api.get_value("suppress_instrumentation"))
 
 
+_conversation_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("atomic_agents_conversation_id", default=None)
+_active_agent_span: contextvars.ContextVar[Span | None] = contextvars.ContextVar(
+    "atomic_agents_active_agent_span", default=None
+)
+
+
+@contextmanager
+def using_conversation(conversation_id: str) -> Iterator[None]:
+    token = _conversation_id.set(conversation_id)
+    try:
+        yield
+    finally:
+        _conversation_id.reset(token)
+
+
 _active_tool: contextvars.ContextVar[Optional[BaseTool]] = contextvars.ContextVar("atomic_agents_active_tool", default=None)
 
 
@@ -169,7 +184,7 @@ def install(
     if _installation is not None:
         if config.openinference_attributes is None:
             config = replace(config, openinference_attributes=_installation.config.openinference_attributes)
-        _warn_if_reinstalled_differently(_installation, tracer_provider, config)
+        _replace_installation(_installation, tracer_provider, config)
         return
     context_attributes = _import_context_attributes()
     if config.openinference_attributes is None:
@@ -194,16 +209,19 @@ def uninstall() -> None:
     _installation = None
 
 
-def _warn_if_reinstalled_differently(
+def _replace_installation(
     installed: _Installation, tracer_provider: Optional["TracerProvider"], config: TracingConfig
 ) -> None:
-    same_provider = tracer_provider is None or tracer_provider is installed.tracer_provider
-    same_config = config == installed.config
-    if not (same_provider and same_config):
-        logger.warning(
-            "AtomicAgentsInstrumentor is already installed; the new tracer_provider/config are ignored. "
-            "Call uninstrument() first to change them."
-        )
+    if tracer_provider is installed.tracer_provider and config == installed.config:
+        return
+    installed.tracer = trace_api.get_tracer(TRACER_NAME, __version__, tracer_provider)
+    installed.tracer_provider = tracer_provider
+    installed.config = config
+    installed.context_attributes = _import_context_attributes()
+    logger.warning(
+        "AtomicAgentsInstrumentor tracer provider/config replaced; "
+        "in-flight spans finish on the provider they started with."
+    )
 
 
 def _instrument_agent_class() -> None:
@@ -276,6 +294,10 @@ def _restore_tool_class(tool_class: Type) -> None:
 
 
 def _agent_display_name(agent: AtomicAgent) -> str:
+    return agent.name or type(agent).__name__
+
+
+def _agent_class_name(agent: AtomicAgent) -> str:
     return f"{type(agent).__name__}[{agent.input_schema.__name__}, {agent.output_schema.__name__}]"
 
 
@@ -283,8 +305,8 @@ def _agent_start_attributes(agent: AtomicAgent) -> Dict[str, Any]:
     try:
         return {
             ATTR_OPERATION: "invoke_agent",
-            ATTR_AGENT_NAME: type(agent).__name__,
-            ATTR_AGENT_CLASS: _agent_display_name(agent),
+            ATTR_AGENT_NAME: _agent_display_name(agent),
+            ATTR_AGENT_CLASS: _agent_class_name(agent),
             ATTR_REQUEST_MODEL: agent.model,
             **_provider_attributes(agent),
             **_optional_attributes("AGENT", {ATTR_OI_AGENT_NAME: _agent_display_name(agent)}),
@@ -327,13 +349,23 @@ def _provider_attributes(agent: AtomicAgent) -> dict[str, str]:
 
 
 def _optional_attributes(kind: str, attributes: dict[str, AttributeValue]) -> dict[str, AttributeValue]:
-    if not _current_installation().config.openinference_attributes:
-        return {}
     context = _context_attributes()
-    session = context.get(ATTR_SESSION_ID)
-    if session is not None:
-        context[ATTR_CONVERSATION_ID] = session
-    return {ATTR_SPAN_KIND: kind, **attributes, **context}
+    conversation = _conversation_attributes(context)
+    if not _current_installation().config.openinference_attributes:
+        return conversation
+    return {ATTR_SPAN_KIND: kind, **attributes, **context, **conversation}
+
+
+def _conversation_attributes(context: dict[str, AttributeValue]) -> dict[str, AttributeValue]:
+    conversation_id: AttributeValue | None = _conversation_id.get()
+    if conversation_id is None:
+        conversation_id = context.get(ATTR_SESSION_ID)
+    if conversation_id is None:
+        return {}
+    attributes = {ATTR_CONVERSATION_ID: conversation_id}
+    if _current_installation().config.openinference_attributes:
+        attributes[ATTR_SESSION_ID] = conversation_id
+    return attributes
 
 
 def _record_payload(
@@ -399,17 +431,20 @@ def _record_failure(span: Any, error: BaseException) -> None:
 def _agent_span(agent: AtomicAgent, args: tuple, kwargs: dict) -> Iterator[Span]:
     installed = _current_installation()
     with installed.tracer.start_as_current_span(
-        f"invoke_agent {type(agent).__name__}",
+        f"invoke_agent {_agent_display_name(agent)}",
         attributes=_agent_start_attributes(agent),
         record_exception=False,
         set_status_on_exception=False,
     ) as span:
         _set_input_safely(span, _user_input_from_call(args, kwargs))
+        token = _active_agent_span.set(span)
         try:
             yield span
         except BaseException as error:
             _record_failure(span, error)
             raise
+        finally:
+            _active_agent_span.reset(token)
 
 
 def _trace_agent_call(method_name: str, wrapped: Callable) -> Callable:
@@ -442,7 +477,7 @@ def _start_agent_span(agent: AtomicAgent, method_name: str, args: tuple, kwargs:
     if _suppressed():
         return trace_api.INVALID_SPAN
     span = _current_installation().tracer.start_span(
-        f"invoke_agent {type(agent).__name__}",
+        f"invoke_agent {_agent_display_name(agent)}",
         attributes=_agent_start_attributes(agent),
     )
     _set_input_safely(span, _user_input_from_call(args, kwargs))
@@ -451,17 +486,21 @@ def _start_agent_span(agent: AtomicAgent, method_name: str, args: tuple, kwargs:
 
 def _call_within_span(span: Any, function: Callable, *args: Any) -> Any:
     token = context_api.attach(trace_api.set_span_in_context(span))
+    agent_token = _active_agent_span.set(span)
     try:
         return function(*args)
     finally:
+        _active_agent_span.reset(agent_token)
         context_api.detach(token)
 
 
 async def _await_within_span(span: Any, awaitable: Any) -> Any:
     token = context_api.attach(trace_api.set_span_in_context(span))
+    agent_token = _active_agent_span.set(span)
     try:
         return await awaitable
     finally:
+        _active_agent_span.reset(agent_token)
         context_api.detach(token)
 
 

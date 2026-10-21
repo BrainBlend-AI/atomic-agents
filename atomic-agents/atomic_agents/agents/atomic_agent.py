@@ -68,6 +68,10 @@ class BasicChatOutputSchema(BaseIOSchema):
 
 class AgentConfig(BaseModel):
     client: instructor.Instructor = Field(..., description="Client for interacting with the language model.")
+    name: Optional[str] = Field(
+        default=None,
+        description="Stable name for this agent in logs and traces, for example the role it plays. Defaults to the class name.",
+    )
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[BaseChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[BaseSystemPromptGenerator] = Field(
@@ -190,6 +194,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Args:
             config (AgentConfig): Configuration for the chat agent.
         """
+        self.name = config.name
         self.client = config.client
         self.model = config.model
         self.history = config.history if config.history is not None else ChatHistory()
