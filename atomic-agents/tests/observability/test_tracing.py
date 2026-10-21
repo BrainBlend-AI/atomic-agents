@@ -992,7 +992,7 @@ def test_tracing_config_environment_and_coercion(monkeypatch):
     assert config == TracingConfig(hide_inputs=True, hide_outputs=True, max_attribute_length=128)
     assert TracingConfig.coerce(None) == config
     assert TracingConfig.coerce(config) is config
-    assert TracingConfig.coerce(TraceConfig(hide_inputs=True)) == TracingConfig(hide_inputs=True)
+    assert TracingConfig.coerce(TraceConfig(hide_inputs=True)) == TracingConfig(hide_inputs=True, max_attribute_length=128)
 
 
 @pytest.mark.parametrize(
@@ -1320,3 +1320,51 @@ def test_tool_parameters_use_the_payload_size_limit(configured_tracing):
     parameters = json.dumps(CalculationInputSchema.model_json_schema())
     assert span.attributes["tool.parameters"] == "...[truncate"
     assert span.attributes["tool.parameters.original_length"] == len(parameters)
+
+
+@pytest.mark.parametrize("value, expected", [("", 4096), ("4k", 4096), ("0", 4096), ("-5", 4096), ("512", 512)])
+@pytest.mark.parametrize("visibility", [None, TraceConfig(hide_inputs=True)])
+def test_attribute_length_environment_is_tolerant(monkeypatch, caplog, value, expected, visibility):
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH", value)
+    with caplog.at_level(logging.WARNING):
+        config = tracing.TracingConfig.coerce(visibility)
+    assert config.max_attribute_length == expected
+    assert config.hide_inputs is (visibility is not None)
+    warnings = [record for record in caplog.records if record.levelno == logging.WARNING]
+    if expected == 4096:
+        assert len(warnings) == 1
+        assert repr(value) in warnings[0].message
+    else:
+        assert warnings == []
+
+
+def test_reinstall_without_config_preserves_redaction(exporter, caplog):
+    config = tracing.TracingConfig(hide_inputs=True, openinference_attributes=False)
+    AtomicAgentsInstrumentor().instrument(tracer_provider=exporter.provider, config=config)
+    other_provider = TracerProvider()
+    other_exporter = InMemorySpanExporter()
+    other_provider.add_span_processor(SimpleSpanProcessor(other_exporter))
+    caplog.clear()
+    try:
+        with caplog.at_level(logging.WARNING):
+            AtomicAgentsInstrumentor().instrument(tracer_provider=other_provider)
+        assert installation._current_installation().config is config
+        assert installation._current_installation().tracer_provider is other_provider
+        make_agent(sync_client()).run(QuestionSchema(question="secret"))
+        assert spans_of(other_exporter)[0].attributes["atomic_agents.input"] == "__REDACTED__"
+        assert len(caplog.records) == 1
+        assert "replaced" in caplog.records[0].message
+    finally:
+        other_provider.shutdown()
+
+
+def test_reinstall_without_provider_preserves_provider(exporter, caplog):
+    config = tracing.TracingConfig(hide_outputs=True)
+    with caplog.at_level(logging.WARNING):
+        AtomicAgentsInstrumentor().instrument(config=config)
+    assert installation._current_installation().tracer_provider is exporter.provider
+    caplog.clear()
+    AtomicAgentsInstrumentor().instrument()
+    assert caplog.records == []
+    make_agent(sync_client()).run(QuestionSchema(question="?"))
+    assert spans_of(exporter)[0].attributes["atomic_agents.output"] == "__REDACTED__"
