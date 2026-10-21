@@ -88,7 +88,7 @@ def test_unknown_launcher_options_preserve_provider_and_privacy(
     assert [exported_attributes(span)[SpanAttributes.OUTPUT_VALUE] for span in spans] == ["__REDACTED__", "__REDACTED__"]
 
 
-def test_loader_skips_missing_openinference_and_continues_without_error(
+def test_loader_skips_missing_opentelemetry_and_continues_without_error(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     instrumentor = installed_entry_point("opentelemetry_instrumentor")
@@ -98,7 +98,7 @@ def test_loader_skips_missing_openinference_and_continues_without_error(
     sentinel.name = "sentinel"
     points = (instrumentor, sentinel)
     monkeypatch.setattr(_load, "entry_points", lambda group: points if group == "opentelemetry_instrumentor" else ())
-    monkeypatch.setattr(observability, "_openinference_is_installed", lambda: False)
+    monkeypatch.setattr(observability, "_opentelemetry_is_installed", lambda: False)
     monkeypatch.delenv("OTEL_PYTHON_DISABLED_INSTRUMENTATIONS", raising=False)
 
     with caplog.at_level(logging.DEBUG):

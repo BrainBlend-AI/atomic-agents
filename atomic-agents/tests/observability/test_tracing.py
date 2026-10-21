@@ -187,7 +187,7 @@ def test_run_emits_agent_span_with_io_and_framework_attributes(exporter):
 
     assert response.answer == "42"
     (span,) = spans_of(exporter)
-    assert span.name == "AtomicAgent[QuestionSchema, AnswerSchema].run"
+    assert span.name == "invoke_agent AtomicAgent"
     assert kind_of(span) == OpenInferenceSpanKindValues.AGENT.value
     assert span.attributes[SpanAttributes.AGENT_NAME] == "AtomicAgent[QuestionSchema, AnswerSchema]"
     assert input_json(span) == {"question": "6*7?"}
@@ -266,7 +266,7 @@ def test_subclassed_agent_is_named_after_the_subclass_and_emits_one_span(exporte
     agent.run(QuestionSchema(question="?"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "ResearchAgent[QuestionSchema, AnswerSchema].run"
+    assert span.name == "invoke_agent ResearchAgent"
 
 
 def test_agent_span_nests_under_a_user_chain_span(exporter, provider_tracer):
@@ -345,7 +345,7 @@ def test_run_stream_records_final_output_and_keeps_child_context_per_step(export
     assert partials == ["4", "42"]
     assert all(span is trace_api.INVALID_SPAN for span in current_between_yields)
     chunk_span, agent_span = spans_of(exporter)
-    assert agent_span.name == "AtomicAgent[QuestionSchema, AnswerSchema].run_stream"
+    assert agent_span.name == "invoke_agent AtomicAgent"
     assert chunk_span.parent.span_id == agent_span.context.span_id
     assert output_json(agent_span) == {"answer": "42"}
     assert agent_span.status.status_code == StatusCode.OK
@@ -426,7 +426,7 @@ async def test_run_async_emits_agent_span(exporter):
 
     assert response.answer == "42"
     (span,) = spans_of(exporter)
-    assert span.name == "AtomicAgent[QuestionSchema, AnswerSchema].run_async"
+    assert span.name == "invoke_agent AtomicAgent"
     assert output_json(span) == {"answer": "42"}
     assert span.status.status_code == StatusCode.OK
 
@@ -446,7 +446,7 @@ async def test_run_async_stream_records_last_partial_and_nests_children(exporter
 
     assert partials == ["4", "42"]
     chunk_span, agent_span = spans_of(exporter)
-    assert agent_span.name == "AtomicAgent[QuestionSchema, AnswerSchema].run_async_stream"
+    assert agent_span.name == "invoke_agent AtomicAgent"
     assert chunk_span.parent.span_id == agent_span.context.span_id
     assert output_json(agent_span) == {"answer": "42"}
 
@@ -484,7 +484,7 @@ def test_tool_defined_before_instrumentation_emits_tool_span(exporter):
 
     assert result.result == "3.0"
     (span,) = spans_of(exporter)
-    assert span.name == "CalculatorTool"
+    assert span.name == "execute_tool CalculatorTool"
     assert kind_of(span) == OpenInferenceSpanKindValues.TOOL.value
     assert span.attributes[SpanAttributes.TOOL_NAME] == "CalculationInputSchema"
     assert span.attributes[SpanAttributes.TOOL_DESCRIPTION] == "Expression to evaluate."
@@ -510,7 +510,7 @@ def test_tool_defined_after_instrumentation_emits_tool_span(exporter):
     LateTool().run(CalculationInputSchema(expression="x"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "LateTool"
+    assert span.name == "execute_tool LateTool"
     assert LateTool().input_schema is CalculationInputSchema
 
 
@@ -522,14 +522,14 @@ def test_subclass_calling_super_run_emits_one_span(exporter):
     LoudCalculatorTool().run(CalculationInputSchema(expression="2*2"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "LoudCalculatorTool"
+    assert span.name == "execute_tool LoudCalculatorTool"
 
 
 def test_sync_run_delegating_to_arun_emits_one_span(exporter):
     AsyncCalculatorTool().run(CalculationInputSchema(expression="2*2"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "AsyncCalculatorTool"
+    assert span.name == "execute_tool AsyncCalculatorTool"
     assert output_json(span) == {"result": "3"}
 
 
@@ -538,7 +538,7 @@ async def test_run_async_delegating_to_thread_emits_one_span(exporter):
     await ThreadedCalculatorTool().run_async(CalculationInputSchema(expression="3*3"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "ThreadedCalculatorTool"
+    assert span.name == "execute_tool ThreadedCalculatorTool"
     assert output_json(span) == {"result": "3"}
 
 
@@ -546,7 +546,7 @@ def test_mixin_defined_run_is_traced(exporter):
     MixinCalculatorTool().run(CalculationInputSchema(expression="x"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "MixinCalculatorTool"
+    assert span.name == "execute_tool MixinCalculatorTool"
 
 
 def test_static_run_is_left_alone(exporter):
@@ -674,31 +674,31 @@ def test_phoenix_entry_point_loads_and_instruments_with_only_a_tracer_provider()
 
 
 @pytest.mark.parametrize("options", [{}, {"skip_dep_check": False}])
-def test_instrument_without_openinference_raises_install_hint(monkeypatch: pytest.MonkeyPatch, options: dict[str, object]):
-    monkeypatch.setattr(observability, "_openinference_is_installed", lambda: False)
+def test_instrument_without_opentelemetry_raises_install_hint(monkeypatch: pytest.MonkeyPatch, options: dict[str, object]):
+    monkeypatch.setattr(observability, "_opentelemetry_is_installed", lambda: False)
 
     with pytest.raises(ImportError, match="atomic-agents\\[observability\\]"):
         AtomicAgentsInstrumentor().instrument(**options)
 
 
-def test_uninstrument_without_openinference_is_a_no_op(monkeypatch):
-    monkeypatch.setattr(observability, "_openinference_is_installed", lambda: False)
+def test_uninstrument_without_opentelemetry_is_a_no_op(monkeypatch):
+    monkeypatch.setattr(observability, "_opentelemetry_is_installed", lambda: False)
 
     AtomicAgentsInstrumentor().uninstrument()
 
     assert not AtomicAgentsInstrumentor().is_instrumented_by_opentelemetry
 
 
-def test_openinference_below_the_floor_disables_tracing_with_a_warning(monkeypatch, caplog):
+def test_openinference_below_the_floor_only_disables_context_with_a_warning(monkeypatch, caplog):
     monkeypatch.setattr(observability, "version", lambda distribution: "0.1.20")
 
     with caplog.at_level(logging.WARNING):
         AtomicAgentsInstrumentor().instrument()
 
     assert "0.1.38 or newer is required" in caplog.text
-    assert not AtomicAgentsInstrumentor().is_instrumented_by_opentelemetry
-    assert AtomicAgent.__dict__["run"].__name__ == "run"
-    assert not hasattr(AtomicAgent.__dict__["run"], tracing.TRACED_MARKER)
+    assert AtomicAgentsInstrumentor().is_instrumented_by_opentelemetry
+    assert tracing._context_attributes() == {}
+    AtomicAgentsInstrumentor().uninstrument()
 
 
 class CountingProvider(BaseDynamicContextProvider):
@@ -790,7 +790,7 @@ def test_forge_style_thread_pool_tool_emits_one_span_in_the_callers_trace(export
         ForgeStyleTool().run(CalculationInputSchema(expression="x"))
 
     tool_span, root_span = spans_of(exporter)
-    assert tool_span.name == "ForgeStyleTool"
+    assert tool_span.name == "execute_tool ForgeStyleTool"
     assert tool_span.parent.span_id == root.get_span_context().span_id
     assert tool_span.context.trace_id == root_span.context.trace_id
 
@@ -812,7 +812,7 @@ def test_mcp_style_generated_tool_class_emits_one_span(exporter):
     GeneratedTool().run(CalculationInputSchema(expression="x"))
 
     (span,) = spans_of(exporter)
-    assert span.name == "GeneratedTool"
+    assert span.name == "execute_tool GeneratedTool"
     assert output_json(span) == {"result": "mcp"}
 
 
@@ -847,5 +847,154 @@ def test_instrument_uninstrument_instrument_cycle_traces_tools_defined_between_c
     finally:
         instrumentor.uninstrument()
 
-    assert [span.name for span in spans_of(exporter)] == ["BetweenCyclesTool"]
+    assert [span.name for span in spans_of(exporter)] == ["execute_tool BetweenCyclesTool"]
     assert BetweenCyclesTool.__dict__["run"] is original_run
+
+
+@pytest.fixture
+def configured_tracing():
+    provider = TracerProvider()
+    exporter = InMemorySpanExporter()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    yield provider, exporter
+    AtomicAgentsInstrumentor().uninstrument()
+    provider.shutdown()
+
+
+@pytest.mark.parametrize("openinference_enabled", [False, True])
+def test_genai_attributes_survive_without_openinference(monkeypatch, configured_tracing, openinference_enabled):
+    provider, exporter = configured_tracing
+    monkeypatch.setattr(tracing, "_import_context_attributes", lambda: None)
+    config = tracing.TracingConfig(openinference_attributes=True if openinference_enabled else None)
+    AtomicAgentsInstrumentor().instrument(tracer_provider=provider, config=config)
+    client = sync_client()
+    client.provider = types.SimpleNamespace(value="openai")
+    make_agent(client).run(QuestionSchema(question="question"))
+    CalculatorTool().run(CalculationInputSchema(expression="1+1"))
+
+    agent_span, tool_span = spans_of(exporter)
+    assert [agent_span.name, tool_span.name] == ["invoke_agent AtomicAgent", "execute_tool CalculatorTool"]
+    assert agent_span.attributes["gen_ai.operation.name"] == "invoke_agent"
+    assert agent_span.attributes["gen_ai.agent.name"] == "AtomicAgent"
+    assert agent_span.attributes["gen_ai.request.model"] == "test-model"
+    assert agent_span.attributes["gen_ai.provider.name"] == "openai"
+    assert agent_span.attributes["atomic_agents.agent.class"] == "AtomicAgent[QuestionSchema, AnswerSchema]"
+    assert json.loads(agent_span.attributes["atomic_agents.input"]) == {"question": "question"}
+    assert json.loads(agent_span.attributes["atomic_agents.output"]) == {"answer": "42"}
+    assert tool_span.attributes["gen_ai.operation.name"] == "execute_tool"
+    assert tool_span.attributes["gen_ai.tool.name"] == "CalculatorTool"
+    assert tool_span.attributes["gen_ai.tool.description"] == "Expression to evaluate."
+    assert tool_span.attributes["gen_ai.tool.type"] == "function"
+    assert json.loads(tool_span.attributes["gen_ai.tool.call.arguments"]) == {"expression": "1+1"}
+    assert json.loads(tool_span.attributes["gen_ai.tool.call.result"]) == {"result": "3.00"}
+    assert ("openinference.span.kind" in agent_span.attributes) is openinference_enabled
+    assert ("openinference.span.kind" in tool_span.attributes) is openinference_enabled
+    if openinference_enabled:
+        assert agent_span.attributes["input.value"] == agent_span.attributes["atomic_agents.input"]
+        assert tool_span.attributes["input.value"] == tool_span.attributes["gen_ai.tool.call.arguments"]
+        assert tool_span.attributes["output.value"] == tool_span.attributes["gen_ai.tool.call.result"]
+    else:
+        assert not ({"input.value", "output.value", "agent.name"} & agent_span.attributes.keys())
+        assert not ({"input.value", "output.value", "tool.name", "tool.parameters"} & tool_span.attributes.keys())
+
+
+@pytest.mark.parametrize("config_class", [tracing.TracingConfig, TraceConfig])
+def test_both_visibility_configs_redact_primary_payloads(configured_tracing, config_class):
+    provider, exporter = configured_tracing
+    AtomicAgentsInstrumentor().instrument(tracer_provider=provider, config=config_class(hide_inputs=True, hide_outputs=True))
+    make_agent(sync_client()).run(QuestionSchema(question="secret"))
+    CalculatorTool().run(CalculationInputSchema(expression="secret"))
+
+    agent_span, tool_span = spans_of(exporter)
+    assert agent_span.attributes["atomic_agents.input"] == "__REDACTED__"
+    assert agent_span.attributes["atomic_agents.output"] == "__REDACTED__"
+    assert tool_span.attributes["gen_ai.tool.call.arguments"] == "__REDACTED__"
+    assert tool_span.attributes["gen_ai.tool.call.result"] == "__REDACTED__"
+
+
+@pytest.mark.parametrize("hide_outputs", [False, True])
+def test_large_tool_result_is_truncated_unless_hidden(configured_tracing, hide_outputs):
+    provider, exporter = configured_tracing
+    AtomicAgentsInstrumentor().instrument(
+        tracer_provider=provider, config=tracing.TracingConfig(hide_outputs=hide_outputs, openinference_attributes=True)
+    )
+
+    class LargeResultTool(BaseTool[CalculationInputSchema, CalculationOutputSchema]):
+        def run(self, params: CalculationInputSchema) -> CalculationOutputSchema:
+            return CalculationOutputSchema(result="x" * 10240)
+
+    result = LargeResultTool().run(CalculationInputSchema(expression="large"))
+    (span,) = spans_of(exporter)
+    serialized = result.model_dump_json()
+    expected = "__REDACTED__" if hide_outputs else serialized[:4096] + "...[truncated]"
+    assert span.attributes["gen_ai.tool.call.result"] == expected
+    assert span.attributes["output.value"] == expected
+    if hide_outputs:
+        assert "gen_ai.tool.call.result.original_length" not in span.attributes
+        assert "output.value.original_length" not in span.attributes
+    else:
+        assert span.attributes["gen_ai.tool.call.result.original_length"] == len(serialized)
+        assert span.attributes["output.value.original_length"] == len(serialized)
+
+
+@pytest.mark.parametrize("agent_method", ["run", "run_async", "run_stream", "run_async_stream"])
+@pytest.mark.asyncio
+async def test_suppression_skips_agent_and_tool_spans(exporter, agent_method):
+    from opentelemetry import context
+
+    client = async_client() if "async" in agent_method else sync_client()
+    agent = make_agent(client)
+    token = context.attach(context.set_value("suppress_instrumentation", True))
+    try:
+        result = getattr(agent, agent_method)(QuestionSchema(question="suppressed"))
+        assert await final_agent_answer(agent_method, result) == "42"
+        assert CalculatorTool().run(CalculationInputSchema(expression="1+1")).result == "3.00"
+        assert (await ThreadedCalculatorTool().run_async(CalculationInputSchema(expression="1+1"))).result == "3"
+    finally:
+        context.detach(token)
+    assert spans_of(exporter) == []
+
+
+def test_failures_record_qualified_error_type(exporter):
+    client = sync_client()
+    client.chat.completions.create.side_effect = ValueError("agent failure")
+    with pytest.raises(ValueError, match="agent failure"):
+        make_agent(client).run(QuestionSchema(question="fail"))
+    with pytest.raises(ValueError, match="boom"):
+        FailingTool().run(CalculationInputSchema(expression="fail"))
+    for span in spans_of(exporter):
+        assert span.attributes["error.type"] == "ValueError"
+        assert span.status.status_code == StatusCode.ERROR
+        assert len(span.events) == 1
+
+
+def test_tracing_config_environment_and_coercion(monkeypatch):
+    monkeypatch.setenv("OPENINFERENCE_HIDE_INPUTS", "TrUe")
+    monkeypatch.setenv("OPENINFERENCE_HIDE_OUTPUTS", "1")
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH", "128")
+    from atomic_agents.observability import TracingConfig
+
+    config = TracingConfig.from_environment()
+    assert config == TracingConfig(hide_inputs=True, hide_outputs=True, max_attribute_length=128)
+    assert TracingConfig.coerce(None) == config
+    assert TracingConfig.coerce(config) is config
+    assert TracingConfig.coerce(TraceConfig(hide_inputs=True)) == TracingConfig(hide_inputs=True)
+
+
+def test_session_is_mirrored_to_genai_conversation(exporter):
+    with using_session("session-1"):
+        make_agent(sync_client()).run(QuestionSchema(question="?"))
+        CalculatorTool().run(CalculationInputSchema(expression="?"))
+    for span in spans_of(exporter):
+        assert span.attributes["gen_ai.conversation.id"] == "session-1"
+
+
+async def final_agent_answer(agent_method, result):
+    if agent_method == "run_async":
+        return (await result).answer
+    elif agent_method == "run_stream":
+        return list(result)[-1].answer
+    elif agent_method == "run_async_stream":
+        return [partial async for partial in result][-1].answer
+    else:
+        return result.answer
