@@ -37,9 +37,11 @@ class _Response(Protocol):
 
 
 class _HookClient(Protocol):
-    def on(self, event: str, handler: Callable[..., None]) -> object: ...
+    def on(self, event: str, handler: Callable[..., None]) -> object:
+        """Append a handler without replacing application hooks."""
 
-    def off(self, event: str, handler: Callable[..., None]) -> object: ...
+    def off(self, event: str, handler: Callable[..., None]) -> object:
+        """Remove only this handler, preserving application hooks."""
 
 
 @dataclass
