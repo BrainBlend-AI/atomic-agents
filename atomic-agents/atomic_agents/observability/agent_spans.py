@@ -12,7 +12,7 @@ from opentelemetry.trace import Span, Status, StatusCode
 
 from atomic_agents.agents.atomic_agent import AtomicAgent
 
-from . import installation
+from . import installation, llm_attempt_spans
 from .span_attributes import ATTR_STREAM_CLOSED_EARLY, _agent_display_name, _agent_start_attributes, _suppressed
 from .span_payloads import _record_failure, _set_input_safely, _set_output_safely
 
@@ -51,13 +51,16 @@ def _agent_span(agent: AtomicAgent, args: tuple, kwargs: dict) -> Iterator[Span]
         set_status_on_exception=False,
     ) as span:
         _set_input_safely(span, _user_input_from_call(args, kwargs))
+        run = llm_attempt_spans.new_run(span, agent)
         token = _active_agent_span.set(span)
         try:
-            yield span
+            with llm_attempt_spans.active_run(run):
+                yield span
         except BaseException as error:
             _record_failure(span, error)
             raise
         finally:
+            llm_attempt_spans.finish_attempt(run)
             _active_agent_span.reset(token)
 
 
@@ -98,43 +101,48 @@ def _start_agent_span(agent: AtomicAgent, method_name: str, args: tuple, kwargs:
     return span
 
 
-def _call_within_span(span: Any, function: Callable, *args: Any) -> Any:
+def _call_within_span(run: llm_attempt_spans._AgentRun, function: Callable, *args: Any) -> Any:
+    span = run.span
     token = context_api.attach(trace_api.set_span_in_context(span))
     agent_token = _active_agent_span.set(span)
     try:
-        return function(*args)
+        with llm_attempt_spans.active_run(run):
+            return function(*args)
     finally:
         _active_agent_span.reset(agent_token)
         context_api.detach(token)
 
 
-async def _await_within_span(span: Any, awaitable: Any) -> Any:
+async def _await_within_span(run: llm_attempt_spans._AgentRun, awaitable: Any) -> Any:
+    span = run.span
     token = context_api.attach(trace_api.set_span_in_context(span))
     agent_token = _active_agent_span.set(span)
     try:
-        return await awaitable
+        with llm_attempt_spans.active_run(run):
+            return await awaitable
     finally:
         _active_agent_span.reset(agent_token)
         context_api.detach(token)
 
 
 class _SyncStreamCursor:
-    def __init__(self, span: Any, inner: Generator):
-        self.span = span
+    def __init__(self, run: llm_attempt_spans._AgentRun, inner: Generator):
+        self.run = run
+        self.span = run.span
         self.inner = inner
         self.last: Any = None
         self.final: Any = None
 
     def advance(self) -> bool:
         try:
-            self.last = _call_within_span(self.span, next, self.inner)
+            self.last = _call_within_span(self.run, next, self.inner)
         except StopIteration as stop:
             self.final = stop.value
             return False
         return True
 
     def close_early(self) -> None:
-        _call_within_span(self.span, self.inner.close)
+        _call_within_span(self.run, self.inner.close)
         _mark_closed_early(self.span, self.last)
         self.span.set_status(Status(StatusCode.OK))
 
@@ -142,20 +150,21 @@ class _SyncStreamCursor:
 class _AsyncStreamCursor:
     """Async twin of :class:`_SyncStreamCursor`; async generators carry no return value, so the last partial is the output."""
 
-    def __init__(self, span: Any, inner: AsyncGenerator):
-        self.span = span
+    def __init__(self, run: llm_attempt_spans._AgentRun, inner: AsyncGenerator):
+        self.run = run
+        self.span = run.span
         self.inner = inner
         self.last: Any = None
 
     async def advance(self) -> bool:
         try:
-            self.last = await _await_within_span(self.span, self.inner.__anext__())
+            self.last = await _await_within_span(self.run, self.inner.__anext__())
         except StopAsyncIteration:
             return False
         return True
 
     async def close_early(self) -> None:
-        await _await_within_span(self.span, self.inner.aclose())
+        await _await_within_span(self.run, self.inner.aclose())
         _mark_closed_early(self.span, self.last)
         self.span.set_status(Status(StatusCode.OK))
 
@@ -167,7 +176,8 @@ def _trace_agent_stream(method_name: str, wrapped: Callable) -> Callable:
     @functools.wraps(wrapped)
     def traced(agent, *args, **kwargs):
         span = _start_agent_span(agent, method_name, args, kwargs)
-        cursor = _SyncStreamCursor(span, wrapped(agent, *args, **kwargs))
+        run = llm_attempt_spans.new_run(span, agent)
+        cursor = _SyncStreamCursor(run, wrapped(agent, *args, **kwargs))
         try:
             while cursor.advance():
                 yield cursor.last
@@ -180,6 +190,7 @@ def _trace_agent_stream(method_name: str, wrapped: Callable) -> Callable:
             _record_failure(span, error)
             raise
         finally:
+            llm_attempt_spans.finish_attempt(run)
             span.end()
 
     return traced
@@ -189,7 +200,8 @@ def _trace_agent_async_stream(method_name: str, wrapped: Callable) -> Callable:
     @functools.wraps(wrapped)
     async def traced(agent, *args, **kwargs):
         span = _start_agent_span(agent, method_name, args, kwargs)
-        cursor = _AsyncStreamCursor(span, wrapped(agent, *args, **kwargs))
+        run = llm_attempt_spans.new_run(span, agent)
+        cursor = _AsyncStreamCursor(run, wrapped(agent, *args, **kwargs))
         try:
             while await cursor.advance():
                 yield cursor.last
@@ -204,6 +216,7 @@ def _trace_agent_async_stream(method_name: str, wrapped: Callable) -> Callable:
             _record_failure(span, error)
             raise
         finally:
+            llm_attempt_spans.finish_attempt(run)
             span.end()
 
     return traced
