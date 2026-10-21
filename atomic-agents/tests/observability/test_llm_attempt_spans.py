@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import instructor
 import pytest
 from instructor.core.hooks import Hooks
-from opentelemetry import trace as trace_api
+from opentelemetry import context as context_api, trace as trace_api
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -377,3 +377,33 @@ def test_partial_registration_is_rolled_back(exporter):
     client.on.side_effect = client.hooks.on
     llm_attempt_spans.register_client(client)
     assert all(len(handlers) == 1 for handlers in client.hooks._handlers.values())
+
+
+@pytest.mark.parametrize("completion", ["response", "error"])
+def test_suppressed_attempt_events_are_ignored_then_normal_attempt_works(exporter, completion):
+    def script(hooks, kwargs):
+        run = llm_attempt_spans._active_run.get()
+        token = context_api.attach(context_api.set_value("suppress_instrumentation", True))
+        try:
+            hooks.emit_completion_arguments(**kwargs)
+        finally:
+            context_api.detach(token)
+        if completion == "response":
+            hooks.emit_completion_response(response())
+        else:
+            hooks.emit_completion_error(ValueError("suppressed"), attempt_number=1, max_attempts=2, is_last_attempt=False)
+        hooks.emit_parse_error(ValueError("suppressed"))
+        hooks.emit_completion_usage(usage(99, 99), attempt_number=1)
+        assert run.attempt_count == 0
+        assert run.open_attempt is None
+        assert not exporter.get_finished_spans()
+        hooks.emit_completion_arguments(**kwargs)
+        hooks.emit_completion_response(response())
+        hooks.emit_completion_usage(usage(), attempt_number=2)
+
+    run_agent(scripted_client(script))
+    child, parent = finished_spans(exporter, 2)
+    assert child.attributes["atomic_agents.llm.attempt"] == 1
+    assert parent.attributes["atomic_agents.llm.attempts"] == 1
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 3
+    assert not parent.events

@@ -52,6 +52,7 @@ class _AgentRun:
     config: TracingConfig
     provider: dict[str, AttributeValue]
     attempt_count: int = 0
+    suppressed_attempt: bool = False
     open_attempt: Span | None = None
     context_token: contextvars.Token | None = None
 
@@ -156,6 +157,10 @@ def _completion_kwargs(*args: object, **kwargs: object) -> None:
     if run is None:
         return
     finish_attempt(run)
+    # Suppressed kwargs must also swallow later response and usage outside that context.
+    run.suppressed_attempt = bool(context_api.get_value("suppress_instrumentation"))
+    if run.suppressed_attempt:
+        return
     run.attempt_count += 1
     if not run.config.llm_spans:
         return
@@ -184,7 +189,7 @@ def _usage_attributes(usage: _Usage | None) -> dict[str, int]:
 @_never_raise
 def _completion_response(response: _Response, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None:
+    if run is None or run.suppressed_attempt:
         return
     attributes = _without_none({_RESPONSE_MODEL: getattr(response, "model", None)})
     run.span.set_attributes(attributes)
@@ -202,7 +207,7 @@ def _complete_response_attempt(run: _AgentRun, response: _Response, attributes: 
 @_never_raise
 def _completion_error(error: BaseException, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None or run.open_attempt is None:
+    if run is None or run.suppressed_attempt or run.open_attempt is None:
         return
     message = _bounded_text(_failure_message(error, run.config), run.config)
     run.open_attempt.set_attribute("error.type", type(error).__qualname__)
@@ -213,7 +218,7 @@ def _completion_error(error: BaseException, **kwargs: object) -> None:
 @_never_raise
 def _parse_error(error: BaseException, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None:
+    if run is None or run.suppressed_attempt:
         return
     text = "__REDACTED__" if run.config.hide_outputs else _failure_message(error, run.config)
     _write_payload(run.span, _VALIDATION_ERROR, None, text, run.config.hide_outputs, run.config)
@@ -223,10 +228,10 @@ def _parse_error(error: BaseException, **kwargs: object) -> None:
 @_never_raise
 def _completion_usage(usage: _Usage, *, attempt_number: int, **kwargs: object) -> None:
     run = _active_run.get()
-    if run is None:
+    if run is None or run.suppressed_attempt:
         return
     run.span.set_attributes(_usage_attributes(usage))
-    run.span.set_attribute("atomic_agents.llm.attempts", attempt_number)
+    run.span.set_attribute("atomic_agents.llm.attempts", run.attempt_count)
 
 
 _HANDLERS: dict[str, Callable[..., None]] = {
