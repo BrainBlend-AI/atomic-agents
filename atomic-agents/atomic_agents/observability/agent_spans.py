@@ -65,7 +65,7 @@ def _agent_span(agent: AtomicAgent, args: tuple[object, ...], kwargs: dict[str, 
             _record_failure(span, error)
             raise
         finally:
-            llm_attempt_spans.finish_attempt(run)
+            llm_attempt_spans.finish_run(run)
             _active_agent_span.reset(token)
 
 
@@ -203,7 +203,7 @@ def _trace_agent_stream(
             _record_failure(span, error)
             raise
         finally:
-            llm_attempt_spans.finish_attempt(run)
+            llm_attempt_spans.finish_run(run)
             span.end()
 
     return traced
@@ -231,7 +231,7 @@ def _trace_agent_async_stream(
             _record_failure(span, error)
             raise
         finally:
-            llm_attempt_spans.finish_attempt(run)
+            llm_attempt_spans.finish_run(run)
             span.end()
 
     return traced

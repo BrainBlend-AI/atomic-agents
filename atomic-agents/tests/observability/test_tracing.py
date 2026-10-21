@@ -940,7 +940,7 @@ def test_large_tool_result_is_truncated_unless_hidden(configured_tracing, hide_o
     result = LargeResultTool().run(CalculationInputSchema(expression="large"))
     (span,) = spans_of(exporter)
     serialized = result.model_dump_json()
-    expected = "__REDACTED__" if hide_outputs else serialized[:4096] + "...[truncated]"
+    expected = "__REDACTED__" if hide_outputs else serialized[: 4096 - len("...[truncated]")] + "...[truncated]"
     assert span.attributes["gen_ai.tool.call.result"] == expected
     assert span.attributes["output.value"] == expected
     if hide_outputs:
@@ -1270,11 +1270,11 @@ def test_error_status_and_recorded_message_are_bounded(configured_tracing):
     with pytest.raises(ValueError) as raised, agent_spans._agent_span(agent, (), {}):
         raise error
     (span,) = spans_of(exporter)
-    expected = str(error)[:12] + "...[truncated]"
+    expected = "...[truncate"
     assert raised.value is error
     assert span.status.description == expected
     assert span.events[0].attributes["exception.message"] == expected
-    assert len(span.events[0].attributes["exception.stacktrace"]) <= 12 + len("...[truncated]")
+    assert len(span.events[0].attributes["exception.stacktrace"]) <= 12
 
 
 def test_hidden_validation_errors_do_not_export_model_output(configured_tracing):
@@ -1299,5 +1299,5 @@ def test_tool_parameters_use_the_payload_size_limit(configured_tracing):
     CalculatorTool().run(CalculationInputSchema(expression="x"))
     (span,) = spans_of(exporter)
     parameters = json.dumps(CalculationInputSchema.model_json_schema())
-    assert span.attributes["tool.parameters"] == parameters[:12] + "...[truncated]"
+    assert span.attributes["tool.parameters"] == "...[truncate"
     assert span.attributes["tool.parameters.original_length"] == len(parameters)

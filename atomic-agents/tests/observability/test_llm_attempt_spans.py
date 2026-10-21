@@ -11,8 +11,11 @@ from opentelemetry import context as context_api, trace as trace_api
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.trace import StatusCode
+from opentelemetry.trace import SpanKind, StatusCode
 from pydantic import ValidationError
+from instructor.core.exceptions import InstructorRetryException
+
+from instructor_transport import ScriptedResponse, instructor_client
 
 from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema
 from atomic_agents.observability import TracingConfig, using_conversation
@@ -42,12 +45,7 @@ def exporter():
 
 
 def usage(input_tokens=3, output_tokens=2):
-    return SimpleNamespace(
-        prompt_tokens=input_tokens,
-        completion_tokens=output_tokens,
-        prompt_tokens_details=SimpleNamespace(cached_tokens=1),
-        completion_tokens_details=SimpleNamespace(reasoning_tokens=2),
-    )
+    return ScriptedResponse(input_tokens=input_tokens, output_tokens=output_tokens).chat_usage()
 
 
 def finished_spans(exporter, count):
@@ -84,11 +82,9 @@ def agent(client):
 def retry_script(hooks, kwargs):
     hooks.emit_completion_arguments(**kwargs)
     hooks.emit_completion_response(response())
-    hooks.emit_completion_usage(usage(), attempt_number=1)
     hooks.emit_parse_error(ValueError("invalid output"))
     hooks.emit_completion_arguments(**kwargs)
     hooks.emit_completion_response(response())
-    hooks.emit_completion_usage(usage(6, 4), attempt_number=2)
 
 
 def run_agent(client):
@@ -96,14 +92,20 @@ def run_agent(client):
 
 
 def test_retry_spans_usage_validation_and_parentage(exporter):
-    client = scripted_client(retry_script)
+    client = instructor_client(
+        instructor.Mode.TOOLS, [ScriptedResponse(arguments='{"answer": {"secret": "private output"}}'), ScriptedResponse()]
+    )
     with using_conversation("conversation"):
         run_agent(client)
     first, second, parent = finished_spans(exporter, 3)
     assert [first.name, second.name] == ["chat test-model", "chat test-model"]
     assert [first.attributes["atomic_agents.llm.attempt"], second.attributes["atomic_agents.llm.attempt"]] == [1, 2]
     assert first.parent.span_id == second.parent.span_id == parent.context.span_id
-    assert first.status.status_code == second.status.status_code == StatusCode.OK
+    assert first.status.status_code == StatusCode.ERROR
+    assert second.status.status_code == StatusCode.OK
+    assert first.kind == second.kind == SpanKind.CLIENT
+    assert first.events[0].name == "validation_error"
+    assert first.attributes["error.type"] == "ValidationError"
     assert first.attributes["gen_ai.provider.name"] == "openai"
     assert first.attributes["gen_ai.conversation.id"] == "conversation"
     assert first.attributes["gen_ai.usage.input_tokens"] == second.attributes["gen_ai.usage.input_tokens"] == 3
@@ -113,7 +115,7 @@ def test_retry_spans_usage_validation_and_parentage(exporter):
     assert parent.attributes["gen_ai.usage.input_tokens"] == 6
     assert parent.attributes["gen_ai.usage.output_tokens"] == 4
     assert parent.attributes.get("atomic_agents.llm.attempts") == 2
-    assert parent.attributes["atomic_agents.llm.last_validation_error"] == "invalid output"
+    assert "private output" in parent.attributes["atomic_agents.llm.last_validation_error"]
     assert parent.attributes["gen_ai.response.model"] == first.attributes["gen_ai.response.model"] == "response-model"
     event = parent.events[0]
     assert event.name == "validation_error"
@@ -133,7 +135,7 @@ def test_completion_error_is_bounded_and_ends_attempt(exporter):
     installed = installation._current_installation()
     installation.install(tracer_provider=installed.tracer_provider, config=TracingConfig(max_attribute_length=32))
     error = ValueError("failed " * 20)
-    expected = str(error)[:32] + "...[truncated]"
+    expected = str(error)[:18] + "...[truncated]"
 
     def script(hooks, kwargs):
         hooks.emit_completion_arguments(**kwargs)
@@ -144,10 +146,10 @@ def test_completion_error_is_bounded_and_ends_attempt(exporter):
     child, parent = finished_spans(exporter, 2)
     assert child.status.status_code == StatusCode.ERROR
     assert child.attributes["error.type"] == "ValueError"
-    assert child.events[0].attributes["exception.message"] == expected
-    assert child.events[0].attributes["exception.stacktrace"] == expected
+    assert child.events[-1].attributes["exception.message"] == expected
+    assert len(child.events[-1].attributes["exception.stacktrace"]) <= 32
     assert child.status.description == expected
-    assert len(child.status.description) == 32 + len("...[truncated]")
+    assert len(child.status.description) == 32
     assert parent.attributes["atomic_agents.llm.last_validation_error"] == expected
     assert parent.attributes["atomic_agents.llm.last_validation_error.original_length"] == len(str(error))
     assert parent.status.status_code == StatusCode.OK
@@ -159,10 +161,10 @@ def test_registration_once_and_uninstall_preserves_application_hooks(exporter):
     client.hooks.on("completion:response", application_hook)
     for _ in range(3):
         run_agent(client)
-    assert client.on.call_count == 5
+    assert client.on.call_count == 4
     assert application_hook.call_count == 6
     installation.uninstall()
-    assert client.off.call_count == 5
+    assert client.off.call_count == 4
     client.hooks.emit_completion_response(response())
     assert application_hook.call_count == 7
     assert not llm_attempt_spans._clients
@@ -176,8 +178,7 @@ def test_concurrent_shared_client_runs_are_isolated(exporter, asynchronous):
         async def complete(agent, *args, **kwargs):
             client.hooks.emit_completion_arguments(model="test-model")
             await asyncio.sleep(0)
-            client.hooks.emit_completion_response(response())
-            client.hooks.emit_completion_usage(usage(number), attempt_number=1)
+            client.hooks.emit_completion_response(SimpleNamespace(model="response-model", usage=usage(number)))
             return Answer(answer="ok")
 
         if asynchronous:
@@ -257,9 +258,9 @@ def test_validation_text_redacted_and_anthropic_usage(exporter):
         hooks.emit_completion_arguments(**kwargs)
         with pytest.raises(ValidationError) as invalid:
             Answer.model_validate({"answer": {"secret": "private output"}})
+        hooks.emit_completion_response(SimpleNamespace(model="response-model", usage=usage(9, 4)))
         hooks.emit_parse_error(invalid.value)
         hooks.emit_completion_error(invalid.value, attempt_number=1, max_attempts=1, is_last_attempt=True)
-        hooks.emit_completion_usage(SimpleNamespace(input_tokens=9, output_tokens=4), attempt_number=1)
 
     run_agent(scripted_client(script))
     child, parent = finished_spans(exporter, 2)
@@ -267,8 +268,8 @@ def test_validation_text_redacted_and_anthropic_usage(exporter):
     assert parent.events[0].attributes["atomic_agents.llm.last_validation_error"] == "__REDACTED__"
     assert parent.attributes["gen_ai.usage.input_tokens"] == 9
     assert child.status.description == "ValidationError: 1 errors (__REDACTED__)"
-    assert child.events[0].attributes["exception.message"] == child.status.description
-    assert child.events[0].attributes["exception.stacktrace"] == child.status.description
+    assert child.events[-1].attributes["exception.message"] == child.status.description
+    assert "ValidationError: 1 errors (__REDACTED__)" in child.events[-1].attributes["exception.stacktrace"]
     assert "private output" not in str(child.events)
 
 
@@ -332,11 +333,10 @@ def test_validation_text_truncation_and_extra_hook_keywords(exporter):
         hooks.emit_completion_arguments(**kwargs)
         llm_attempt_spans._parse_error(ValueError("long error"), future_option=True)
         llm_attempt_spans._completion_response(response(), future_option=True)
-        llm_attempt_spans._completion_usage(usage(), attempt_number=1, future_option=True)
 
     run_agent(scripted_client(script))
     child, parent = finished_spans(exporter, 2)
-    assert parent.attributes["atomic_agents.llm.last_validation_error"] == "long...[truncated]"
+    assert parent.attributes["atomic_agents.llm.last_validation_error"] == "...["
     assert parent.attributes["atomic_agents.llm.last_validation_error.original_length"] == 10
 
 
@@ -373,7 +373,7 @@ def test_threaded_first_use_registers_once_and_uninstalls(exporter, monkeypatch)
             release_registration.set()
         first.result(timeout=5)
         second.result(timeout=5)
-    assert len(client.hooks._handlers) == 5
+    assert len(client.hooks._handlers) == 4
     assert all(len(handlers) == 1 for handlers in client.hooks._handlers.values())
     installation.uninstall()
     assert all(not handlers for handlers in client.hooks._handlers.values())
@@ -410,13 +410,11 @@ def test_suppressed_attempt_events_are_ignored_then_normal_attempt_works(exporte
         else:
             hooks.emit_completion_error(ValueError("suppressed"), attempt_number=1, max_attempts=2, is_last_attempt=False)
         hooks.emit_parse_error(ValueError("suppressed"))
-        hooks.emit_completion_usage(usage(99, 99), attempt_number=1)
         assert run.attempt_count == 0
         assert run.open_attempt is None
         assert not exporter.get_finished_spans()
         hooks.emit_completion_arguments(**kwargs)
         hooks.emit_completion_response(response())
-        hooks.emit_completion_usage(usage(), attempt_number=2)
 
     run_agent(scripted_client(script))
     child, parent = finished_spans(exporter, 2)
@@ -424,3 +422,118 @@ def test_suppressed_attempt_events_are_ignored_then_normal_attempt_works(exporte
     assert parent.attributes["atomic_agents.llm.attempts"] == 1
     assert parent.attributes["gen_ai.usage.input_tokens"] == 3
     assert not parent.events
+
+
+@pytest.mark.parametrize(
+    "mode", [instructor.Mode.TOOLS, instructor.Mode.JSON, instructor.Mode.JSON_SCHEMA, instructor.Mode.RESPONSES_TOOLS]
+)
+def test_real_transport_usage_is_accumulated_per_response(exporter, mode):
+    client = instructor_client(
+        mode,
+        [
+            ScriptedResponse(arguments='{"answer": {"private": "model text"}}'),
+            ScriptedResponse(input_tokens=7, output_tokens=5, cached_tokens=3, reasoning_tokens=4),
+        ],
+    )
+    assert run_agent(client).answer == "42"
+    first, second, parent = finished_spans(exporter, 3)
+    assert first.status.status_code == StatusCode.ERROR
+    assert first.events[0].name == "validation_error"
+    assert second.status.status_code == StatusCode.OK
+    assert first.attributes["gen_ai.usage.input_tokens"] == 3
+    assert second.attributes["gen_ai.usage.input_tokens"] == 7
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 10
+    assert parent.attributes["gen_ai.usage.output_tokens"] == 7
+    assert parent.attributes["gen_ai.usage.cache_read.input_tokens"] == 4
+    assert parent.attributes["gen_ai.usage.reasoning.output_tokens"] == 6
+    assert parent.attributes["atomic_agents.llm.attempts"] == 2
+    assert "completion:usage" not in llm_attempt_spans._HANDLERS
+
+
+@pytest.mark.parametrize("hidden", [False, True])
+def test_real_retry_exhaustion_redacts_or_bounds_every_exception(exporter, hidden):
+    installed = installation._current_installation()
+    installation.install(
+        tracer_provider=installed.tracer_provider, config=TracingConfig(hide_outputs=hidden, max_attribute_length=256)
+    )
+    secret = "private model text " * 100
+    client = instructor_client(
+        instructor.Mode.TOOLS, [ScriptedResponse(arguments='{"answer": {"secret": "' + secret + '"}}')] * 3
+    )
+    configured = agent(client)
+    configured.model_api_parameters["max_retries"] = 2
+    with pytest.raises(InstructorRetryException):
+        configured.run(Question(question="test"))
+    first, second, third, parent = finished_spans(exporter, 4)
+    assert parent.status.status_code == StatusCode.ERROR
+    assert parent.attributes["atomic_agents.llm.attempts"] == 3
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 9
+    message = parent.events[-1].attributes["exception.message"]
+    assert len(message) <= 256
+    assert len(parent.status.description) <= 256
+    assert len(parent.events[-1].attributes["exception.stacktrace"]) <= 256
+    if hidden:
+        assert message == parent.status.description == "InstructorRetryException: 3 attempts (__REDACTED__)"
+        assert "private model text" not in str(parent.events)
+        assert "private model text" not in str(first.events) + str(second.events) + str(third.events)
+        assert (
+            first.events[0].attributes["atomic_agents.llm.last_validation_error"] == "ValidationError: 1 errors (__REDACTED__)"
+        )
+    else:
+        assert message.endswith("...[truncated]")
+
+
+def test_direct_instructor_calls_inside_run_add_to_agent_totals(exporter):
+    client = instructor_client(instructor.Mode.TOOLS, [ScriptedResponse(), ScriptedResponse(input_tokens=11)])
+
+    def call_twice(configured):
+        for _ in range(2):
+            client.chat.completions.create(
+                model="test-model", response_model=Answer, messages=[{"role": "user", "content": "test"}]
+            )
+        return Answer(answer="42")
+
+    agent_spans._trace_agent_call(call_twice)(agent(client))
+    first, second, parent = finished_spans(exporter, 3)
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 14
+    assert parent.attributes["atomic_agents.llm.attempts"] == 2
+    assert first.parent.span_id == second.parent.span_id == parent.context.span_id
+
+
+def test_missing_model_and_final_completion_error_still_count(exporter):
+    def script(hooks, kwargs):
+        hooks.emit_completion_arguments()
+        hooks.emit_completion_response(response())
+        hooks.emit_completion_arguments()
+        hooks.emit_completion_error(RuntimeError("transport failed"))
+
+    run_agent(scripted_client(script))
+    first, second, parent = finished_spans(exporter, 3)
+    assert first.name == second.name == "chat"
+    assert first.kind == second.kind == SpanKind.CLIENT
+    assert second.status.status_code == StatusCode.ERROR
+    assert parent.attributes["atomic_agents.llm.attempts"] == 2
+    assert parent.attributes["gen_ai.usage.input_tokens"] == 3
+
+
+@pytest.mark.parametrize("chain", ["__cause__", "__context__"])
+def test_wrapped_validation_error_and_tool_exception_are_redacted(exporter, chain):
+    from atomic_agents.observability import tool_spans
+    from atomic_agents.base.base_tool import BaseTool
+
+    installed = installation._current_installation()
+    installation.install(tracer_provider=installed.tracer_provider, config=TracingConfig(hide_outputs=True))
+    with pytest.raises(ValidationError) as invalid:
+        Answer.model_validate({"answer": {"secret": "private model text"}})
+    wrapped = RuntimeError("private wrapper text")
+    setattr(wrapped, chain, invalid.value)
+    with pytest.raises(RuntimeError), tool_spans._tool_span(Mock(spec=BaseTool, tool_name="test"), (), {}):
+        raise wrapped
+    (span,) = finished_spans(exporter, 1)
+    assert span.status.description == "RuntimeError: 1 errors (__REDACTED__)"
+    assert span.events[0].attributes["exception.message"] == span.status.description
+    stacktrace = span.events[0].attributes["exception.stacktrace"]
+    assert "Traceback (most recent call last)" in stacktrace
+    assert stacktrace.rstrip().endswith(span.status.description)
+    assert "private model text" not in stacktrace
+    assert "private wrapper text" not in stacktrace
