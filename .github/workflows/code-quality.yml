@@ -205,7 +205,7 @@ jobs:
       - name: Resolve runtime dependencies at their declared floors
         run: |
           echo 'opentelemetry-instrumentation==0.51b0' > telemetry-test-requirements.txt
-          uv pip compile pyproject.toml telemetry-test-requirements.txt --resolution lowest-direct --extra observability -o lowest-requirements.txt
+          uv pip compile pyproject.toml telemetry-test-requirements.txt --resolution lowest-direct --extra observability --extra phoenix -o lowest-requirements.txt
 
       - name: Install the floors plus current test tooling
         run: |
