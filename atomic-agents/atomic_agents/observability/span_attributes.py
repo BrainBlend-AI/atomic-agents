@@ -98,7 +98,8 @@ def using_conversation(conversation_id: str) -> Iterator[None]:
 
 
 def _agent_display_name(agent: AtomicAgent) -> str:
-    return agent.name or type(agent).__name__
+    attributes = _best_effort_attributes({ATTR_AGENT_NAME: lambda: getattr(agent, "name", None)})
+    return str(attributes.get(ATTR_AGENT_NAME) or type(agent).__name__)
 
 
 def _agent_class_name(agent: AtomicAgent) -> str:

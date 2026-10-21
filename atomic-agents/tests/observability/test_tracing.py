@@ -1421,3 +1421,24 @@ def test_run_stream_cancellation_marks_closed_early(exporter):
     assert span.attributes.get(tracing.ATTR_STREAM_CLOSED_EARLY) is True
     assert span.status.status_code == StatusCode.UNSET
     assert span.events == ()
+
+
+@pytest.mark.parametrize("broken_name", [False, True])
+def test_agent_name_falls_back_without_initialized_base(exporter, broken_name):
+    class UninitializedAgent(AtomicAgent[QuestionSchema, AnswerSchema]):
+        def __init__(self):
+            self.client = sync_client()
+
+    if broken_name:
+        UninitializedAgent.name = property(lambda self: 1 / 0)
+    agent = UninitializedAgent()
+    try:
+        display_name = span_attributes._agent_display_name(agent)
+    except (AttributeError, ZeroDivisionError):
+        display_name = None
+    assert display_name == "UninitializedAgent"
+    with agent_spans._agent_span(agent, (), {}):
+        pass
+    (span,) = spans_of(exporter)
+    assert span.name == "invoke_agent UninitializedAgent"
+    assert span.attributes["gen_ai.agent.name"] == "UninitializedAgent"
