@@ -562,6 +562,51 @@ def test_tool_failure_propagates_same_exception_and_marks_error(exporter):
     (span,) = spans_of(exporter)
     assert span.status.status_code == StatusCode.ERROR
     assert raised.value.args == ("boom",)
+    assert span.attributes["error.type"] == "ValueError"
+    assert [event.name for event in span.events] == ["exception"]
+
+
+@pytest.mark.asyncio
+async def test_tool_run_async_cancellation_leaves_span_unset(exporter):
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    class WaitingTool(CalculatorTool):
+        async def run_async(self, params: CalculationInputSchema) -> CalculationOutputSchema:
+            started.set()
+            await release.wait()
+            return CalculationOutputSchema(result="never")
+
+    task = asyncio.create_task(WaitingTool().run_async(CalculationInputSchema(expression="x")))
+    await asyncio.wait_for(started.wait(), timeout=2)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    (span,) = spans_of(exporter)
+    assert span.attributes.get("atomic_agents.cancelled") is True
+    assert span.status.status_code == StatusCode.UNSET
+    assert span.events == ()
+    assert "error.type" not in span.attributes
+
+
+@pytest.mark.parametrize("error_type", [GeneratorExit, asyncio.CancelledError])
+@pytest.mark.parametrize("method_name", ["run", "run_async"])
+@pytest.mark.asyncio
+async def test_tool_cancellation_propagates_without_error(exporter, monkeypatch, error_type, method_name):
+    def cancelled_result(*args, **kwargs):
+        raise error_type
+
+    monkeypatch.setattr(CalculationOutputSchema, "__init__", cancelled_result)
+    tool = ThreadedCalculatorTool()
+    with pytest.raises(error_type):
+        result = getattr(tool, method_name)(CalculationInputSchema(expression="x"))
+        if method_name == "run_async":
+            await result
+    (span,) = spans_of(exporter)
+    assert span.attributes.get("atomic_agents.cancelled") is True
+    assert span.status.status_code == StatusCode.UNSET
+    assert span.events == ()
+    assert "error.type" not in span.attributes
 
 
 def test_unserializable_input_still_returns_result(exporter, caplog):
@@ -1010,6 +1055,17 @@ def test_tracing_config_llm_spans_environment(monkeypatch, value, expected):
     monkeypatch.setenv("ATOMIC_AGENTS_TRACE_LLM_SPANS", value)
     assert TracingConfig.from_environment().llm_spans is expected
     assert TracingConfig.coerce(None).llm_spans is expected
+
+
+def test_payload_visibility_preserves_environment_settings(monkeypatch):
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_LLM_SPANS", "false")
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_MAX_ATTRIBUTE_LENGTH", "128")
+    monkeypatch.setenv("ATOMIC_AGENTS_TRACE_HIDE_OUTPUTS", "true")
+    config = tracing.TracingConfig.coerce(TraceConfig(hide_inputs=True, hide_outputs=False))
+    assert config.llm_spans is False
+    assert config.max_attribute_length == 128
+    assert config.hide_inputs is True
+    assert config.hide_outputs is False
 
 
 def test_tracing_config_llm_spans_defaults_to_enabled(monkeypatch):

@@ -2,7 +2,7 @@
 
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Protocol
 
 
@@ -38,11 +38,7 @@ class TracingConfig:
             return cls.from_environment()
         if isinstance(config, cls):
             return config
-        return cls(
-            hide_inputs=config.hide_inputs,
-            hide_outputs=config.hide_outputs,
-            max_attribute_length=_attribute_length_environment(),
-        )
+        return replace(cls.from_environment(), hide_inputs=config.hide_inputs, hide_outputs=config.hide_outputs)
 
 
 def _visibility_environment(direction: str) -> str:

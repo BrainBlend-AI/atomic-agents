@@ -1,5 +1,6 @@
 """Tool spans and tool class instrumentation."""
 
+import asyncio
 import contextvars
 import functools
 import inspect
@@ -140,6 +141,9 @@ def _tool_span(tool: BaseTool, args: tuple[object, ...], kwargs: dict[str, objec
         _set_input_safely(span, _tool_input_from_call(args, kwargs), ATTR_TOOL_ARGUMENTS)
         try:
             yield span
+        except (asyncio.CancelledError, GeneratorExit):
+            span.set_attribute("atomic_agents.cancelled", True)
+            raise
         except BaseException as error:
             _record_failure(span, error)
             raise
