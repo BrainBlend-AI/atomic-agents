@@ -84,6 +84,85 @@ jobs:
         run: |
           uv venv fresh-install-venv
           uv pip install --python fresh-install-venv "atomic-agents[observability] @ $(ls dist/*.whl)"
+          uv pip install --python fresh-install-venv opentelemetry-sdk
+
+      - name: Verify OpenInference is absent
+        run: |
+          if fresh-install-venv/bin/python -c "import openinference"; then
+            echo "OpenInference must not be installed in the api-only environment"
+            exit 1
+          fi
+
+      - name: Trace a tool and agent with only OpenTelemetry
+        run: |
+          fresh-install-venv/bin/python - <<'PY'
+          from types import SimpleNamespace
+
+          from instructor import Instructor
+          from opentelemetry.sdk.trace import TracerProvider
+          from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+          from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+          from atomic_agents import AgentConfig, AtomicAgent, BaseIOSchema, BaseTool
+          from atomic_agents.observability import AtomicAgentsInstrumentor, TracingConfig
+
+          exporter = InMemorySpanExporter()
+          provider = TracerProvider()
+          provider.add_span_processor(SimpleSpanProcessor(exporter))
+          AtomicAgentsInstrumentor().instrument(tracer_provider=provider, config=TracingConfig(hide_inputs=True))
+
+          class SmokeInput(BaseIOSchema):
+              """Text for the fresh-install tracing check."""
+
+              text: str
+
+          class SmokeOutput(BaseIOSchema):
+              """Result of the fresh-install tracing check."""
+
+              text: str
+
+          class SmokeTool(BaseTool[SmokeInput, SmokeOutput]):
+              def run(self, params: SmokeInput) -> SmokeOutput:
+                  return SmokeOutput(text=params.text)
+
+          class StubCompletions:
+              def create(self, **options: object) -> SmokeOutput:
+                  return SmokeOutput(text="offline response")
+
+          class StubClient(Instructor):
+              chat = SimpleNamespace(completions=StubCompletions())
+              provider = None
+
+              def __init__(self) -> None:
+                  pass
+
+              def on(self, event: str, handler: object) -> None:
+                  pass
+
+              def off(self, event: str, handler: object) -> None:
+                  pass
+
+          class SmokeAgent(AtomicAgent[SmokeInput, SmokeOutput]):
+              pass
+
+          assert SmokeTool().run(SmokeInput(text="tool input")).text == "tool input"
+          agent = SmokeAgent(config=AgentConfig(client=StubClient(), model="offline-model"))
+          assert agent.run(SmokeInput(text="private agent input")).text == "offline response"
+
+          spans = exporter.get_finished_spans()
+          for span in spans:
+              print(f"{span.name}: {sorted(span.attributes)}")
+          spans_by_name = {span.name: span for span in spans}
+          tool_span = spans_by_name["execute_tool SmokeTool"]
+          agent_span = spans_by_name["invoke_agent SmokeAgent"]
+          assert tool_span.attributes["gen_ai.operation.name"] == "execute_tool"
+          assert tool_span.attributes["gen_ai.tool.name"] == "SmokeTool"
+          assert agent_span.attributes["gen_ai.operation.name"] == "invoke_agent"
+          assert agent_span.attributes["atomic_agents.input"] == "__REDACTED__"
+          for span in (tool_span, agent_span):
+              assert not any(key.startswith("openinference.") for key in span.attributes)
+          print("api-only tracing ok: tool and agent spans, GenAI attributes, redacted input, no OpenInference keys")
+          PY
 
       - name: Import every subpackage the way a new user would
         run: |
