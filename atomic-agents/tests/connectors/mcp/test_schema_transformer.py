@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+from jsonschema import Draft202012Validator
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import ValidationError
@@ -75,6 +76,69 @@ class TestSchemaTransformer:
 
 
 class TestCreateModelFromSchema:
+    @pytest.mark.parametrize(
+        "prop_schema, invalid",
+        [
+            ({"type": ["boolean", "integer"], "enum": [True]}, 1),
+            ({"type": ["boolean", "integer"], "enum": [1]}, True),
+            ({"type": ["boolean", "number"], "const": False}, 0.0),
+            ({"type": ["boolean", "number"], "const": 0}, False),
+            ({"enum": [True]}, 1.0),
+            ({"enum": [0]}, False),
+            ({"const": True}, 1),
+            ({"const": 1}, True),
+        ],
+    )
+    def test_scalar_choices_preserve_json_identity(self, prop_schema, invalid):
+        schema = {"type": "object", "properties": {"value": prop_schema}, "required": ["value"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "ChoiceInput", "choose")
+        payload = {"tool_name": "choose", "value": invalid}
+
+        assert not Draft202012Validator(schema).is_valid(payload)
+        with pytest.raises(ValidationError):
+            model.model_validate(payload)
+        assert not Draft202012Validator(model.model_json_schema()).is_valid(payload)
+
+    @pytest.mark.parametrize("choices", [[True, 1], [1, True], [False, 0], [0, False]])
+    def test_mixed_boolean_and_numeric_choices_keep_the_matching_choice(self, choices):
+        schema = {"type": "object", "properties": {"value": {"enum": choices}}, "required": ["value"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "MixedChoiceInput", "choose")
+        numeric = next(value for value in choices if not isinstance(value, bool))
+
+        assert type(model(tool_name="choose", value=float(numeric)).value) is int
+        boolean = next(value for value in choices if isinstance(value, bool))
+        assert model(tool_name="choose", value=boolean).value is boolean
+
+    @pytest.mark.parametrize("prop_schema", [{"type": "number", "enum": [1]}, {"const": 1.0}, {"enum": [0, 1]}])
+    def test_scalar_choices_retain_json_numeric_equality(self, prop_schema):
+        schema = {"type": "object", "properties": {"value": prop_schema}, "required": ["value"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "NumericChoiceInput", "choose")
+        for value in (1, 1.0):
+            payload = {"tool_name": "choose", "value": value}
+            assert Draft202012Validator(schema).is_valid(payload)
+            assert model.model_validate(payload).value == value
+            assert Draft202012Validator(model.model_json_schema()).is_valid(payload)
+
+    @pytest.mark.parametrize(
+        "prop_schema",
+        [
+            {"type": "string", "enum": ["brief", "detailed"]},
+            {"type": "string", "const": "brief"},
+            {"type": ["string", "null"], "enum": ["brief", None]},
+            {"type": "number", "enum": [1, 2]},
+        ],
+    )
+    def test_optional_scalar_choice_schema_matches_none_validation(self, prop_schema):
+        schema = {"type": "object", "properties": {"value": prop_schema}}
+        model = SchemaTransformer.create_model_from_schema(schema, "OptionalChoiceInput", "choose")
+        payload = {"tool_name": "choose", "value": None}
+
+        assert model.model_validate(payload).value is None
+        emitted = model.model_json_schema()
+        assert Draft202012Validator(emitted).is_valid(payload)
+        assert Draft202012Validator(emitted).is_valid({"tool_name": "choose"})
+        assert not Draft202012Validator(emitted).is_valid({"tool_name": "choose", "value": "unknown"})
+
     @pytest.mark.parametrize(
         "prop_schema, valid, invalid, emitted_type, choices",
         [

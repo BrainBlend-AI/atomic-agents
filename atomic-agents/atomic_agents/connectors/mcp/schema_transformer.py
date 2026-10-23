@@ -38,19 +38,26 @@ class SchemaTransformer:
     def _scalar_choice_type(prop_schema: Dict[str, Any], choices: List[Any]) -> Type:
         """Intersect scalar choices with the declared type for validation and schema output."""
         declared_type = prop_schema.get("type")
-        if declared_type is None:
-            return Literal[tuple(choices)]
         json_types = declared_type if isinstance(declared_type, list) else [declared_type]
-        choices = [value for value in choices if SchemaTransformer._matches_scalar_type(value, json_types)]
+        if declared_type is not None:
+            choices = [value for value in choices if SchemaTransformer._matches_scalar_type(value, json_types)]
         if not choices:
             raise ValueError("Scalar choices do not match the declared JSON Schema type")
 
-        def validate_type(value: Any) -> Any:
-            if not SchemaTransformer._matches_scalar_type(value, json_types):
+        def validate_choice(value: Any) -> Any:
+            if declared_type is not None and not SchemaTransformer._matches_scalar_type(value, json_types):
                 raise ValueError("Value does not match the declared JSON Schema type")
-            return value
+            for choice in choices:
+                if isinstance(value, bool) == isinstance(choice, bool) and value == choice:
+                    # Give Literal the matching choice so 1.0 cannot resolve to True.
+                    return choice
+            raise ValueError("Value does not match the JSON Schema choices")
 
-        return Annotated[Literal[tuple(choices)], BeforeValidator(validate_type)]
+        choice_type = Annotated[Literal[tuple(choices)], BeforeValidator(validate_choice)]
+        if declared_type is not None:
+            # Keep type metadata inside the choice branch when Optional wraps it.
+            choice_type = Annotated[choice_type, Field(json_schema_extra={"type": declared_type})]
+        return choice_type
 
     @staticmethod
     def _resolve_ref(ref_path: str, root_schema: Dict[str, Any], model_cache: Dict[str, Type]) -> Type:
@@ -177,8 +184,6 @@ class SchemaTransformer:
                         python_type = Dict[str, value_type]
 
         field_kwargs = {"description": description}
-        if ("const" in prop_schema or "enum" in prop_schema) and "type" in prop_schema:
-            field_kwargs["json_schema_extra"] = {"type": prop_schema["type"]}
         if required:
             field_kwargs["default"] = ...
         elif default is not None:
