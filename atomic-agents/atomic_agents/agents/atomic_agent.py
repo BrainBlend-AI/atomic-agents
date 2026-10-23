@@ -20,22 +20,24 @@ from jiter import from_json
 
 
 def model_from_chunks_patched(cls, json_chunks, **kwargs):
+    kwargs.setdefault("strict", None)
     potential_object = ""
     partial_model = cls.get_partial_model()
     for chunk in json_chunks:
         potential_object += chunk
         obj = from_json((potential_object or "{}").encode(), partial_mode="trailing-strings")
-        obj = partial_model.model_validate(obj, strict=None, **kwargs)
+        obj = partial_model.model_validate(obj, **kwargs)
         yield obj
 
 
 async def model_from_chunks_async_patched(cls, json_chunks, **kwargs):
+    kwargs.setdefault("strict", None)
     potential_object = ""
     partial_model = cls.get_partial_model()
     async for chunk in json_chunks:
         potential_object += chunk
         obj = from_json((potential_object or "{}").encode(), partial_mode="trailing-strings")
-        obj = partial_model.model_validate(obj, strict=None, **kwargs)
+        obj = partial_model.model_validate(obj, **kwargs)
         yield obj
 
 
@@ -65,7 +67,11 @@ class BasicChatOutputSchema(BaseIOSchema):
 
 
 class AgentConfig(BaseModel):
-    client: instructor.core.client.Instructor = Field(..., description="Client for interacting with the language model.")
+    client: instructor.Instructor = Field(..., description="Client for interacting with the language model.")
+    name: Optional[str] = Field(
+        default=None,
+        description="Stable name for this agent in logs and traces, for example the role it plays. Defaults to the class name.",
+    )
     model: str = Field(default="gpt-5-mini", description="The model to use for generating responses.")
     history: Optional[BaseChatHistory] = Field(default=None, description="History component for storing chat history.")
     system_prompt_generator: Optional[BaseSystemPromptGenerator] = Field(
@@ -92,9 +98,9 @@ class AgentConfig(BaseModel):
     )
     model_config = {"arbitrary_types_allowed": True}
     mode: Mode = Field(default=Mode.TOOLS, description="The Instructor mode used for structured outputs (TOOLS, JSON, etc.).")
-    model_api_parameters: Optional[dict] = Field(None, description="Additional parameters passed to the API provider.")
+    model_api_parameters: Optional[dict] = Field(default=None, description="Additional parameters passed to the API provider.")
     max_context_tokens: Optional[int] = Field(
-        None,
+        default=None,
         description=(
             "Maximum tokens for the full context (system prompt + history + tools). "
             "When exceeded, oldest conversation turns are automatically trimmed to stay within limit. "
@@ -188,6 +194,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Args:
             config (AgentConfig): Configuration for the chat agent.
         """
+        self.name = config.name
         self.client = config.client
         self.model = config.model
         self.history = config.history if config.history is not None else ChatHistory()
@@ -577,7 +584,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             OutputSchema: The response from the chat agent.
         """
         assert not isinstance(
-            self.client, instructor.core.client.AsyncInstructor
+            self.client, instructor.AsyncInstructor
         ), "The run method is not supported for async clients. Use run_async instead."
 
         if user_input:
@@ -612,7 +619,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             OutputSchema: The final response from the chat agent.
         """
         assert not isinstance(
-            self.client, instructor.core.client.AsyncInstructor
+            self.client, instructor.AsyncInstructor
         ), "The run_stream method is not supported for async clients. Use run_async instead."
 
         if user_input:
@@ -637,7 +644,9 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         if last_response:
-            full_response_content = self.output_schema(**last_response.model_dump())
+            # model_dump() keys the data by field name, so accept field names
+            # for output schemas whose fields have an alias.
+            full_response_content = self.output_schema.model_validate(last_response.model_dump(), by_name=True)
             self.history.add_message(self.assistant_role, full_response_content)
             self._prepare_messages()
             return full_response_content
@@ -656,7 +665,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             NotAsyncIterableError: If used as an async generator (in an async for loop).
                                    Use run_async_stream() method instead for streaming responses.
         """
-        assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
+        assert isinstance(self.client, instructor.AsyncInstructor), "The run_async method is for async clients."
 
         if user_input:
             self.history.initialize_turn()
@@ -684,7 +693,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Yields:
             OutputSchema: Partial responses from the chat agent.
         """
-        assert isinstance(self.client, instructor.core.client.AsyncInstructor), "The run_async method is for async clients."
+        assert isinstance(self.client, instructor.AsyncInstructor), "The run_async method is for async clients."
         if user_input:
             self.history.initialize_turn()
             self.current_user_input = user_input
@@ -707,7 +716,8 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             yield partial_response
 
         if last_response:
-            full_response_content = self.output_schema(**last_response.model_dump())
+            # See run_stream(): accept field names for aliased output schemas.
+            full_response_content = self.output_schema.model_validate(last_response.model_dump(), by_name=True)
             self.history.add_message(self.assistant_role, full_response_content)
             self._prepare_messages()
 
@@ -789,16 +799,11 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         Args:
             event (Optional[str]): The event name to clear, or None to clear all
         """
-        if event:
-            if event in self._hook_handlers:
-                # Clear from instructor client first
-                if hasattr(self.client, "clear"):
-                    self.client.clear(event)
-                self._hook_handlers[event].clear()
-        else:
-            # Clear all hooks
-            if hasattr(self.client, "clear"):
-                self.client.clear()
+        events = [event] if event else list(self._hook_handlers)
+        for registered_event in events:
+            for handler in list(self._hook_handlers.get(registered_event, [])):
+                self.unregister_hook(registered_event, handler)
+        if not event:
             self._hook_handlers.clear()
 
     def _dispatch_hook(self, event: str, *args, **kwargs) -> None:

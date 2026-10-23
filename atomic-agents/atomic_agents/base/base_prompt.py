@@ -35,17 +35,19 @@ class BasePrompt[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema](ABC):
         input_schema (Type[InputSchema]): Schema class defining the input data (derived from generic type parameter).
         output_schema (Type[OutputSchema]): Schema class defining the output data (derived from generic type parameter).
         prompt_name (str): The name of the prompt, derived from the input schema's title or overridden by the config.
-        prompt_description (str): Description of the prompt, derived from the input schema's description or overridden by the config.
+        prompt_description (str): Description of the prompt, derived from the input schema's description
+            or overridden by the config.
     """
 
-    def __init__(self, config: BasePromptConfig = BasePromptConfig()):
+    def __init__(self, config: Optional[BasePromptConfig] = None):
         """
         Initializes the BasePrompt with an optional configuration override.
 
         Args:
-            config (BasePromptConfig, optional): Configuration for the prompt, including optional title and description overrides.
+            config (BasePromptConfig, optional): Configuration for the prompt, including optional title
+                and description overrides. If omitted, a new configuration is created for this instance.
         """
-        self.config = config
+        self.config = config if config is not None else BasePromptConfig()
 
     def __init_subclass__(cls, **kwargs):
         """
