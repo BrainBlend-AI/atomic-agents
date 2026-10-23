@@ -1,6 +1,7 @@
 import os
 from typing import List, Literal, Optional
 import asyncio
+import contextvars
 from concurrent.futures import ThreadPoolExecutor
 
 import aiohttp
@@ -174,6 +175,7 @@ class TavilySearchTool(BaseTool[TavilySearchToolInputSchema, TavilySearchToolOut
         """
         with ThreadPoolExecutor() as executor:
             result = executor.submit(
+                contextvars.copy_context().run,
                 asyncio.run,
                 self.run_async(
                     params,

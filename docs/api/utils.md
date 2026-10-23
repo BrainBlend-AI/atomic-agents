@@ -152,6 +152,10 @@ serialized request.
 
 ## Tool Message Formatting
 
+Tool arguments use Pydantic's JSON representations for values such as dates,
+UUIDs, decimals, paths, and enums. JSON-only field serializers are honored when
+formatting the arguments.
+
 ```{eval-rst}
 .. automodule:: atomic_agents.utils.format_tool_message
    :members:

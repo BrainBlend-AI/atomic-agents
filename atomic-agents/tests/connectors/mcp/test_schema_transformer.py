@@ -1,5 +1,9 @@
+import logging
+
 import pytest
 from typing import Any, Dict, List, Optional, Union
+
+from pydantic import ValidationError
 
 from atomic_agents import BaseIOSchema
 from atomic_agents.connectors.mcp import SchemaTransformer
@@ -184,6 +188,60 @@ class TestCreateModelFromSchema:
         assert model(tool_name="configure", mode=None).mode is None
         with pytest.raises(ValueError):
             model(tool_name="configure", mode="unknown")
+
+    @pytest.mark.parametrize("invalid_field", ["first", "second"])
+    def test_repeated_reference_reuses_model_and_validates_both_fields(self, invalid_field: str) -> None:
+        reference = {"$ref": "#/$defs/Item"}
+        schema = {
+            "type": "object",
+            "properties": {"first": reference, "second": reference},
+            "required": ["first", "second"],
+            "$defs": {"Item": {"type": "object", "properties": {"count": {"type": "integer"}}, "required": ["count"]}},
+        }
+        model = SchemaTransformer.create_model_from_schema(schema, "ItemPairInput", "load_pair")
+
+        instance = model.model_validate({"tool_name": "load_pair", "first": {"count": 42}, "second": {"count": 7}})
+        assert model.model_fields["first"].annotation is model.model_fields["second"].annotation
+        assert instance.model_dump() == {"tool_name": "load_pair", "first": {"count": 42}, "second": {"count": 7}}
+        values: dict[str, str | dict[str, int | str]] = {
+            "tool_name": "load_pair",
+            "first": {"count": 42},
+            "second": {"count": 7},
+        }
+        values[invalid_field] = {"count": "invalid"}
+        with pytest.raises(ValidationError) as error:
+            model.model_validate(values)
+        assert error.value.errors()[0]["loc"] == (invalid_field, "count")
+
+    def test_unresolved_reference_warns_and_preserves_value(self, caplog: pytest.LogCaptureFixture) -> None:
+        schema = {
+            "type": "object",
+            "properties": {"payload": {"$ref": "#/$defs/MissingPayload"}},
+            "required": ["payload"],
+        }
+        with caplog.at_level(logging.WARNING, logger="atomic_agents.connectors.mcp.schema_transformer"):
+            model = SchemaTransformer.create_model_from_schema(schema, "PayloadInput", "load_payload")
+
+        assert (
+            "atomic_agents.connectors.mcp.schema_transformer",
+            logging.WARNING,
+            "Could not resolve $ref: #/$defs/MissingPayload",
+        ) in caplog.record_tuples
+        payload = {"count": "untyped", "items": [7, None]}
+        assert model.model_validate({"tool_name": "load_payload", "payload": payload}).model_dump()["payload"] == payload
+
+    @pytest.mark.parametrize("union_keyword", ["oneOf", "anyOf"])
+    def test_single_member_union_validates_integer(self, union_keyword: str) -> None:
+        schema = {
+            "type": "object",
+            "properties": {"count": {union_keyword: [{"type": "integer"}]}},
+            "required": ["count"],
+        }
+        model = SchemaTransformer.create_model_from_schema(schema, "CountInput", "count_items")
+
+        assert model.model_validate({"tool_name": "count_items", "count": 42}).model_dump()["count"] == 42
+        with pytest.raises(ValidationError):
+            model.model_validate({"tool_name": "count_items", "count": "invalid"})
 
     @pytest.mark.parametrize("definitions_key", ["$defs", "definitions"])
     @pytest.mark.parametrize(

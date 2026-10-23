@@ -68,7 +68,9 @@ class SchemaTransformer:
             ref_schema = defs[ref_name]
             # Avoid infinite recursion by adding placeholder first
             model_cache[ref_name] = Any
-            if ref_schema.get("type") == "object" or "properties" in ref_schema:
+            if ref_schema.get("properties") or (
+                ref_schema.get("type") == "object" and ref_schema.get("additionalProperties") is False
+            ):
                 model_name = ref_schema.get("title", ref_name)
                 model = SchemaTransformer._create_nested_model(ref_schema, model_name, root_schema, model_cache)
             else:
@@ -169,6 +171,10 @@ class SchemaTransformer:
 
                 elif json_type == "object":
                     python_type = Dict[str, Any]
+                    value_schema = prop_schema.get("additionalProperties", {})
+                    if isinstance(value_schema, dict):
+                        value_type, _ = SchemaTransformer.json_to_pydantic_field(value_schema, True, root_schema, model_cache)
+                        python_type = Dict[str, value_type]
 
         field_kwargs = {"description": description}
         if ("const" in prop_schema or "enum" in prop_schema) and "type" in prop_schema:

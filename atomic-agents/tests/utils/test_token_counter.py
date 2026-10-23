@@ -1,3 +1,4 @@
+import sys
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -91,6 +92,18 @@ class TestTokenCounter:
         assert result == 42
         mock_token_counter.assert_called_once_with(model="gpt-4", messages=messages)
 
+    def test_count_messages_reports_missing_litellm(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setitem(sys.modules, "litellm", None)
+
+        with pytest.raises(
+            ImportError, match=r"litellm is required for token counting\. Install it with: pip install litellm"
+        ) as error:
+            TokenCounter().count_messages("gpt-4", [{"role": "user", "content": "Hello"}])
+
+        assert not isinstance(error.value, TokenCountError)
+        assert isinstance(error.value.__cause__, ModuleNotFoundError)
+        assert "litellm" in str(error.value.__cause__)
+
     @patch("litellm.token_counter")
     def test_count_messages_multiple(self, mock_token_counter):
         mock_token_counter.return_value = 100
@@ -126,6 +139,30 @@ class TestTokenCounter:
 
         assert result == 128000
         mock_get_model_info.assert_called_once_with("gpt-4")
+
+    def test_get_max_tokens_reports_missing_litellm(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setitem(sys.modules, "litellm", None)
+
+        with pytest.raises(
+            ImportError, match=r"litellm is required for token counting\. Install it with: pip install litellm"
+        ) as error:
+            TokenCounter().get_max_tokens("gpt-4")
+
+        assert not isinstance(error.value, TokenCountError)
+        assert isinstance(error.value.__cause__, ModuleNotFoundError)
+        assert "litellm" in str(error.value.__cause__)
+
+    @pytest.mark.parametrize("model", [None, 123], ids=["none", "integer"])
+    @patch("litellm.get_model_info")
+    def test_get_max_tokens_rejects_non_string_model_before_dependency_import(
+        self, mock_get_model_info: MagicMock, monkeypatch: pytest.MonkeyPatch, model: int | None
+    ) -> None:
+        monkeypatch.setitem(sys.modules, "litellm", None)
+
+        with pytest.raises(TypeError, match=f"model must be a string, got {type(model).__name__}"):
+            TokenCounter().get_max_tokens(model)
+
+        mock_get_model_info.assert_not_called()
 
     @patch("litellm.get_model_info")
     def test_get_max_tokens_falls_back_to_max_tokens(self, mock_get_model_info):

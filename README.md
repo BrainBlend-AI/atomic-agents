@@ -178,7 +178,7 @@ Here's a simple example:
 from atomic_agents.context import BaseDynamicContextProvider
 
 class SearchResultsProvider(BaseDynamicContextProvider):
-    def __init__(self, title: str, search_results: List[str]):
+    def __init__(self, title: str, search_results: list[str]):
         super().__init__(title=title)
         self.search_results = search_results
 
@@ -287,6 +287,7 @@ For full, runnable examples, please refer to the following files in the `atomic-
 In addition to the quickstart examples, we have more complex examples demonstrating the power of Atomic Agents:
 
 - [Hooks System](/atomic-examples/hooks-example/README.md): Comprehensive demonstration of the AtomicAgent hook system for monitoring, error handling, and performance metrics with intelligent retry mechanisms.
+- [Phoenix Tracing](/atomic-examples/phoenix-tracing/README.md): Traces agents and tools in Arize Phoenix with the OpenTelemetry instrumentor (`pip install "atomic-agents[phoenix]"`).
 - [Basic Multimodal](/atomic-examples/basic-multimodal/README.md): Demonstrates how to analyze images with text, focusing on extracting structured information from nutrition labels using GPT-4 Vision capabilities.
 - [Deep Research](/atomic-examples/deep-research/README.md): An advanced example showing how to perform deep research tasks.
 - [Orchestration Agent](/atomic-examples/orchestration-agent/README.md): Shows how to create an Orchestrator Agent that intelligently decides between using different tools (search or calculator) based on user input.
@@ -296,6 +297,10 @@ In addition to the quickstart examples, we have more complex examples demonstrat
 - [YouTube to Recipe](/atomic-examples/youtube-to-recipe/README.md): An example that extracts structured recipe information from cooking videos, demonstrating complex information extraction and structuring.
 
 For a complete list of examples, see the [examples directory](/atomic-examples/).
+
+## Observability
+
+Every agent and tool run is an OpenTelemetry span. Works with any OpenTelemetry backend (Grafana, Sentry, Phoenix, Langfuse, ...), including Datadog, Honeycomb, Jaeger or a plain OTLP collector. Install it with `pip install "atomic-agents[observability]"` and see the [Observability guide](docs/guides/observability.md).
 
 ## AI-Assisted Development
 
@@ -350,6 +355,7 @@ Atomic Forge is a collection of tools that can be used with Atomic Agents to ext
 - DateTime
 - Fía Signals
 - Firecrawl Search
+- FXMacroData
 - Hacker News Search
 - PDF Reader
 - SearXNG Search

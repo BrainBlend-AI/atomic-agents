@@ -1,6 +1,6 @@
 # Communication & Integrations
 
-*Last Updated: 2026-08-11*
+*Last Updated: 2026-10-21*
 
 The framework exposes no HTTP API of its own; "communication" here means how it talks to LLM
 providers and external tools.
@@ -28,11 +28,30 @@ providers and external tools.
   tools/resources/prompts: `MCPFactory`, `MCPDefinitionService`, `SchemaTransformer`, and
   `fetch_mcp_tools` / `fetch_mcp_resources` / `fetch_mcp_prompts` (sync + async). See the
   `mcp-agent` and `progressive-disclosure` examples.
+- Discovery follows tool, resource, template and prompt cursors. Template continuation errors propagate.
+- Schema references decode escaped definition names and support non-object definitions.
+- Typed SDK tool results use structured content only when it is non-None, then use the existing validated JSON-text fallback. Present empty structured data retains precedence. Mapping adapters keep their separate validation contract.
+- SDK `CallToolResult` and strictly validated mapping envelopes with `isError=True` raise a `RuntimeError` before typed or generic output parsing. The message uses `TextContent` only (meaningful fallback when no text); `structuredContent`, `_meta` and binary blocks never enter messages or logs. Raw application dictionaries that merely contain `isError`/`name` keys (even with a string `content`) stay ordinary outputs.
 
 ## Hooks / observability
 - Built on Instructor's hook system: `register_hook(event, handler)`, `unregister_hook`,
   `clear_hooks`. Events include `parse:error`, `completion:kwargs`, `completion:response`,
   `token:counted`. See the `hooks-example` example and `docs/guides/hooks.md`.
+- OpenTelemetry tracing (`atomic_agents.observability`, `observability` extra = `opentelemetry-api` only): an AGENT
+  span per `AtomicAgent` run, a TOOL span per `BaseTool` run and one CLIENT `chat` span per Instructor attempt
+  (driven by Instructor hooks registered once per client), all with OpenTelemetry GenAI attributes; OpenInference
+  attributes are added only when its package is importable (`phoenix` extra). Activated by
+  `phoenix.otel.register(auto_instrument=True)` through `openinference_instrumentor`, by the `opentelemetry-instrument`
+  launcher through `opentelemetry_instrumentor`, or by `AtomicAgentsInstrumentor().instrument(tracer_provider=...,
+  config=TracingConfig(...))`. A later install with different explicit values replaces the provider/config in place
+  with a WARNING; `None` keeps the installed value. Missing `opentelemetry-api` is DEBUG-skipped when the launcher
+  passes `skip_dep_check=True`; manual setup raises `ModuleNotFoundError` with the install hint. Application hooks on
+  the same client keep running; `AtomicAgent.clear_hooks()` removes only its own. Set `llm_spans=False` (or
+  `ATOMIC_AGENTS_TRACE_LLM_SPANS=false`) when a provider instrumentor also emits LLM spans. See
+  `docs/guides/observability.md` and the `phoenix-tracing` example.
+- Forge tools that run their async body through a `ThreadPoolExecutor` submit via
+  `contextvars.copy_context().run` so the caller's OpenTelemetry context (and the tracing re-entrancy guard)
+  survives in the pool thread.
 
 ## Assembler ↔ GitHub
 - `atomic-assembler` clones `https://github.com/eigenwise/atomic-agents.git` (via GitPython), reads

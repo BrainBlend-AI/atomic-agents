@@ -1,5 +1,21 @@
 import pytest
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+from mcp import ClientSession, StdioServerParameters
+from mcp.types import (
+    CallToolResult,
+    GetPromptResult,
+    ImageContent,
+    ListResourcesResult,
+    ListResourceTemplatesResult,
+    ListToolsResult,
+    PromptMessage,
+    ReadResourceResult,
+    ResourceTemplate,
+    TextContent,
+    Tool,
+)
+from atomic_agents.base import BasePrompt, BaseResource
+from unittest.mock import AsyncMock, MagicMock, call
 import asyncio
 from atomic_agents.connectors.mcp import (
     fetch_mcp_tools,
@@ -19,6 +35,115 @@ from atomic_agents.connectors.mcp import (
     MCPDefinitionService,
     MCPTransportType,
 )
+
+
+@pytest.fixture(params=[False, True], ids=["generic", "typed"])
+def error_test_tool(request, monkeypatch):
+    output_schema = None
+    if request.param:
+        output_schema = {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}
+    definition = MCPToolDefinition(
+        name="SearchTool", description="Search", input_schema={"type": "object", "properties": {}}, output_schema=output_schema
+    )
+    factory = MCPFactory("http://example.com")
+    tool = factory._create_tool_classes([definition])[0]()
+    session = AsyncMock(spec=ClientSession)
+    session.__aenter__.return_value = session
+    transport = AsyncMock()
+    transport.__aenter__.return_value = (None, None, None)
+    monkeypatch.setattr("atomic_agents.connectors.mcp.mcp_factory.ClientSession", MagicMock(return_value=session))
+    monkeypatch.setattr("atomic_agents.connectors.mcp.mcp_factory.streamablehttp_client", MagicMock(return_value=transport))
+    return tool, session, transport, request.param
+
+
+@pytest.fixture(params=[False, True], ids=["owned", "borrowed"])
+def error_test_connection(request, error_test_tool):
+    tool, session, transport, typed = error_test_tool
+    loop = asyncio.new_event_loop()
+    if request.param:
+        tool._client_session = session
+        tool._event_loop = loop
+    yield tool, session, transport, typed, request.param
+    loop.close()
+
+
+@pytest.mark.parametrize("synchronous", [False, True], ids=["async", "sync"])
+@pytest.mark.parametrize("mapping", [False, True], ids=["sdk", "mapping"])
+def test_execution_error_precedes_output_parsing(error_test_connection, synchronous, mapping, caplog):
+    tool, session, transport, typed, borrowed = error_test_connection
+    envelope = CallToolResult(
+        isError=True,
+        content=[
+            TextContent(type="text", text="Search unavailable"),
+            ImageContent(type="image", data="PRIVATE_BINARY", mimeType="image/png", text=None),
+        ],
+        structuredContent={"name": "PRIVATE_STRUCTURED"},
+        _meta={"secret": "PRIVATE_META"},
+    )
+    session.call_tool.return_value = envelope.model_dump() if mapping else envelope
+    params = tool.input_schema(tool_name="SearchTool")
+    with pytest.raises(RuntimeError, match="Failed to execute MCP tool 'SearchTool': Search unavailable") as raised:
+        if synchronous:
+            tool.run(params)
+        else:
+            asyncio.run(tool.arun(params))
+    assert isinstance(raised.value.__cause__, RuntimeError)
+    assert str(raised.value.__cause__) == "Search unavailable"
+    assert "PRIVATE_" not in str(raised.value) + caplog.text
+    session.call_tool.assert_awaited_once_with(name="SearchTool", arguments={})
+    owned_session_calls = int(not borrowed)
+    assert session.initialize.await_count == owned_session_calls
+    assert session.__aexit__.await_count == owned_session_calls
+    assert transport.__aexit__.await_count == owned_session_calls
+
+
+@pytest.mark.parametrize("mapping", [False, True], ids=["sdk", "mapping"])
+@pytest.mark.parametrize(
+    "content",
+    [[], [ImageContent(type="image", data="PRIVATE_BINARY", mimeType="image/png")], [TextContent(type="text", text="  \n ")]],
+)
+def test_execution_error_without_text_has_safe_fallback(error_test_connection, mapping, content, caplog):
+    tool, session, transport, typed, borrowed = error_test_connection
+    envelope = CallToolResult(isError=True, content=content, structuredContent={"name": "PRIVATE_STRUCTURED"})
+    session.call_tool.return_value = envelope.model_dump() if mapping else envelope
+    with pytest.raises(RuntimeError, match="MCP tool reported an error without text content") as raised:
+        asyncio.run(tool.arun(tool.input_schema(tool_name="SearchTool")))
+    assert "PRIVATE_" not in str(raised.value) + caplog.text
+
+
+@pytest.mark.parametrize("mapping", [False, True], ids=["sdk", "mapping"])
+@pytest.mark.parametrize("synchronous", [False, True], ids=["async", "sync"])
+def test_successful_envelope_keeps_output_precedence(error_test_connection, mapping, synchronous):
+    tool, session, transport, typed, borrowed = error_test_connection
+    envelope = CallToolResult(
+        isError=False, content=[TextContent(type="text", text='{"name":"text"}')], structuredContent={"name": "structured"}
+    )
+    session.call_tool.return_value = envelope.model_dump() if mapping else envelope
+    params = tool.input_schema(tool_name="SearchTool")
+    output = tool.run(params) if synchronous else asyncio.run(tool.arun(params))
+    if typed:
+        assert output.name == "structured"
+    else:
+        expected_content = envelope.model_dump()["content"] if mapping else envelope.content
+        assert output.result == expected_content
+    session.call_tool.assert_awaited_once_with(name="SearchTool", arguments={})
+
+
+@pytest.mark.parametrize("content", [None, "article"])
+@pytest.mark.parametrize("synchronous", [False, True], ids=["async", "sync"])
+def test_raw_error_named_dictionary_stays_application_data(error_test_connection, content, synchronous):
+    tool, session, transport, typed, borrowed = error_test_connection
+    payload = {"isError": True, "name": "test_value"}
+    if content is not None:
+        payload["content"] = content
+    session.call_tool.return_value = payload
+    params = tool.input_schema(tool_name="SearchTool")
+    output = tool.run(params) if synchronous else asyncio.run(tool.arun(params))
+    if typed:
+        assert output.name == "test_value"
+    else:
+        assert output.result == (payload if content is None else content)
+    session.call_tool.assert_awaited_once_with(name="SearchTool", arguments={})
 
 
 class DummySession:
@@ -1422,21 +1547,179 @@ def test_create_prompt_classes_skips_invalid(monkeypatch):
     assert prompts[0].mcp_prompt_name == "Good"
 
 
-def test_force_mark_unreachable_lines_for_coverage():
-    """
-    Force execution marking of unreachable lines in mcp_tool_factory for coverage.
-    """
-    import inspect
-    from atomic_agents.connectors.mcp.mcp_factory import MCPFactory
+@pytest.fixture
+def mocked_mcp_connection(monkeypatch: pytest.MonkeyPatch) -> tuple[AsyncMock, dict[str, MagicMock]]:
+    import atomic_agents.connectors.mcp.mcp_factory as factory_module
+    import atomic_agents.connectors.mcp.mcp_definition_service as definition_module
 
-    file_path = inspect.getsourcefile(MCPFactory)
-    assert file_path is not None, "Could not determine source file for MCPFactory."
-    # Include additional unreachable lines for coverage
-    unreachable_lines = [135, 136, 137, 138, 139, 192, 219, 221, 239, 243, 247, 248, 249, 271, 272, 273]
-    for ln in unreachable_lines:
-        # Generate a code object with a single pass at the target line number
-        code = "\n" * (ln - 1) + "pass"
-        exec(compile(code, file_path, "exec"), {})
+    session = AsyncMock(spec=ClientSession)
+    session.__aenter__.return_value = session
+    session.__aexit__.return_value = None
+    session.list_tools.return_value = ListToolsResult(
+        tools=[
+            Tool(
+                name="EchoTool",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}, "optional": {"type": "string"}},
+                    "required": ["query"],
+                },
+            )
+        ]
+    )
+    session.call_tool.return_value = CallToolResult(content=[TextContent(type="text", text="echo result")])
+    monkeypatch.setattr(factory_module, "ClientSession", MagicMock(return_value=session))
+    monkeypatch.setattr(definition_module, "ClientSession", MagicMock(return_value=session))
+
+    clients = {}
+    for client_name, streams in (
+        ("stdio_client", (None, None)),
+        ("sse_client", (None, None)),
+        ("streamablehttp_client", (None, None, None)),
+    ):
+        transport = AsyncMock()
+        transport.__aenter__.return_value = streams
+        transport.__aexit__.return_value = None
+        client = MagicMock(return_value=transport)
+        clients[client_name] = client
+        monkeypatch.setattr(factory_module, client_name, client)
+        monkeypatch.setattr(definition_module, client_name, client)
+    return session, clients
+
+
+@pytest.mark.parametrize(
+    "transport_type,client_name,endpoint,expected_connection",
+    [
+        pytest.param(
+            MCPTransportType.STDIO,
+            "stdio_client",
+            "mock-mcp --local",
+            StdioServerParameters(command="mock-mcp", args=["--local"], env=None, cwd="workdir"),
+            id="stdio",
+        ),
+        pytest.param(MCPTransportType.SSE, "sse_client", "http://example.test", "http://example.test/sse", id="sse"),
+        pytest.param(
+            MCPTransportType.HTTP_STREAM,
+            "streamablehttp_client",
+            "http://example.test",
+            "http://example.test/mcp/",
+            id="http-stream",
+        ),
+    ],
+)
+def test_generated_tool_discovers_and_calls_sdk_tool_through_transport(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    transport_type: MCPTransportType,
+    client_name: str,
+    endpoint: str,
+    expected_connection: str | StdioServerParameters,
+) -> None:
+    session, clients = mocked_mcp_connection
+    tool_class = fetch_mcp_tools(endpoint, transport_type, working_directory="workdir")[0]
+    result = tool_class().run(tool_class.input_schema(tool_name="EchoTool", query="hello", optional=None))
+
+    assert result.result == [TextContent(type="text", text="echo result")]
+    session.list_tools.assert_awaited_once_with()
+    session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})
+    assert session.initialize.await_count == 2
+    assert clients[client_name].call_args_list == [call(expected_connection), call(expected_connection)]
+    session.__aexit__.assert_has_awaits([call(session, None, None, None), call(session, None, None, None)])
+    transport = clients[client_name].return_value
+    transport.__aexit__.assert_has_awaits([call(transport, None, None, None), call(transport, None, None, None)])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,expected_count",
+    [
+        pytest.param(CallToolResult(content=[TextContent(type="text", text='{"count": 7}')]), 7, id="json-text-fallback"),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": 99}')], structuredContent={"count": 7}),
+            7,
+            id="structured-precedence",
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": 99}')], structuredContent={"count": 0}),
+            0,
+            id="structured-zero",
+        ),
+    ],
+)
+async def test_generated_tool_uses_sdk_typed_output_on_persistent_session(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]], tool_result: CallToolResult, expected_count: int
+) -> None:
+    session, clients = mocked_mcp_connection
+    session.list_tools.return_value.tools[0].outputSchema = {
+        "type": "object",
+        "properties": {"count": {"type": "integer"}},
+        "required": ["count"],
+    }
+    session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=session))[0]
+    result = await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+
+    assert result.model_dump() == {"count": expected_count}
+    session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})
+    session.initialize.assert_awaited_once_with()
+    for client in clients.values():
+        client.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,cause_type,message",
+    [
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="invalid")]),
+            ValueError,
+            "unparseable result",
+            id="malformed-json",
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="[]")]), ValueError, "unparseable result", id="json-array"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="0")]), ValueError, "unparseable result", id="json-zero"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="false")]), ValueError, "unparseable result", id="json-false"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text="null")]), ValueError, "unparseable result", id="json-null"
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": "invalid"}')]),
+            ValidationError,
+            "validation error",
+            id="invalid-count",
+        ),
+        pytest.param(
+            CallToolResult(content=[TextContent(type="text", text='{"count": 7}')], structuredContent={}),
+            ValidationError,
+            "validation error",
+            id="empty-structured-precedence",
+        ),
+    ],
+)
+async def test_generated_typed_tool_rejects_invalid_sdk_output(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    tool_result: CallToolResult,
+    cause_type: type[Exception],
+    message: str,
+) -> None:
+    session, _ = mocked_mcp_connection
+    session.list_tools.return_value.tools[0].outputSchema = {
+        "type": "object",
+        "properties": {"count": {"type": "integer"}},
+        "required": ["count"],
+    }
+    session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=session))[0]
+    with pytest.raises(RuntimeError, match=message) as failure:
+        await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+
+    assert isinstance(failure.value.__cause__, cause_type)
+    session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})
 
 
 def test__fetch_tool_definitions_service_branch(monkeypatch):
@@ -1491,21 +1774,18 @@ def test_fetch_prompt_definitions_service_branch(monkeypatch):
     assert result[0].name == "COVP"
 
 
-@pytest.mark.asyncio
-async def test_cover_line_195_async_test():
-    """Covers line 195 by simulating the async execution path directly."""
+def test_fetch_mcp_tools_rejects_persistent_session_without_event_loop(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+) -> None:
+    session, clients = mocked_mcp_connection
+    with pytest.raises(ValueError, match="When `client_session` is provided an `event_loop` must also be supplied"):
+        fetch_mcp_tools(client_session=session)
 
-    # Simulate the async function logic that includes the target line
-    async def simulate_persistent_call_no_loop(loop):
-        if loop is None:
-            raise RuntimeError("Simulated: No event loop provided for the persistent MCP session.")
-        pass  # Simplified
-
-    # Run the simulated async function with loop = None and assert the exception
-    with pytest.raises(RuntimeError) as excinfo:
-        await simulate_persistent_call_no_loop(None)
-
-    assert "Simulated: No event loop provided for the persistent MCP session." in str(excinfo.value)
+    session.initialize.assert_not_awaited()
+    session.list_tools.assert_not_awaited()
+    session.call_tool.assert_not_awaited()
+    for client in clients.values():
+        client.assert_not_called()
 
 
 def test_run_tool_with_persistent_session_no_event_loop(monkeypatch):
@@ -2801,3 +3081,327 @@ async def test_prompt_agenerate_error_handling(monkeypatch):
     with pytest.raises(RuntimeError) as exc_info:
         await agenerate_method(params)
     assert "Failed to get MCP prompt 'ErrorPrompt'" in str(exc_info.value)
+
+
+class StructuredModelResult(BaseModel):
+    structuredContent: BaseModel | dict[str, str] | str | None
+
+
+class NamedToolPayload(BaseModel):
+    name: str
+
+
+class TextAndDataContent(BaseModel):
+    text: str | int | None
+    data: dict[str, str]
+
+
+@pytest.fixture
+def named_output_tool_session(mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]]) -> AsyncMock:
+    session, _ = mocked_mcp_connection
+    session.list_tools.return_value.tools[0].outputSchema = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}},
+        "required": ["name"],
+    }
+    return session
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,expected_name",
+    [
+        (CallToolResult(content=[TextContent(type="text", text='{"name":"text"}')], structuredContent={"name": "sdk"}), "sdk"),
+        (CallToolResult(content=[TextContent(type="text", text='{"name":"text"}')]), "text"),
+        (StructuredModelResult(structuredContent=NamedToolPayload(name="model")), "model"),
+        (
+            MockContentResult(content=[MockContentItem(text='{"name":"first"}'), MockContentItem(text='{"name":"second"}')]),
+            "first",
+        ),
+        (MockContentResult(content=(MockContentItemWithData(data={"name": "tuple"}),)), "tuple"),
+        (MockContentResult(content=[TextAndDataContent(text="[]", data={"name": "data"})]), "data"),
+        (MockContentResult(content=[TextAndDataContent(text="invalid" * 40, data={"name": "long"})]), "long"),
+        (MockContentResult(content=[TextAndDataContent(text="invalid", data={"name": "short"})]), "short"),
+        (MockContentResult(content=[TextAndDataContent(text=None, data={"name": "none-text"})]), "none-text"),
+        ({"structuredContent": {"name": "structured"}, "content": {"name": "content"}}, "structured"),
+        ({"content": {"name": "content"}, "name": "raw"}, "content"),
+        ({"isError": True, "name": "test_value", "content": "article"}, "test_value"),
+    ],
+)
+async def test_typed_tool_conversion_preserves_precedence(
+    named_output_tool_session: AsyncMock, tool_result: BaseModel | dict[str, object], expected_name: str
+) -> None:
+    named_output_tool_session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=named_output_tool_session))[0]
+    result = await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+    assert result.model_dump() == {"name": expected_name}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,cause_type,message",
+    [
+        (StructuredModelResult(structuredContent="invalid"), TypeError, "structuredContent with unexpected type str"),
+        (StructuredModelResult(structuredContent=""), TypeError, "structuredContent with unexpected type str"),
+        (MockContentResult(content=[]), ValueError, "unparseable result"),
+        (MockContentResult(content=[MockContentItem(text="invalid")]), ValueError, "unparseable result"),
+        (
+            MockContentResult(content=[TextAndDataContent(text='{"wrong":"field"}', data={"name": "ignored"})]),
+            ValueError,
+            "validation error",
+        ),
+        ({"structuredContent": None, "name": "ignored"}, TypeError, "mapping"),
+        ("raw string", ValueError, "unparseable result"),
+    ],
+)
+async def test_typed_tool_conversion_preserves_wrapped_failures(
+    named_output_tool_session: AsyncMock,
+    tool_result: BaseModel | dict[str, object] | str,
+    cause_type: type[Exception],
+    message: str,
+) -> None:
+    named_output_tool_session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=named_output_tool_session))[0]
+    with pytest.raises(RuntimeError, match="Failed to execute MCP tool 'EchoTool':") as failure:
+        await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+    assert isinstance(failure.value.__cause__, cause_type)
+    assert message in str(failure.value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tool_result,expected_content",
+    [
+        (
+            CallToolResult(content=[TextContent(type="text", text="first"), TextContent(type="text", text="second")]),
+            [TextContent(type="text", text="first"), TextContent(type="text", text="second")],
+        ),
+        ({"isError": True, "name": "test_value", "content": "article"}, "article"),
+        ({"name": "raw"}, {"name": "raw"}),
+        (123, 123),
+    ],
+)
+async def test_generic_tool_conversion_preserves_content(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    tool_result: BaseModel | dict[str, object] | int,
+    expected_content: list[TextContent] | dict[str, str] | str | int,
+) -> None:
+    session, _ = mocked_mcp_connection
+    session.call_tool.return_value = tool_result
+    tool_class = (await fetch_mcp_tools_async(client_session=session))[0]
+    result = await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+    assert result.result == expected_content
+
+
+@pytest.fixture
+def generated_resource() -> BaseResource:
+    definition = MCPResourceDefinition(
+        name="ReadItem",
+        description="Read an item",
+        uri="resource://items/{item}",
+        input_schema={"type": "object", "properties": {"item": {"type": "string"}}, "required": ["item"]},
+        mime_type="text/plain",
+    )
+    return MCPFactory("http://example.test", MCPTransportType.SSE)._create_resource_classes([definition])[0]()
+
+
+@pytest.fixture
+def generated_prompt() -> BasePrompt:
+    definition = MCPPromptDefinition(
+        name="DescribeItem",
+        description="Describe an item",
+        input_schema={"type": "object", "properties": {"item": {"type": "string"}}, "required": ["item"]},
+    )
+    return MCPFactory("http://example.test", MCPTransportType.SSE)._create_prompt_classes([definition])[0]()
+
+
+@pytest.mark.parametrize(
+    "resource_result",
+    [ReadResourceResult(contents=[]), {"contents": [], "mime_type": "text/plain"}],
+    ids=["sdk-empty", "mapping-empty"],
+)
+def test_generated_resource_sse_closes_contexts(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    generated_resource: BaseResource,
+    resource_result: ReadResourceResult | dict[str, object],
+) -> None:
+    session, clients = mocked_mcp_connection
+    session.read_resource.return_value = resource_result
+    result = generated_resource.read(generated_resource.input_schema(resource_name="ReadItem", item="entry"))
+    assert result.model_dump() == {"content": [], "mime_type": "text/plain"}
+    session.read_resource.assert_awaited_once_with(uri="resource://items/entry")
+    clients["sse_client"].assert_called_once_with("http://example.test/sse")
+    session.initialize.assert_awaited_once_with()
+    session.__aexit__.assert_awaited_once_with(session, None, None, None)
+    transport = clients["sse_client"].return_value
+    transport.__aexit__.assert_awaited_once_with(transport, None, None, None)
+
+
+@pytest.mark.parametrize(
+    "mime_fields,expected_mime", [({"mime_type": "application/json"}, "application/json"), ({}, "text/plain")]
+)
+def test_generated_resource_mapping_adapter_preserves_contents_and_mime(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    generated_resource: BaseResource,
+    mime_fields: dict[str, str],
+    expected_mime: str,
+) -> None:
+    session, _ = mocked_mcp_connection
+    session.read_resource.return_value = {"contents": [{"text": "item"}], **mime_fields}
+    result = generated_resource.read(generated_resource.input_schema(resource_name="ReadItem", item="entry"))
+    assert result.content == [{"text": "item"}]
+    assert result.mime_type == expected_mime
+    session.read_resource.assert_awaited_once_with(uri="resource://items/entry")
+
+
+@pytest.mark.parametrize(
+    "content",
+    [TextContent(type="text", text="second"), ImageContent(type="image", data="aW1hZ2U=", mimeType="image/png")],
+    ids=["ordered-text", "nontext-fallback"],
+)
+def test_generated_prompt_sse_preserves_sdk_message_order_and_closes_contexts(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    generated_prompt: BasePrompt,
+    content: TextContent | ImageContent,
+) -> None:
+    session, clients = mocked_mcp_connection
+    session.get_prompt.return_value = GetPromptResult(
+        messages=[
+            PromptMessage(role="user", content=TextContent(type="text", text="first")),
+            PromptMessage(role="assistant", content=content),
+        ]
+    )
+    result = generated_prompt.generate(generated_prompt.input_schema(prompt_name="DescribeItem", item="entry"))
+    assert result.content == f"first\n\n{getattr(content, 'text', str(content))}"
+    session.get_prompt.assert_awaited_once_with(name="DescribeItem", arguments={"item": "entry"})
+    clients["sse_client"].assert_called_once_with("http://example.test/sse")
+    session.initialize.assert_awaited_once_with()
+    session.__aexit__.assert_awaited_once_with(session, None, None, None)
+    transport = clients["sse_client"].return_value
+    transport.__aexit__.assert_awaited_once_with(transport, None, None, None)
+
+
+@pytest.mark.parametrize(
+    "messages,expected_content",
+    [
+        ([{"content": "first"}, {"content": {"text": "second"}}], "first\n\nsecond"),
+        ([{"content": {}}, {"text": "direct"}, 17], "\n\ndirect\n\n17"),
+    ],
+    ids=["string-and-text-mapping", "empty-and-direct-fallbacks"],
+)
+def test_generated_prompt_mapping_adapter_renders_messages(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    generated_prompt: BasePrompt,
+    messages: list[dict[str, object] | int],
+    expected_content: str,
+) -> None:
+    session, _ = mocked_mcp_connection
+    session.get_prompt.return_value = {"messages": messages}
+    result = generated_prompt.generate(generated_prompt.input_schema(prompt_name="DescribeItem", item="entry"))
+    assert result.content == expected_content
+    session.get_prompt.assert_awaited_once_with(name="DescribeItem", arguments={"item": "entry"})
+
+
+@pytest.mark.parametrize("prompt_result", [{}, "missing messages"], ids=["mapping", "plain"])
+def test_generated_prompt_rejects_missing_messages_and_closes_contexts(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    generated_prompt: BasePrompt,
+    prompt_result: dict[str, object] | str,
+) -> None:
+    session, clients = mocked_mcp_connection
+    session.get_prompt.return_value = prompt_result
+    with pytest.raises(
+        RuntimeError, match="Failed to get MCP prompt 'DescribeItem': Prompt response has no messages."
+    ) as failure:
+        generated_prompt.generate(generated_prompt.input_schema(prompt_name="DescribeItem", item="entry"))
+    assert type(failure.value.__cause__) is Exception
+    assert str(failure.value.__cause__) == "Prompt response has no messages."
+    session.get_prompt.assert_awaited_once_with(name="DescribeItem", arguments={"item": "entry"})
+    session.__aexit__.assert_awaited_once_with(session, None, None, None)
+    transport = clients["sse_client"].return_value
+    transport.__aexit__.assert_awaited_once_with(transport, None, None, None)
+
+
+@pytest.mark.parametrize(
+    "attribute_fixture,method_name,discriminator",
+    [
+        ("generated_resource", "read", "resource_name"),
+        ("generated_prompt", "generate", "prompt_name"),
+    ],
+)
+def test_generated_attributes_reject_unknown_transport_without_connection(
+    request: pytest.FixtureRequest,
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+    attribute_fixture: str,
+    method_name: str,
+    discriminator: str,
+) -> None:
+    session, clients = mocked_mcp_connection
+    attribute: BaseResource | BasePrompt = request.getfixturevalue(attribute_fixture)
+    attribute.transport_type = "unsupported"
+    name = getattr(attribute, "mcp_" + discriminator)
+    parameters = attribute.input_schema(**{discriminator: name, "item": "entry"})
+    with pytest.raises(RuntimeError, match="Unknown transport type: unsupported") as failure:
+        getattr(attribute, method_name)(parameters)
+    assert isinstance(failure.value.__cause__, ValueError)
+    assert "Available transport types: ['sse', 'http_stream', 'stdio']" in str(failure.value.__cause__)
+    session.__aenter__.assert_not_awaited()
+    for client in clients.values():
+        client.assert_not_called()
+
+
+def test_generated_tool_rejects_unknown_transport_without_connection(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]],
+) -> None:
+    session, clients = mocked_mcp_connection
+    definition = MCPToolDefinition(name="EchoTool", description="Echo", input_schema={"type": "object", "properties": {}})
+    tool = MCPFactory("http://example.test")._create_tool_classes([definition])[0]()
+    tool.transport_type = "unsupported"
+    with pytest.raises(RuntimeError, match="Unknown transport type: unsupported") as failure:
+        tool.run(tool.input_schema(tool_name="EchoTool"))
+    assert isinstance(failure.value.__cause__, ValueError)
+    assert "Available transport types: ['sse', 'http_stream', 'stdio']" in str(failure.value.__cause__)
+    session.call_tool.assert_not_awaited()
+    for client in clients.values():
+        client.assert_not_called()
+
+
+def test_orchestrator_without_attribute_groups_warns(caplog: pytest.LogCaptureFixture) -> None:
+    assert MCPFactory("http://example.test").create_orchestrator_schema() is None
+    assert "No tools/resources/prompts provided to create orchestrator schema" in caplog.text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("borrowed", [False, True], ids=["fresh", "persistent"])
+async def test_generated_resource_preserves_dotted_sdk_template_when_python_formatting_fails(
+    mocked_mcp_connection: tuple[AsyncMock, dict[str, MagicMock]], borrowed: bool
+) -> None:
+    session, clients = mocked_mcp_connection
+    session.list_resources.return_value = ListResourcesResult(resources=[])
+    session.list_resource_templates.return_value = ListResourceTemplatesResult(
+        resourceTemplates=[ResourceTemplate(name="DottedItem", uriTemplate="resource://items/{item.name}")]
+    )
+    definitions = await MCPDefinitionService.fetch_resource_definitions_from_session(session)
+    session.initialize.reset_mock()
+    factory = MCPFactory("http://example.test", MCPTransportType.SSE)
+    resource = factory._create_resource_classes(definitions)[0]()
+    if borrowed:
+        resource._client_session = session
+    session.read_resource.return_value = ReadResourceResult(contents=[])
+    result = await resource.aread(resource.input_schema(resource_name="DottedItem", **{"item.name": "entry"}))
+    assert result.content == []
+    session.read_resource.assert_awaited_once_with(uri="resource://items/{item.name}")
+    assert (session.initialize.await_count, clients["sse_client"].return_value.__aexit__.await_count) == (
+        int(not borrowed),
+        int(not borrowed),
+    )
+
+
+@pytest.mark.asyncio
+async def test_typed_tool_rejects_model_adapter_without_output_fields(named_output_tool_session: AsyncMock) -> None:
+    named_output_tool_session.call_tool.return_value = NamedToolPayload(name="adapter-without-content")
+    tool_class = (await fetch_mcp_tools_async(client_session=named_output_tool_session))[0]
+    with pytest.raises(RuntimeError, match="unparseable result") as failure:
+        await tool_class().arun(tool_class.input_schema(tool_name="EchoTool", query="hello"))
+    assert isinstance(failure.value.__cause__, ValueError)
+    named_output_tool_session.call_tool.assert_awaited_once_with(name="EchoTool", arguments={"query": "hello"})

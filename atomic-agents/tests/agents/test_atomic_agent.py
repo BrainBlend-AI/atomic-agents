@@ -42,8 +42,7 @@ def mock_instructor():
 
 @pytest.fixture
 def mock_instructor_async():
-    # Changed spec from instructor.Instructor to instructor.core.client.AsyncInstructor
-    mock = Mock(spec=instructor.core.client.AsyncInstructor)
+    mock = Mock(spec=instructor.AsyncInstructor)
 
     # Configure chat.completions structure
     mock.chat = Mock()
@@ -512,6 +511,27 @@ def test_run_stream(mock_instructor, mock_history):
     mock_history.add_message.assert_has_calls([call("user", mock_input), call("assistant", mock_output)])
 
 
+class AliasedOutputSchema(BaseIOSchema):
+    """Output schema whose field is set through an alias."""
+
+    chat_message: str = Field(..., alias="chatMessage", description="The reply text")
+
+
+def test_run_stream_with_aliased_output_schema(mock_instructor, mock_history):
+    streamed = AliasedOutputSchema(chatMessage="Test output")
+    mock_instructor.chat.completions.create_partial.return_value = iter([streamed])
+    config = AgentConfig(client=mock_instructor, model="gpt-5-mini", history=mock_history)
+    agent = AtomicAgent[BasicChatInputSchema, AliasedOutputSchema](config)
+
+    stream = agent.run_stream(BasicChatInputSchema(chat_message="Test input"))
+    with pytest.raises(StopIteration) as stop:
+        while True:
+            next(stream)
+
+    assert stop.value.value == streamed
+    mock_history.add_message.assert_called_with("assistant", streamed)
+
+
 @pytest.mark.asyncio
 async def test_run_async(agent_async, mock_history):
     # Create a mock input
@@ -549,6 +569,23 @@ async def test_run_async_stream(agent_async, mock_history):
     # Create the expected full response content to check
     full_response_content = agent_async.output_schema(**responses[0].model_dump())
     mock_history.add_message.assert_any_call("assistant", full_response_content)
+
+
+@pytest.mark.asyncio
+async def test_run_async_stream_with_aliased_output_schema(mock_instructor_async, mock_history):
+    streamed = AliasedOutputSchema(chatMessage="Test output")
+
+    async def mock_create_partial(*args, **kwargs):
+        yield streamed
+
+    mock_instructor_async.chat.completions.create_partial = mock_create_partial
+    config = AgentConfig(client=mock_instructor_async, model="gpt-5-mini", history=mock_history)
+    agent = AtomicAgent[BasicChatInputSchema, AliasedOutputSchema](config)
+
+    responses = [response async for response in agent.run_async_stream(BasicChatInputSchema(chat_message="Test input"))]
+
+    assert responses == [streamed]
+    mock_history.add_message.assert_called_with("assistant", streamed)
 
 
 def test_model_from_chunks_patched():
@@ -1144,6 +1181,89 @@ def test_get_context_token_count_multimodal_content(mock_get_token_counter, mock
     image_entry = next(item for item in content if item.get("type") == "image_url")
     assert "image_url" in image_entry
     assert image_entry["image_url"]["url"] == "https://example.com/test.png"
+
+
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_image_conversion_failure(mock_get_token_counter, mock_instructor, caplog):
+    from logging import WARNING
+    from instructor.processing.multimodal import Image
+
+    class ImageInputSchema(BaseIOSchema):
+        """Input with text and an image."""
+
+        text: str
+        image: Image
+
+    image = Image(source="https://example.com/test.png", media_type="image/png")
+    history = ChatHistory()
+    history.add_message("system", BasicChatInputSchema(chat_message="Earlier context"))
+    history.add_message("user", ImageInputSchema(text="Describe this image", image=image))
+    history.add_message("assistant", BasicChatOutputSchema(chat_message="Later reply"))
+    agent = AtomicAgent[ImageInputSchema, BasicChatOutputSchema](AgentConfig(client=mock_instructor, history=history))
+    expected_result = TokenCountResult(total=150, system_prompt=50, history=100, tools=0, model=agent.model)
+    mock_get_token_counter.return_value.count_context.return_value = expected_result
+
+    with patch.object(
+        Image, "to_openai", autospec=True, side_effect=RuntimeError("controlled conversion failure")
+    ) as convert_image:
+        result = agent.get_context_token_count()
+
+    convert_image.assert_called_once_with(image, instructor.Mode.JSON)
+    assert result == expected_result
+    assert caplog.record_tuples == [
+        (
+            "atomic_agents.agents.atomic_agent",
+            WARNING,
+            "Failed to serialize Image for token counting: controlled conversion failure. Using placeholder for estimation.",
+        )
+    ]
+    assert mock_get_token_counter.return_value.count_context.call_args.kwargs["history_messages"] == [
+        {"role": "system", "content": '{"chat_message":"Earlier context"}'},
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": '{"text":"Describe this image"}'},
+                {"type": "text", "text": "[image content]"},
+            ],
+        },
+        {"role": "assistant", "content": '{"chat_message":"Later reply"}'},
+    ]
+
+
+@patch("atomic_agents.agents.atomic_agent.get_token_counter")
+def test_get_context_token_count_custom_history_stringifies_unusual_content(mock_get_token_counter, mock_instructor):
+    from copy import deepcopy
+    from decimal import Decimal
+
+    class CustomHistory(ChatHistory):
+        def get_history(self) -> list[dict[str, str | list[str | Decimal]]]:
+            return [
+                {"role": "tool", "content": ["Before value", Decimal("12.50"), "After value"]},
+                {"role": "assistant", "content": "Remaining message"},
+            ]
+
+        def copy(self) -> "CustomHistory":
+            return deepcopy(self)
+
+    history = CustomHistory()
+    agent = AtomicAgent[BasicChatInputSchema, BasicChatOutputSchema](AgentConfig(client=mock_instructor, history=history))
+    expected_result = TokenCountResult(total=150, system_prompt=50, history=100, tools=0, model=agent.model)
+    mock_get_token_counter.return_value.count_context.return_value = expected_result
+
+    result = agent.get_context_token_count()
+
+    assert result == expected_result
+    assert mock_get_token_counter.return_value.count_context.call_args.kwargs["history_messages"] == [
+        {
+            "role": "tool",
+            "content": [
+                {"type": "text", "text": "Before value"},
+                {"type": "text", "text": "12.50"},
+                {"type": "text", "text": "After value"},
+            ],
+        },
+        {"role": "assistant", "content": "Remaining message"},
+    ]
 
 
 def test_serialize_history_for_token_count_video_placeholder(agent, mock_history):
