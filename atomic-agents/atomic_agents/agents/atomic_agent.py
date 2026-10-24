@@ -774,7 +774,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
         self._hook_handlers[event].append(handler)
 
         # Register with instructor client if it supports hooks
-        if hasattr(self.client, "on"):
+        if self._hooks_enabled and hasattr(self.client, "on"):
             self.client.on(event, handler)
 
     def unregister_hook(self, event: str, handler: Callable) -> None:
@@ -789,7 +789,7 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
             self._hook_handlers[event].remove(handler)
 
             # Remove from instructor client if it supports hooks
-            if hasattr(self.client, "off"):
+            if self._hooks_enabled and hasattr(self.client, "off"):
                 self.client.off(event, handler)
 
     def clear_hooks(self, event: Optional[str] = None) -> None:
@@ -828,11 +828,23 @@ class AtomicAgent[InputSchema: BaseIOSchema, OutputSchema: BaseIOSchema]:
 
     def enable_hooks(self) -> None:
         """Enable hook processing."""
+        if self._hooks_enabled:
+            return
         self._hooks_enabled = True
+        if hasattr(self.client, "on"):
+            for event, handlers in self._hook_handlers.items():
+                for handler in handlers:
+                    self.client.on(event, handler)
 
     def disable_hooks(self) -> None:
         """Disable hook processing."""
+        if not self._hooks_enabled:
+            return
         self._hooks_enabled = False
+        if hasattr(self.client, "off"):
+            for event, handlers in self._hook_handlers.items():
+                for handler in handlers:
+                    self.client.off(event, handler)
 
     @property
     def hooks_enabled(self) -> bool:
