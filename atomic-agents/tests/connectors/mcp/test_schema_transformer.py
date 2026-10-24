@@ -1,6 +1,7 @@
 import logging
 
 import pytest
+from jsonschema import Draft202012Validator
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import ValidationError
@@ -75,6 +76,183 @@ class TestSchemaTransformer:
 
 
 class TestCreateModelFromSchema:
+    @pytest.mark.parametrize(
+        "prop_schema, invalid",
+        [
+            ({"type": ["boolean", "integer"], "enum": [True]}, 1),
+            ({"type": ["boolean", "integer"], "enum": [1]}, True),
+            ({"type": ["boolean", "number"], "const": False}, 0.0),
+            ({"type": ["boolean", "number"], "const": 0}, False),
+            ({"enum": [True]}, 1.0),
+            ({"enum": [0]}, False),
+            ({"const": True}, 1),
+            ({"const": 1}, True),
+        ],
+    )
+    def test_scalar_choices_preserve_json_identity(self, prop_schema, invalid):
+        schema = {"type": "object", "properties": {"value": prop_schema}, "required": ["value"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "ChoiceInput", "choose")
+        payload = {"tool_name": "choose", "value": invalid}
+
+        assert not Draft202012Validator(schema).is_valid(payload)
+        with pytest.raises(ValidationError):
+            model.model_validate(payload)
+        assert not Draft202012Validator(model.model_json_schema()).is_valid(payload)
+
+    @pytest.mark.parametrize("choices", [[True, 1], [1, True], [False, 0], [0, False]])
+    def test_mixed_boolean_and_numeric_choices_keep_the_matching_choice(self, choices):
+        schema = {"type": "object", "properties": {"value": {"enum": choices}}, "required": ["value"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "MixedChoiceInput", "choose")
+        numeric = next(value for value in choices if not isinstance(value, bool))
+
+        assert type(model(tool_name="choose", value=float(numeric)).value) is int
+        boolean = next(value for value in choices if isinstance(value, bool))
+        assert model(tool_name="choose", value=boolean).value is boolean
+
+    @pytest.mark.parametrize("prop_schema", [{"type": "number", "enum": [1]}, {"const": 1.0}, {"enum": [0, 1]}])
+    def test_scalar_choices_retain_json_numeric_equality(self, prop_schema):
+        schema = {"type": "object", "properties": {"value": prop_schema}, "required": ["value"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "NumericChoiceInput", "choose")
+        for value in (1, 1.0):
+            payload = {"tool_name": "choose", "value": value}
+            assert Draft202012Validator(schema).is_valid(payload)
+            assert model.model_validate(payload).value == value
+            assert Draft202012Validator(model.model_json_schema()).is_valid(payload)
+
+    @pytest.mark.parametrize(
+        "prop_schema",
+        [
+            {"type": "string", "enum": ["brief", "detailed"]},
+            {"type": "string", "const": "brief"},
+            {"type": ["string", "null"], "enum": ["brief", None]},
+            {"type": "number", "enum": [1, 2]},
+        ],
+    )
+    def test_optional_scalar_choice_schema_matches_none_validation(self, prop_schema):
+        schema = {"type": "object", "properties": {"value": prop_schema}}
+        model = SchemaTransformer.create_model_from_schema(schema, "OptionalChoiceInput", "choose")
+        payload = {"tool_name": "choose", "value": None}
+
+        assert model.model_validate(payload).value is None
+        emitted = model.model_json_schema()
+        assert Draft202012Validator(emitted).is_valid(payload)
+        assert Draft202012Validator(emitted).is_valid({"tool_name": "choose"})
+        assert not Draft202012Validator(emitted).is_valid({"tool_name": "choose", "value": "unknown"})
+
+    @pytest.mark.parametrize(
+        "prop_schema, valid, invalid, emitted_type, choices",
+        [
+            ({"type": "string", "enum": ["brief", None]}, "brief", None, "string", ["brief"]),
+            ({"type": "integer", "enum": [1, "two"]}, 1, "two", "integer", [1]),
+            ({"type": "integer", "enum": [1, True, 2.5]}, 1, True, "integer", [1]),
+            ({"type": "number", "enum": [1, 2.5, False]}, 2.5, False, "number", [1, 2.5]),
+            ({"type": "boolean", "enum": [False, 0, "false"]}, False, 0, "boolean", [False]),
+            ({"type": "integer", "enum": [1.0, 2.5]}, 1, 2.5, "integer", [1.0]),
+            ({"type": "boolean", "const": False}, False, 0, "boolean", [False]),
+        ],
+    )
+    def test_typed_scalar_choices(self, prop_schema, valid, invalid, emitted_type, choices):
+        """Choice constraints intersect the declared JSON type, including bool/number boundaries."""
+        schema = {"type": "object", "properties": {"mode": prop_schema}, "required": ["mode"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "TypedModeInput", "configure")
+        assert model(tool_name="configure", mode=valid).mode == valid
+        with pytest.raises(ValueError):
+            model(tool_name="configure", mode=invalid)
+        emitted = model.model_json_schema()["properties"]["mode"]
+        assert emitted["type"] == emitted_type
+        assert emitted.get("enum", [emitted.get("const")]) == choices
+
+    @pytest.mark.parametrize("prop_schema", [{"type": "string", "const": None}, {"type": "integer", "enum": ["two"]}])
+    def test_incompatible_scalar_choices_reject_definition(self, prop_schema):
+        """An impossible type/choice combination never becomes an unrestricted input field."""
+        schema = {"type": "object", "properties": {"mode": prop_schema}, "required": ["mode"]}
+        with pytest.raises(ValueError, match="choices.*declared"):
+            SchemaTransformer.create_model_from_schema(schema, "InvalidModeInput", "configure")
+
+    def test_nullable_type_array_with_mixed_enum(self):
+        schema = {
+            "type": "object",
+            "properties": {"mode": {"type": ["string", "null"], "enum": ["brief", None, 1]}},
+            "required": ["mode"],
+        }
+        model = SchemaTransformer.create_model_from_schema(schema, "NullableModeInput", "configure")
+        assert model(tool_name="configure", mode="brief").mode == "brief"
+        assert model(tool_name="configure", mode=None).mode is None
+        with pytest.raises(ValueError):
+            model(tool_name="configure", mode=1)
+        assert model.model_json_schema()["properties"]["mode"]["enum"] == ["brief", None]
+
+    @pytest.mark.parametrize(
+        "prop_schema, valid, invalid",
+        [
+            ({"type": "string", "enum": ["brief", "detailed"]}, "brief", "unknown"),
+            ({"type": "integer", "enum": [1, 2]}, 1, 3),
+            ({"enum": ["brief", None]}, None, "unknown"),
+            ({"type": "string", "const": "brief"}, "brief", "detailed"),
+            ({"type": "integer", "const": 0}, 0, 1),
+            ({"type": "boolean", "const": False}, False, True),
+            ({"const": None}, None, "unknown"),
+        ],
+    )
+    def test_scalar_value_constraints(self, prop_schema, valid, invalid):
+        """MCP parameter choices constrain both validation and the model-facing schema."""
+        schema = {"type": "object", "properties": {"mode": prop_schema}, "required": ["mode"]}
+        model = SchemaTransformer.create_model_from_schema(schema, "ModeInput", "configure")
+
+        assert model(tool_name="configure", mode=valid).mode == valid
+        with pytest.raises(ValueError):
+            model(tool_name="configure", mode=invalid)
+        emitted = model.model_json_schema()["properties"]["mode"]
+        choices = prop_schema.get("enum", [prop_schema.get("const")])
+        if len(choices) == 1:
+            assert emitted["const"] == choices[0]
+        else:
+            assert emitted["enum"] == choices
+
+    def test_array_item_enum(self):
+        """Enum constraints survive recursive conversion of tool parameter arrays."""
+        schema = {
+            "type": "object",
+            "properties": {"modes": {"type": "array", "items": {"type": "string", "enum": ["brief", "detailed"]}}},
+            "required": ["modes"],
+        }
+        model = SchemaTransformer.create_model_from_schema(schema, "ModesInput", "configure")
+
+        assert model(tool_name="configure", modes=["brief", "detailed"]).modes == ["brief", "detailed"]
+        with pytest.raises(ValueError):
+            model(tool_name="configure", modes=["unknown"])
+        assert model.model_json_schema()["properties"]["modes"]["items"]["enum"] == ["brief", "detailed"]
+
+    @pytest.mark.parametrize("definitions_key", ["$defs", "definitions"])
+    def test_referenced_enum(self, definitions_key):
+        """Enum definitions emitted by MCP servers remain scalar parameter choices."""
+        schema = {
+            "type": "object",
+            "properties": {"mode": {"$ref": f"#/{definitions_key}/Mode"}},
+            "required": ["mode"],
+            definitions_key: {"Mode": {"type": "string", "enum": ["brief", "detailed"]}},
+        }
+        model = SchemaTransformer.create_model_from_schema(schema, "ModeInput", "configure")
+
+        assert model(tool_name="configure", mode="brief").mode == "brief"
+        with pytest.raises(ValueError):
+            model(tool_name="configure", mode="unknown")
+        assert model.model_json_schema()["properties"]["mode"]["enum"] == ["brief", "detailed"]
+
+    def test_nullable_enum_with_default(self):
+        schema = {
+            "type": "object",
+            "properties": {
+                "mode": {"anyOf": [{"type": "string", "enum": ["brief", "detailed"]}, {"type": "null"}], "default": "brief"}
+            },
+        }
+        model = SchemaTransformer.create_model_from_schema(schema, "ModeInput", "configure")
+
+        assert model(tool_name="configure").mode == "brief"
+        assert model(tool_name="configure", mode=None).mode is None
+        with pytest.raises(ValueError):
+            model(tool_name="configure", mode="unknown")
+
     @pytest.mark.parametrize("invalid_field", ["first", "second"])
     def test_repeated_reference_reuses_model_and_validates_both_fields(self, invalid_field: str) -> None:
         reference = {"$ref": "#/$defs/Item"}
